@@ -1,0 +1,53 @@
+import { Injectable, Logger } from '@nestjs/common';
+
+@Injectable()
+export class RecommendationGeminiApiService {
+  private readonly logger = new Logger(RecommendationGeminiApiService.name);
+
+  async generateJson(prompt: string): Promise<unknown | null> {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      return null;
+    }
+
+    const baseUrl = process.env.GEMINI_BASE_URL || 'https://generativelanguage.googleapis.com';
+    const model = process.env.GEMINI_MODEL || 'gemini-1.5-flash';
+    const endpoint = `${baseUrl}/v1beta/models/${model}:generateContent?key=${apiKey}`;
+
+    try {
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          contents: [
+            {
+              parts: [{ text: prompt }],
+            },
+          ],
+          generationConfig: {
+            temperature: 0.2,
+            responseMimeType: 'application/json',
+          },
+        }),
+      });
+
+      if (!response.ok) {
+        this.logger.warn(`Gemini request failed: ${response.status}`);
+        return null;
+      }
+
+      const payload = (await response.json()) as any;
+      const text = payload?.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (!text) {
+        return null;
+      }
+
+      return text;
+    } catch (error) {
+      this.logger.warn(`Gemini request error: ${(error as Error).message}`);
+      return null;
+    }
+  }
+}

@@ -1,0 +1,437 @@
+import {
+  WebSocketGateway,
+  SubscribeMessage,
+  OnGatewayConnection,
+  OnGatewayDisconnect,
+  ConnectedSocket,
+  MessageBody,
+  WsException,
+} from '@nestjs/websockets';
+import { Socket } from 'socket.io';
+import { Logger, UseGuards } from '@nestjs/common';
+import { ProgressSyncService } from './progress-sync.service';
+import { RedisProgressCacheService } from './redis-progress-cache.service';
+import { OfflineQueueService } from './offline-queue.service';
+import { ProgressUpdateDto } from '../dto/progress-update.dto';
+import { WsJwtGuard } from '@shared/guards/ws-jwt.guard';
+
+/**
+ * Progress Synchronization WebSocket Gateway
+ * Manages real-time bidirectional communication for progress updates
+ */
+@WebSocketGateway({
+  namespace: '/progress-sync',
+  cors: {
+    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    credentials: true,
+  },
+})
+@UseGuards(WsJwtGuard)
+export class ProgressSyncGateway implements OnGatewayConnection, OnGatewayDisconnect {
+  private readonly logger = new Logger(ProgressSyncGateway.name);
+
+  // Track active connections: userId -> Set<deviceId>
+  private activeUsers = new Map<string, Set<string>>();
+
+  constructor(
+    private progressSync: ProgressSyncService,
+    private redisCache: RedisProgressCacheService,
+    private offlineQueue: OfflineQueueService
+  ) {}
+
+  /**
+   * Handle client connection
+   * Register device session and restore offline queue
+   */
+  async handleConnection(client: Socket) {
+    try {
+      const userId = client.handshake.auth.userId;
+      const deviceId = client.handshake.auth.deviceId;
+      const deviceInfo = client.handshake.auth.deviceInfo;
+
+      if (!userId || !deviceId) {
+        this.logger.warn('Connection without userId or deviceId');
+        client.disconnect();
+        return;
+      }
+
+      client.data.userId = userId;
+      client.data.deviceId = deviceId;
+
+      // Register device session
+      await this.redisCache.registerDeviceSession(userId, deviceId, deviceInfo);
+
+      // Join device-specific room
+      client.join(`user:${userId}`);
+      client.join(`device:${userId}:${deviceId}`);
+
+      // Track active user
+      if (!this.activeUsers.has(userId)) {
+        this.activeUsers.set(userId, new Set());
+      }
+      this.activeUsers.get(userId).add(deviceId);
+
+      this.logger.log(
+        `Device connected: ${userId}:${deviceId} (${this.activeUsers.get(userId).size} total devices)`
+      );
+
+      // Check for offline queue
+      const queueSize = await this.offlineQueue.getQueueSize(userId, deviceId);
+      if (queueSize > 0) {
+        this.logger.info(`Device ${deviceId} has ${queueSize} queued updates`);
+        
+        // Notify client about pending sync
+        client.emit('offline:queue-detected', {
+          queueSize,
+          estimatedSyncTime: await this.offlineQueue.getEstimatedSyncTime(
+            userId,
+            deviceId
+          ),
+        });
+      }
+
+      // Send ready signal
+      client.emit('ready', {
+        userId,
+        deviceId,
+        timestamp: Date.now(),
+        queueSize,
+      });
+    } catch (error) {
+      this.logger.error(`Connection error: ${error.message}`);
+      client.disconnect();
+    }
+  }
+
+  /**
+   * Handle client disconnection
+   */
+  async handleDisconnect(client: Socket) {
+    try {
+      const userId = client.data.userId;
+      const deviceId = client.data.deviceId;
+
+      if (!userId || !deviceId) return;
+
+      // Mark device as offline
+      await this.redisCache.markDeviceOffline(userId, deviceId);
+
+      // Remove from active tracking
+      const userDevices = this.activeUsers.get(userId);
+      if (userDevices) {
+        userDevices.delete(deviceId);
+        if (userDevices.size === 0) {
+          this.activeUsers.delete(userId);
+        }
+      }
+
+      this.logger.log(`Device disconnected: ${userId}:${deviceId}`);
+    } catch (error) {
+      this.logger.error(`Disconnect error: ${error.message}`);
+    }
+  }
+
+  /**
+   * Handle progress update from client
+   * @event progress:update
+   */
+  @SubscribeMessage('progress:update')
+  async handleProgressUpdate(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() update: ProgressUpdateDto
+  ) {
+    try {
+      const userId = client.data.userId;
+      const deviceId = client.data.deviceId;
+
+      // Validate authorization
+      if (update.userId !== userId) {
+        throw new WsException('Unauthorized: userId mismatch');
+      }
+
+      if (!update.deviceId) {
+        update.deviceId = deviceId;
+      }
+
+      // Set server timestamp if not provided
+      if (!update.timestamp) {
+        update.timestamp = Date.now();
+      }
+
+      const startTime = Date.now();
+
+      // Process update
+      const result = await this.progressSync.processProgressUpdate(update);
+
+      const latency = Date.now() - startTime;
+
+      // Acknowledge to sender
+      client.emit('progress:ack', {
+        status: result.syncStatus,
+        message: result.message,
+        latency,
+        timestamp: result.syncTimestamp,
+      });
+
+      // Broadcast to other devices if successful
+      if (result.syncStatus === 'SUCCESS') {
+        const broadcastDevices = await this.progressSync.broadcastToOtherDevices(
+          update,
+          deviceId
+        );
+
+        // Emit to other devices
+        for (const otherDeviceId of broadcastDevices) {
+          this.broadcastToDevice(userId, otherDeviceId, 'progress:update', update);
+        }
+      }
+
+      this.logger.debug(
+        `Update processed in ${latency}ms: ${result.syncStatus}`
+      );
+    } catch (error) {
+      this.logger.error(`Update error: ${error.message}`);
+      client.emit('progress:error', {
+        message: error.message,
+        timestamp: Date.now(),
+      });
+    }
+  }
+
+  /**
+   * Handle batch progress updates
+   * @event progress:batch-update
+   */
+  @SubscribeMessage('progress:batch-update')
+  async handleBatchUpdate(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() batch: { updates: ProgressUpdateDto[] }
+  ) {
+    try {
+      const userId = client.data.userId;
+      const deviceId = client.data.deviceId;
+      const batchId = `batch:${Date.now()}:${Math.random()}`;
+
+      const startTime = Date.now();
+      const results = [];
+
+      // Process each update
+      for (const update of batch.updates) {
+        update.userId = userId;
+        update.deviceId = deviceId;
+        if (!update.timestamp) {
+          update.timestamp = Date.now();
+        }
+
+        const result = await this.progressSync.processProgressUpdate(update);
+        results.push(result);
+      }
+
+      const latency = Date.now() - startTime;
+
+      // Acknowledge batch
+      client.emit('progress:batch-ack', {
+        batchId,
+        totalUpdates: batch.updates.length,
+        successCount: results.filter(r => r.syncStatus === 'SUCCESS').length,
+        conflictCount: results.filter(r => r.syncStatus === 'CONFLICT').length,
+        failureCount: results.filter(r => r.syncStatus === 'FAILED').length,
+        latency,
+        timestamp: Date.now(),
+      });
+
+      this.logger.debug(`Batch processed: ${batch.updates.length} updates in ${latency}ms`);
+    } catch (error) {
+      this.logger.error(`Batch update error: ${error.message}`);
+      client.emit('progress:error', {
+        message: error.message,
+        timestamp: Date.now(),
+      });
+    }
+  }
+
+  /**
+   * Handle offline sync request
+   * Syncs all queued updates on reconnect
+   * @event progress:sync-offline-queue
+   */
+  @SubscribeMessage('progress:sync-offline-queue')
+  async handleOfflineSync(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { force?: boolean }
+  ) {
+    try {
+      const userId = client.data.userId;
+      const deviceId = client.data.deviceId;
+
+      this.logger.info(`Starting offline sync for ${userId}:${deviceId}`);
+
+      const syncStart = Date.now();
+      const syncStats = await this.progressSync.syncOfflineQueue(userId, deviceId);
+      const syncDuration = Date.now() - syncStart;
+
+      // Acknowledge sync completion
+      client.emit('progress:offline-sync-complete', {
+        totalUpdates: syncStats.totalUpdates,
+        synced: syncStats.synced,
+        failed: syncStats.failed,
+        conflicts: syncStats.conflicts,
+        syncDuration,
+        timestamp: Date.now(),
+      });
+
+      this.logger.info(
+        `Offline sync completed: ${syncStats.synced}/${syncStats.totalUpdates} synced (${syncDuration}ms)`
+      );
+    } catch (error) {
+      this.logger.error(`Offline sync error: ${error.message}`);
+      client.emit('progress:error', {
+        message: error.message,
+        timestamp: Date.now(),
+      });
+    }
+  }
+
+  /**
+   * Request current sync state
+   * @event progress:get-sync-state
+   */
+  @SubscribeMessage('progress:get-sync-state')
+  async handleGetSyncState(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { types?: string[] }
+  ) {
+    try {
+      const userId = client.data.userId;
+
+      // Get all active sessions
+      const sessions = await this.redisCache.getUserActiveSessions(userId);
+
+      // Get queue stats for this device
+      const queueStats = await this.offlineQueue.getQueueStats(
+        userId,
+        client.data.deviceId
+      );
+
+      // Get metrics
+      const metrics = await this.progressSync.getSyncMetrics(userId);
+
+      client.emit('progress:sync-state', {
+        userId,
+        activeSessions: sessions.length,
+        queueStats,
+        metrics,
+        timestamp: Date.now(),
+      });
+    } catch (error) {
+      this.logger.error(`Get sync state error: ${error.message}`);
+      client.emit('progress:error', {
+        message: error.message,
+        timestamp: Date.now(),
+      });
+    }
+  }
+
+  /**
+   * Handle heartbeat/keep-alive
+   * @event progress:heartbeat
+   */
+  @SubscribeMessage('progress:heartbeat')
+  async handleHeartbeat(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { clientTimestamp?: number }
+  ) {
+    try {
+      const userId = client.data.userId;
+      const deviceId = client.data.deviceId;
+
+      // Update session last activity
+      await this.redisCache.markDeviceOnline(userId, deviceId);
+
+      // Record heartbeat event
+      await this.redisCache.recordSyncEvent(
+        userId,
+        deviceId,
+        'HEARTBEAT',
+        { clientTimestamp: data.clientTimestamp }
+      );
+
+      // Send heartbeat acknowledgment
+      client.emit('progress:heartbeat-ack', {
+        serverTimestamp: Date.now(),
+        clientTimestamp: data.clientTimestamp,
+      });
+    } catch (error) {
+      this.logger.error(`Heartbeat error: ${error.message}`);
+    }
+  }
+
+  /**
+   * Request diagnostics/health check
+   * @event progress:health-check
+   */
+  @SubscribeMessage('progress:health-check')
+  async handleHealthCheck(
+    @ConnectedSocket() client: Socket
+  ) {
+    try {
+      const userId = client.data.userId;
+      const deviceId = client.data.deviceId;
+
+      const cacheStats = await this.redisCache.getCacheStats();
+      const queueStats = await this.offlineQueue.getQueueStats(userId, deviceId);
+      const metrics = await this.progressSync.getSyncMetrics(userId);
+
+      client.emit('progress:health-status', {
+        status: 'HEALTHY',
+        redis: cacheStats,
+        queue: queueStats,
+        metrics,
+        timestamp: Date.now(),
+      });
+    } catch (error) {
+      this.logger.error(`Health check error: ${error.message}`);
+      client.emit('progress:health-status', {
+        status: 'UNHEALTHY',
+        error: error.message,
+        timestamp: Date.now(),
+      });
+    }
+  }
+
+  /**
+   * Broadcast message to specific device
+   */
+  private broadcastToDevice(
+    userId: string,
+    deviceId: string,
+    event: string,
+    data: any
+  ): void {
+    this.logger.debug(`Broadcasting ${event} to ${userId}:${deviceId}`);
+    // This would broadcast to the device's socket room
+    // Implementation depends on your socket.io setup
+  }
+
+  /**
+   * Get active users count
+   */
+  getActiveUsersCount(): number {
+    return this.activeUsers.size;
+  }
+
+  /**
+   * Get active devices for user
+   */
+  getActiveDevicesForUser(userId: string): number {
+    return this.activeUsers.get(userId)?.size || 0;
+  }
+
+  /**
+   * Broadcast to all connected users
+   */
+  broadcastToAllUsers(event: string, data: any): void {
+    this.logger.info(`Broadcasting ${event} to all connected users`);
+    // Implementation would broadcast to all connected sockets
+  }
+}

@@ -1,0 +1,882 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+//////////////////////////////////////
+// ENUMS
+//////////////////////////////////////
+
+enum Role {
+  PARENT
+  ADMIN
+}
+
+enum MediaType {
+  IMAGE
+  AUDIO
+  VIDEO
+}
+
+enum ActivityType {
+  FLASHCARD
+  QUIZ
+  PRONUNCIATION
+  VIDEO
+}
+
+enum SyncEventType {
+  UPDATE_APPLIED
+  UPDATE_FAILED
+  SYNC_COMPLETED
+  CONFLICT_RESOLVED
+}
+
+enum SyncStatus {
+  SUCCESS
+  CONFLICT
+  FAILED
+}
+
+enum ConflictResolution {
+  SERVER
+  CLIENT
+  MERGE
+}
+
+enum DeviceType {
+  MOBILE
+  TABLET
+  WEB
+  DESKTOP
+}
+
+enum DeviceStatus {
+  ONLINE
+  OFFLINE
+  IDLE
+}
+
+enum OfflineQueueStatus {
+  PENDING
+  SYNCED
+  FAILED
+}
+
+enum AvatarActivityType {
+  AVATAR_CHANGED
+  ITEM_EQUIPPED
+  ITEM_REMOVED
+}
+
+enum ReviewDifficulty {
+  EASY
+  MEDIUM
+  HARD
+}
+
+enum ValidationStatus {
+  PENDING
+  IN_REVIEW
+  AUTO_FLAGGED
+  APPROVED
+  REJECTED
+  CONDITIONAL_APPROVE
+}
+
+enum SafetyFlagType {
+  PROFANITY
+  VIOLENCE
+  EXPLICIT_CONTENT
+  HATE_SPEECH
+  PERSONAL_INFO
+  INAPPROPRIATE_LANGUAGE
+  MISLEADING_CONTENT
+  COPYRIGHT_CONCERN
+  BULLYING
+  EXTERNAL_LINKS
+  UNVERIFIED_CLAIMS
+  QUALITY_ISSUE
+  OTHER
+}
+
+enum SafetySeverity {
+  CRITICAL
+  HIGH
+  MEDIUM
+  LOW
+}
+
+enum ApprovalDecision {
+  APPROVE
+  REJECT
+  CONDITIONAL_APPROVE
+  REQUEST_REVISION
+}
+
+enum InteractionType {
+  VIEW
+  COMPLETE
+  BOOKMARK
+  LIKE
+}
+
+enum UserActionType {
+  LOGIN
+  LOGOUT
+  VIEW_CONTENT
+  COMPLETE_QUIZ
+  START_LEARNING
+  END_LEARNING
+}
+
+//////////////////////////////////////
+// AUTH
+//////////////////////////////////////
+
+model User {
+  id            Int       @id @default(autoincrement())
+  email         String    @unique
+  passwordHash  String
+  firstName     String?
+  lastName      String?
+  isActive      Boolean   @default(true)
+  lastLoginAt   DateTime?
+  activeChildId Int?
+  role          Role      @default(PARENT)
+  deletedAt     DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  children            ChildProfile[]
+  sessions            Session[]
+  auditLogs           AuditLog[]
+  contentViews        ContentView[]
+  userProgress        UserProgress[]
+  validationAuditLogs ValidationAuditLog[]
+  activeChild         ChildProfile?        @relation("ActiveChild", fields: [activeChildId], references: [id], onDelete: SetNull)
+
+  @@index([email])
+  @@index([activeChildId])
+}
+
+model Session {
+  id        String   @id @default(uuid())
+  userId    Int
+  token     String?
+  expiresAt DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model AuditLog {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  action    String
+  entity    String?
+  details   String?
+  changes   Json?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+//////////////////////////////////////
+// CHILD DOMAIN
+//////////////////////////////////////
+
+model ChildProfile {
+  id       Int     @id @default(autoincrement())
+  parentId Int?
+  userId   Int?
+  nickname String
+  age      Int
+  avatar   String?
+
+  totalPoints   Int       @default(0)
+  currentLevel  Int       @default(1)
+  streakCount   Int       @default(0)
+  lastLearnDate DateTime?
+  deletedAt     DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  parent         User?  @relation(fields: [parentId], references: [id], onDelete: Cascade)
+  activeForUsers User[] @relation("ActiveChild")
+
+  progress           LearningProgress[]
+  reviews            VocabularyReview[]
+  pronunciation      PronunciationAttempt[]
+  activities         ActivityLog[]
+  starTransactions   StarTransaction[]
+  badges             ChildBadge[]
+  avatarItems        ChildAvatarItem[]
+  avatarConfig       AvatarConfiguration?
+  avatarActivityLogs AvatarActivityLog[]
+  dailyProgress      DailyProgress[]
+  reviewSessions     ReviewSessionLog[]
+  purchases          Purchase[]
+
+  @@unique([parentId, nickname])
+  @@index([parentId])
+}
+
+//////////////////////////////////////
+// CONTENT
+//////////////////////////////////////
+
+model Topic {
+  id          Int       @id @default(autoincrement())
+  name        String    @unique
+  description String?
+  deletedAt   DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  vocabularies Vocabulary[]
+}
+
+model Vocabulary {
+  id              Int       @id @default(autoincrement())
+  topicId         Int
+  word            String
+  phonetic        String?
+  translation     String?
+  partOfSpeech    String?
+  exampleSentence String?
+  difficulty      Int?
+  deletedAt       DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  topic Topic @relation(fields: [topicId], references: [id], onDelete: Cascade)
+
+  media          VocabularyMedia[]
+  quizQuestions  QuizQuestion[]
+  progress       LearningProgress[]
+  reviews        VocabularyReview[]
+  reviewSessions ReviewSessionLog[]
+  pronunciation  PronunciationAttempt[]
+
+  @@index([topicId])
+}
+
+model VocabularyMedia {
+  id           Int       @id @default(autoincrement())
+  vocabularyId Int
+  type         MediaType
+  url          String
+
+  vocabulary Vocabulary @relation(fields: [vocabularyId], references: [id], onDelete: Cascade)
+
+  @@index([vocabularyId])
+  @@index([type])
+}
+
+//////////////////////////////////////
+// QUIZ
+//////////////////////////////////////
+
+model QuizQuestion {
+  id           Int    @id @default(autoincrement())
+  vocabularyId Int
+  question     String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  vocabulary Vocabulary @relation(fields: [vocabularyId], references: [id], onDelete: Cascade)
+
+  options QuizOption[]
+
+  @@index([vocabularyId])
+}
+
+model QuizOption {
+  id         Int     @id @default(autoincrement())
+  questionId Int
+  text       String
+  isCorrect  Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  question QuizQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@index([questionId])
+}
+
+//////////////////////////////////////
+// LEARNING PROGRESS
+//////////////////////////////////////
+
+model LearningProgress {
+  id           Int @id @default(autoincrement())
+  childId      Int
+  vocabularyId Int
+
+  quizScore          Int?
+  pronunciationScore Float?
+  lastReviewedAt     DateTime?
+
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  child      ChildProfile @relation(fields: [childId], references: [id], onDelete: Cascade)
+  vocabulary Vocabulary   @relation(fields: [vocabularyId], references: [id], onDelete: Cascade)
+
+  @@unique([childId, vocabularyId])
+  @@index([childId, lastReviewedAt])
+}
+
+model VocabularyReview {
+  id           Int @id @default(autoincrement())
+  childId      Int
+  vocabularyId Int
+
+  nextReview  DateTime
+  interval    Int
+  easeFactor  Float
+  reviewCount Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  child      ChildProfile @relation(fields: [childId], references: [id], onDelete: Cascade)
+  vocabulary Vocabulary   @relation(fields: [vocabularyId], references: [id], onDelete: Cascade)
+
+  @@unique([childId, vocabularyId])
+  @@index([childId, nextReview])
+  @@index([childId, easeFactor(sort: Desc)])
+}
+
+//////////////////////////////////////
+// UC-16: VOCABULARY REVIEW (SPACED REPETITION)
+//////////////////////////////////////
+
+model ReviewSessionLog {
+  id           Int               @id @default(autoincrement())
+  childId      Int
+  vocabularyId Int
+  correct      Boolean
+  difficulty   ReviewDifficulty?
+  timeSpentMs  Int?
+  newInterval  Int?
+  newEase      Decimal?          @db.Decimal(4, 2)
+  createdAt    DateTime          @default(now())
+
+  child      ChildProfile @relation(fields: [childId], references: [id], onDelete: Cascade)
+  vocabulary Vocabulary   @relation(fields: [vocabularyId], references: [id], onDelete: Cascade)
+
+  @@index([childId, createdAt(sort: Desc)])
+  @@index([correct])
+}
+
+//////////////////////////////////////
+// AI PRONUNCIATION
+//////////////////////////////////////
+
+model PronunciationAttempt {
+  id           Int @id @default(autoincrement())
+  childId      Int
+  vocabularyId Int
+
+  accuracyScore     Float?
+  fluencyScore      Float?
+  completenessScore Float?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  child      ChildProfile @relation(fields: [childId], references: [id], onDelete: Cascade)
+  vocabulary Vocabulary   @relation(fields: [vocabularyId], references: [id], onDelete: Cascade)
+
+  @@index([childId])
+  @@index([vocabularyId])
+}
+
+//////////////////////////////////////
+// GAMIFICATION
+//////////////////////////////////////
+
+model Badge {
+  id          Int     @id @default(autoincrement())
+  name        String  @unique
+  description String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  children ChildBadge[]
+}
+
+model ChildBadge {
+  id       Int      @id @default(autoincrement())
+  childId  Int
+  badgeId  Int
+  earnedAt DateTime @default(now())
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  child ChildProfile @relation(fields: [childId], references: [id], onDelete: Cascade)
+  badge Badge        @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+
+  @@unique([childId, badgeId])
+  @@index([childId, earnedAt])
+}
+
+model StarTransaction {
+  id      Int      @id @default(autoincrement())
+  childId Int
+  points  Int
+  reason  String
+  date    DateTime @default(now())
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  child ChildProfile @relation(fields: [childId], references: [id], onDelete: Cascade)
+
+  @@index([childId])
+  @@index([childId, date])
+}
+
+model AvatarItem {
+  id          Int     @id @default(autoincrement())
+  name        String
+  description String?
+  price       Int
+  category    String? @default("AVATAR")
+  imageUrl    String?
+  rarity      String? @default("COMMON")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  children ChildAvatarItem[]
+
+  @@index([category])
+  @@index([price])
+}
+
+model ChildAvatarItem {
+  childId Int
+  itemId  Int
+
+  child ChildProfile @relation(fields: [childId], references: [id], onDelete: Cascade)
+  item  AvatarItem   @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  equipped   Boolean   @default(false)
+  acquiredAt DateTime  @default(now())
+  equippedAt DateTime?
+
+  @@id([childId, itemId])
+  @@unique([childId, itemId])
+  @@index([childId])
+  @@index([childId, equipped])
+}
+
+//////////////////////////////////////
+// UC-15: AVATAR CUSTOMIZATION
+//////////////////////////////////////
+
+model AvatarConfiguration {
+  id                      Int       @id @default(autoincrement())
+  childId                 Int       @unique
+  config                  Json
+  previewCache            String?
+  previewCacheGeneratedAt DateTime?
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
+
+  child ChildProfile @relation(fields: [childId], references: [id], onDelete: Cascade)
+
+  @@index([childId])
+}
+
+model AvatarActivityLog {
+  id           Int                @id @default(autoincrement())
+  childId      Int
+  activityType AvatarActivityType
+  itemId       Int?
+  timestamp    DateTime           @default(now())
+
+  child ChildProfile @relation(fields: [childId], references: [id], onDelete: Cascade)
+
+  @@index([childId])
+  @@index([timestamp(sort: Desc)])
+  @@index([activityType])
+}
+
+//////////////////////////////////////
+// ANALYTICS
+//////////////////////////////////////
+
+model ActivityLog {
+  id           Int          @id @default(autoincrement())
+  childId      Int
+  activityType ActivityType
+  topicId      Int?
+  vocabularyId Int?
+  contentId    String?
+  pointsEarned Int?
+  score        Float?
+  metadata     Json?
+
+  durationSec Int?
+  createdAt   DateTime @default(now())
+
+  child ChildProfile @relation(fields: [childId], references: [id], onDelete: Cascade)
+
+  @@index([childId, createdAt])
+  @@index([activityType, createdAt])
+  @@index([topicId])
+  @@index([vocabularyId])
+}
+
+model DailyProgress {
+  id      Int      @id @default(autoincrement())
+  childId Int
+  date    DateTime
+
+  wordsLearned Int
+  pointsEarned Int
+  totalTimeSec Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  child ChildProfile @relation(fields: [childId], references: [id], onDelete: Cascade)
+
+  @@unique([childId, date])
+  @@index([childId])
+  @@index([date])
+}
+
+//////////////////////////////////////
+// ANALYTICS - ADVANCED
+//////////////////////////////////////
+
+model AnalyticsSnapshot {
+  id        String   @id @default(uuid())
+  date      DateTime @db.Date
+  metric    String
+  value     Decimal
+  metadata  Json     @default("{}")
+  createdAt DateTime @default(now())
+
+  @@unique([metric, date])
+  @@index([metric])
+  @@index([date])
+  @@index([metric, date])
+}
+
+model ContentView {
+  id          String   @id @default(uuid())
+  userId      Int
+  contentId   String
+  contentType String // TOPIC, VOCABULARY, QUIZ
+  createdAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([contentId, contentType])
+  @@index([createdAt])
+  @@index([contentId, contentType, createdAt])
+}
+
+model UserProgress {
+  id               String   @id @default(uuid())
+  userId           Int
+  contentId        String
+  contentType      String
+  completed        Boolean  @default(false)
+  score            Decimal?
+  timeSpentSeconds Int?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, contentId, contentType])
+  @@index([userId])
+  @@index([contentId, contentType])
+  @@index([completed])
+  @@index([createdAt])
+}
+
+//////////////////////////////////////
+// UC-14: MEDIA VALIDATION & CONTENT APPROVAL
+//////////////////////////////////////
+
+model ContentValidation {
+  id               String           @id @default(uuid())
+  contentId        String
+  status           ValidationStatus
+  isApproved       Boolean          @default(false)
+  hasAutoFlags     Boolean          @default(false)
+  safetyScore      Int // 0-100
+  recommendations  String           @default("[]")
+  detailedReport   String?
+  validationTimeMs Int              @default(0)
+  contentType      String?
+  contentTitle     String?
+  validatedBy      String?
+  validatedAt      DateTime         @default(now())
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  safetyFlags SafetyFlag[]
+  approval    ContentApproval?
+  rejection   ContentRejection?
+  auditLogs   ValidationAuditLog[]
+
+  @@index([contentId])
+  @@index([status])
+  @@index([validatedAt(sort: Desc)])
+  @@index([hasAutoFlags])
+  @@index([isApproved])
+  @@index([safetyScore])
+  @@index([contentType])
+}
+
+model SafetyFlag {
+  id              String         @id @default(uuid())
+  validationId    String
+  type            SafetyFlagType
+  severity        SafetySeverity
+  description     String
+  detectedText    String?
+  confidence      Decimal?       @db.Decimal(3, 2)
+  isAutoDetected  Boolean        @default(true)
+  suggestedAction String?
+  locationInfo    Json?
+  detectedAt      DateTime       @default(now())
+  createdAt       DateTime       @default(now())
+
+  validation ContentValidation @relation(fields: [validationId], references: [id], onDelete: Cascade)
+
+  @@index([validationId])
+  @@index([type])
+  @@index([severity])
+  @@index([isAutoDetected])
+}
+
+model ContentApproval {
+  id                 String           @id @default(uuid())
+  contentId          String
+  validationId       String?          @unique
+  decision           ApprovalDecision
+  approvedBy         String
+  comments           String?
+  conditionsTags     String[]         @default([])
+  scheduledPublishAt DateTime?
+  publishedAt        DateTime?
+  publishUrl         String?
+  notificationId     String?
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+
+  validation ContentValidation? @relation(fields: [validationId], references: [id], onDelete: SetNull)
+
+  @@index([contentId])
+  @@index([decision])
+  @@index([approvedBy])
+  @@index([createdAt(sort: Desc)])
+  @@index([scheduledPublishAt])
+}
+
+model ContentRejection {
+  id               String    @id @default(uuid())
+  contentId        String
+  validationId     String?   @unique
+  reason           String
+  flaggedIssues    String[]  @default([])
+  rejectedBy       String
+  canResubmit      Boolean   @default(true)
+  resubmitDeadline DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  validation ContentValidation? @relation(fields: [validationId], references: [id], onDelete: SetNull)
+
+  @@index([contentId])
+  @@index([rejectedBy])
+  @@index([createdAt(sort: Desc)])
+  @@index([canResubmit])
+}
+
+model ValidationAuditLog {
+  id           String   @id @default(uuid())
+  contentId    String
+  validationId String?
+  action       String
+  actorId      Int
+  actorRole    String?
+  oldStatus    String?
+  newStatus    String?
+  details      Json?
+  ipAddress    String?
+  userAgent    String?
+  createdAt    DateTime @default(now())
+
+  user       User               @relation(fields: [actorId], references: [id], onDelete: Cascade)
+  validation ContentValidation? @relation(fields: [validationId], references: [id], onDelete: SetNull)
+
+  @@index([contentId])
+  @@index([validationId])
+  @@index([action])
+  @@index([actorId])
+  @@index([createdAt(sort: Desc)])
+}
+
+//////////////////////////////////////
+// UC-13/15: SHOP & PURCHASE
+//////////////////////////////////////
+
+model Purchase {
+  id          Int      @id @default(autoincrement())
+  childId     Int
+  itemId      Int
+  purchasedAt DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  child ChildProfile @relation(fields: [childId], references: [id], onDelete: Cascade)
+
+  @@unique([childId, itemId])
+  @@index([childId])
+  @@index([itemId])
+}
+
+//////////////////////////////////////
+// COMPATIBILITY MODELS (legacy modules)
+//////////////////////////////////////
+
+model Media {
+  id        String   @id @default(uuid())
+  url       String
+  type      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ShopItem {
+  id          Int     @id @default(autoincrement())
+  name        String
+  price       Int     @default(0)
+  description String?
+  category    String? @default("GENERAL")
+  imageUrl    String?
+  rarity      String? @default("COMMON")
+  isActive    Boolean @default(true)
+  stock       Int?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([category])
+  @@index([price])
+  @@index([isActive])
+}
+
+model Recommendation {
+  id                     Int      @id @default(autoincrement())
+  childId                Int
+  type                   String
+  title                  String
+  description            String?
+  priority               Int      @default(0)
+  status                 String?  @default("PENDING")
+  scoreBreakdown         Json?
+  learningPath           Json?
+  totalEstimatedMinutes  Int      @default(0)
+  expectedOutcome        String?
+  generatedAt            DateTime @default(now())
+  viewedAt               DateTime?
+  appliedAt              DateTime?
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  @@index([childId])
+  @@index([status])
+  @@index([generatedAt])
+}
+
+model AppliedLearningPath {
+  id                     Int      @id @default(autoincrement())
+  childId                Int
+  recommendationId       Int
+  learningPath           Json
+  totalEstimatedMinutes  Int      @default(0)
+  itemsCompleted         Int      @default(0)
+  totalItems             Int      @default(0)
+  progressPercentage     Int      @default(0)
+  appliedAt              DateTime @default(now())
+  completedAt            DateTime?
+  parentNotes            String?
+  status                 String?  @default("ACTIVE")
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  @@index([childId])
+  @@index([recommendationId])
+}
+
+model RecommendationFeedback {
+  id               Int      @id @default(autoincrement())
+  recommendationId Int
+  childId          Int
+  isHelpful        Boolean  @default(false)
+  rating           Int?
+  feedback         String?
+  createdAt        DateTime @default(now())
+
+  @@index([childId])
+  @@index([recommendationId])
+}
+
+model ReportPreference {
+  id               String   @id @default(uuid())
+  userId           Int      @unique
+  frequency        String   @default("WEEKLY")
+  preferredChannel String   @default("EMAIL")
+  email            String?
+  zaloPhoneNumber  String?
+  reportDay        Int      @default(1)
+  reportHour       Int      @default(9)
+  lastReportSentAt DateTime?
+  enabled          Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model ProgressReport {
+  id        String   @id @default(uuid())
+  userId    Int
+  content   Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    Int
+  title     String
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+}

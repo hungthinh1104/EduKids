@@ -1,0 +1,196 @@
+import { Injectable } from '@nestjs/common';
+import { PrismaService } from '../../../prisma/prisma.service';
+import { PronunciationAttemptEntity } from '../entities/pronunciation-attempt.entity';
+import { IPronunciationRepository } from './pronunciation.repository.interface';
+import { ActivityLog, LearningProgress } from '@prisma/client';
+import { Prisma } from '@prisma/client';
+
+@Injectable()
+export class PronunciationRepository implements IPronunciationRepository {
+  constructor(private prisma: PrismaService) {}
+
+  /**
+   * Record pronunciation attempt with confidence score from Web Speech API
+   * NFR-03: Audio not stored permanently, only confidence score recorded
+   */
+  async create(attempt: PronunciationAttemptEntity): Promise<PronunciationAttemptEntity> {
+    const metadata = {
+      confidenceScore: attempt.aiScore,
+      evaluationNotes: attempt.feedback || null,
+      assessment: attempt.assessment ? JSON.parse(JSON.stringify(attempt.assessment)) : null,
+    };
+
+    const activity = await this.prisma.activityLog.create({
+      data: {
+        childId: parseInt(attempt.childId, 10),
+        vocabularyId: parseInt(attempt.vocabularyId, 10),
+        activityType: 'PRONUNCIATION',
+        score: attempt.aiScore,
+        metadata: metadata as Prisma.InputJsonValue,
+        durationSec: 0, // No duration tracked for pronunciation
+      },
+    });
+
+    return {
+      id: activity.id.toString(),
+      childId: activity.childId.toString(),
+      vocabularyId: activity.vocabularyId.toString(),
+      aiScore: (activity.metadata as any)?.confidenceScore || 0,
+      feedback: (activity.metadata as any)?.evaluationNotes || '',
+      createdAt: activity.createdAt,
+    };
+  }
+
+  /**
+   * Get all pronunciation attempts for a child
+   */
+  async findByChild(childId: string): Promise<PronunciationAttemptEntity[]> {
+    const activities = await this.prisma.activityLog.findMany({
+      where: {
+        childId: parseInt(childId, 10),
+        activityType: 'PRONUNCIATION',
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    return activities.map((a) => ({
+      id: a.id.toString(),
+      childId: a.childId.toString(),
+      vocabularyId: a.vocabularyId.toString(),
+      aiScore: (a.metadata as any)?.confidenceScore || 0,
+      feedback: (a.metadata as any)?.evaluationNotes || '',
+      createdAt: a.createdAt,
+    }));
+  }
+
+  /**
+   * Get recent pronunciation attempts for specific vocabulary
+   */
+  async getRecentAttempts(
+    childId: number,
+    vocabularyId: number,
+    limit: number = 10,
+  ): Promise<ActivityLog[]> {
+    return this.prisma.activityLog.findMany({
+      where: {
+        childId,
+        vocabularyId,
+        activityType: 'PRONUNCIATION',
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+      take: limit,
+    });
+  }
+
+  /**
+   * Get pronunciation statistics for vocabulary
+   * Returns best score, attempt count, perfect streak
+   */
+  async getPronunciationStats(
+    childId: number,
+    vocabularyId: number,
+  ): Promise<{
+    bestScore: number;
+    attemptCount: number;
+    lastAttemptedAt: Date | null;
+    perfectStreak: number;
+  }> {
+    const attempts = await this.getRecentAttempts(childId, vocabularyId, 100);
+
+    if (attempts.length === 0) {
+      return {
+        bestScore: 0,
+        attemptCount: 0,
+        lastAttemptedAt: null,
+        perfectStreak: 0,
+      };
+    }
+
+    // Extract confidence scores from metadata
+    const scores = attempts
+      .map((a) => (a.metadata as any)?.confidenceScore || 0)
+      .filter((s) => s > 0);
+
+    // Calculate perfect streak (consecutive scores >= 80)
+    let perfectStreak = 0;
+    for (const score of scores) {
+      if (score >= 80) {
+        perfectStreak++;
+      } else {
+        break;
+      }
+    }
+
+    return {
+      bestScore: Math.max(...scores, 0),
+      attemptCount: attempts.length,
+      lastAttemptedAt: attempts[0].createdAt,
+      perfectStreak,
+    };
+  }
+
+  /**
+   * Update learning progress with pronunciation score
+   * Upserts LearningProgress with pronunciation-specific data
+   */
+  async updatePronunciationProgress(
+    childId: number,
+    vocabularyId: number,
+    confidenceScore: number,
+    starRating: number,
+  ): Promise<LearningProgress> {
+    const progress = await this.prisma.learningProgress.upsert({
+      where: {
+        childId_vocabularyId: {
+          childId,
+          vocabularyId,
+        },
+      },
+      create: {
+        childId,
+        vocabularyId,
+        lastReviewedAt: new Date(),
+      },
+      update: {
+        lastReviewedAt: new Date(),
+      },
+    });
+
+    return progress;
+  }
+
+  /**
+   * Get vocabulary details with pronunciation data
+   */
+  async getVocabularyWithPronunciationData(vocabularyId: number) {
+    return this.prisma.vocabulary.findUnique({
+      where: { id: vocabularyId },
+      include: {
+        topic: {
+          select: { id: true, name: true },
+        },
+        media: {
+          where: { type: 'AUDIO' },
+          select: { url: true, type: true },
+        },
+      },
+    });
+  }
+
+  /**
+   * Get top performers in pronunciation for a vocabulary (for leaderboard)
+   */
+  async getTopPronunciationScores(
+    vocabularyId: number,
+    limit: number = 5,
+  ): Promise<any[]> {
+    // Simplified fallback for current schema: no per-vocabulary pronunciation leaderboard fields.
+    void vocabularyId;
+    void limit;
+    return [];
+  }
+}

@@ -1,0 +1,107 @@
+version: '3.9'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: edukids-postgres
+    environment:
+      POSTGRES_USER: ${DB_USER:-edukids}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-edukids_password}
+      POSTGRES_DB: ${DB_NAME:-edukids_db}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres-init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-edukids}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - edukids-network
+
+  # Redis Cache & Message Broker
+  redis:
+    image: redis:7-alpine
+    container_name: edukids-redis
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-redis_password}
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - edukids-network
+
+  # Nest.js Backend
+  backend:
+    build:
+      context: ./apps/backend
+      dockerfile: ../../docker/Dockerfile.backend
+      args:
+        NODE_ENV: development
+    container_name: edukids-backend
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      PORT: ${BACKEND_PORT:-3001}
+      DATABASE_URL: postgresql://${DB_USER:-edukids}:${DB_PASSWORD:-edukids_password}@postgres:5432/${DB_NAME:-edukids_db}?sslmode=disable
+      REDIS_URL: redis://:${REDIS_PASSWORD:-redis_password}@redis:6379
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-redis_password}
+      JWT_SECRET: ${JWT_SECRET:-your_super_secret_jwt_key_change_in_production}
+      JWT_EXPIRY: ${JWT_EXPIRY:-24h}
+      SMTP_HOST: ${SMTP_HOST:-smtp.gmail.com}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASSWORD: ${SMTP_PASSWORD}
+      SMTP_FROM: ${SMTP_FROM:-noreply@edukids.com}
+    volumes:
+      - ./apps/backend/src:/app/src
+      - ./apps/backend/prisma:/app/prisma
+    ports:
+      - "3001:3001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - edukids-network
+    command: npm run start:prod
+
+  # Next.js Frontend
+  frontend:
+    image: node:20-alpine
+    container_name: edukids-frontend
+    working_dir: /app
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3001/api}
+      NEXT_PUBLIC_WS_URL: ${NEXT_PUBLIC_WS_URL:-ws://localhost:3001}
+      NEXT_TELEMETRY_DISABLED: 1
+    volumes:
+      - ./apps/frontend:/app
+      - frontend_node_modules:/app/node_modules
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    networks:
+      - edukids-network
+    command: sh -c "npm install --legacy-peer-deps && npm run dev"
+
+volumes:
+  postgres_data:
+  redis_data:
+  frontend_node_modules:
+
+networks:
+  edukids-network:
+    driver: bridge

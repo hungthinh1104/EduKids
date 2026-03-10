@@ -1,0 +1,108 @@
+'use client';
+
+import { motion } from 'framer-motion';
+import Image from 'next/image';
+import { HeartPulse, CheckCircle2, Star } from 'lucide-react';
+
+export function TestimonialsSection() {
+    return (
+        <section id="parents" className="py-32 px-4 bg-slate-50 dark:bg-slate-950 relative overflow-hidden">
+            <div className="max-w-7xl mx-auto">
+                <div className="grid lg:grid-cols-2 gap-20 items-center">
+
+                    {/* Left Content */}
+                    <motion.div
+                        initial={{ opacity: 0, x: -50 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.8 }}
+                    >
+                        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 font-bold text-sm tracking-widest mb-6">
+                            <HeartPulse size={16} /> GÓC PHỤ HUYNH
+                        </div>
+                        <h2 className="font-heading font-black text-4xl sm:text-5xl lg:text-6xl text-slate-900 dark:text-white mb-8 leading-[1.15]">
+                            Đồng hành cùng con, <br /> <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-500 to-orange-400">An tâm tuyệt đối.</span>
+                        </h2>
+                        <p className="text-xl mb-10 leading-relaxed text-slate-600 dark:text-slate-400">
+                            Hàng ngàn phụ huynh Việt Nam đã tin tưởng chọn <b>EduKids</b> làm người bạn đồng hành giúp bé phát triển tư duy ngoại ngữ một cách tự nhiên và an toàn nhất.
+                        </p>
+
+                        <div className="space-y-6 mb-12">
+                            {[
+                                { title: 'Báo cáo học tập tự động', desc: 'Nhận phân tích chi tiết lộ trình học qua Email/Zalo mỗi tuần.' },
+                                { title: 'Môi trường 100% An toàn', desc: 'Không chứa quảng cáo và nội dung độc hại. Giao diện thân thiện với trẻ nhỏ.' },
+                                { title: 'Kiểm soát thời gian', desc: 'Tính năng nhắc nhở nghỉ ngơi bảo vệ thị lực cho bé.' }
+                            ].map((item, i) => (
+                                <div key={i} className="flex items-start gap-4 p-4 rounded-2xl hover:bg-white dark:hover:bg-slate-900 shadow-sm border border-transparent hover:border-slate-200 dark:hover:border-slate-800 transition-all">
+                                    <div className="bg-success-light dark:bg-success/20 p-2 rounded-xl mt-1">
+                                        <CheckCircle2 className="text-success" size={24} />
+                                    </div>
+                                    <div>
+                                        <h4 className="font-heading font-bold text-xl text-slate-900 dark:text-white mb-1">{item.title}</h4>
+                                        <p className="text-slate-600 dark:text-slate-400">{item.desc}</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </motion.div>
+
+                    {/* Right Reviews */}
+                    <div className="relative">
+                        {/* Decorative blobs */}
+                        <div className="absolute top-20 right-0 w-72 h-72 bg-rose-100 dark:bg-rose-900/20 rounded-full blur-3xl -z-10"></div>
+                        <div className="absolute bottom-0 left-10 w-64 h-64 bg-amber-100 dark:bg-amber-900/20 rounded-full blur-3xl -z-10"></div>
+
+                        <div className="flex flex-col gap-8">
+                            {/* Review Card 1 */}
+                            <motion.div
+                                initial={{ opacity: 0, y: 30 }}
+                                whileInView={{ opacity: 1, y: 0 }}
+                                viewport={{ once: true }}
+                                transition={{ duration: 0.6 }}
+                                className="bg-white dark:bg-slate-900 p-8 sm:p-10 rounded-[2.5rem] shadow-[0_20px_50px_-20px_rgba(0,0,0,0.1)] border border-slate-100 dark:border-slate-800 relative translate-x-0 lg:-translate-x-10"
+                            >
+                                <div className="flex items-center gap-1.5 text-warning mb-6">
+                                    {[1, 2, 3, 4, 5].map(i => <Star key={i} className="fill-current" size={22} />)}
+                                </div>
+                                <p className="italic text-slate-700 dark:text-slate-300 mb-8 text-xl leading-relaxed">
+                                    &quot;Bé Bi nhà mình từ hồi học EduKids tự giác hẳn. Tối nào ăn cơm xong cũng đòi vọc iPad đọc từ mới lấy phần thưởng. Phát âm của con dạo này tây lắm luôn!&quot;
+                                </p>
+                                <div className="flex items-center gap-5 border-t border-slate-100 dark:border-slate-800 pt-6">
+                                    <Image src="https://api.dicebear.com/7.x/notionists/svg?seed=Trinh" alt="Avatar" width={60} height={60} className="rounded-full bg-slate-100 border-2 border-white" />
+                                    <div>
+                                        <h5 className="font-heading font-bold text-slate-900 dark:text-white text-lg">Trần Thu Trà</h5>
+                                        <span className="text-slate-500 text-sm">Mẹ bé Bi (7 tuổi)</span>
+                                    </div>
+                                </div>
+                            </motion.div>
+
+                            {/* Review Card 2 */}
+                            <motion.div
+                                initial={{ opacity: 0, y: 30 }}
+                                whileInView={{ opacity: 1, y: 0 }}
+                                viewport={{ once: true }}
+                                transition={{ duration: 0.6, delay: 0.2 }}
+                                className="bg-white dark:bg-slate-900 p-8 sm:p-10 rounded-[2.5rem] shadow-[0_20px_50px_-20px_rgba(0,0,0,0.1)] border border-slate-100 dark:border-slate-800 relative translate-x-0 lg:translate-x-10"
+                            >
+                                <div className="flex items-center gap-1.5 text-warning mb-6">
+                                    {[1, 2, 3, 4, 5].map(i => <Star key={i} className="fill-current" size={22} />)}
+                                </div>
+                                <p className="italic text-slate-700 dark:text-slate-300 mb-8 text-xl leading-relaxed">
+                                    &quot;App màu sắc siêu đẹp, thiết kế nhân vật giống y chơi game nên hai đứa nhà mình khoái lắm. Hơn cả học tiếng Anh, nó giúp bé rèn luyện tư duy rất tốt.&quot;
+                                </p>
+                                <div className="flex items-center gap-5 border-t border-slate-100 dark:border-slate-800 pt-6">
+                                    <Image src="https://api.dicebear.com/7.x/notionists/svg?seed=HoangPhat" alt="Avatar" width={60} height={60} className="rounded-full bg-slate-100 border-2 border-white" />
+                                    <div>
+                                        <h5 className="font-heading font-bold text-slate-900 dark:text-white text-lg">Lê Hoàng Phát</h5>
+                                        <span className="text-slate-500 text-sm">Ba cặp song sinh Nhím & Thỏ</span>
+                                    </div>
+                                </div>
+                            </motion.div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+    );
+}

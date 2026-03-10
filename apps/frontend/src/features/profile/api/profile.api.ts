@@ -1,0 +1,134 @@
+import { apiClient } from '@/shared/services/api.client';
+
+export interface ChildProfile {
+  id: number;
+  nickname: string;
+  age: number;
+  avatar: string; // Note: Backend uses 'avatar', not 'avatarUrl'
+  totalPoints: number;
+  currentLevel: number;
+  badgesEarned: number;
+  streakDays: number;
+  isActive: boolean;
+  createdAt: string;
+  lastActivityAt: string;
+  parentId?: number;
+}
+
+export interface ChildProfileWithStats extends ChildProfile {
+  rewards: {
+    streakDays: number;
+    totalPoints: number;
+    currentLevel: number;
+  };
+  hp: number;
+  avatarUrl: string; // Alias for compatibility with existing components
+}
+
+export interface ProfileSwitchResponse {
+  accessToken: string;
+  refreshToken: string;
+  profile: ChildProfile;
+}
+
+/**
+ * Get all child profiles for current parent
+ * GET /api/v1/profiles
+ */
+export const getAllProfiles = async (): Promise<ChildProfile[]> => {
+  const response = await apiClient.get('/profiles');
+  return response.data.data?.items || response.data.data || [];
+};
+
+/**
+ * Get currently active child profile
+ * GET /api/v1/profiles/active/current
+ */
+export const getActiveProfile = async (): Promise<ChildProfileWithStats | null> => {
+  try {
+    const response = await apiClient.get('/profiles/active/current');
+    const profile = response.data.data;
+    
+    if (!profile) {
+      return null;
+    }
+
+    // Backend already includes totalPoints, currentLevel, streakDays
+    // Transform to match component expectations
+    return {
+      ...profile,
+      avatarUrl: profile.avatar, // Alias for compatibility
+      hp: 5, // Default HP (could fetch from learning progress if needed)
+      rewards: {
+        streakDays: profile.streakDays || 0,
+        totalPoints: profile.totalPoints || 0,
+        currentLevel: profile.currentLevel || 1,
+      },
+    };
+  } catch (error: unknown) {
+    const status =
+      typeof error === 'object' &&
+      error !== null &&
+      'response' in error &&
+      typeof (error as { response?: { status?: unknown } }).response?.status === 'number'
+        ? (error as { response?: { status?: number } }).response?.status
+        : undefined;
+    if (status === 404) {
+      return null; // No active profile
+    }
+    throw error;
+  }
+};
+
+/**
+ * Switch to a different child profile
+ * POST /api/v1/profiles/switch
+ * @returns New JWT tokens with LEARNER role
+ */
+export const switchProfile = async (childId: number): Promise<ProfileSwitchResponse> => {
+  const response = await apiClient.post('/profiles/switch', { childId });
+  const data = response.data.data;
+  
+  // Store new tokens with LEARNER role (matching api.client.ts cookie names)
+  if (data.accessToken) {
+    document.cookie = `access_token=${data.accessToken}; path=/; max-age=${15 * 60}`; // 15 min
+  }
+  if (data.refreshToken) {
+    document.cookie = `refresh_token=${data.refreshToken}; path=/; max-age=${7 * 24 * 60 * 60}`; // 7 days
+  }
+  
+  return data;
+};
+
+/**
+ * Create a new child profile
+ * POST /api/v1/profiles
+ */
+export const createProfile = async (data: {
+  nickname: string;
+  age: number;
+  avatarUrl?: string;
+}): Promise<ChildProfile> => {
+  const response = await apiClient.post('/profiles', data);
+  return response.data.data.profile;
+};
+
+/**
+ * Update child profile
+ * PUT /api/v1/profiles/:id
+ */
+export const updateProfile = async (
+  id: number,
+  data: { nickname?: string; age?: number; avatarUrl?: string }
+): Promise<ChildProfile> => {
+  const response = await apiClient.put(`/profiles/${id}`, data);
+  return response.data.data.profile;
+};
+
+/**
+ * Delete child profile
+ * DELETE /api/v1/profiles/:id
+ */
+export const deleteProfile = async (id: number): Promise<void> => {
+  await apiClient.delete(`/profiles/${id}`);
+};

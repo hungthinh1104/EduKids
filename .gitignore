@@ -1,0 +1,50 @@
+# Root .gitignore
+# Node modules
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.settings
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Dependencies lock files (optional - uncomment if needed)
+# package-lock.json
+# yarn.lock
+
+# Build artifacts
+dist/
+build/
+
+# Cache
+.cache/
+.eslintcache
+.prettierignore
+
+# Temporary files
+tmp/
+temp/
+
+# Logs
+logs/
+*.log
+
+# IDE specific
+*.iml
+.iws
+.ipr
