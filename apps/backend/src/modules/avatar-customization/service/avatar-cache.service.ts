@@ -10,10 +10,15 @@ export class AvatarCacheService {
   private readonly CONFIG_PREFIX = "avatar:config:";
   private readonly ITEMS_PREFIX = "avatar:items:";
 
+  private parseCachedJson<T>(cached: string | null): T | null {
+    if (!cached) return null;
+    return JSON.parse(cached) as T;
+  }
+
   /**
    * Cache avatar configuration
    */
-  async cacheAvatarConfig(childId: number, config: any) {
+  async cacheAvatarConfig(childId: number, config: unknown) {
     const key = `${this.CONFIG_PREFIX}${childId}`;
     await this.redis.setex(key, this.CACHE_TTL, JSON.stringify(config));
   }
@@ -21,16 +26,16 @@ export class AvatarCacheService {
   /**
    * Get cached avatar configuration
    */
-  async getCachedConfig(childId: number) {
+  async getCachedConfig<T>(childId: number): Promise<T | null> {
     const key = `${this.CONFIG_PREFIX}${childId}`;
     const cached = await this.redis.get(key);
-    return cached ? JSON.parse(cached) : null;
+    return this.parseCachedJson<T>(cached);
   }
 
   /**
    * Cache child's avatar items
    */
-  async cacheChildItems(childId: number, items: any[]) {
+  async cacheChildItems(childId: number, items: unknown[]) {
     const key = `${this.ITEMS_PREFIX}${childId}`;
     await this.redis.setex(key, this.CACHE_TTL, JSON.stringify(items));
   }
@@ -38,10 +43,10 @@ export class AvatarCacheService {
   /**
    * Get cached child items
    */
-  async getCachedItems(childId: number) {
+  async getCachedItems<T>(childId: number): Promise<T[] | null> {
     const key = `${this.ITEMS_PREFIX}${childId}`;
     const cached = await this.redis.get(key);
-    return cached ? JSON.parse(cached) : null;
+    return this.parseCachedJson<T[]>(cached);
   }
 
   /**

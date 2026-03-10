@@ -11,7 +11,9 @@ import {
   HttpStatus,
   ParseIntPipe,
   Query,
+  BadRequestException,
 } from "@nestjs/common";
+import { Request as ExpressRequest } from "express";
 import {
   ApiTags,
   ApiBearerAuth,
@@ -39,6 +41,15 @@ import {
 export class AvatarCustomizationController {
   constructor(private avatarService: AvatarCustomizationService) {}
 
+  private getChildId(req: RequestWithUser): number {
+    if (!req.user.childId) {
+      throw new BadRequestException(
+        "Active child profile required. Please switch profile first.",
+      );
+    }
+    return req.user.childId;
+  }
+
   /**
    * Apply avatar item to current avatar
    */
@@ -46,8 +57,11 @@ export class AvatarCustomizationController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: "Apply item to avatar" })
   @ApiResponse({ status: 200, type: AvatarUpdateResponseDto })
-  async applyItem(@Request() req: any, @Body() dto: ApplyAvatarItemRequestDto) {
-    const childId = req.user.childId;
+  async applyItem(
+    @Request() req: RequestWithUser,
+    @Body() dto: ApplyAvatarItemRequestDto,
+  ) {
+    const childId = this.getChildId(req);
     const config = await this.avatarService.applyItem(childId, dto);
 
     return {
@@ -67,8 +81,11 @@ export class AvatarCustomizationController {
   @ApiOperation({ summary: "Remove item from avatar" })
   @ApiParam({ name: "layer", enum: AvatarLayer })
   @ApiResponse({ status: 200, type: AvatarUpdateResponseDto })
-  async removeItem(@Request() req: any, @Param("layer") layer: AvatarLayer) {
-    const childId = req.user.childId;
+  async removeItem(
+    @Request() req: RequestWithUser,
+    @Param("layer") layer: AvatarLayer,
+  ) {
+    const childId = this.getChildId(req);
     const config = await this.avatarService.removeItem(childId, layer);
 
     return {
@@ -86,8 +103,8 @@ export class AvatarCustomizationController {
   @Get()
   @ApiOperation({ summary: "Get current avatar configuration" })
   @ApiResponse({ status: 200, description: "Avatar configuration" })
-  async getAvatar(@Request() req: any) {
-    const childId = req.user.childId;
+  async getAvatar(@Request() req: RequestWithUser) {
+    const childId = this.getChildId(req);
     return this.avatarService.getAvatarConfig(childId);
   }
 
@@ -97,8 +114,8 @@ export class AvatarCustomizationController {
   @Get("preview")
   @ApiOperation({ summary: "Get avatar preview as SVG" })
   @ApiResponse({ status: 200, type: AvatarPreviewDto })
-  async getPreview(@Request() req: any) {
-    const childId = req.user.childId;
+  async getPreview(@Request() req: RequestWithUser) {
+    const childId = this.getChildId(req);
     return this.avatarService.getAvatarPreview(childId);
   }
 
@@ -108,8 +125,8 @@ export class AvatarCustomizationController {
   @Get("items")
   @ApiOperation({ summary: "Get owned avatar items" })
   @ApiResponse({ status: 200, type: OwnedAvatarItemsDto })
-  async getOwnedItems(@Request() req: any) {
-    const childId = req.user.childId;
+  async getOwnedItems(@Request() req: RequestWithUser) {
+    const childId = this.getChildId(req);
     return this.avatarService.getOwnedItems(childId);
   }
 
@@ -131,8 +148,8 @@ export class AvatarCustomizationController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: "Reset avatar to default" })
   @ApiResponse({ status: 200, description: "Avatar reset successfully" })
-  async resetAvatar(@Request() req: any) {
-    const childId = req.user.childId;
+  async resetAvatar(@Request() req: RequestWithUser) {
+    const childId = this.getChildId(req);
     const config = await this.avatarService.resetAvatar(childId);
 
     return {
@@ -152,10 +169,10 @@ export class AvatarCustomizationController {
   @ApiQuery({ name: "limit", type: "number", required: false })
   @ApiResponse({ status: 200, description: "Activity history" })
   async getHistory(
-    @Request() req: any,
+    @Request() req: RequestWithUser,
     @Query("limit", new ParseIntPipe({ optional: true })) limit?: number,
   ) {
-    const childId = req.user.childId;
+    const childId = this.getChildId(req);
     return this.avatarService.getActivityHistory(childId, limit || 20);
   }
 
@@ -169,3 +186,9 @@ export class AvatarCustomizationController {
     return this.avatarService.getStatistics();
   }
 }
+
+type RequestWithUser = ExpressRequest & {
+  user: {
+    childId?: number;
+  };
+};

@@ -1,10 +1,15 @@
 import { Injectable } from "@nestjs/common";
+import { AvatarActivityType, Prisma } from "@prisma/client";
 import { PrismaService } from "../../../prisma/prisma.service";
 import { AvatarLayer } from "../dto/avatar-customization.dto";
 
 @Injectable()
 export class AvatarRepository {
   constructor(private prisma: PrismaService) {}
+
+  private toInputJsonValue(value: unknown): Prisma.InputJsonValue {
+    return value as Prisma.InputJsonValue;
+  }
 
   /**
    * Create avatar item for child
@@ -55,16 +60,16 @@ export class AvatarRepository {
   /**
    * Update avatar configuration for child
    */
-  async updateAvatarConfig(childId: number, config: any) {
+  async updateAvatarConfig(childId: number, config: unknown) {
     return this.prisma.avatarConfiguration.upsert({
       where: { childId },
       update: {
-        config,
+        config: this.toInputJsonValue(config),
         updatedAt: new Date(),
       },
       create: {
         childId,
-        config,
+        config: this.toInputJsonValue(config),
       },
     });
   }
@@ -116,15 +121,15 @@ export class AvatarRepository {
   ) {
     const mappedActivityType =
       activityType === "avatar_changed"
-        ? "AVATAR_CHANGED"
+        ? AvatarActivityType.AVATAR_CHANGED
         : activityType === "item_equipped"
-          ? "ITEM_EQUIPPED"
-          : "ITEM_REMOVED";
+          ? AvatarActivityType.ITEM_EQUIPPED
+          : AvatarActivityType.ITEM_REMOVED;
 
     return this.prisma.avatarActivityLog.create({
       data: {
         childId,
-        activityType: mappedActivityType as any,
+        activityType: mappedActivityType,
         itemId,
         timestamp: new Date(),
       },
@@ -190,7 +195,7 @@ export class AvatarRepository {
   /**
    * Get available avatar items from shop
    */
-  async getAvailableAvatarItems(layer?: AvatarLayer) {
+  async getAvailableAvatarItems(_layer?: AvatarLayer) {
     return this.prisma.shopItem.findMany({
       orderBy: { createdAt: "desc" },
     });

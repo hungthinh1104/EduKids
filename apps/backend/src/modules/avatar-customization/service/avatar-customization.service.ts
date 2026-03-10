@@ -40,10 +40,7 @@ export class AvatarCustomizationService {
       config = await this.initializeDefaultAvatar(childId);
     }
 
-    const configData =
-      typeof config.config === "string"
-        ? JSON.parse(config.config)
-        : config.config;
+    const configData = this.toAvatarConfigPayload(config.config);
 
     // Get item details
     const item = await this.prisma.shopItem.findUnique({
@@ -63,9 +60,9 @@ export class AvatarCustomizationService {
     };
 
     // Replace or add layer
-    configData.layers = configData.layers.filter(
-      (l: any) => l.layer !== request.layer,
-    );
+    configData.layers = configData.layers.filter((layer) => {
+      return layer.layer !== request.layer;
+    });
     configData.layers.push(newLayer);
 
     // Save to database (immediate auto-save)
@@ -93,13 +90,12 @@ export class AvatarCustomizationService {
       throw new NotFoundException("Avatar not found");
     }
 
-    const configData =
-      typeof config.config === "string"
-        ? JSON.parse(config.config)
-        : config.config;
+    const configData = this.toAvatarConfigPayload(config.config);
 
     // Remove layer
-    configData.layers = configData.layers.filter((l: any) => l.layer !== layer);
+    configData.layers = configData.layers.filter(
+      (item) => item.layer !== layer,
+    );
 
     // Save immediately
     await this.avatarRepository.updateAvatarConfig(childId, configData);
@@ -116,7 +112,8 @@ export class AvatarCustomizationService {
    */
   async getAvatarConfig(childId: number): Promise<AvatarConfigDto> {
     // Try cache first
-    const cached = await this.cacheService.getCachedConfig(childId);
+    const cached =
+      await this.cacheService.getCachedConfig<AvatarConfigPayload>(childId);
     if (cached) {
       return this.buildAvatarConfigDto(childId, cached);
     }
@@ -127,10 +124,7 @@ export class AvatarCustomizationService {
       return this.buildDefaultAvatarConfig(childId);
     }
 
-    const configData =
-      typeof config.config === "string"
-        ? JSON.parse(config.config)
-        : config.config;
+    const configData = this.toAvatarConfigPayload(config.config);
 
     // Cache it
     await this.cacheService.cacheAvatarConfig(childId, configData);
@@ -204,7 +198,10 @@ export class AvatarCustomizationService {
     const defaultConfig = await this.initializeDefaultAvatar(childId);
     await this.avatarRepository.logAvatarActivity(childId, "avatar_changed");
 
-    return this.buildAvatarConfigDto(childId, defaultConfig.config);
+    return this.buildAvatarConfigDto(
+      childId,
+      this.toAvatarConfigPayload(defaultConfig.config),
+    );
   }
 
   /**
@@ -244,7 +241,7 @@ export class AvatarCustomizationService {
    */
   private buildAvatarConfigDto(
     childId: number,
-    configData: any,
+    configData: AvatarConfigPayload,
   ): AvatarConfigDto {
     return {
       childId,
@@ -292,4 +289,25 @@ export class AvatarCustomizationService {
       </svg>
     `;
   }
+
+  private toAvatarConfigPayload(value: unknown): AvatarConfigPayload {
+    const parsedValue =
+      typeof value === "string" ? (JSON.parse(value) as unknown) : value;
+
+    const parsedLayers = (parsedValue as { layers?: unknown })?.layers;
+    const layers = Array.isArray(parsedLayers)
+      ? (parsedLayers as AvatarLayerConfigDto[])
+      : [];
+
+    return {
+      ...(typeof parsedValue === "object" && parsedValue !== null
+        ? parsedValue
+        : {}),
+      layers,
+    } as AvatarConfigPayload;
+  }
 }
+
+type AvatarConfigPayload = {
+  layers: AvatarLayerConfigDto[];
+} & Record<string, unknown>;
