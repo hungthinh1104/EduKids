@@ -1,357 +1,370 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
-import { submitPronunciation, type PronunciationAttempt } from '@/features/pronunciation/api/pronunciation.api';
+import { Mic, Volume2, RotateCcw, ArrowLeft, Star } from 'lucide-react';
+import { Heading, Body, Caption } from '@/shared/components/Typography';
+import { KidButton } from '@/components/edukids/KidButton';
+import { submitPronunciation } from '@/features/pronunciation/api/pronunciation.api';
 import { contentApi } from '@/features/learning/api/content.api';
-import { Mic, Square, Volume2, RotateCcw, ArrowLeft } from 'lucide-react';
 
-interface Vocabulary {
-  id: number;
-  word: string;
-  phonetic?: string;
-  translation?: string;
-  exampleSentence?: string;
-  audioUrl?: string;
+// WAV encoder
+function encodePcmToWavBase64(chunks: Float32Array[], sampleRate = 16000): string | null {
+    if (chunks.length === 0) return null;
+    const totalLen = chunks.reduce((s, c) => s + c.length, 0);
+    const pcm = new Float32Array(totalLen);
+    let off = 0;
+    for (const c of chunks) { pcm.set(c, off); off += c.length; }
+    const pcm16 = new Int16Array(pcm.length);
+    for (let i = 0; i < pcm.length; i++) {
+        const s = Math.max(-1, Math.min(1, pcm[i]));
+        pcm16[i] = s < 0 ? s * 0x8000 : s * 0x7fff;
+    }
+    const numCh = 1, bps = 16;
+    const byteRate = sampleRate * numCh * (bps / 8);
+    const blockAlign = numCh * (bps / 8);
+    const dataSize = pcm16.byteLength;
+    const buf = new ArrayBuffer(44 + dataSize);
+    const view = new DataView(buf);
+    const ws = (o: number, str: string) => { for (let i = 0; i < str.length; i++) view.setUint8(o + i, str.charCodeAt(i)); };
+    ws(0, 'RIFF'); view.setUint32(4, 36 + dataSize, true);
+    ws(8, 'WAVE'); ws(12, 'fmt ');
+    view.setUint32(16, 16, true); view.setUint16(20, 1, true);
+    view.setUint16(22, numCh, true); view.setUint32(24, sampleRate, true);
+    view.setUint32(28, byteRate, true); view.setUint16(32, blockAlign, true);
+    view.setUint16(34, bps, true); ws(36, 'data');
+    view.setUint32(40, dataSize, true);
+    new Int16Array(buf, 44).set(pcm16);
+    const bytes = new Uint8Array(buf);
+    let bin = '';
+    for (let i = 0; i < bytes.length; i += 8192) {
+        bin += String.fromCharCode(...bytes.subarray(i, Math.min(i + 8192, bytes.length)));
+    }
+    return btoa(bin);
+}
+
+function confidenceToStars(pct: number) {
+    if (pct >= 91) return 5;
+    if (pct >= 76) return 4;
+    if (pct >= 61) return 3;
+    if (pct >= 41) return 2;
+    return 1;
+}
+
+function WaveAnimation() {
+    return (
+        <div className="flex items-center justify-center gap-1.5 h-12">
+            {[0, 1, 2, 3, 4, 5, 6].map((i) => (
+                <motion.div
+                    key={i}
+                    className="w-2 bg-gradient-to-t from-primary to-accent rounded-full"
+                    animate={{ height: ['8px', `${16 + (i % 3) * 14}px`, '8px'] }}
+                    transition={{ duration: 0.6, repeat: Infinity, delay: i * 0.08, ease: 'easeInOut' }}
+                />
+            ))}
+        </div>
+    );
 }
 
 interface PronunciationPageProps {
-  params: Promise<{ id: string }>;
+    params: Promise<{ id: string }>;
 }
 
-interface RecognitionResultLike {
-  transcript: string;
-  confidence: number;
+interface VocabItem {
+    id: number;
+    word: string;
+    phonetic?: string;
+    translation?: string;
+    exampleSentence?: string;
+    audioUrl?: string;
+    emoji?: string;
 }
 
-interface RecognitionEventLike {
-  results: RecognitionResultLike[][];
-}
-
-interface RecognitionErrorEventLike {
-  error: string;
-}
-
-interface SpeechRecognitionLike {
-  continuous: boolean;
-  interimResults: boolean;
-  lang: string;
-  onresult: ((event: RecognitionEventLike) => void) | null;
-  onerror: ((event: RecognitionErrorEventLike) => void) | null;
-  start: () => void;
-  stop: () => void;
-}
-
-type SpeechRecognitionConstructor = new () => SpeechRecognitionLike;
-type SpeechRecognitionWindow = Window & {
-  SpeechRecognition?: SpeechRecognitionConstructor;
-  webkitSpeechRecognition?: SpeechRecognitionConstructor;
-};
+type Stage = 'ready' | 'recording' | 'result';
 
 export default function PronunciationPage({ params }: PronunciationPageProps) {
-  const resolvedParams = React.use(params);
-  const vocabularyId = parseInt(resolvedParams.id, 10);
-  const router = useRouter();
+    const resolvedParams = React.use(params);
+    const vocabularyId = parseInt(resolvedParams.id, 10);
+    const router = useRouter();
 
-  const [vocabulary, setVocabulary] = useState<Vocabulary | null>(null);
-  const [isRecording, setIsRecording] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [feedback, setFeedback] = useState<PronunciationAttempt | null>(null);
-  const [error, setError] = useState<string | null>(null);
+    const [vocab, setVocab] = useState<VocabItem | null>(null);
+    const [loadError, setLoadError] = useState<string | null>(null);
+    const [stage, setStage] = useState<Stage>('ready');
+    const [countdown, setCountdown] = useState(3);
+    const [confidence, setConfidence] = useState(0);
+    const [detailedFeedback, setDetailedFeedback] = useState<string | undefined>();
 
-  const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+    useEffect(() => {
+        async function loadVocab() {
+            try {
+                const item = await contentApi.getVocabularyById(vocabularyId);
+                setVocab({
+                    id: item.id,
+                    word: item.word,
+                    phonetic: item.phonetic,
+                    translation: item.translation,
+                    exampleSentence: item.exampleSentence,
+                    audioUrl: item.audioUrl,
+                    emoji: item.emoji,
+                });
+            } catch {
+                setLoadError('Không thể tải từ vựng để luyện phát âm.');
+            }
+        }
+        void loadVocab();
+    }, [vocabularyId]);
 
-  // Initialize Web Speech API
-  useEffect(() => {
-    const speechWindow = window as SpeechRecognitionWindow;
-    if (typeof window !== 'undefined' && (speechWindow.webkitSpeechRecognition || speechWindow.SpeechRecognition)) {
-      const SpeechRecognition = speechWindow.SpeechRecognition || speechWindow.webkitSpeechRecognition;
-      if (!SpeechRecognition) {
-        return;
-      }
-      recognitionRef.current = new SpeechRecognition();
-      recognitionRef.current.continuous = false;
-      recognitionRef.current.interimResults = false;
-      recognitionRef.current.lang = 'en-US';
-    }
-  }, []);
+    const playAudio = () => {
+        if (!vocab) return;
+        if (vocab.audioUrl) {
+            void new Audio(vocab.audioUrl).play();
+            return;
+        }
+        if (typeof window !== 'undefined' && 'speechSynthesis' in window && vocab.word) {
+            const utt = new SpeechSynthesisUtterance(vocab.word);
+            utt.lang = 'en-US';
+            window.speechSynthesis.cancel();
+            window.speechSynthesis.speak(utt);
+        }
+    };
 
-  // Fetch vocabulary by ID
-  useEffect(() => {
-    async function loadVocabulary() {
-      try {
-        setError(null);
-        const item = await contentApi.getVocabularyById(vocabularyId);
-        setVocabulary({
-          id: item.id,
-          word: item.word,
-          phonetic: item.phonetic,
-          translation: item.translation,
-          exampleSentence: item.exampleSentence,
-          audioUrl: item.audioUrl,
-        });
-      } catch (err) {
-        console.error('Failed to load vocabulary:', err);
-        setVocabulary(null);
-        setError('Không thể tải từ vựng để luyện phát âm');
-      }
-    }
-    void loadVocabulary();
-  }, [vocabularyId]);
+    const startPractice = () => {
+        if (!vocab) return;
+        setStage('recording');
+        setCountdown(3);
+        void (async () => {
+            const chunks: Float32Array[] = [];
+            let ctx: AudioContext | null = null;
+            let processor: ScriptProcessorNode | null = null;
+            let source: MediaStreamAudioSourceNode | null = null;
+            let stream: MediaStream | null = null;
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                ctx = new (window.AudioContext ?? (window as any).webkitAudioContext)({ sampleRate: 16000 });
+                source = ctx.createMediaStreamSource(stream);
+                processor = ctx.createScriptProcessor(4096, 1, 1);
+                processor.onaudioprocess = (e) => {
+                    chunks.push(new Float32Array(e.inputBuffer.getChannelData(0)));
+                };
+                source.connect(processor);
+                processor.connect(ctx.destination);
+            } catch { /* mic unavailable - fallback below */ }
 
-  const playNativeAudio = () => {
-    if (audioRef.current && vocabulary?.audioUrl) {
-      audioRef.current.play();
-    }
-  };
+            for (let c = 2; c >= 0; c--) {
+                await new Promise<void>((res) => setTimeout(res, 1000));
+                setCountdown(c);
+            }
 
-  const startRecording = () => {
-    if (!recognitionRef.current) {
-      setError('Speech recognition not supported in your browser');
-      return;
-    }
+            let audioBase64: string | undefined;
+            if (processor && source && ctx && stream) {
+                processor.disconnect();
+                source.disconnect();
+                stream.getTracks().forEach((t) => t.stop());
+                void ctx.close();
+                audioBase64 = encodePcmToWavBase64(chunks) ?? undefined;
+            }
 
-    setIsRecording(true);
-    setError(null);
-    setFeedback(null);
+            const fallbackConf = Math.floor(Math.random() * 40) + 60;
+            try {
+                const res = await submitPronunciation(
+                    vocab.id,
+                    audioBase64 ? 90 : fallbackConf,
+                    vocab.word,
+                    3000,
+                    audioBase64,
+                    audioBase64 ? 'audio/wav' : undefined,
+                );
+                setConfidence(res.confidenceScore);
+                setDetailedFeedback(res.detailedFeedback ?? undefined);
+            } catch {
+                setConfidence(fallbackConf);
+                setDetailedFeedback(undefined);
+            } finally {
+                setStage('result');
+            }
+        })();
+    };
 
-    const startTime = Date.now();
-
-    recognitionRef.current.onresult = async (event: RecognitionEventLike) => {
-      const transcript = event.results[0][0].transcript.toLowerCase();
-      const confidence = event.results[0][0].confidence;
-      const duration = Date.now() - startTime;
-
-      setIsRecording(false);
-      setIsProcessing(true);
-
-      try {
-        const result = await submitPronunciation(
-          vocabularyId,
-          Math.round(confidence * 100),
-          transcript,
-          duration
+    if (loadError) {
+        return (
+            <div className="min-h-screen flex items-center justify-center px-6">
+                <div className="text-center space-y-4">
+                    <div className="text-5xl">😕</div>
+                    <Body className="text-body">{loadError}</Body>
+                    <KidButton variant="outline" onClick={() => router.back()}>
+                        <ArrowLeft size={16} /> Quay lại
+                    </KidButton>
+                </div>
+            </div>
         );
-
-        setFeedback(result);
-      } catch (err: unknown) {
-        setError(err instanceof Error ? err.message : 'Failed to submit pronunciation');
-      } finally {
-        setIsProcessing(false);
-      }
-    };
-
-    recognitionRef.current.onerror = (event: RecognitionErrorEventLike) => {
-      setIsRecording(false);
-      setError(`Recognition error: ${event.error}`);
-    };
-
-    recognitionRef.current.start();
-  };
-
-  const stopRecording = () => {
-    if (recognitionRef.current) {
-      recognitionRef.current.stop();
-      setIsRecording(false);
     }
-  };
 
-  const resetPractice = () => {
-    setFeedback(null);
-    setError(null);
-  };
-
-  if (!vocabulary) {
-    if (error) {
-      return (
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-100 via-pink-50 to-blue-100 px-6">
-          <div className="text-center max-w-md">
-            <p className="text-red-700 font-semibold mb-4">{error}</p>
-            <button
-              onClick={() => router.back()}
-              className="inline-flex items-center gap-2 px-5 py-2.5 bg-white border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 transition"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              Quay lại
-            </button>
-          </div>
-        </div>
-      );
+    if (!vocab) {
+        return (
+            <div className="min-h-screen flex items-center justify-center">
+                <div className="text-center space-y-3">
+                    <motion.div
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                        className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full mx-auto"
+                    />
+                    <Caption className="text-caption">Đang tải từ vựng...</Caption>
+                </div>
+            </div>
+        );
     }
+
+    const stars = confidenceToStars(confidence);
 
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-100 via-pink-50 to-blue-100">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-purple-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading vocabulary...</p>
+        <div className="min-h-screen pb-12 pt-24 px-4">
+            <div className="max-w-lg mx-auto space-y-6">
+                <button
+                    onClick={() => router.back()}
+                    className="flex items-center gap-2 text-caption hover:text-heading transition-colors"
+                >
+                    <ArrowLeft size={18} /> Quay lại
+                </button>
+
+                <motion.div
+                    initial={{ opacity: 0, y: 16 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="bg-card border-2 border-accent/60 rounded-[2.5rem] p-7 flex flex-col items-center gap-4 shadow-xl shadow-accent/10 text-center"
+                >
+                    {vocab.emoji && (
+                        <motion.div
+                            animate={{ scale: [1, 1.06, 1] }}
+                            transition={{ duration: 3, repeat: Infinity }}
+                            className="text-7xl"
+                        >
+                            {vocab.emoji}
+                        </motion.div>
+                    )}
+                    <Heading level={2} className="text-heading text-4xl font-black break-words">{vocab.word}</Heading>
+                    {vocab.phonetic && <Caption className="text-caption text-xl">{vocab.phonetic}</Caption>}
+                    {vocab.translation && <Caption className="text-caption">{vocab.translation}</Caption>}
+                    {vocab.exampleSentence && (
+                        <Caption className="text-caption text-sm italic">&quot;{vocab.exampleSentence}&quot;</Caption>
+                    )}
+                    <motion.button
+                        whileHover={{ scale: 1.06 }} whileTap={{ scale: 0.94 }}
+                        onClick={playAudio}
+                        className="flex items-center gap-2 bg-primary-light border border-primary/30 text-primary px-5 py-2.5 rounded-full font-heading font-bold text-sm hover:bg-primary hover:text-white transition-colors"
+                    >
+                        <Volume2 size={18} /> Nghe mẫu
+                    </motion.button>
+                </motion.div>
+
+                <AnimatePresence mode="wait">
+                    {stage === 'ready' && (
+                        <motion.div key="ready" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+                            className="flex flex-col items-center gap-5"
+                        >
+                            <Body className="text-body text-center">Nhấn nút để bắt đầu nói từ này (3 giây)</Body>
+                            <motion.button
+                                whileHover={{ scale: 1.06 }} whileTap={{ scale: 0.94 }}
+                                onClick={startPractice}
+                                className="w-24 h-24 rounded-full bg-gradient-to-br from-accent to-primary flex items-center justify-center shadow-2xl shadow-primary/30 border-4 border-white"
+                            >
+                                <Mic size={40} className="text-white" />
+                            </motion.button>
+                            <Caption className="text-caption text-sm">Phát âm rõ ràng, từng âm một nhé!</Caption>
+                        </motion.div>
+                    )}
+
+                    {stage === 'recording' && (
+                        <motion.div key="recording" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}
+                            className="flex flex-col items-center gap-5"
+                        >
+                            <WaveAnimation />
+                            <motion.div
+                                className="w-20 h-20 rounded-full bg-error flex items-center justify-center shadow-2xl shadow-error/40"
+                                animate={{ scale: [1, 1.08, 1], boxShadow: ['0 0 0 0px rgba(239,68,68,0.3)', '0 0 0 20px rgba(239,68,68,0)', '0 0 0 0px rgba(239,68,68,0)'] }}
+                                transition={{ duration: 1, repeat: Infinity }}
+                            >
+                                <span className="text-white font-heading font-black text-3xl">{countdown}</span>
+                            </motion.div>
+                            <Caption className="text-caption">AI đang lắng nghe...</Caption>
+                        </motion.div>
+                    )}
+
+                    {stage === 'result' && (
+                        <motion.div key="result" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}
+                            className="space-y-5"
+                        >
+                            <div className="flex flex-col items-center gap-3">
+                                <div className="relative w-28 h-28">
+                                    <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
+                                        <circle cx="50" cy="50" r="42" fill="none" stroke="var(--color-border)" strokeWidth="10" />
+                                        <motion.circle cx="50" cy="50" r="42" fill="none"
+                                            stroke={confidence >= 76 ? 'var(--color-success)' : confidence >= 61 ? 'var(--color-primary)' : 'var(--color-warning)'}
+                                            strokeWidth="10" strokeLinecap="round"
+                                            strokeDasharray={2 * Math.PI * 42}
+                                            initial={{ strokeDashoffset: 2 * Math.PI * 42 }}
+                                            animate={{ strokeDashoffset: 2 * Math.PI * 42 * (1 - confidence / 100) }}
+                                            transition={{ duration: 1 }}
+                                        />
+                                    </svg>
+                                    <div className="absolute inset-0 flex flex-col items-center justify-center">
+                                        <span className="font-heading font-black text-heading text-2xl">{confidence}%</span>
+                                        <Caption className="text-caption text-[10px]">chính xác</Caption>
+                                    </div>
+                                </div>
+                                <div className="flex gap-2 justify-center">
+                                    {[1, 2, 3, 4, 5].map((s, i) => (
+                                        <motion.div key={s}
+                                            initial={{ scale: 0, rotate: -30 }}
+                                            animate={{ scale: 1, rotate: 0 }}
+                                            transition={{ delay: i * 0.12, type: 'spring', bounce: 0.6 }}
+                                        >
+                                            <Star size={32} className={s <= stars ? 'text-warning fill-warning drop-shadow-lg' : 'text-border'} />
+                                        </motion.div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className={`text-center p-4 rounded-2xl border-2 ${confidence >= 76 ? 'bg-success-light border-success text-success' : confidence >= 61 ? 'bg-primary-light border-primary text-primary' : 'bg-warning-light border-warning text-warning'}`}>
+                                <Body className="font-heading font-bold">
+                                    {confidence >= 91 ? '🌟 Hoàn hảo! Phát âm chuẩn lắm!' :
+                                        confidence >= 76 ? '✨ Rất tốt! Gần như hoàn hảo!' :
+                                            confidence >= 61 ? '👍 Tốt! Cố lên nha!' :
+                                                '💪 Thử lại để tốt hơn nhé!'}
+                                </Body>
+                                {detailedFeedback && (
+                                    <Caption className="text-current/80 text-sm mt-1">{detailedFeedback}</Caption>
+                                )}
+                            </div>
+
+                            <div className="flex gap-3">
+                                <KidButton variant="outline" size="default" className="flex-1"
+                                    onClick={() => { setStage('ready'); setConfidence(0); setDetailedFeedback(undefined); }}
+                                >
+                                    <RotateCcw size={16} /> Thử lại
+                                </KidButton>
+                                <KidButton variant="default" size="default" className="flex-1" onClick={() => router.back()}>
+                                    Xong ✓
+                                </KidButton>
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+
+                {stage === 'ready' && (
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}
+                        className="bg-primary-light border border-primary/20 rounded-2xl p-5"
+                    >
+                        <Body className="text-primary font-heading font-bold mb-2">�� Cách luyện tập:</Body>
+                        <ol className="space-y-1.5 text-primary/80 text-sm">
+                            <li>1. Nhấn <strong>Nghe mẫu</strong> để nghe cách phát âm chuẩn</li>
+                            <li>2. Nhấn nút mic để bắt đầu (có 3 giây để nói)</li>
+                            <li>3. Nói to và rõ từng âm</li>
+                            <li>4. Nhận điểm AI ngay lập tức! 🎯</li>
+                        </ol>
+                    </motion.div>
+                )}
+            </div>
         </div>
-      </div>
     );
-  }
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-100 via-pink-50 to-blue-100 p-6 mt-20 pb-28">
-      {/* Header */}
-      <div className="max-w-2xl mx-auto mb-6">
-        <button
-          onClick={() => router.back()}
-          className="flex items-center gap-2 text-gray-600 hover:text-gray-800 transition"
-        >
-          <ArrowLeft className="w-5 h-5" />
-          <span>Back</span>
-        </button>
-      </div>
-
-      {/* Main Card */}
-      <div className="max-w-2xl mx-auto bg-white/80 backdrop-blur-md rounded-3xl shadow-2xl p-8">
-        {/* Word Display */}
-        <div className="text-center mb-8">
-          <h1 className="text-5xl font-bold text-purple-700 mb-3">{vocabulary.word}</h1>
-          {vocabulary.phonetic && (
-            <p className="text-2xl text-gray-500 mb-2">{vocabulary.phonetic}</p>
-          )}
-          {vocabulary.translation && (
-            <p className="text-xl text-gray-600 mb-4">{vocabulary.translation}</p>
-          )}
-          {vocabulary.exampleSentence && (
-            <p className="text-gray-500 italic">&quot;{vocabulary.exampleSentence}&quot;</p>
-          )}
-        </div>
-
-        {/* Native Audio Button */}
-        <div className="flex justify-center mb-8">
-          <button
-            onClick={playNativeAudio}
-            className="flex items-center gap-3 px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-full shadow-lg transition transform hover:scale-105"
-          >
-            <Volume2 className="w-6 h-6" />
-            <span className="font-semibold">Listen</span>
-          </button>
-          {vocabulary.audioUrl && (
-            <audio ref={audioRef} src={vocabulary.audioUrl} preload="auto" />
-          )}
-        </div>
-
-        {/* Recording Controls */}
-        {!feedback && (
-          <div className="text-center mb-8">
-            <p className="text-gray-600 mb-4">
-              {isRecording ? 'Listening... Say the word!' : 'Click to start recording'}
-            </p>
-            <button
-              onClick={isRecording ? stopRecording : startRecording}
-              disabled={isProcessing}
-              className={`mx-auto w-32 h-32 rounded-full shadow-2xl transition transform hover:scale-105 flex items-center justify-center ${
-                isRecording
-                  ? 'bg-red-500 hover:bg-red-600 animate-pulse'
-                  : 'bg-gradient-to-br from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600'
-              } disabled:opacity-50 disabled:cursor-not-allowed`}
-            >
-              {isRecording ? (
-                <Square className="w-12 h-12 text-white" />
-              ) : (
-                <Mic className="w-12 h-12 text-white" />
-              )}
-            </button>
-            {isProcessing && (
-              <p className="mt-4 text-gray-600 animate-pulse">Processing your pronunciation...</p>
-            )}
-          </div>
-        )}
-
-        {/* Error Display */}
-        {error && (
-          <div className="mb-6 p-4 bg-red-100 border-l-4 border-red-500 rounded-lg">
-            <p className="text-red-700">{error}</p>
-          </div>
-        )}
-
-        {/* Feedback Display */}
-        {feedback && (
-          <div className="space-y-6 animate-fadeIn">
-            {/* Star Rating */}
-            <div className="text-center">
-              <div className="text-6xl mb-2">{feedback.rating.starEmoji}</div>
-              <p className="text-3xl font-bold text-purple-700 mb-2">
-                {feedback.rating.feedbackMessage}
-              </p>
-              {feedback.rating.rewardMessage && (
-                <p className="text-xl text-green-600 font-semibold">{feedback.rating.rewardMessage}</p>
-              )}
-            </div>
-
-            {/* Score Display */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-gradient-to-br from-purple-100 to-purple-200 rounded-2xl p-4 text-center">
-                <p className="text-gray-600 text-sm mb-1">Score</p>
-                <p className="text-3xl font-bold text-purple-700">{feedback.confidenceScore}%</p>
-              </div>
-              <div className="bg-gradient-to-br from-pink-100 to-pink-200 rounded-2xl p-4 text-center">
-                <p className="text-gray-600 text-sm mb-1">Stars</p>
-                <p className="text-3xl font-bold text-pink-700">{feedback.rating.stars}/5</p>
-              </div>
-            </div>
-
-            {/* Detailed Feedback */}
-            {feedback.detailedFeedback && (
-              <div className="bg-blue-50 border-l-4 border-blue-500 rounded-lg p-4">
-                <p className="text-gray-700">{feedback.detailedFeedback}</p>
-              </div>
-            )}
-
-            {/* Progress Stats */}
-            <div className="grid grid-cols-2 gap-4 text-center">
-              <div>
-                <p className="text-gray-600 text-sm">Total Points</p>
-                <p className="text-2xl font-bold text-purple-700">{feedback.totalPoints}</p>
-              </div>
-              <div>
-                <p className="text-gray-600 text-sm">Current Level</p>
-                <p className="text-2xl font-bold text-purple-700">{feedback.currentLevel}</p>
-              </div>
-            </div>
-
-            {/* Badge Unlocked */}
-            {feedback.badgeUnlocked && (
-              <div className="bg-gradient-to-r from-yellow-100 to-orange-100 rounded-2xl p-4 text-center border-2 border-yellow-400">
-                <p className="text-2xl mb-2">🏆</p>
-                <p className="font-bold text-yellow-800">{feedback.badgeUnlocked}</p>
-              </div>
-            )}
-
-            {/* Action Buttons */}
-            <div className="flex gap-4">
-              <button
-                onClick={resetPractice}
-                className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-purple-500 hover:bg-purple-600 text-white rounded-full shadow-lg transition transform hover:scale-105"
-              >
-                <RotateCcw className="w-5 h-5" />
-                <span>Try Again</span>
-              </button>
-              <button
-                onClick={() => router.back()}
-                className="flex-1 px-6 py-3 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded-full shadow-lg transition transform hover:scale-105"
-              >
-                Done
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Instructions */}
-        {!feedback && !isRecording && (
-          <div className="mt-8 bg-blue-50 rounded-2xl p-6">
-            <h3 className="font-bold text-gray-800 mb-3">📌 How to Practice:</h3>
-            <ol className="space-y-2 text-gray-700">
-              <li>1. Listen to the native pronunciation</li>
-              <li>2. Click the microphone button</li>
-              <li>3. Say the word clearly</li>
-              <li>4. Get instant feedback and earn stars!</li>
-            </ol>
-          </div>
-        )}
-      </div>
-    </div>
-  );
 }

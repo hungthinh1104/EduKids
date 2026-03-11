@@ -1,12 +1,14 @@
 import {
   Controller,
   Post,
+  Patch,
   Get,
   Body,
   UseGuards,
   Req,
   HttpCode,
   HttpStatus,
+  NotImplementedException,
 } from "@nestjs/common";
 import {
   ApiTags,
@@ -25,6 +27,10 @@ import { RegisterDto } from "./dto/register.dto";
 import { LoginDto } from "./dto/login.dto";
 import { RefreshTokenDto } from "./dto/refresh-token.dto";
 import { SwitchProfileDto } from "./dto/switch-profile.dto";
+import { ForgotPasswordDto } from "./dto/forgot-password.dto";
+import { ResetPasswordDto } from "./dto/reset-password.dto";
+import { ChangePasswordDto } from "./dto/change-password.dto";
+import { UpdateProfileDto } from "./dto/update-profile.dto";
 import {
   AuthResponseDto,
   SwitchProfileResponseDto,
@@ -160,6 +166,28 @@ export class AuthController {
   }
 
   /**
+   * Exit learner mode and return to parent/admin session
+   */
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth("JWT-auth")
+  @ApiOperation({
+    summary: "Exit child mode",
+    description:
+      "Issue a new token with the account's original role (PARENT/ADMIN) so user can leave child learning area.",
+  })
+  @ApiResponse({
+    status: 200,
+    description: "Exited child mode successfully",
+    type: AuthResponseDto,
+  })
+  @HttpCode(HttpStatus.OK)
+  @Post("exit-child")
+  async exitChildMode(@Req() req): Promise<AuthResponseDto> {
+    const userId = req.user.sub;
+    return this.authService.exitChildMode(userId);
+  }
+
+  /**
    * Get current user info
    * No rate limit for frequent profile checks
    */
@@ -178,6 +206,82 @@ export class AuthController {
   }
 
   /**
+   * UC-00: Forgot password — request reset link
+   */
+  @Public()
+  @ApiOperation({
+    summary: "Request password reset link",
+    description:
+      "Send reset token to registered email. Demo mode returns token directly.",
+  })
+  @ApiResponse({ status: 200, description: "Reset link sent (if email registered)" })
+  @Throttle(3, 60) // 3 requests per minute per IP
+  @HttpCode(HttpStatus.OK)
+  @Post("forgot-password")
+  async forgotPassword(
+    @Body() dto: ForgotPasswordDto,
+  ): Promise<{ message: string; resetToken?: string }> {
+    return this.authService.forgotPassword(dto);
+  }
+
+  /**
+   * UC-00: Reset password with token
+   */
+  @Public()
+  @ApiOperation({
+    summary: "Reset password using reset token",
+    description: "Validates token (15-min TTL) and sets a new password.",
+  })
+  @ApiResponse({ status: 200, description: "Password reset successfully" })
+  @ApiResponse({ status: 400, description: "Invalid or expired token" })
+  @HttpCode(HttpStatus.OK)
+  @Post("reset-password")
+  async resetPassword(
+    @Body() dto: ResetPasswordDto,
+  ): Promise<{ message: string }> {
+    return this.authService.resetPassword(dto);
+  }
+
+  /**
+   * UC-00: Change password (authenticated)
+   */
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth("JWT-auth")
+  @ApiOperation({
+    summary: "Change password",
+    description: "Verify current password and set a new one.",
+  })
+  @ApiResponse({ status: 200, description: "Password changed successfully" })
+  @ApiResponse({ status: 400, description: "Current password is incorrect" })
+  @HttpCode(HttpStatus.OK)
+  @Post("change-password")
+  async changePassword(
+    @Req() req,
+    @Body() dto: ChangePasswordDto,
+  ): Promise<{ message: string }> {
+    return this.authService.changePassword(req.user.sub, dto);
+  }
+
+  /**
+   * UC-00: Update current user profile (firstName / lastName)
+   */
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth("JWT-auth")
+  @ApiOperation({
+    summary: "Update profile",
+    description: "Update the current user's first/last name.",
+  })
+  @ApiResponse({ status: 200, description: "Profile updated successfully" })
+  @HttpCode(HttpStatus.OK)
+  @Patch("profile")
+  async updateProfile(
+    @Req() req,
+    @Body() dto: UpdateProfileDto,
+  ): Promise<{ message: string }> {
+    return this.authService.updateProfile(req.user.sub, dto);
+  }
+
+  /**
    * OAuth Login - Google (Placeholder)
    * UC-00: Step 2 - OAuth provider redirect
    */
@@ -186,13 +290,10 @@ export class AuthController {
     summary: "Login with Google OAuth",
     description: "Redirect to Google OAuth consent screen",
   })
-  @ApiResponse({ status: 200, description: "OAuth URL returned" })
+  @ApiResponse({ status: 501, description: "OAuth flow not available" })
   @Get("google")
   async loginWithGoogle() {
-    // TODO: Generate Google OAuth URL
-    return {
-      authUrl: "https://accounts.google.com/o/oauth2/v2/auth?...",
-    };
+    throw new NotImplementedException("Google OAuth is disabled");
   }
 
   /**
@@ -203,10 +304,10 @@ export class AuthController {
     summary: "Google OAuth callback",
     description: "Handle OAuth callback and issue JWT",
   })
+  @ApiResponse({ status: 501, description: "OAuth flow not available" })
   @Get("google/callback")
   async googleCallback() {
-    // TODO: Exchange code for token, get user profile, issue JWT
-    return { message: "OAuth not implemented yet" };
+    throw new NotImplementedException("Google OAuth is disabled");
   }
 
   /**
@@ -217,19 +318,19 @@ export class AuthController {
     summary: "Login with Facebook OAuth",
     description: "Redirect to Facebook OAuth consent screen",
   })
+  @ApiResponse({ status: 501, description: "OAuth flow not available" })
   @Get("facebook")
   async loginWithFacebook() {
-    return {
-      authUrl: "https://www.facebook.com/v12.0/dialog/oauth?...",
-    };
+    throw new NotImplementedException("Facebook OAuth is disabled");
   }
 
   /**
    * OAuth Callback - Facebook (Placeholder)
    */
   @Public()
+  @ApiResponse({ status: 501, description: "OAuth flow not available" })
   @Get("facebook/callback")
   async facebookCallback() {
-    return { message: "OAuth not implemented yet" };
+    throw new NotImplementedException("Facebook OAuth is disabled");
   }
 }

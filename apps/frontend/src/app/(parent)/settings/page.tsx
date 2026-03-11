@@ -1,16 +1,17 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import {
     User, Lock, Bell, CreditCard, Shield, ChevronRight,
-    Moon, Sun, Trash2, LogOut, Check, Clock, Sliders,
+    Moon, Sun, Trash2, LogOut, Check, Clock, Sliders, Eye, EyeOff,
 } from 'lucide-react';
 import { Heading, Body, Caption } from '@/shared/components/Typography';
 import { KidButton } from '@/components/edukids/KidButton';
 import { authApi } from '@/features/auth/api/auth.api';
+import { getReportPreferences, updateReportPreferences } from '@/features/reports/api/reports.api';
 import { useAuthStore } from '@/shared/store/auth.store';
 import { useChildProfiles } from '@/features/dashboard/hooks/useChildProfiles';
 import { deleteProfile } from '@/features/profile/api/profile.api';
@@ -62,16 +63,149 @@ export default function SettingsPage() {
     const { resolvedTheme, setTheme } = useTheme();
     const logout = useAuthStore((state) => state.logout);
     const user = useAuthStore((state) => state.user);
+    const patchUser = useAuthStore((state) => state.patchUser);
     const profilesData = useChildProfiles();
     
-    const [notifications, setNotifications] = useState(true);
-    const [dailyReminder, setDailyReminder] = useState(true);
-    const [studyLimit, setStudyLimit] = useState(30); // minutes per day
+    const [notifications, setNotificationsRaw] = useState(true);
+    const [dailyReminder, setDailyReminderRaw] = useState(true);
+    const [studyLimit, setStudyLimitRaw] = useState(30); // minutes per day
     const [activeTab, setActiveTab] = useState<'account' | 'children' | 'plan' | 'security'>('account');
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [selectedChildId, setSelectedChildId] = useState<number | null>(profilesData.activeProfileId);
     const [isDeletingChild, setIsDeletingChild] = useState(false);
     const [deleteError, setDeleteError] = useState<string | null>(null);
+
+    // Change password modal state
+    const [showChangePwd, setShowChangePwd] = useState(false);
+    const [cpCurrentPwd, setCpCurrentPwd] = useState('');
+    const [cpNewPwd, setCpNewPwd] = useState('');
+    const [cpConfirmPwd, setCpConfirmPwd] = useState('');
+    const [cpError, setCpError] = useState<string | null>(null);
+    const [cpSuccess, setCpSuccess] = useState(false);
+    const [cpLoading, setCpLoading] = useState(false);
+    const [cpShowCurrent, setCpShowCurrent] = useState(false);
+    const [cpShowNew, setCpShowNew] = useState(false);
+
+    // Edit profile modal state
+    const [showEditProfile, setShowEditProfile] = useState(false);
+    const [epFirstName, setEpFirstName] = useState('');
+    const [epLastName, setEpLastName] = useState('');
+    const [epError, setEpError] = useState<string | null>(null);
+    const [epSuccess, setEpSuccess] = useState(false);
+    const [epLoading, setEpLoading] = useState(false);
+
+    // Load settings: localStorage first, then backend preferences
+    useEffect(() => {
+        try {
+            const saved = localStorage.getItem('edukids_settings');
+            if (saved) {
+                const parsed = JSON.parse(saved) as { notifications?: boolean; dailyReminder?: boolean; studyLimit?: number };
+                if (typeof parsed.notifications === 'boolean') setNotificationsRaw(parsed.notifications);
+                if (typeof parsed.dailyReminder === 'boolean') setDailyReminderRaw(parsed.dailyReminder);
+                if (typeof parsed.studyLimit === 'number') setStudyLimitRaw(parsed.studyLimit);
+            }
+        } catch { /* ignore */ }
+
+        void (async () => {
+            try {
+                const prefs = await getReportPreferences();
+                if (typeof prefs.emailEnabled === 'boolean') {
+                    setNotificationsRaw(prefs.emailEnabled || Boolean(prefs.zaloEnabled));
+                }
+                if (prefs.frequency) {
+                    setDailyReminderRaw(prefs.frequency === 'daily');
+                }
+            } catch {
+                // keep localStorage values
+            }
+        })();
+    }, []);
+
+    const saveSettings = (patch: Partial<{ notifications: boolean; dailyReminder: boolean; studyLimit: number }>) => {
+        try {
+            const prev = JSON.parse(localStorage.getItem('edukids_settings') ?? '{}') as Record<string, unknown>;
+            localStorage.setItem('edukids_settings', JSON.stringify({ ...prev, ...patch }));
+        } catch { /* ignore */ }
+    };
+
+    const syncPrefsToBackend = async (patch: { notifications?: boolean; dailyReminder?: boolean }) => {
+        try {
+            const payload: Parameters<typeof updateReportPreferences>[0] = {};
+            if (typeof patch.notifications === 'boolean') {
+                payload.emailEnabled = patch.notifications;
+                payload.zaloEnabled = false;
+            }
+            if (typeof patch.dailyReminder === 'boolean') {
+                payload.frequency = patch.dailyReminder ? 'daily' : 'weekly';
+            }
+            await updateReportPreferences(payload);
+        } catch {
+            // fallback silently to localStorage only
+        }
+    };
+
+    const setNotifications = (v: boolean) => {
+        setNotificationsRaw(v);
+        saveSettings({ notifications: v });
+        void syncPrefsToBackend({ notifications: v });
+    };
+    const setDailyReminder = (v: boolean) => {
+        setDailyReminderRaw(v);
+        saveSettings({ dailyReminder: v });
+        void syncPrefsToBackend({ dailyReminder: v });
+    };
+    const setStudyLimit = (v: number) => { setStudyLimitRaw(v); saveSettings({ studyLimit: v }); };
+
+    const handleChangePwd = async () => {
+        setCpError(null);
+        if (!cpCurrentPwd || !cpNewPwd || !cpConfirmPwd) {
+            setCpError('Vui lòng điền đầy đủ các trường.');
+            return;
+        }
+        if (cpNewPwd !== cpConfirmPwd) {
+            setCpError('Mật khẩu mới không khớp.');
+            return;
+        }
+        if (cpNewPwd.length < 8 || !/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(cpNewPwd)) {
+            setCpError('Mật khẩu mới phải có ít nhất 8 ký tự, chữ hoa, chữ thường và số.');
+            return;
+        }
+        setCpLoading(true);
+        try {
+            await authApi.changePassword(cpCurrentPwd, cpNewPwd);
+            setCpSuccess(true);
+            setCpCurrentPwd(''); setCpNewPwd(''); setCpConfirmPwd('');
+            setTimeout(() => { setShowChangePwd(false); setCpSuccess(false); }, 2000);
+        } catch {
+            setCpError('Mật khẩu hiện tại không đúng. Vui lòng thử lại.');
+        } finally {
+            setCpLoading(false);
+        }
+    };
+
+    const handleEditProfile = async () => {
+        setEpError(null);
+        const trimFirst = epFirstName.trim();
+        const trimLast = epLastName.trim();
+        if (!trimFirst && !trimLast) {
+            setEpError('Vui lòng nhập ít nhất tên hoặc họ.');
+            return;
+        }
+        setEpLoading(true);
+        try {
+            const payload: { firstName?: string; lastName?: string } = {};
+            if (trimFirst) payload.firstName = trimFirst;
+            if (trimLast) payload.lastName = trimLast;
+            await authApi.updateProfile(payload);
+            patchUser(payload);
+            setEpSuccess(true);
+            setTimeout(() => { setShowEditProfile(false); setEpSuccess(false); }, 2000);
+        } catch {
+            setEpError('Không thể cập nhật thông tin. Vui lòng thử lại.');
+        } finally {
+            setEpLoading(false);
+        }
+    };
 
     const handleLogout = async () => {
         try {
@@ -131,7 +265,9 @@ export default function SettingsPage() {
                 </div>
                 <div className="flex-1 text-white">
                     <Heading level={3} className="text-white text-xl mb-0.5">
-                        {user?.email?.split('@')[0] || 'Phụ huynh'}
+                        {user?.firstName
+                            ? `${user.firstName} ${user.lastName ?? ''}`.trim()
+                            : user?.email?.split('@')[0] || 'Phụ huynh'}
                     </Heading>
                     <Caption className="text-white/80">{user?.email || 'parent@example.com'}</Caption>
                     <div className="mt-2 inline-flex items-center gap-1.5 bg-white/20 px-3 py-1 rounded-full text-xs font-heading font-black backdrop-blur-sm">
@@ -183,7 +319,18 @@ export default function SettingsPage() {
                                 />
                             </SettingRow>
                             <SettingRow icon={<User size={16} />} label="Chỉnh sửa thông tin" desc="Tên, email, ảnh đại diện">
-                                <ChevronRight size={16} className="text-caption" />
+                                <button
+                                    onClick={() => {
+                                        setEpFirstName(user?.firstName ?? '');
+                                        setEpLastName(user?.lastName ?? '');
+                                        setEpError(null);
+                                        setEpSuccess(false);
+                                        setShowEditProfile(true);
+                                    }}
+                                    className="text-primary font-heading font-bold text-sm hover:underline flex items-center gap-1"
+                                >
+                                    Sửa <ChevronRight size={14} />
+                                </button>
                             </SettingRow>
                         </div>
                     )}
@@ -297,7 +444,12 @@ export default function SettingsPage() {
                         <div className="space-y-4">
                             <div className="bg-card border-2 border-border rounded-2xl px-5">
                                 <SettingRow icon={<Lock size={16} />} label="Đổi mật khẩu" desc="Thay đổi mật khẩu đăng nhập">
-                                    <ChevronRight size={16} className="text-caption" />
+                                    <button
+                                        onClick={() => { setCpError(null); setCpSuccess(false); setShowChangePwd(true); }}
+                                        className="text-primary font-heading font-bold text-sm hover:underline flex items-center gap-1"
+                                    >
+                                        Đổi <ChevronRight size={14} />
+                                    </button>
                                 </SettingRow>
                                 <SettingRow icon={<Shield size={16} />} label="Xác thực 2 lớp" desc="Bảo vệ tài khoản tốt hơn">
                                     <span className="text-xs font-heading font-bold px-2 py-1 rounded-lg bg-warning-light text-warning">
@@ -316,6 +468,161 @@ export default function SettingsPage() {
                         </div>
                     )}
                 </motion.div>
+            </AnimatePresence>
+
+            {/* Change password modal */}
+            <AnimatePresence>
+                {showChangePwd && (
+                    <>
+                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/40 z-40 backdrop-blur-sm" onClick={() => setShowChangePwd(false)} />
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.85 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.85 }}
+                            transition={{ type: 'spring', bounce: 0.3 }}
+                            className="fixed inset-0 z-50 flex items-center justify-center px-6"
+                        >
+                            <div className="bg-card border-2 border-primary/30 rounded-[2rem] p-7 w-full max-w-sm shadow-2xl">
+                                <Heading level={3} className="text-heading text-xl mb-5 text-center">🔒 Đổi mật khẩu</Heading>
+
+                                {cpSuccess ? (
+                                    <div className="text-center py-6 space-y-3">
+                                        <div className="text-5xl">✅</div>
+                                        <Body className="text-success font-bold">Mật khẩu đã được cập nhật!</Body>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-4">
+                                        {cpError && (
+                                            <div className="p-3 rounded-xl bg-secondary-light border border-secondary/20 text-secondary text-sm font-medium">
+                                                {cpError}
+                                            </div>
+                                        )}
+
+                                        {/* Current password */}
+                                        <div className="space-y-1.5">
+                                            <label className="text-sm font-bold text-heading ml-1">Mật khẩu hiện tại</label>
+                                            <div className="relative">
+                                                <input
+                                                    type={cpShowCurrent ? 'text' : 'password'}
+                                                    value={cpCurrentPwd}
+                                                    onChange={(e) => setCpCurrentPwd(e.target.value)}
+                                                    placeholder="Mật khẩu hiện tại"
+                                                    className="input-base pr-10"
+                                                    disabled={cpLoading}
+                                                />
+                                                <button type="button" onClick={() => setCpShowCurrent((v) => !v)}
+                                                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-caption">
+                                                    {cpShowCurrent ? <EyeOff size={16} /> : <Eye size={16} />}
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        {/* New password */}
+                                        <div className="space-y-1.5">
+                                            <label className="text-sm font-bold text-heading ml-1">Mật khẩu mới</label>
+                                            <div className="relative">
+                                                <input
+                                                    type={cpShowNew ? 'text' : 'password'}
+                                                    value={cpNewPwd}
+                                                    onChange={(e) => setCpNewPwd(e.target.value)}
+                                                    placeholder="Ít nhất 8 ký tự, chữ hoa + số"
+                                                    className="input-base pr-10"
+                                                    disabled={cpLoading}
+                                                />
+                                                <button type="button" onClick={() => setCpShowNew((v) => !v)}
+                                                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-caption">
+                                                    {cpShowNew ? <EyeOff size={16} /> : <Eye size={16} />}
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        {/* Confirm new password */}
+                                        <div className="space-y-1.5">
+                                            <label className="text-sm font-bold text-heading ml-1">Xác nhận mật khẩu mới</label>
+                                            <input
+                                                type="password"
+                                                value={cpConfirmPwd}
+                                                onChange={(e) => setCpConfirmPwd(e.target.value)}
+                                                placeholder="Nhập lại mật khẩu mới"
+                                                className="input-base"
+                                                disabled={cpLoading}
+                                            />
+                                        </div>
+
+                                        <div className="flex gap-3 pt-2">
+                                            <KidButton variant="outline" className="flex-1" onClick={() => setShowChangePwd(false)} disabled={cpLoading}>
+                                                Hủy
+                                            </KidButton>
+                                            <KidButton variant="default" className="flex-1" onClick={() => void handleChangePwd()} disabled={cpLoading}>
+                                                {cpLoading ? 'Đang lưu...' : 'Lưu'}
+                                            </KidButton>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </motion.div>
+                    </>
+                )}
+            </AnimatePresence>
+
+            {/* Edit profile modal */}
+            <AnimatePresence>
+                {showEditProfile && (
+                    <>
+                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/40 z-40 backdrop-blur-sm" onClick={() => setShowEditProfile(false)} />
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.85 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.85 }}
+                            transition={{ type: 'spring', bounce: 0.3 }}
+                            className="fixed inset-0 z-50 flex items-center justify-center px-6"
+                        >
+                            <div className="bg-card border-2 border-primary/30 rounded-[2rem] p-7 w-full max-w-sm shadow-2xl">
+                                <Heading level={3} className="text-heading text-xl mb-5 text-center">✏️ Chỉnh sửa thông tin</Heading>
+                                {epSuccess ? (
+                                    <div className="text-center py-6 space-y-3">
+                                        <div className="text-5xl">✅</div>
+                                        <Body className="text-success font-bold">Thông tin đã được cập nhật!</Body>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-4">
+                                        {epError && (
+                                            <div className="p-3 rounded-xl bg-secondary-light border border-secondary/20 text-secondary text-sm font-medium">
+                                                {epError}
+                                            </div>
+                                        )}
+                                        <div className="space-y-1.5">
+                                            <label className="text-sm font-bold text-heading ml-1">Tên</label>
+                                            <input
+                                                type="text"
+                                                value={epFirstName}
+                                                onChange={(e) => setEpFirstName(e.target.value)}
+                                                placeholder="Nhập tên của bạn"
+                                                className="input-base"
+                                                disabled={epLoading}
+                                            />
+                                        </div>
+                                        <div className="space-y-1.5">
+                                            <label className="text-sm font-bold text-heading ml-1">Họ</label>
+                                            <input
+                                                type="text"
+                                                value={epLastName}
+                                                onChange={(e) => setEpLastName(e.target.value)}
+                                                placeholder="Nhập họ của bạn"
+                                                className="input-base"
+                                                disabled={epLoading}
+                                            />
+                                        </div>
+                                        <div className="flex gap-3 pt-2">
+                                            <KidButton variant="outline" className="flex-1" onClick={() => setShowEditProfile(false)} disabled={epLoading}>
+                                                Hủy
+                                            </KidButton>
+                                            <KidButton variant="default" className="flex-1" onClick={() => void handleEditProfile()} disabled={epLoading}>
+                                                {epLoading ? 'Đang lưu...' : 'Lưu'}
+                                            </KidButton>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </motion.div>
+                    </>
+                )}
             </AnimatePresence>
 
             {/* Delete confirm modal */}

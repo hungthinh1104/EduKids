@@ -27,6 +27,19 @@ export class ProgressSyncService {
     private offlineQueue: OfflineQueueService,
   ) {}
 
+  private getNumericStateValue(value: unknown): number {
+    if (typeof value === "number") return value;
+    if (
+      typeof value === "object" &&
+      value !== null &&
+      "current" in value &&
+      typeof (value as { current?: unknown }).current === "number"
+    ) {
+      return (value as { current: number }).current;
+    }
+    return 0;
+  }
+
   /**
    * Process incoming progress update
    * Validates, resolves conflicts, broadcasts to other devices
@@ -71,7 +84,7 @@ export class ProgressSyncService {
           await this.redisCache.recordConflict(
             String(update.userId),
             conflictResolution.conflict.conflictId,
-            conflictResolution.conflict,
+            { ...conflictResolution.conflict },
           );
 
           return {
@@ -87,7 +100,7 @@ export class ProgressSyncService {
 
       // 4. Validate consistency
       const consistency = this.conflictResolution.validateUpdateConsistency(
-        currentState?.value,
+        this.getNumericStateValue(currentState?.value),
         this.extractNumericValue(update),
         update.type,
       );
@@ -149,8 +162,9 @@ export class ProgressSyncService {
         message: "Progress synchronized successfully",
       };
 
-      if (update.type === "STARS_EARNED" && newState?.value?.current) {
-        syncState.starPoints = newState.value.current;
+      const latestStarPoints = this.getNumericStateValue(newState?.value);
+      if (update.type === "STARS_EARNED" && latestStarPoints > 0) {
+        syncState.starPoints = latestStarPoints;
       }
 
       return syncState;
@@ -300,7 +314,7 @@ export class ProgressSyncService {
   async getCurrentProgress(
     userId: string,
     type: string,
-  ): Promise<{ timestamp: number; value: any } | null> {
+  ): Promise<{ timestamp: number; value: unknown } | null> {
     try {
       // Try cache first
       const devices = await this.redisCache.getUserActiveSessions(userId);
@@ -383,9 +397,39 @@ export class ProgressSyncService {
           break;
 
         case ProgressUpdateType.SCORE_UPDATED:
-          // quizResult model doesn't exist in schema
-          if (update.score && update.contentId) {
-            // TODO: Implement score tracking using UserProgress
+          if (update.score && (update.contentId ?? update.score.quizId)) {
+            const scoreContentId = update.contentId ?? update.score.quizId;
+            const scoreContentType = update.contentType ?? "QUIZ";
+            const pct =
+              update.score.percentageScore ??
+              (update.score.maxScore > 0
+                ? Math.round(
+                    (update.score.score / update.score.maxScore) * 100,
+                  )
+                : 0);
+            await this.prisma.userProgress.upsert({
+              where: {
+                userId_contentId_contentType: {
+                  userId: update.userId,
+                  contentId: scoreContentId,
+                  contentType: scoreContentType,
+                },
+              },
+              update: {
+                score: pct,
+                completed: pct >= 50,
+                updatedAt: new Date(),
+              },
+              create: {
+                userId: update.userId,
+                contentId: scoreContentId,
+                contentType: scoreContentType,
+                score: pct,
+                completed: pct >= 50,
+                createdAt: new Date(),
+                updatedAt: new Date(),
+              },
+            });
           }
           break;
 
@@ -477,17 +521,24 @@ export class ProgressSyncService {
       let conflictCount = 0;
 
       for (const event of events) {
-        if (event.activityType === "UPDATE_APPLIED") {
+        const typedEvent = event as {
+          type?: string;
+          activityType?: string;
+          details?: { latency?: number };
+        };
+        const eventType = typedEvent.type ?? typedEvent.activityType;
+
+        if (eventType === "UPDATE_APPLIED") {
           successCount++;
         }
 
-        if (event.activityType === "CONFLICT_DETECTED") {
+        if (eventType === "CONFLICT_DETECTED") {
           conflictCount++;
         }
 
         // Calculate latency from event timing
-        if (event.details?.latency) {
-          totalLatency += event.details.latency;
+        if (typedEvent.details?.latency) {
+          totalLatency += typedEvent.details.latency;
           latencyCount++;
         }
       }

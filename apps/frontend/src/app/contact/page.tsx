@@ -1,10 +1,7 @@
 import { Heading, Body, Display } from '@/shared/components/Typography';
 import { FeatureCard } from '@/components/edukids/FeatureCard';
-import { KidButton } from '@/components/edukids/KidButton';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
 import { Mail, PhoneCall, MapPin, MessageSquareHeart } from 'lucide-react';
+import { ContactForm } from './ContactForm';
 
 export const metadata = {
     title: 'Liên hệ | EduKids',
@@ -64,36 +61,7 @@ export default function ContactPage() {
                             <Heading level={2} className="text-3xl text-heading">Gửi lời nhắn</Heading>
                         </div>
 
-                        <form className="space-y-6">
-                            <div className="grid md:grid-cols-2 gap-6">
-                                <div className="space-y-3">
-                                    <Label htmlFor="name" className="text-base font-bold text-slate-700">Tên của ba/mẹ</Label>
-                                    <Input id="name" placeholder="Ví dụ: Nguyễn Văn A" className="h-14 rounded-2xl bg-background dark:bg-slate-900 border-2 dark:border-slate-700" />
-                                </div>
-                                <div className="space-y-3">
-                                    <Label htmlFor="phone" className="text-base font-bold text-slate-700">Số điện thoại</Label>
-                                    <Input id="phone" type="tel" placeholder="0901234567" className="h-14 rounded-2xl bg-background dark:bg-slate-900 border-2 dark:border-slate-700" />
-                                </div>
-                            </div>
-
-                            <div className="space-y-3">
-                                <Label htmlFor="email" className="text-base font-bold text-slate-700">Địa chỉ Email (Tùy chọn)</Label>
-                                <Input id="email" type="email" placeholder="email@vi-du.com" className="h-14 rounded-2xl bg-background dark:bg-slate-900 border-2 dark:border-slate-700" />
-                            </div>
-
-                            <div className="space-y-3">
-                                <Label htmlFor="message" className="text-base font-bold text-slate-700">Nội dung tin nhắn</Label>
-                                <Textarea
-                                    id="message"
-                                    placeholder="Ba mẹ đang gặp vấn đề gì hoặc cần tư vấn lộ trình nào ạ?"
-                                    className="min-h-[160px] rounded-2xl bg-background dark:bg-slate-900 border-2 resize-none p-4 dark:border-slate-700"
-                                />
-                            </div>
-
-                            <KidButton type="button" size="lg" className="w-full text-xl py-8 mt-4 shadow-xl shadow-blue-200/50">
-                                Gửi Đi Ngay Thôi 🚀
-                            </KidButton>
-                        </form>
+                        <ContactForm />
                     </div>
                 </div>
             </div>
