@@ -30,6 +30,24 @@ groups:
 
   - name: infra-alerts
     rules:
+      - alert: FrontendProbeDown
+        expr: probe_success{job="blackbox-http", instance="http://frontend:3000"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Frontend probe failed"
+          description: "Blackbox probe cannot reach frontend for 2 minutes."
+
+      - alert: BackendHealthProbeDown
+        expr: probe_success{job="blackbox-http", instance="http://backend:3001/api/system/health"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Backend health probe failed"
+          description: "Blackbox probe cannot reach backend health endpoint for 2 minutes."
+
       - alert: PostgresExporterDown
         expr: up{job="postgres-exporter"} == 0
         for: 5m
@@ -47,3 +65,12 @@ groups:
         annotations:
           summary: "Redis exporter down"
           description: "Prometheus cannot scrape redis-exporter for 5 minutes."
+
+      - alert: HighContainerMemoryUsage
+        expr: sum(container_memory_usage_bytes{name=~"edukids-.*"}) > 3.5e+09
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High container memory usage"
+          description: "Combined EduKids container memory usage exceeded 3.5 GB for 10 minutes."

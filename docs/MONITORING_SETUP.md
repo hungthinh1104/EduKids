@@ -4,6 +4,8 @@ This project includes a production-style local monitoring stack:
 
 - Prometheus (metrics collection + alert rules)
 - Grafana (dashboards)
+- Alertmanager (alert routing)
+- Blackbox Exporter (HTTP endpoint probes)
 - Node Exporter (host metrics)
 - cAdvisor (container metrics)
 - Postgres Exporter (database metrics)
@@ -28,7 +30,11 @@ docker compose up -d
 
 - Prometheus: http://localhost:9090
 - Grafana: http://localhost:3003
+- Alertmanager: http://localhost:9093
+- Blackbox Exporter: http://localhost:9115
 - Backend metrics: http://localhost:3001/api/metrics
+
+> In compose, monitoring ports are bound to `127.0.0.1` for safer local defaults.
 
 ## 3) Grafana login
 
@@ -44,9 +50,10 @@ Defaults from `.env.example`:
 
 ## 4) Pre-provisioned dashboard
 
-A default dashboard is auto-loaded:
+Default dashboards are auto-loaded:
 
 - **EduKids Monitoring Overview**
+- **EduKids SLO & Infra**
 
 It includes:
 
@@ -55,12 +62,16 @@ It includes:
 - 5xx error ratio
 - P95 latency (global + by route)
 - Container CPU & memory usage
+- Endpoint probe success/duration
+- Redis and Postgres basic health signals
 
 ## 5) Alert rules
 
 Configured in:
 
 - `docker/monitoring/prometheus/alerts.yml`
+- `docker/monitoring/prometheus/recording.rules.yml`
+- `docker/monitoring/alertmanager/alertmanager.yml`
 
 Current alerts:
 
@@ -69,6 +80,9 @@ Current alerts:
 - `HighBackend5xxRate`
 - `PostgresExporterDown`
 - `RedisExporterDown`
+- `FrontendProbeDown`
+- `BackendHealthProbeDown`
+- `HighContainerMemoryUsage`
 
 ## 6) Metrics exposed by backend
 
@@ -84,8 +98,15 @@ Notes:
 - `/api/metrics` is excluded from request metrics to avoid self-scrape noise.
 - Route labels use resolved route template when available.
 
-## 7) Security notes
+## 7) Build/runtime optimization done
+
+- Backend image uses multi-stage build with separate dev/prod dependency layers.
+- Frontend image uses multi-stage build and ships only built app + production dependencies.
+- Compose now runs backend/frontend in production mode by default (lighter, stable runtime).
+- Monitoring services use `restart: unless-stopped`.
+
+## 8) Security notes
 
 - Do not expose Grafana/Prometheus directly to the public internet without auth + network controls.
 - Use strong `GRAFANA_ADMIN_PASSWORD` in non-local environments.
-- Consider adding Alertmanager for real notification channels (Slack/Email/PagerDuty).
+- Configure Alertmanager receivers (Slack/Email/PagerDuty/Telegram) before production use.

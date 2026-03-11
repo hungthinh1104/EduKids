@@ -49,7 +49,7 @@ EduKids is a comprehensive English language learning platform designed specifica
 ### Infrastructure
 - **Containerization**: Docker & Docker Compose
 - **Development**: Hot reload for both frontend & backend
-- **Monitoring**: Prometheus + Grafana + Exporters (Node, cAdvisor, Postgres, Redis)
+- **Monitoring**: Prometheus + Grafana + Alertmanager + Blackbox + Exporters (Node, cAdvisor, Postgres, Redis)
 
 ---
 
@@ -99,6 +99,7 @@ docker-compose exec backend npm run prisma:migrate
 # Backend API: http://localhost:3001/api
 # Prometheus: http://localhost:9090
 # Grafana: http://localhost:3003
+# Alertmanager: http://localhost:9093
 ```
 
 For detailed setup instructions, see [QUICK_START.md](./docs/QUICK_START.md)
