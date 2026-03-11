@@ -19,6 +19,7 @@ EduKids is a comprehensive English language learning platform designed specifica
 
 - **Interactive Learning**: Flashcards, lessons, quizzes with immediate feedback
 - **Speech Recognition**: Web Speech API integration for pronunciation practice
+- **Optional Azure Speech**: Provider-based pronunciation assessment for demo/prod upgrades
 - **Gamification**: Points, badges, achievements, and leaderboards
 - **Parent Dashboard**: Monitor child progress and learning analytics
 - **Real-time Progress**: Track vocabulary mastery and learning paths
@@ -34,6 +35,7 @@ EduKids is a comprehensive English language learning platform designed specifica
 - **State Management**: [Zustand](https://github.com/pmndrs/zustand)
 - **Type Safety**: TypeScript
 - **Speech API**: Web Speech API for voice recording & recognition
+- **Optional cloud speech**: Azure Speech provider support in backend pronunciation flow
 
 ### Backend
 - **Runtime**: [Node.js 20+](https://nodejs.org/)
@@ -47,6 +49,7 @@ EduKids is a comprehensive English language learning platform designed specifica
 ### Infrastructure
 - **Containerization**: Docker & Docker Compose
 - **Development**: Hot reload for both frontend & backend
+- **Monitoring**: Prometheus + Grafana + Exporters (Node, cAdvisor, Postgres, Redis)
 
 ---
 
@@ -94,7 +97,8 @@ docker-compose exec backend npm run prisma:migrate
 # 5. Access the application
 # Frontend: http://localhost:3000
 # Backend API: http://localhost:3001/api
-# pgAdmin: http://localhost:5050
+# Prometheus: http://localhost:9090
+# Grafana: http://localhost:3003
 ```
 
 For detailed setup instructions, see [QUICK_START.md](./docs/QUICK_START.md)
@@ -106,6 +110,8 @@ For detailed setup instructions, see [QUICK_START.md](./docs/QUICK_START.md)
 - **[Quick Start Guide](./docs/QUICK_START.md)** - Get up and running
 - **[Project Structure](./docs/PROJECT_STRUCTURE.md)** - Architecture and directory organization
 - **[Docker Setup](./docker-compose.yml)** - Infrastructure configuration
+- **[Azure backend-only demo deploy](./docs/AZURE_BACKEND_DEMO_DEPLOY.md)** - Cheapest Azure VM deployment for backend container only
+- **[Monitoring Setup](./docs/MONITORING_SETUP.md)** - Prometheus + Grafana + alert rules
 
 ---
 

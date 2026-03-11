@@ -4,9 +4,81 @@ import { AppModule } from "./app.module";
 import { setupSwagger } from "./config/swagger.config";
 import { HttpExceptionFilter } from "./common/filters/http-exception.filter";
 import { ResponseInterceptor } from "./common/interceptors/response.interceptor";
+import {
+  Registry,
+  Counter,
+  Gauge,
+  Histogram,
+  collectDefaultMetrics,
+} from "prom-client";
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  const httpAdapter = app.getHttpAdapter().getInstance();
+
+  // Prometheus metrics registry (single-process)
+  const metricsRegistry = new Registry();
+  collectDefaultMetrics({
+    register: metricsRegistry,
+    prefix: "edukids_backend_",
+  });
+
+  const httpRequestsTotal = new Counter({
+    name: "edukids_http_requests_total",
+    help: "Total number of HTTP requests",
+    labelNames: ["method", "route", "status_code"] as const,
+    registers: [metricsRegistry],
+  });
+
+  const httpRequestDuration = new Histogram({
+    name: "edukids_http_request_duration_seconds",
+    help: "HTTP request duration in seconds",
+    labelNames: ["method", "route", "status_code"] as const,
+    buckets: [0.005, 0.01, 0.025, 0.05, 0.1, 0.3, 0.5, 1, 2, 5],
+    registers: [metricsRegistry],
+  });
+
+  const httpRequestsInFlight = new Gauge({
+    name: "edukids_http_requests_in_flight",
+    help: "Current number of in-flight HTTP requests",
+    labelNames: ["method", "route"] as const,
+    registers: [metricsRegistry],
+  });
+
+  httpAdapter.use((req, res, next) => {
+    // Ignore metrics endpoint itself to avoid self-scrape noise
+    if (req.path === "/api/metrics") {
+      next();
+      return;
+    }
+
+    const method = req.method;
+    const start = process.hrtime.bigint();
+    const routeForInFlight = req.path || "unknown";
+    httpRequestsInFlight.inc({ method, route: routeForInFlight });
+
+    res.on("finish", () => {
+      const statusCode = String(res.statusCode);
+      const resolvedRoute = req.route?.path
+        ? `${req.baseUrl || ""}${req.route.path}`
+        : req.path || "unknown";
+      const durationSeconds = Number(process.hrtime.bigint() - start) / 1e9;
+
+      httpRequestsInFlight.dec({ method, route: routeForInFlight });
+      httpRequestsTotal.inc({ method, route: resolvedRoute, status_code: statusCode });
+      httpRequestDuration.observe(
+        { method, route: resolvedRoute, status_code: statusCode },
+        durationSeconds,
+      );
+    });
+
+    next();
+  });
+
+  httpAdapter.get("/api/metrics", async (_req, res) => {
+    res.setHeader("Content-Type", metricsRegistry.contentType);
+    res.end(await metricsRegistry.metrics());
+  });
 
   const configuredOrigins = (process.env.CORS_ORIGIN || "http://localhost:3000")
     .split(",")
@@ -72,6 +144,7 @@ async function bootstrap() {
 
   console.log(`🚀 Application is running on: http://localhost:${port}`);
   console.log(`📚 API Documentation: http://localhost:${port}/api/docs`);
+  console.log(`📈 Metrics Endpoint: http://localhost:${port}/api/metrics`);
 }
 
 bootstrap();

@@ -1,5 +1,3 @@
-version: '3.9'
-
 services:
   # PostgreSQL Database
   postgres:
@@ -7,13 +5,13 @@ services:
     container_name: edukids-postgres
     environment:
       POSTGRES_USER: ${DB_USER:-edukids}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-edukids_password}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
       POSTGRES_DB: ${DB_NAME:-edukids_db}
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./docker/postgres-init.sql:/docker-entrypoint-initdb.d/init.sql
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-edukids}"]
       interval: 10s
@@ -26,13 +24,13 @@ services:
   redis:
     image: redis:7-alpine
     container_name: edukids-redis
-    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-redis_password}
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:?REDIS_PASSWORD is required}
     volumes:
       - redis_data:/data
     ports:
-      - "6379:6379"
+      - "127.0.0.1:6379:6379"
     healthcheck:
-      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      test: ["CMD-SHELL", "redis-cli -a ${REDIS_PASSWORD:?REDIS_PASSWORD is required} ping | grep PONG"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -50,12 +48,12 @@ services:
     environment:
       NODE_ENV: ${NODE_ENV:-development}
       PORT: ${BACKEND_PORT:-3001}
-      DATABASE_URL: postgresql://${DB_USER:-edukids}:${DB_PASSWORD:-edukids_password}@postgres:5432/${DB_NAME:-edukids_db}?sslmode=disable
-      REDIS_URL: redis://:${REDIS_PASSWORD:-redis_password}@redis:6379
+      DATABASE_URL: postgresql://${DB_USER:-edukids}:${DB_PASSWORD:?DB_PASSWORD is required}@postgres:5432/${DB_NAME:-edukids_db}?sslmode=disable
+      REDIS_URL: redis://:${REDIS_PASSWORD:?REDIS_PASSWORD is required}@redis:6379
       REDIS_HOST: redis
       REDIS_PORT: 6379
-      REDIS_PASSWORD: ${REDIS_PASSWORD:-redis_password}
-      JWT_SECRET: ${JWT_SECRET:-your_super_secret_jwt_key_change_in_production}
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?REDIS_PASSWORD is required}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
       JWT_EXPIRY: ${JWT_EXPIRY:-24h}
       SMTP_HOST: ${SMTP_HOST:-smtp.gmail.com}
       SMTP_PORT: ${SMTP_PORT:-587}
@@ -72,6 +70,16 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "node -e \"require('http').get('http://localhost:3001/api/system/health', (res) => process.exit(res.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))\"",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
     networks:
       - edukids-network
     command: npm run start:prod
@@ -97,10 +105,116 @@ services:
       - edukids-network
     command: sh -c "npm install --legacy-peer-deps && npm run dev"
 
+  # Prometheus metrics collector
+  prometheus:
+    image: prom/prometheus:v2.55.1
+    container_name: edukids-prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--storage.tsdb.retention.time=15d"
+      - "--web.enable-lifecycle"
+    volumes:
+      - ./docker/monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./docker/monitoring/prometheus/alerts.yml:/etc/prometheus/alerts.yml:ro
+      - prometheus_data:/prometheus
+    ports:
+      - "9090:9090"
+    depends_on:
+      - backend
+      - postgres
+      - redis
+    networks:
+      - edukids-network
+
+  # Grafana dashboard UI
+  grafana:
+    image: grafana/grafana:11.3.0
+    container_name: edukids-grafana
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin123}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_METRICS_ENABLED: "true"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./docker/monitoring/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
+      - ./docker/monitoring/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./docker/monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    ports:
+      - "3003:3000"
+    depends_on:
+      - prometheus
+    networks:
+      - edukids-network
+
+  # Node (host) metrics exporter
+  node-exporter:
+    image: prom/node-exporter:v1.8.2
+    container_name: edukids-node-exporter
+    command:
+      - "--path.rootfs=/host"
+      - "--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($|/)"
+    volumes:
+      - /:/host:ro,rslave
+    ports:
+      - "9100:9100"
+    networks:
+      - edukids-network
+
+  # Docker container metrics exporter
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.49.1
+    container_name: edukids-cadvisor
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    ports:
+      - "8080:8080"
+    privileged: true
+    devices:
+      - /dev/kmsg
+    networks:
+      - edukids-network
+
+  # PostgreSQL metrics exporter
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:v0.17.1
+    container_name: edukids-postgres-exporter
+    environment:
+      DATA_SOURCE_NAME: postgresql://${DB_USER:-edukids}:${DB_PASSWORD:?DB_PASSWORD is required}@postgres:5432/${DB_NAME:-edukids_db}?sslmode=disable
+    ports:
+      - "9187:9187"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - edukids-network
+
+  # Redis metrics exporter
+  redis-exporter:
+    image: oliver006/redis_exporter:v1.64.0
+    container_name: edukids-redis-exporter
+    environment:
+      REDIS_ADDR: redis://redis:6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?REDIS_PASSWORD is required}
+    ports:
+      - "9121:9121"
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - edukids-network
+
 volumes:
   postgres_data:
   redis_data:
   frontend_node_modules:
+  prometheus_data:
+  grafana_data:
 
 networks:
   edukids-network:
