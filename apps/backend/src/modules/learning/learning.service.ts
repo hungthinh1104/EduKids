@@ -1,4 +1,4 @@
-import { Injectable, Logger } from "@nestjs/common";
+import { Injectable, Logger, NotFoundException } from "@nestjs/common";
 import { LearningProgressRepository } from "./repositories/learning-progress.repository";
 import { UpdateProgressDto, ProgressResponseDto } from "./dto/progress.dto";
 
@@ -19,9 +19,30 @@ export class LearningService {
     dto: UpdateProgressDto,
   ): Promise<ProgressResponseDto> {
     try {
+      const vocabularyExists =
+        await this.learningProgressRepository.vocabularyExists(dto.vocabularyId);
+
+      if (!vocabularyExists) {
+        throw new NotFoundException("Vocabulary not found");
+      }
+
+      const existingProgress = await this.learningProgressRepository.findProgress(
+        childId,
+        dto.vocabularyId,
+      );
+
+      if (dto.completed && existingProgress?.completedAt) {
+        return {
+          childId: existingProgress.childId,
+          vocabularyId: existingProgress.vocabularyId,
+          completedAt: existingProgress.completedAt,
+          message: "Progress updated successfully",
+        };
+      }
+
       const data: { completedAt?: Date } = {};
 
-      // If marked as completed, set completedAt timestamp
+      // Preserve the first completion timestamp once a vocabulary is completed.
       if (dto.completed) {
         data.completedAt = new Date();
       }
@@ -32,7 +53,7 @@ export class LearningService {
         data,
       );
 
-      this.logger.log(
+      this.logger.debug(
         `Progress updated for child ${childId}, vocabulary ${dto.vocabularyId}, completed: ${dto.completed}`,
       );
 
@@ -42,10 +63,13 @@ export class LearningService {
         completedAt: progress.completedAt,
         message: "Progress updated successfully",
       };
-    } catch (error) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      const stack = error instanceof Error ? error.stack : undefined;
+
       this.logger.error(
-        `Failed to update progress for child ${childId}, vocabulary ${dto.vocabularyId}: ${error.message}`,
-        error.stack,
+        `Failed to update progress for child ${childId}, vocabulary ${dto.vocabularyId}: ${message}`,
+        stack,
       );
       throw error;
     }

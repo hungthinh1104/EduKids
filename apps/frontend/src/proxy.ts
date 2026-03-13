@@ -6,9 +6,9 @@ import { NextRequest, NextResponse } from 'next/server';
  * Route Structure:
  * PUBLIC  → /, /login, /register, /privacy, /terms, /faq, /contact
  * PARENT  → /dashboard, /add-child, /reports, /settings, /analytics, /recommendations, /onboarding
- *         (requires PARENT/ADMIN role)
- * CHILD   → /play, /play/topic/[id] (requires active child session inside parent session)
- * ADMIN   → /admin/* (requires ADMIN role)
+ *         (requires PARENT or ADMIN role)
+ * CHILD   → /play, /play/topic/[id] (requires LEARNER role only)
+ * ADMIN   → /admin/* (requires ADMIN role only)
  */
 
 const PUBLIC_PATHS = ['/', '/login', '/register', '/privacy', '/terms', '/faq', '/contact'];
@@ -38,14 +38,16 @@ export function proxy(request: NextRequest) {
 
     // Read tokens from cookies (set by auth store / js-cookie)
     const accessToken = request.cookies.get('access_token')?.value;
-    const role = request.cookies.get('role')?.value; // 'PARENT' | 'ADMIN'
+    const role = request.cookies.get('role')?.value; // 'PARENT' | 'LEARNER' | 'ADMIN'
 
     const isPublicPath = matchesPrefix(pathname, PUBLIC_PATHS);
 
     // ── Unauthenticated user trying to access protected route ──
     if (!accessToken) {
         if (matchesPrefix(pathname, [...PARENT_PATHS, ...CHILD_PATHS, ...ADMIN_PATHS])) {
-            return NextResponse.redirect(new URL('/login', request.url));
+            // Preserve the original path for redirect after login (deep-link support)
+            const nextUrl = encodeURIComponent(pathname + request.nextUrl.search);
+            return NextResponse.redirect(new URL(`/login?next=${nextUrl}`, request.url));
         }
         if (isPublicPath) {
             return NextResponse.next();
@@ -57,6 +59,21 @@ export function proxy(request: NextRequest) {
     if (accessToken && (pathname === '/login' || pathname === '/register')) {
         const target = role === 'ADMIN' ? '/admin' : role === 'LEARNER' ? '/play' : '/dashboard';
         return NextResponse.redirect(new URL(target, request.url));
+    }
+
+    // ── Parent path requires PARENT or ADMIN role ──
+    if (matchesPrefix(pathname, PARENT_PATHS) && !['PARENT', 'ADMIN'].includes(role || '')) {
+        return NextResponse.redirect(new URL('/dashboard', request.url));
+    }
+
+    // ── Child path requires LEARNER role only ──
+    if (matchesPrefix(pathname, CHILD_PATHS) && role !== 'LEARNER') {
+        // If parent is viewing child routes without active child session, redirect to select child
+        if (role === 'PARENT' || role === 'ADMIN') {
+            return NextResponse.redirect(new URL('/dashboard?intent=select-child', request.url));
+        }
+        // Other cases redirect to home
+        return NextResponse.redirect(new URL('/dashboard', request.url));
     }
 
     // ── Admin path requires ADMIN role ──

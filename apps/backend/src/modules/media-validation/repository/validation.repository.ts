@@ -1,5 +1,6 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { PrismaService } from "../../../prisma/prisma.service";
+import { SafetyFlagDto } from "../dto/validation.dto";
 import { ValidationStatus } from "../dto/validation.dto";
 
 /**
@@ -28,7 +29,7 @@ export class ValidationRepository {
     validatedAt: Date;
     contentType: string;
     contentTitle?: string;
-    flags?: any[];
+    flags?: SafetyFlagDto[];
   }) {
     return this.prisma.contentValidation.create({
       data: {

@@ -60,12 +60,13 @@ export function ItemPreviewDrawer({
                                 </button>
                             </div>
                         ) : (
-                            <button
+                            <motion.button
+                                whileTap={{ scale: 0.96 }}
                                 onClick={() => handleBuy(previewItem)}
                                 className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl bg-primary text-white font-heading font-black text-lg hover:bg-primary-dark border-b-4 border-primary-dark active:border-b-0 active:translate-y-1 transition-all"
                             >
                                 <ShoppingCart size={18} /> Mua — {previewItem.price} {previewItem.currency === 'stars' ? '⭐' : '💰'}
-                            </button>
+                            </motion.button>
                         )}
                     </motion.div>
                 </>

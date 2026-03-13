@@ -13,6 +13,7 @@ export class RecommendationGeminiApiService {
     const baseUrl = process.env.GEMINI_BASE_URL || 'https://generativelanguage.googleapis.com';
     const model = process.env.GEMINI_MODEL || 'gemini-1.5-flash';
     const endpoint = `${baseUrl}/v1beta/models/${model}:generateContent?key=${apiKey}`;
+    const startedAt = Date.now();
 
     try {
       const response = await fetch(endpoint, {
@@ -34,19 +35,30 @@ export class RecommendationGeminiApiService {
       });
 
       if (!response.ok) {
-        this.logger.warn(`Gemini request failed: ${response.status}`);
+        this.logger.warn(
+          `Gemini request failed: status=${response.status}, model=${model}, latencyMs=${Date.now() - startedAt}`,
+        );
         return null;
       }
 
       const payload = (await response.json()) as any;
       const text = payload?.candidates?.[0]?.content?.parts?.[0]?.text;
       if (!text) {
+        this.logger.warn(
+          `Gemini response missing text: model=${model}, latencyMs=${Date.now() - startedAt}`,
+        );
         return null;
       }
 
+      this.logger.debug(
+        `Gemini success: model=${model}, latencyMs=${Date.now() - startedAt}, outputChars=${String(text).length}`,
+      );
+
       return text;
     } catch (error) {
-      this.logger.warn(`Gemini request error: ${(error as Error).message}`);
+      this.logger.warn(
+        `Gemini request error: ${(error as Error).message}, model=${model}, latencyMs=${Date.now() - startedAt}`,
+      );
       return null;
     }
   }

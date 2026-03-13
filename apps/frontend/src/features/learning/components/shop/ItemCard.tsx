@@ -58,7 +58,8 @@ export function ItemCard({ item, onBuy, onPreview, stars, coins }: ItemCardProps
                         <Check size={12} /> Đã có
                     </div>
                 ) : (
-                    <button
+                    <motion.button
+                        whileTap={!canAfford ? { x: [-4, 4, -3, 3, -2, 2, 0] } : { scale: 0.95 }}
                         onClick={() => onBuy(item)}
                         disabled={!canAfford}
                         className={`w-full flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-heading font-black transition-all
@@ -69,7 +70,7 @@ export function ItemCard({ item, onBuy, onPreview, stars, coins }: ItemCardProps
                         {canAfford ? <ShoppingCart size={12} /> : <Lock size={12} />}
                         {item.price}
                         {item.currency === 'stars' ? ' ⭐' : ' 💰'}
-                    </button>
+                    </motion.button>
                 )}
             </div>
         </motion.div>

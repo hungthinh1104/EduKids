@@ -178,6 +178,29 @@ export class ContentService {
     }
   }
 
+  async getVocabularyById(vocabularyId: number): Promise<VocabularyDto> {
+    const vocabulary = await this.vocabularyRepository.findById(vocabularyId);
+
+    if (!vocabulary) {
+      throw new NotFoundException(
+        `Vocabulary with ID ${vocabularyId} not found`,
+      );
+    }
+
+    return {
+      id: vocabulary.id,
+      topicId: vocabulary.topicId,
+      word: vocabulary.word,
+      phonetic: vocabulary.phonetic,
+      translation: vocabulary.translation,
+      partOfSpeech: vocabulary.partOfSpeech,
+      exampleSentence: vocabulary.exampleSentence,
+      difficulty: vocabulary.difficulty,
+      media: vocabulary.media.map((media) => this.transformMediaUrl(media)),
+      createdAt: vocabulary.createdAt,
+    };
+  }
+
   /**
    * Transform media URL with CDN base or fallback to placeholder
    * Handles UC-01 Exception: Media loading fails

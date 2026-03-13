@@ -4,24 +4,27 @@ import { apiClient } from '@/shared/services/api.client';
 // Rewards, badges, shop, leaderboard
 
 export interface RewardSummary {
-  childId: number;
   totalPoints: number;
   currentLevel: number;
   streakDays: number;
   nextLevelPoints: number;
   badgesEarned: number;
+  totalBadges?: number;
+  levelProgress?: number;
 }
 
 export interface Badge {
   id: number;
   name: string;
   description?: string;
-  createdAt: string;
-  updatedAt: string;
+  category?: string;
+  icon?: string;
   // Fields from ChildBadge join
   earnedAt?: string;
   childId?: number;
   isEarned?: boolean;
+  progress?: number;
+  requirement?: number;
 }
 
 export interface ShopItem {
@@ -39,6 +42,7 @@ export interface PurchaseResult {
   itemId: number;
   remainingPoints: number;
   message: string;
+  currentLevel?: number;
 }
 
 export interface LeaderboardEntry {
@@ -61,7 +65,25 @@ export interface LeaderboardEntry {
  */
 export const getRewardSummary = async (): Promise<RewardSummary> => {
   const response = await apiClient.get('/gamification/rewards/summary');
-  return response.data.data;
+  const data = response.data.data as {
+    totalPoints: number;
+    currentLevel: number;
+    streakDays: number;
+    pointsToNextLevel: number;
+    badgesEarned: number;
+    totalBadges?: number;
+    levelProgress?: number;
+  };
+
+  return {
+    totalPoints: data.totalPoints,
+    currentLevel: data.currentLevel,
+    streakDays: data.streakDays,
+    nextLevelPoints: data.pointsToNextLevel,
+    badgesEarned: data.badgesEarned,
+    totalBadges: data.totalBadges,
+    levelProgress: data.levelProgress,
+  };
 };
 
 /**
@@ -71,7 +93,17 @@ export const getRewardSummary = async (): Promise<RewardSummary> => {
  */
 export const getAllBadges = async (): Promise<Badge[]> => {
   const response = await apiClient.get('/gamification/badges');
-  return response.data.data;
+  return (response.data.data as Array<Record<string, unknown>>).map((badge) => ({
+    id: Number(badge.id ?? 0),
+    name: String(badge.name ?? ''),
+    description: typeof badge.description === 'string' ? badge.description : undefined,
+    category: typeof badge.category === 'string' ? badge.category : undefined,
+    icon: typeof badge.icon === 'string' ? badge.icon : undefined,
+    isEarned: Boolean(badge.isEarned),
+    progress: typeof badge.progress === 'number' ? badge.progress : undefined,
+    requirement: typeof badge.requirement === 'number' ? badge.requirement : undefined,
+    earnedAt: typeof badge.earnedAt === 'string' ? badge.earnedAt : undefined,
+  }));
 };
 
 /**
@@ -81,7 +113,15 @@ export const getAllBadges = async (): Promise<Badge[]> => {
  */
 export const getEarnedBadges = async (): Promise<Badge[]> => {
   const response = await apiClient.get('/gamification/badges/earned');
-  return response.data.data;
+  return (response.data.data as Array<Record<string, unknown>>).map((badge) => ({
+    id: Number(badge.id ?? 0),
+    name: String(badge.name ?? ''),
+    description: typeof badge.description === 'string' ? badge.description : undefined,
+    category: typeof badge.category === 'string' ? badge.category : undefined,
+    icon: typeof badge.icon === 'string' ? badge.icon : undefined,
+    isEarned: true,
+    earnedAt: typeof badge.earnedAt === 'string' ? badge.earnedAt : undefined,
+  }));
 };
 
 /**
@@ -92,7 +132,16 @@ export const getEarnedBadges = async (): Promise<Badge[]> => {
 export const getShopItems = async (category?: string): Promise<ShopItem[]> => {
   const url = category ? `/gamification/shop/items?category=${category}` : '/gamification/shop/items';
   const response = await apiClient.get(url);
-  return response.data.data;
+  return (response.data.data as Array<Record<string, unknown>>).map((item) => ({
+    id: Number(item.id ?? 0),
+    name: String(item.name ?? ''),
+    description: String(item.description ?? ''),
+    imageUrl: String(item.imageUrl ?? ''),
+    price: Number(item.price ?? 0),
+    category: String(item.category ?? 'BACKGROUND') as ShopItem['category'],
+    isOwned: Boolean(item.isPurchased),
+    isEquipped: Boolean(item.isEquipped),
+  }));
 };
 
 /**
@@ -127,7 +176,24 @@ export const getAvatarCustomization = async (): Promise<{
   availableSlots: string[];
 }> => {
   const response = await apiClient.get('/gamification/avatar/customization');
-  return response.data.data;
+  const data = response.data.data as Record<string, unknown>;
+  const ownedItems = Array.isArray(data.ownedItems) ? data.ownedItems as Array<Record<string, unknown>> : [];
+
+  return {
+    equippedItems: ownedItems
+      .filter((item) => Boolean(item.isEquipped))
+      .map((item) => ({
+        id: Number(item.id ?? 0),
+        name: String(item.name ?? ''),
+        description: String(item.description ?? ''),
+        imageUrl: String(item.imageUrl ?? ''),
+        price: Number(item.price ?? 0),
+        category: String(item.category ?? 'BACKGROUND') as ShopItem['category'],
+        isOwned: Boolean(item.isPurchased),
+        isEquipped: Boolean(item.isEquipped),
+      })),
+    availableSlots: ['hair', 'outfit', 'accessory', 'pet', 'background'],
+  };
 };
 
 /**
@@ -140,6 +206,16 @@ export const getLeaderboard = async (
   scope: 'global' | 'friends' | 'age_group' = 'global',
   limit = 100
 ): Promise<LeaderboardEntry[]> => {
-  const response = await apiClient.get(`/gamification/leaderboard?scope=${scope}&limit=${limit}`);
-  return response.data.data;
+  void scope;
+  const response = await apiClient.get(`/gamification/leaderboard?limit=${limit}`);
+  return (response.data.data as Array<Record<string, unknown>>).map((entry) => ({
+    rank: Number(entry.rank ?? 0),
+    childId: Number(entry.childId ?? 0),
+    nickname: String(entry.childName ?? ''),
+    avatarUrl: String(entry.avatar ?? ''),
+    totalPoints: Number(entry.totalPoints ?? 0),
+    level: Number(entry.currentLevel ?? 0),
+    childName: typeof entry.childName === 'string' ? entry.childName : undefined,
+    badgesEarned: typeof entry.badgesEarned === 'number' ? entry.badgesEarned : undefined,
+  }));
 };

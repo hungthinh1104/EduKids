@@ -20,6 +20,10 @@ export class ApprovalService {
 
   constructor(private prisma: PrismaService) {}
 
+  private getErrorMessage(error: unknown): string {
+    return error instanceof Error ? error.message : "Unknown error";
+  }
+
   /**
    * Approve content for publishing
    */
@@ -117,10 +121,8 @@ export class ApprovalService {
 
       this.logger.log(`Content approved: ${request.contentId}`);
       return response;
-    } catch (error: any) {
-      this.logger.error(
-        `Approval failed: ${error?.message || "Unknown error"}`,
-      );
+    } catch (error: unknown) {
+      this.logger.error(`Approval failed: ${this.getErrorMessage(error)}`);
       throw error;
     }
   }
@@ -177,9 +179,9 @@ export class ApprovalService {
 
       this.logger.log(`Conditional approval created: ${request.contentId}`);
       return response;
-    } catch (error: any) {
+    } catch (error: unknown) {
       this.logger.error(
-        `Conditional approval failed: ${error?.message || "Unknown error"}`,
+        `Conditional approval failed: ${this.getErrorMessage(error)}`,
       );
       throw error;
     }
@@ -240,10 +242,8 @@ export class ApprovalService {
 
       this.logger.log(`Content rejected: ${contentId}`);
       return response;
-    } catch (error: any) {
-      this.logger.error(
-        `Rejection failed: ${error?.message || "Unknown error"}`,
-      );
+    } catch (error: unknown) {
+      this.logger.error(`Rejection failed: ${this.getErrorMessage(error)}`);
       throw error;
     }
   }
@@ -271,7 +271,7 @@ export class ApprovalService {
   /**
    * Get pending approvals
    */
-  async getPendingApprovals(limit = 50): Promise<any[]> {
+  async getPendingApprovals(limit = 50) {
     return this.prisma.contentValidation.findMany({
       where: {
         status: {
@@ -397,9 +397,9 @@ export class ApprovalService {
 
       // Mock: Log notification
       this.logger.debug(`Notification: ${title} - ${message}`);
-    } catch (error: any) {
+    } catch (error: unknown) {
       this.logger.error(
-        `Failed to send notification: ${error?.message || "Unknown error"}`,
+        `Failed to send notification: ${this.getErrorMessage(error)}`,
       );
     }
   }
@@ -463,9 +463,9 @@ export class ApprovalService {
           comments,
         });
         results.push(result);
-      } catch (error: any) {
+      } catch (error: unknown) {
         this.logger.error(
-          `Failed to approve ${contentId}: ${error?.message || "Unknown error"}`,
+          `Failed to approve ${contentId}: ${this.getErrorMessage(error)}`,
         );
       }
     }
@@ -494,9 +494,9 @@ export class ApprovalService {
           rejectedBy,
         );
         results.push(result);
-      } catch (error: any) {
+      } catch (error: unknown) {
         this.logger.error(
-          `Failed to reject ${contentId}: ${error?.message || "Unknown error"}`,
+          `Failed to reject ${contentId}: ${this.getErrorMessage(error)}`,
         );
       }
     }

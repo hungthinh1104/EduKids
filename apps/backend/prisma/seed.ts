@@ -22,7 +22,12 @@ async function main() {
   // 0. SEED ADMIN USER
   // ========================================
   console.log('👤 Seeding Admin User...');
-  const adminPassword = 'Admin@123456'; // Change this in production
+  const adminPassword = process.env.ADMIN_SEED_PASSWORD || 'ChangeMe-Local-Only-123!';
+
+  if (process.env.NODE_ENV === 'production' && !process.env.ADMIN_SEED_PASSWORD) {
+    throw new Error('ADMIN_SEED_PASSWORD is required when seeding in production');
+  }
+
   const hashedPassword = await bcrypt.hash(adminPassword, 10);
   
   const adminUser = await prisma.user.upsert({
@@ -39,7 +44,11 @@ async function main() {
   });
   console.log(`✅ Created admin user: ${adminUser.email}`);
   console.log(`   📧 Email: admin@edukids.com`);
-  console.log(`   🔑 Password: ${adminPassword}`);
+  if (process.env.SHOW_SEED_CREDENTIALS === 'true') {
+    console.log(`   🔑 Password: ${adminPassword}`);
+  } else {
+    console.log('   🔒 Password: [hidden] (set SHOW_SEED_CREDENTIALS=true to print)');
+  }
   console.log('');
 
   // ========================================

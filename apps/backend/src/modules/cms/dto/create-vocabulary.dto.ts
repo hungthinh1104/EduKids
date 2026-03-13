@@ -34,25 +34,35 @@ export class CreateVocabularyDto {
   @ApiProperty({
     example: "A large carnivorous feline",
     description: "Word definition",
-    minLength: 5,
+    minLength: 1,
     maxLength: 500,
   })
   @IsString()
   @IsNotEmpty()
-  @MinLength(5)
+  @MinLength(1)
   @MaxLength(500)
   definition: string;
 
   @ApiProperty({
+    example: "/laɪən/",
+    description: "Phonetic transcription",
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  phonetic?: string;
+
+  @ApiProperty({
     example: "A large wild cat with a mane",
     description: "Word example usage",
-    minLength: 5,
+    minLength: 1,
     maxLength: 500,
     required: false,
   })
   @IsOptional()
   @IsString()
-  @MinLength(5)
+  @MinLength(1)
   @MaxLength(500)
   example?: string;
 

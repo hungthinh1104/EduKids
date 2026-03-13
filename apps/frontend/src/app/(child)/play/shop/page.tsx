@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import { Star, Coins, ArrowLeft, Sparkles } from 'lucide-react';
@@ -26,6 +26,16 @@ export default function ShopPage() {
     const [previewItem, setPreviewItem] = useState<ShopItem | null>(null);
     const [loading, setLoading] = useState(true);
     const [purchased, setPurchased] = useState<number | null>(null);
+    const purchaseTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+    useEffect(() => {
+        return () => {
+            if (purchaseTimeoutRef.current) {
+                clearTimeout(purchaseTimeoutRef.current);
+            }
+        };
+    }, []);
+
     const [equippedBySlot, setEquippedBySlot] = useState<Record<string, number | null>>({
         'Mũ': null,
         'Áo': null,
@@ -67,7 +77,7 @@ export default function ShopPage() {
                 setCoins(result.remainingCoins);
                 setPurchased(item.id);
                 setPreviewItem(null);
-                setTimeout(() => setPurchased(null), 2500);
+                purchaseTimeoutRef.current = setTimeout(() => setPurchased(null), 2500);
             }
         } catch (err) {
             console.error('Failed to purchase item:', err);

@@ -52,7 +52,7 @@ export class ChildProfileController {
 
   /**
    * Create a new child profile
-   * POST /api/v1/profiles
+    * POST /api/profiles
    */
   @Post()
   @Roles("PARENT")
@@ -97,7 +97,7 @@ export class ChildProfileController {
 
   /**
    * Get all child profiles for parent
-   * GET /api/v1/profiles
+    * GET /api/profiles
    */
   @Get()
   @Roles("PARENT")
@@ -124,7 +124,7 @@ export class ChildProfileController {
 
   /**
    * Get a single child profile by ID
-   * GET /api/v1/profiles/:id
+    * GET /api/profiles/:id
    */
   @Get(":id")
   @Roles("PARENT")
@@ -165,7 +165,7 @@ export class ChildProfileController {
 
   /**
    * Update child profile details
-   * PUT /api/v1/profiles/:id
+    * PUT /api/profiles/:id
    */
   @Put(":id")
   @Roles("PARENT")
@@ -199,7 +199,7 @@ export class ChildProfileController {
 
   /**
    * Delete child profile
-   * DELETE /api/v1/profiles/:id
+    * DELETE /api/profiles/:id
    */
   @Delete(":id")
   @Roles("PARENT")
@@ -245,7 +245,7 @@ export class ChildProfileController {
 
   /**
    * Switch active child profile (UC-06 Main Action)
-   * POST /api/v1/profiles/switch
+    * POST /api/profiles/switch
    */
   @Post("switch")
   @Roles("PARENT")
@@ -274,7 +274,7 @@ export class ChildProfileController {
 
   /**
    * Get currently active profile
-   * GET /api/v1/profiles/active
+    * GET /api/profiles/active/current
    */
   @Get("active/current")
   @Roles("PARENT", "LEARNER")

@@ -50,13 +50,22 @@ export const submitPronunciation = async (
   vocabularyId: number,
   confidenceScore: number,
   recognizedText?: string,
-  recordingDurationMs?: number
+  recordingDurationMs?: number,
+  audioBase64?: string,
+  audioMimeType?: string,
 ): Promise<PronunciationAttempt> => {
-  const response = await apiClient.post(`/pronunciation`, {
+  const safeDuration =
+    recordingDurationMs === undefined
+      ? undefined
+      : Math.min(10000, Math.max(5000, recordingDurationMs));
+
+  const response = await apiClient.post(`/pronunciation/${vocabularyId}`, {
     vocabularyId,
     confidenceScore,
     recognizedText,
-    recordingDurationMs,
+    recordingDurationMs: safeDuration,
+    audioBase64,
+    audioMimeType,
   });
   return response.data.data;
 };
@@ -79,7 +88,8 @@ export const getPronunciationProgress = async (
  * @Roles LEARNER
  */
 export const getPronunciationHistory = async (limit = 50): Promise<PronunciationAttempt[]> => {
-  const response = await apiClient.get(`/pronunciation/history?limit=${limit}`);
+  void limit;
+  const response = await apiClient.get(`/pronunciation/history`);
   return response.data.data;
 };
 

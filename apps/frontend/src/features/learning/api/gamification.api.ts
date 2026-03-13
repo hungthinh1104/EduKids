@@ -75,56 +75,135 @@ export interface ApiEnvelope<T> {
 export const gamificationApi = {
   // Get rewards summary
   getRewardsSummary: async (childId: number): Promise<RewardsSummary> => {
-    const response = await axiosInstance.get<ApiEnvelope<RewardsSummary>>(
-      `gamification/rewards/summary?childId=${childId}`
-    );
-    return response.data.data;
+    void childId;
+    const response = await axiosInstance.get<ApiEnvelope<{
+      totalPoints: number;
+      currentLevel: number;
+      pointsToNextLevel: number;
+      streakDays: number;
+      badgesEarned: number;
+      totalBadges?: number;
+    }>>('gamification/rewards/summary');
+
+    const payload = response.data.data;
+    return {
+      totalPoints: payload.totalPoints,
+      currentLevel: payload.currentLevel,
+      pointsToNextLevel: payload.pointsToNextLevel,
+      streakDays: payload.streakDays,
+      totalBadges: payload.totalBadges ?? payload.badgesEarned,
+      stars: payload.totalPoints,
+      coins: 0,
+    };
   },
 
   // Get all badges
   getBadges: async (): Promise<Badge[]> => {
-    const response = await axiosInstance.get<ApiEnvelope<Badge[]>>('gamification/badges');
-    return response.data.data;
+    const response = await axiosInstance.get<ApiEnvelope<Array<Record<string, unknown>>>>('gamification/badges');
+    return (response.data.data ?? []).map((badge) => ({
+      id: Number(badge.id ?? 0),
+      name: String(badge.name ?? ''),
+      description: typeof badge.description === 'string' ? badge.description : '',
+      imageUrl: typeof badge.imageUrl === 'string' ? badge.imageUrl : undefined,
+      rarity: typeof badge.rarity === 'string' ? badge.rarity.toLowerCase() : 'common',
+      category: typeof badge.category === 'string' ? badge.category : 'Khác',
+      icon: typeof badge.icon === 'string' ? badge.icon : '🏆',
+      criteria: typeof badge.criteria === 'string' ? badge.criteria : undefined,
+      earnedAt: typeof badge.earnedAt === 'string' ? badge.earnedAt : undefined,
+    }));
   },
 
   // Get earned badges
   getEarnedBadges: async (childId: number): Promise<EarnedBadge[]> => {
-    const response = await axiosInstance.get<ApiEnvelope<EarnedBadge[]>>(
-      `gamification/badges/earned?childId=${childId}`
+    void childId;
+    const response = await axiosInstance.get<ApiEnvelope<Array<Record<string, unknown>>>>(
+      'gamification/badges/earned'
     );
-    return response.data.data;
+    return (response.data.data ?? []).map((badge) => ({
+      id: Number(badge.id ?? 0),
+      name: String(badge.name ?? ''),
+      description: typeof badge.description === 'string' ? badge.description : '',
+      imageUrl: typeof badge.imageUrl === 'string' ? badge.imageUrl : undefined,
+      rarity: typeof badge.rarity === 'string' ? badge.rarity.toLowerCase() : 'common',
+      category: typeof badge.category === 'string' ? badge.category : 'Khác',
+      icon: typeof badge.icon === 'string' ? badge.icon : '🏆',
+      criteria: typeof badge.criteria === 'string' ? badge.criteria : undefined,
+      earnedAt: String(badge.earnedAt ?? new Date().toISOString()),
+    }));
   },
 
   // Get shop items
   getShopItems: async (): Promise<ShopItem[]> => {
-    const response = await axiosInstance.get<ApiEnvelope<ShopItem[]>>('gamification/shop/items');
-    return response.data.data;
+    const response = await axiosInstance.get<ApiEnvelope<Array<Record<string, unknown>>>>('gamification/shop/items');
+    return (response.data.data ?? []).map((item) => ({
+      id: Number(item.id ?? 0),
+      name: String(item.name ?? ''),
+      description: typeof item.description === 'string' ? item.description : undefined,
+      price: Number(item.price ?? 0),
+      currency: 'stars',
+      category: String(item.category ?? 'Khác'),
+      imageUrl: typeof item.imageUrl === 'string' ? item.imageUrl : undefined,
+      emoji: typeof item.emoji === 'string' ? item.emoji : '🎁',
+      rarity: typeof item.rarity === 'string' ? item.rarity.toLowerCase() : 'common',
+      owned: Boolean(item.isPurchased),
+    }));
   },
 
   // Purchase item
   purchaseItem: async (childId: number, itemId: number): Promise<PurchaseResult> => {
-    const response = await axiosInstance.post<ApiEnvelope<PurchaseResult>>(
+    void childId;
+    const response = await axiosInstance.post<ApiEnvelope<{
+      itemId: number;
+      remainingPoints: number;
+      message: string;
+    }>>(
       'gamification/shop/purchase',
-      { childId, itemId }
+      { itemId }
     );
-    return response.data.data;
+    const payload = response.data.data;
+    return {
+      success: true,
+      message: payload.message,
+      remainingStars: payload.remainingPoints,
+      remainingCoins: 0,
+      item: {
+        id: payload.itemId,
+        name: '',
+        price: 0,
+        currency: 'stars',
+        category: '',
+        rarity: 'common',
+        owned: true,
+      },
+    };
   },
 
   // Equip item
   equipItem: async (childId: number, itemId: number): Promise<EquipResult> => {
+    void childId;
     const response = await axiosInstance.post<ApiEnvelope<EquipResult>>(
       'gamification/shop/equip',
-      { childId, itemId }
+      { itemId }
     );
     return response.data.data;
   },
 
   // Get avatar customization
   getAvatarCustomization: async (childId: number): Promise<AvatarCustomization> => {
-    const response = await axiosInstance.get<ApiEnvelope<AvatarCustomization>>(
-      `gamification/avatar/customization?childId=${childId}`
+    void childId;
+    const response = await axiosInstance.get<ApiEnvelope<{
+      childId?: number;
+      equippedItems?: ShopItem[];
+      ownedItems?: ShopItem[];
+    }>>(
+      'gamification/avatar/customization'
     );
-    return response.data.data;
+    const payload = response.data.data;
+    return {
+      childId: Number(payload.childId ?? 0),
+      equippedItems: Array.isArray(payload.equippedItems) ? payload.equippedItems : [],
+      availableItems: Array.isArray(payload.ownedItems) ? payload.ownedItems : [],
+    };
   },
 
   // Get leaderboard

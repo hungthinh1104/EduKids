@@ -21,6 +21,10 @@ export class CmsRepository {
       data: {
         name: dto.name,
         description: dto.description,
+        learningLevel: dto.learningLevel,
+        imageUrl: dto.imageUrl,
+        status: dto.status,
+        tags: dto.tags ?? [],
       },
     });
   }
@@ -31,6 +35,10 @@ export class CmsRepository {
 
     if (dto.name) updateData.name = dto.name;
     if (dto.description) updateData.description = dto.description;
+    if (dto.learningLevel !== undefined) updateData.learningLevel = dto.learningLevel;
+    if (dto.imageUrl !== undefined) updateData.imageUrl = dto.imageUrl;
+    if (dto.status !== undefined) updateData.status = dto.status;
+    if (dto.tags !== undefined) updateData.tags = dto.tags;
 
     return this.prisma.topic.update({
       where: { id: topicId },
@@ -57,6 +65,9 @@ export class CmsRepository {
       `Fetching topics - skip: ${skip}, take: ${take}, status: ${status}`,
     );
     const where: Record<string, unknown> = {};
+    if (status && status !== ("all" as unknown as ContentStatus)) {
+      where.status = status;
+    }
 
     const [topics, total] = await Promise.all([
       this.prisma.topic.findMany({
@@ -66,7 +77,7 @@ export class CmsRepository {
         orderBy: { createdAt: "desc" },
         include: {
           _count: {
-            select: { vocabularies: true },
+            select: { vocabularies: true, quizzes: true },
           },
         },
       }),
@@ -90,7 +101,7 @@ export class CmsRepository {
     return this.prisma.topic.update({
       where: { id: topicId },
       data: {
-        description: "Published",
+        status: ContentStatus.PUBLISHED,
       },
     });
   }
@@ -104,7 +115,11 @@ export class CmsRepository {
         word: dto.word,
         topicId: dto.topicId,
         translation: dto.definition,
+        phonetic: dto.phonetic || null,
         exampleSentence: dto.example || null,
+        imageUrl: dto.imageUrl || null,
+        audioUrl: dto.audioUrl || null,
+        status: dto.status,
       },
     });
   }
@@ -113,12 +128,16 @@ export class CmsRepository {
     this.logger.debug(`Updating vocabulary ID: ${vocabularyId}`);
     const updateData: Record<string, unknown> = {};
 
-    if (dto.word) updateData.word = dto.word;
-    if (dto.definition) updateData.definition = dto.definition;
-    if (dto.example !== undefined) updateData.example = dto.example;
-    if (dto.imageUrl !== undefined) updateData.imageUrl = dto.imageUrl;
-    if (dto.audioUrl !== undefined) updateData.audioUrl = dto.audioUrl;
-    if (dto.status) updateData.status = dto.status;
+    if (dto.word !== undefined) updateData.word = dto.word;
+    // "definition" in DTO maps to "translation" in the Prisma Vocabulary model
+    if (dto.definition !== undefined) updateData.translation = dto.definition;
+    // "phonetic" maps directly
+    if (dto.phonetic !== undefined) updateData.phonetic = dto.phonetic || null;
+    // "example" in DTO maps to "exampleSentence" in the Prisma Vocabulary model
+    if (dto.example !== undefined) updateData.exampleSentence = dto.example || null;
+    if (dto.imageUrl !== undefined) updateData.imageUrl = dto.imageUrl || null;
+    if (dto.audioUrl !== undefined) updateData.audioUrl = dto.audioUrl || null;
+    if (dto.status !== undefined) updateData.status = dto.status;
 
     return this.prisma.vocabulary.update({
       where: { id: vocabularyId },
@@ -168,7 +187,7 @@ export class CmsRepository {
     return this.prisma.vocabulary.update({
       where: { id: vocabularyId },
       data: {
-        difficulty: 1,
+        status: ContentStatus.PUBLISHED,
       },
     });
   }
@@ -179,18 +198,61 @@ export class CmsRepository {
     dto: CreateQuizStructureDto,
     _createdByUserId: number,
   ) {
-    this.logger.debug(`Creating quiz structure (stub)`);
-    return { id: 0, topicId: dto.topicId };
+    this.logger.debug(`Creating quiz structure for topic ${dto.topicId}: ${dto.title}`);
+    return this.prisma.topicQuiz.create({
+      data: {
+        topicId: dto.topicId,
+        title: dto.title,
+        description: dto.description ?? null,
+        questionText: dto.questionText,
+        difficultyLevel: dto.difficultyLevel,
+        status: dto.status,
+        options: {
+          create: dto.options.map((opt) => ({
+            text: opt.text,
+            isCorrect: opt.isCorrect,
+          })),
+        },
+      },
+      include: { options: true },
+    });
   }
 
-  async updateQuizStructure(quizId: number, _dto: UpdateQuizStructureDto) {
+  async updateQuizStructure(quizId: number, dto: UpdateQuizStructureDto) {
     this.logger.debug(`Updating quiz structure ID: ${quizId}`);
-    return { id: quizId };
+
+    // If options are provided, replace them all
+    if (dto.options && dto.options.length > 0) {
+      await this.prisma.topicQuizOption.deleteMany({ where: { quizId } });
+      await this.prisma.topicQuizOption.createMany({
+        data: dto.options.map((opt) => ({
+          quizId,
+          text: opt.text,
+          isCorrect: opt.isCorrect,
+        })),
+      });
+    }
+
+    const updateData: Record<string, unknown> = {};
+    if (dto.title !== undefined) updateData.title = dto.title;
+    if (dto.description !== undefined) updateData.description = dto.description;
+    if (dto.questionText !== undefined) updateData.questionText = dto.questionText;
+    if (dto.difficultyLevel !== undefined) updateData.difficultyLevel = dto.difficultyLevel;
+    if (dto.status !== undefined) updateData.status = dto.status;
+
+    return this.prisma.topicQuiz.update({
+      where: { id: quizId },
+      data: updateData,
+      include: { options: true },
+    });
   }
 
   async getQuizStructureById(quizId: number) {
     this.logger.debug(`Fetching quiz structure ID: ${quizId}`);
-    return { id: quizId };
+    return this.prisma.topicQuiz.findUnique({
+      where: { id: quizId },
+      include: { options: true, topic: true },
+    });
   }
 
   async getQuizStructuresByTopicId(
@@ -201,16 +263,31 @@ export class CmsRepository {
     this.logger.debug(
       `Fetching quizzes for topic ${topicId} - skip: ${skip}, take: ${take}`,
     );
-    return { quizzes: [], total: 0 };
+    const [quizzes, total] = await Promise.all([
+      this.prisma.topicQuiz.findMany({
+        where: { topicId },
+        skip,
+        take,
+        orderBy: { createdAt: "desc" },
+        include: { options: true },
+      }),
+      this.prisma.topicQuiz.count({ where: { topicId } }),
+    ]);
+    return { quizzes, total };
   }
 
   async deleteQuizStructure(quizId: number): Promise<void> {
     this.logger.debug(`Deleting quiz structure ID: ${quizId}`);
+    await this.prisma.topicQuiz.delete({ where: { id: quizId } });
   }
 
   async publishQuizStructure(quizId: number, _userId: number) {
     this.logger.debug(`Publishing quiz structure ID: ${quizId}`);
-    return { id: quizId };
+    return this.prisma.topicQuiz.update({
+      where: { id: quizId },
+      data: { status: ContentStatus.PUBLISHED },
+      include: { options: true },
+    });
   }
 
   // ============ AUDIT LOG OPERATIONS ============

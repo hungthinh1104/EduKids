@@ -1,16 +1,28 @@
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { CMSVocabulary } from '@/features/cms/api/cms.api';
 import { useEffect } from 'react';
+import { MediaUploadField } from './MediaUploadField';
+
+const isSupportedAssetUrl = (value: string) => {
+  if (!value) return true;
+
+  try {
+    const url = new URL(value);
+    return ['http:', 'https:', 'data:'].includes(url.protocol);
+  } catch {
+    return false;
+  }
+};
 
 const vocabularySchema = z.object({
   word: z.string().min(1, 'Từ vựng không được để trống').max(100),
   definition: z.string().min(1, 'Định nghĩa không được để trống'),
   phonetic: z.string().optional(),
   example: z.string().optional(),
-  imageUrl: z.string().url('URL hình ảnh không hợp lệ').optional().or(z.literal('')),
-  audioUrl: z.string().url('URL âm thanh không hợp lệ').optional().or(z.literal('')),
+  imageUrl: z.string().refine(isSupportedAssetUrl, 'URL hình ảnh không hợp lệ').optional().or(z.literal('')),
+  audioUrl: z.string().refine(isSupportedAssetUrl, 'URL âm thanh không hợp lệ').optional().or(z.literal('')),
 });
 
 export type VocabularyFormData = z.infer<typeof vocabularySchema>;
@@ -26,6 +38,8 @@ export function VocabularyForm({ initialData, onSubmit, onCancel, isLoading }: V
   const {
     register,
     handleSubmit,
+    setValue,
+    control,
     formState: { errors },
     reset
   } = useForm<VocabularyFormData>({
@@ -39,6 +53,9 @@ export function VocabularyForm({ initialData, onSubmit, onCancel, isLoading }: V
       audioUrl: '',
     }
   });
+
+  const imageUrlValue = useWatch({ control, name: 'imageUrl' });
+  const audioUrlValue = useWatch({ control, name: 'audioUrl' });
 
   useEffect(() => {
     if (initialData) {
@@ -125,6 +142,15 @@ export function VocabularyForm({ initialData, onSubmit, onCancel, isLoading }: V
               placeholder="https://..."
             />
             {errors.imageUrl && <p className="text-red-500 text-sm mt-1">{errors.imageUrl.message}</p>}
+            <MediaUploadField
+              mediaType="IMAGE"
+              context="VOCABULARY"
+              accept="image/*"
+              buttonLabel="Tải ảnh lên"
+              currentValue={imageUrlValue}
+              disabled={isLoading}
+              onUploaded={(url) => setValue('imageUrl', url, { shouldDirty: true, shouldValidate: true })}
+            />
           </div>
           <div>
             <label className="block text-sm font-bold text-gray-700 mb-2">URL Âm thanh (Audio)</label>
@@ -136,6 +162,15 @@ export function VocabularyForm({ initialData, onSubmit, onCancel, isLoading }: V
               placeholder="https://..."
             />
             {errors.audioUrl && <p className="text-red-500 text-sm mt-1">{errors.audioUrl.message}</p>}
+            <MediaUploadField
+              mediaType="AUDIO"
+              context="VOCABULARY"
+              accept="audio/*"
+              buttonLabel="Tải audio lên"
+              currentValue={audioUrlValue}
+              disabled={isLoading}
+              onUploaded={(url) => setValue('audioUrl', url, { shouldDirty: true, shouldValidate: true })}
+            />
           </div>
         </div>
       </div>

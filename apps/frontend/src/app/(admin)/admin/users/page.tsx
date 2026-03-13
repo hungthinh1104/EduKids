@@ -21,6 +21,7 @@ export default function AdminUsersPage() {
     const [users, setUsers] = useState<AdminUser[]>([]);
     const [currentPage, setCurrentPage] = useState(1);
     const [selectedUserIds, setSelectedUserIds] = useState<number[]>([]);
+    const [bulkActionMessage, setBulkActionMessage] = useState<string | null>(null);
     const PAGE_SIZE = 10;
 
     useEffect(() => {
@@ -100,21 +101,45 @@ export default function AdminUsersPage() {
         document.body.removeChild(link);
     };
 
+    const handleBulkStatusUpdate = (status: Extract<StatusFilter, 'active' | 'banned'>) => {
+        if (selectedUserIds.length === 0) return;
+
+        setUsers((prev) =>
+            prev.map((user) =>
+                selectedUserIds.includes(user.id)
+                    ? { ...user, status }
+                    : user,
+            ),
+        );
+        setBulkActionMessage(
+            status === 'banned'
+                ? `Đã khóa ${selectedUserIds.length} tài khoản (mô phỏng UI).`
+                : `Đã mở khóa ${selectedUserIds.length} tài khoản (mô phỏng UI).`,
+        );
+        setSelectedUserIds([]);
+    };
+
     return (
         <div className="space-y-8">
             {/* Header */}
-            <motion.div initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }} className="flex items-start justify-between">
+            <motion.div initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }} className="flex items-start justify-between rounded-3xl border border-primary/15 bg-gradient-to-r from-primary-light/55 via-card to-accent-light/40 p-5 md:p-6 shadow-sm">
                 <div>
                     <Heading level={2} className="text-heading text-3xl mb-1">Người dùng 👥</Heading>
                     <Caption className="text-caption">Quản lý tài khoản phụ huynh và học sinh</Caption>
                 </div>
-                <button onClick={handleExportCSV} className="flex items-center gap-2 px-4 py-2.5 bg-white border border-border rounded-xl text-sm font-heading font-bold text-body hover:bg-primary hover:text-white hover:border-primary transition-colors shadow-sm">
+                <button onClick={handleExportCSV} className="flex items-center gap-2 px-4 py-2.5 bg-card border border-border rounded-xl text-sm font-heading font-bold text-body hover:bg-primary hover:text-white hover:border-primary transition-colors shadow-sm">
                     <Download size={16} /> Xuất CSV
                 </button>
             </motion.div>
 
+            {bulkActionMessage && (
+                <div className="rounded-2xl border border-primary/20 bg-primary-light/40 px-4 py-3">
+                    <Caption className="text-primary">{bulkActionMessage}</Caption>
+                </div>
+            )}
+
             {/* Metrics */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-5">
                 <MetricCard label="Tổng tài khoản" value={users.length} icon={<Users size={20} />} colorCls="text-primary bg-primary-light" index={0} />
                 <MetricCard label="Đang hoạt động" value={users.filter((u) => u.status === 'active').length} icon={<Shield size={20} />} colorCls="text-success bg-success-light" index={1} />
                 <MetricCard label="Gói Premium" value={users.filter((u) => u.plan === 'premium').length} icon={<Star size={20} />} colorCls="text-warning bg-warning-light" index={2} />
@@ -122,7 +147,7 @@ export default function AdminUsersPage() {
             </div>
 
             {/* Filters */}
-            <div className="flex items-center gap-3 flex-wrap">
+            <div className="flex items-center gap-3 flex-wrap rounded-2xl border border-border/70 bg-card/90 p-3.5 md:p-4 shadow-sm">
                 <div className="relative flex-1 min-w-[220px] max-w-sm">
                     <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-caption" />
                     <input
@@ -184,10 +209,10 @@ export default function AdminUsersPage() {
                             <span className="font-heading font-bold text-primary">Đã chọn {selectedUserIds.length} người dùng</span>
                         </div>
                         <div className="flex items-center gap-3">
-                            <button className="flex items-center gap-2 px-4 py-2 bg-white text-error font-heading font-bold text-sm rounded-xl border border-border shadow-sm hover:bg-error-light hover:border-error transition-all" onClick={() => console.log('Ban', selectedUserIds)}>
+                            <button className="flex items-center gap-2 px-4 py-2 bg-white text-error font-heading font-bold text-sm rounded-xl border border-border shadow-sm hover:bg-error-light hover:border-error transition-all" onClick={() => handleBulkStatusUpdate('banned')}>
                                 <Ban size={16} /> Khóa tài khoản
                             </button>
-                            <button className="flex items-center gap-2 px-4 py-2 bg-white text-success font-heading font-bold text-sm rounded-xl border border-border shadow-sm hover:bg-success-light hover:border-success transition-all" onClick={() => console.log('Unban', selectedUserIds)}>
+                            <button className="flex items-center gap-2 px-4 py-2 bg-white text-success font-heading font-bold text-sm rounded-xl border border-border shadow-sm hover:bg-success-light hover:border-success transition-all" onClick={() => handleBulkStatusUpdate('active')}>
                                 <Shield size={16} /> Mở khóa
                             </button>
                         </div>
@@ -196,10 +221,10 @@ export default function AdminUsersPage() {
             </AnimatePresence>
 
             {/* Table */}
-            <div className="bg-card border-2 border-border rounded-2xl overflow-hidden">
+            <div className="bg-card border border-border/70 rounded-2xl overflow-hidden shadow-sm">
                 <div className="overflow-x-auto">
                     <table className="w-full text-sm">
-                        <thead className="bg-background border-b-2 border-border">
+                        <thead className="bg-background/80 border-b border-border">
                             <tr>
                                 <th className="text-left px-5 py-3 w-10">
                                     <input

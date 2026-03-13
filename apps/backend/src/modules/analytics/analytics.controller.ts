@@ -56,7 +56,7 @@ export class AnalyticsController {
 
   /**
    * Get complete analytics overview (UC-07 Main Action)
-   * GET /api/v1/analytics/overview
+    * GET /api/analytics/overview
    */
   @Get('overview')
   @Roles('PARENT')
@@ -125,7 +125,7 @@ export class AnalyticsController {
 
   /**
    * Get learning time analytics
-   * GET /api/v1/analytics/learning-time
+    * GET /api/analytics/learning-time
    */
   @Get('learning-time')
   @Roles('PARENT')
@@ -167,7 +167,7 @@ export class AnalyticsController {
 
   /**
    * Get vocabulary retention analytics
-   * GET /api/v1/analytics/vocabulary
+    * GET /api/analytics/vocabulary
    */
   @Get('vocabulary')
   @Roles('PARENT')
@@ -213,7 +213,7 @@ export class AnalyticsController {
 
   /**
    * Get pronunciation accuracy analytics
-   * GET /api/v1/analytics/pronunciation
+    * GET /api/analytics/pronunciation
    */
   @Get('pronunciation')
   @Roles('PARENT')
@@ -259,7 +259,7 @@ export class AnalyticsController {
 
   /**
    * Get quiz performance analytics
-   * GET /api/v1/analytics/quiz
+    * GET /api/analytics/quiz
    */
   @Get('quiz')
   @Roles('PARENT')
@@ -301,7 +301,7 @@ export class AnalyticsController {
 
   /**
    * Get gamification progress analytics
-   * GET /api/v1/analytics/gamification
+    * GET /api/analytics/gamification
    */
   @Get('gamification')
   @Roles('PARENT')

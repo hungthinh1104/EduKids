@@ -44,7 +44,10 @@ export function TopicNode({ id, name, icon, color, starsEarned, completed, total
         >
             {locked ? (
                 // Locked node
-                <div className="relative w-48 rounded-[1.5rem] bg-card border-2 border-dashed border-border p-5 flex flex-col items-center gap-3 opacity-50 cursor-not-allowed">
+                <motion.div 
+                    whileTap={{ x: [-5, 5, -4, 4, -2, 2, 0] }}
+                    className="relative w-48 rounded-[1.5rem] bg-card border-2 border-dashed border-border p-5 flex flex-col items-center gap-3 opacity-60 cursor-not-allowed"
+                >
                     <div className="w-16 h-16 rounded-full bg-background border-2 border-border flex items-center justify-center text-3xl grayscale">
                         {icon}
                     </div>
@@ -52,7 +55,7 @@ export function TopicNode({ id, name, icon, color, starsEarned, completed, total
                     <div className="flex items-center gap-1.5 text-body text-xs">
                         <Lock size={12} /> Chưa mở khóa
                     </div>
-                </div>
+                </motion.div>
             ) : (
                 // Unlocked / current node
                 <Link href={`/play/topic/${id}`}>

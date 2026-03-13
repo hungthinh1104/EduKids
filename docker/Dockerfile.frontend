@@ -26,16 +26,14 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
-
-COPY --from=deps-prod /app/node_modules ./node_modules
-COPY package*.json ./
+ENV PORT=3000
+ENV HOSTNAME=0.0.0.0
 
 RUN addgroup -g 1001 -S nodejs && adduser -S nextjs -u 1001
 
-COPY --from=builder /app/.next ./.next
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/public ./public
-COPY --from=builder /app/next.config.mjs ./next.config.mjs
-COPY --from=builder /app/postcss.config.js ./postcss.config.js
 
 RUN chown -R nextjs:nodejs /app
 
@@ -45,6 +43,6 @@ EXPOSE 3000
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
-  CMD wget --quiet --tries=1 --spider http://localhost:3000 || exit 1
+  CMD wget --quiet --tries=1 --spider http://127.0.0.1:3000 || exit 1
 
-CMD ["npm", "run", "start"]
+CMD ["node", "server.js"]

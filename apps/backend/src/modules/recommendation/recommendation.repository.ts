@@ -350,8 +350,12 @@ export class RecommendationRepository {
       return [];
     }
 
-    const normalized = normalizeGeminiRecommendationOutput(rawOutput);
     const allowedTopicIds = new Set(candidateTopics.map((t) => t.id));
+    const normalized = normalizeGeminiRecommendationOutput(rawOutput, {
+      maxRecommendations: context.constraints?.maxRecommendations ?? 3,
+      maxPathItems: context.constraints?.maxPathItems ?? 3,
+      allowedTopicIds: [...allowedTopicIds],
+    });
 
     const generatedAt = new Date();
 

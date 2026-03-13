@@ -1,4 +1,5 @@
 import { ImageResponse } from 'next/og';
+import { semanticColors } from '@/shared/utils/design-tokens';
 
 export const size = {
   width: 180,
@@ -17,8 +18,8 @@ export default function AppleIcon() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: 'linear-gradient(135deg, #34D399 0%, #60A5FA 100%)',
-          color: 'white',
+          background: `linear-gradient(135deg, ${semanticColors.secondary} 0%, ${semanticColors.primaryLight} 100%)`,
+          color: semanticColors.textInverse,
           fontSize: 72,
           fontWeight: 900,
           borderRadius: 36,

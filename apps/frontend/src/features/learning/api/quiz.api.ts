@@ -5,38 +5,40 @@ export interface QuizQuestion {
   vocabularyId: number;
   question: string;
   options: QuizOption[];
+  questionImage?: string;
 }
 
 export interface QuizOption {
   id: number;
   text: string;
-  isCorrect: boolean;
+  isCorrect?: boolean;
 }
 
 export interface QuizSession {
-  quizSessionId: number;
+  quizSessionId: string;
   topicId: number;
-  questions: QuizQuestion[];
+  questions?: QuizQuestion[];
+  firstQuestion?: QuizQuestion;
   totalQuestions: number;
   startedAt: string;
 }
 
 export interface AnswerSubmission {
-  quizSessionId: number;
+  quizSessionId: string;
   questionId: number;
   selectedOptionId: number;
-  timeSpentMs: number;
+  timeTakenMs: number;
 }
 
 export interface AnswerResult {
   isCorrect: boolean;
-  correctOptionId: number;
+  correctAnswerId: number;
   pointsEarned: number;
   currentScore: number;
 }
 
 export interface QuizResults {
-  quizSessionId: number;
+  quizSessionId: string;
   topicId: number;
   score: number;
   totalQuestions: number;
@@ -53,12 +55,45 @@ export interface ApiEnvelope<T> {
 
 export const quizApi = {
   // Start a new quiz session
-  startQuiz: async (topicId: number, childId: number): Promise<QuizSession> => {
-    const response = await axiosInstance.post<ApiEnvelope<QuizSession>>('quiz/start', {
+  startQuiz: async (topicId: number): Promise<QuizSession> => {
+    const response = await axiosInstance.post<ApiEnvelope<unknown>>('quiz/start', {
       topicId,
-      childId,
     });
-    return response.data.data;
+    const payload = response.data.data as {
+      quizSessionId: string;
+      topicId: number;
+      totalQuestions: number;
+      startedAt: string;
+      firstQuestion?: {
+        questionId: number;
+        questionText?: string;
+        question?: string;
+        questionImage?: string;
+        options?: QuizOption[];
+      };
+    };
+
+    const firstQuestion = payload.firstQuestion
+      ? {
+          questionId: payload.firstQuestion.questionId,
+          vocabularyId: 0,
+          question:
+            payload.firstQuestion.questionText ||
+            payload.firstQuestion.question ||
+            'What is this in English?',
+          questionImage: payload.firstQuestion.questionImage,
+          options: Array.isArray(payload.firstQuestion.options) ? payload.firstQuestion.options : [],
+        }
+      : undefined;
+
+    return {
+      quizSessionId: payload.quizSessionId,
+      topicId: payload.topicId,
+      totalQuestions: payload.totalQuestions,
+      startedAt: payload.startedAt,
+      firstQuestion,
+      questions: firstQuestion ? [firstQuestion] : [],
+    };
   },
 
   // Submit an answer
@@ -68,7 +103,7 @@ export const quizApi = {
   },
 
   // Get quiz results
-  getResults: async (quizSessionId: number): Promise<QuizResults> => {
+  getResults: async (quizSessionId: string): Promise<QuizResults> => {
     const response = await axiosInstance.get<ApiEnvelope<QuizResults>>(`quiz/results/${quizSessionId}`);
     return response.data.data;
   },

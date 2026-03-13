@@ -4,7 +4,7 @@ import { apiClient } from '@/shared/services/api.client';
 // Spaced repetition system
 
 export interface ReviewProgress {
-  childId: number;
+  childId?: number;
   totalReviews: number;
   masteredCount: number;
   learningCount: number;
@@ -27,10 +27,40 @@ export interface ReviewSession {
 
 export interface ReviewResult {
   vocabularyId: number;
-  quality: number; // 0-5 (0=wrong, 5=perfect)
+  quality: number;
   nextReviewAt: string;
   repetitionNumber: number;
   easinessFactor: number;
+}
+
+interface ReviewProgressDto {
+  reviewedToday: number;
+  totalDueForReview: number;
+  percentageComplete: number;
+  averageAccuracy: number;
+  upcomingReviews: Array<{
+    daysFromNow: number;
+    count: number;
+  }>;
+}
+
+interface ReviewSessionDto {
+  sessionId: number;
+  childId: number;
+  items: Array<{
+    vocabularyId: number;
+    word: string;
+    definition: string;
+    pronunciation?: string;
+  }>;
+  itemCount: number;
+}
+
+interface ReviewResultDto {
+  vocabularyId: number;
+  nextReview: number;
+  newInterval: number;
+  newEase: number;
 }
 
 /**
@@ -39,9 +69,19 @@ export interface ReviewResult {
  * @Roles PARENT or LEARNER
  */
 export const getReviewProgress = async (childId?: number): Promise<ReviewProgress> => {
-  const url = childId ? `/vocabulary/review/progress?childId=${childId}` : '/vocabulary/review/progress';
-  const response = await apiClient.get(url);
-  return response.data.data;
+  void childId;
+  const response = await apiClient.get('/vocabulary/review/progress');
+  const payload = response.data.data as ReviewProgressDto;
+  return {
+    totalReviews: payload.reviewedToday + payload.totalDueForReview,
+    masteredCount: 0,
+    learningCount: payload.totalDueForReview,
+    dueToday: payload.totalDueForReview,
+    streakDays: 0,
+    nextReviewAt: payload.upcomingReviews[0]
+      ? new Date(Date.now() + payload.upcomingReviews[0].daysFromNow * 24 * 60 * 60 * 1000).toISOString()
+      : '',
+  };
 };
 
 /**
@@ -51,8 +91,19 @@ export const getReviewProgress = async (childId?: number): Promise<ReviewProgres
  * @body { limit?: number }
  */
 export const startReviewSession = async (limit = 10): Promise<ReviewSession> => {
-  const response = await apiClient.post('/vocabulary/review/start', { limit });
-  return response.data.data;
+  const response = await apiClient.get(`/vocabulary/review/session?limit=${limit}`);
+  const payload = response.data.data as ReviewSessionDto;
+  return {
+    sessionId: String(payload.sessionId),
+    vocabularies: payload.items.map((item) => ({
+      id: item.vocabularyId,
+      word: item.word,
+      translation: item.definition,
+      imageUrl: '',
+      audioUrl: '',
+    })),
+    totalWords: payload.itemCount,
+  };
 };
 
 /**
@@ -66,12 +117,21 @@ export const submitReviewAnswer = async (
   vocabularyId: number,
   quality: number
 ): Promise<ReviewResult> => {
+  void sessionId;
+  const difficulty = quality >= 4 ? 'EASY' : quality >= 2 ? 'MEDIUM' : 'HARD';
   const response = await apiClient.post('/vocabulary/review/submit', {
-    sessionId,
     vocabularyId,
-    quality,
+    difficulty,
+    correct: quality >= 2,
   });
-  return response.data.data;
+  const payload = response.data.data as ReviewResultDto;
+  return {
+    vocabularyId: payload.vocabularyId,
+    quality,
+    nextReviewAt: new Date(payload.nextReview * 1000).toISOString(),
+    repetitionNumber: payload.newInterval,
+    easinessFactor: payload.newEase,
+  };
 };
 
 /**
@@ -85,8 +145,13 @@ export const completeReviewSession = async (sessionId: string): Promise<{
   masteredWords: number;
   pointsEarned: number;
 }> => {
-  const response = await apiClient.post('/vocabulary/review/complete', { sessionId });
-  return response.data.data;
+  void sessionId;
+  const progress = await getReviewProgress();
+  return {
+    totalReviewed: progress.totalReviews,
+    masteredWords: progress.masteredCount,
+    pointsEarned: 0,
+  };
 };
 
 /**

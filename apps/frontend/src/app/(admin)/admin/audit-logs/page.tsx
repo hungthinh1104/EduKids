@@ -68,6 +68,10 @@ const pillBaseClass =
 
 export default function AdminAuditLogsPage() {
   const userId = useAuthStore((state) => state.user?.id);
+  const adminId: number | null = useMemo(() => {
+    const parsed = Number(userId);
+    return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
+  }, [userId]);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -78,14 +82,14 @@ export default function AdminAuditLogsPage() {
 
   useEffect(() => {
     async function loadAuditLogs() {
-      if (!userId) {
+      if (!adminId) {
         setAuditLogs([]);
         return;
       }
 
       try {
         setIsLoading(true);
-        const logs = await getAdminAuditLogs(userId, 100);
+        const logs = await getAdminAuditLogs(adminId, 100);
         const mappedLogs: AuditLog[] = logs.map((log) => {
           const entityType = (log.entity ?? '').toLowerCase();
           const action = (log.action ?? '').toLowerCase();
@@ -103,7 +107,7 @@ export default function AdminAuditLogsPage() {
             userName: `Admin #${log.userId}`,
             action,
             entityType,
-            entityId: (log as { entityId?: number }).entityId,
+            entityId: log.entityId,
             entityName: log.entity,
             timestamp: log.createdAt,
             changesSummary,
@@ -121,7 +125,7 @@ export default function AdminAuditLogsPage() {
     }
 
     void loadAuditLogs();
-  }, [userId]);
+  }, [adminId]);
 
   const getActionStyle = (action: string) => {
     const act = action?.toLowerCase() || '';

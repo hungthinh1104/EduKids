@@ -15,6 +15,7 @@ import {
   SessionLengthResponseDto,
   ContentPopularityResponseDto,
   DashboardSummaryDto,
+  DbStatsResponseDto,
   InsufficientDataResponseDto,
 } from "../dto/analytics-response.dto";
 import { JwtAuthGuard } from "../../../common/guards/jwt-auth.guard";
@@ -115,8 +116,7 @@ export class AdminAnalyticsController {
 
   @Get("content-popularity")
   @Roles("admin")
-  @ApiOperation({
-    summary: "Get content popularity rankings",
+  @ApiOperation({    summary: "Get content popularity rankings",
     description:
       "Retrieve most popular content with views, engagement, and completion stats",
   })
@@ -142,5 +142,22 @@ export class AdminAnalyticsController {
     @Query() queryDto: ContentPopularityQueryDto,
   ): Promise<ContentPopularityResponseDto | InsufficientDataResponseDto> {
     return this.analyticsService.getContentPopularity(queryDto);
+  }
+
+  @Get("db-stats")
+  @Roles("admin")
+  @ApiOperation({
+    summary: "Get real DB-backed platform statistics",
+    description:
+      "Returns actual row counts from DB for topics, vocabularies, quizzes, pronunciation scores, and learning progress. Independent of Redis/user-activity data.",
+  })
+  @ApiResponse({
+    status: 200,
+    description: "DB stats retrieved successfully",
+    type: DbStatsResponseDto,
+  })
+  @ApiResponse({ status: 403, description: "Forbidden - Admin role required" })
+  async getDbStats(): Promise<DbStatsResponseDto> {
+    return this.analyticsService.getDbStats();
   }
 }

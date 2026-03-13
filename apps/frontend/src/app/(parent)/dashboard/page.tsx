@@ -6,6 +6,7 @@ import { BookOpen, Trophy, Mic, TrendingUp } from 'lucide-react';
 import Image from 'next/image';
 import { Heading, Body, Caption } from '@/shared/components/Typography';
 import { Skeleton } from '@/components/edukids/Skeleton';
+import { Alert } from '@/components/edukids/Alert';
 import { ChildProfileCard, AddChildCard } from '@/features/dashboard/components/ChildProfileCard';
 import { useChildProfiles, useChildAnalytics } from '@/features/dashboard/hooks/useChildProfiles';
 import type { ChartDataPoint } from '@/features/profile/types/child-profile.types';
@@ -50,10 +51,15 @@ export default function ParentDashboardPage() {
     const maxMinutes = Math.max(...chartData.map((d: ChartDataPoint) => d.value), 1);
 
     return (
-        <div className="space-y-12">
+        <div className="max-w-7xl mx-auto space-y-10 px-1">
             {/* ── Profile Selector ── */}
             <section>
-                <motion.div initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="mb-8">
+                <motion.div
+                    initial={{ opacity: 0, y: -16 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5 }}
+                    className="mb-8 rounded-3xl border border-primary/15 bg-gradient-to-r from-primary-light/50 via-card to-accent-light/40 p-6 md:p-7 shadow-sm"
+                >
                     <Heading level={2} className="text-heading text-3xl mb-1">Chào buổi sáng! 👋</Heading>
                     <Body className="text-body">Hôm nay bé nào muốn học tiếng Anh?</Body>
                 </motion.div>
@@ -63,30 +69,36 @@ export default function ParentDashboardPage() {
                         initial={{ opacity: 0, y: 12 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.3 }}
-                        className="flex flex-wrap gap-2 mb-6"
+                        className="mb-6 rounded-2xl border border-border/70 bg-card/90 p-3.5 md:p-4 shadow-sm"
                     >
-                        {profiles.map((profile) => {
-                            const isSelected = profile.id === currentChildId;
-                            return (
-                                <button
-                                    key={`selector-${profile.id}`}
-                                    onClick={async () => {
-                                        setSelectedChildId(profile.id);
-                                        const ok = await switchActiveProfile(profile.id);
-                                        if (!ok) {
-                                            // keep local selection for UI continuity even if backend switch fails
+                        <Caption className="text-caption font-bold text-xs uppercase tracking-wide mb-2.5 block">
+                            Chọn hồ sơ bé
+                        </Caption>
+                        <div className="flex flex-wrap gap-2.5">
+                            {profiles.map((profile) => {
+                                const isSelected = profile.id === currentChildId;
+                                return (
+                                    <motion.button
+                                        whileTap={{ scale: 0.95 }}
+                                        key={`selector-${profile.id}`}
+                                        onClick={async () => {
                                             setSelectedChildId(profile.id);
-                                        }
-                                    }}
-                                    className={`px-3 py-1.5 rounded-full text-sm font-heading font-bold border transition-colors ${isSelected
-                                        ? 'bg-primary text-white border-primary'
-                                        : 'bg-card text-body border-border hover:border-primary/50 hover:text-primary'
-                                        }`}
-                                >
-                                    {profile.nickname}
-                                </button>
-                            );
-                        })}
+                                            const ok = await switchActiveProfile(profile.id);
+                                            if (!ok) {
+                                                // keep local selection for UI continuity even if backend switch fails
+                                                setSelectedChildId(profile.id);
+                                            }
+                                        }}
+                                        className={`px-4 py-2 rounded-full text-sm font-heading font-bold border transition-all ${isSelected
+                                            ? 'bg-primary text-white border-primary shadow-sm'
+                                            : 'bg-card text-body border-border hover:border-primary/50 hover:text-primary hover:-translate-y-0.5'
+                                            }`}
+                                    >
+                                        {profile.nickname}
+                                    </motion.button>
+                                );
+                            })}
+                        </div>
                     </motion.div>
                 )}
 
@@ -109,14 +121,19 @@ export default function ParentDashboardPage() {
                 </motion.div>
 
                 {profileError && (
-                    <div className="mt-4 bg-warning-light/40 border border-warning/30 rounded-2xl p-4 flex items-center justify-between gap-3">
-                        <Caption className="text-warning font-semibold">{profileError}</Caption>
-                        <button
-                            onClick={() => void refetchProfiles()}
-                            className="px-3 py-1.5 rounded-full bg-card border border-warning/40 text-warning text-xs font-heading font-bold hover:bg-warning-light/50 transition-colors"
-                        >
-                            Thử lại
-                        </button>
+                    <div className="mt-4">
+                        <Alert
+                            type="warning"
+                            message={profileError}
+                            action={
+                                <button
+                                    onClick={() => void refetchProfiles()}
+                                    className="px-3 py-1.5 rounded-full bg-card border border-warning/40 text-warning text-xs font-heading font-bold hover:bg-warning-light/50 transition-colors"
+                                >
+                                    Thử lại
+                                </button>
+                            }
+                        />
                     </div>
                 )}
 
@@ -132,13 +149,13 @@ export default function ParentDashboardPage() {
             {!profileLoading && activeProfile && analytics?.hasData && (
                 <section>
                     <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.6 }} className="flex items-center gap-3 mb-6">
-                        <Image src={activeProfile.avatar} alt={activeProfile.nickname} width={36} height={36} className="rounded-full bg-primary-light p-0.5" />
+                        <Image src={activeProfile.avatar} alt={activeProfile.nickname} width={36} height={36} priority className="rounded-full bg-primary-light p-0.5" />
                         <Heading level={3} className="text-heading text-xl">
                             Báo cáo của <span className="text-primary">{analytics.childNickname}</span> — 7 ngày qua
                         </Heading>
                     </motion.div>
 
-                    <div className="bg-success-light/40 border border-success/20 rounded-2xl p-4 mb-6">
+                    <div className="bg-success-light/40 border border-success/20 rounded-2xl p-4 mb-6 shadow-sm">
                         <Caption className="text-success font-semibold">{analytics.insightMessage}</Caption>
                     </div>
 
@@ -156,7 +173,7 @@ export default function ParentDashboardPage() {
                             { icon: <Trophy size={22} />, label: 'Điểm phát âm', value: `${analytics.pronunciation.averageAccuracy}%`, color: 'text-success', bg: 'bg-success-light' },
                             { icon: <TrendingUp size={22} />, label: 'Từ đã ôn', value: analytics.vocabulary.wordsReviewed, color: 'text-accent', bg: 'bg-accent-light' },
                         ].map((stat, i) => (
-                            <motion.div key={i} variants={fadeUp} className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-md border border-white/40 dark:border-white/10 shadow-sm rounded-[2rem] p-5 flex flex-col gap-3 hover:shadow-md transition-shadow">
+                            <motion.div key={i} variants={fadeUp} className="bg-card/90 backdrop-blur-sm border border-border/70 shadow-sm rounded-3xl p-5 flex flex-col gap-3 hover:shadow-md hover:-translate-y-0.5 transition-all">
                                 <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${stat.bg} ${stat.color}`}>{stat.icon}</div>
                                 <div>
                                     <div className={`text-2xl font-heading font-black ${stat.color}`}>{stat.value}</div>
@@ -167,7 +184,7 @@ export default function ParentDashboardPage() {
                     </motion.div>
 
                     {/* Activity bar chart — data from analytics.learningTime.chartData (ChartDataPoint[]) */}
-                    <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.6 }} className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-md border border-white/40 dark:border-white/10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-[2.5rem] p-8">
+                    <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.6 }} className="bg-card/90 backdrop-blur-sm border border-border/70 shadow-[0_8px_24px_rgba(0,0,0,0.05)] rounded-[2rem] p-6 md:p-8">
                         <div className="flex items-center justify-between mb-6">
                             <div className="flex items-center gap-2">
                                 <TrendingUp size={20} className="text-primary" />
@@ -199,14 +216,19 @@ export default function ParentDashboardPage() {
             )}
 
             {!profileLoading && activeProfile && analyticsError && (
-                <section className="bg-warning-light/40 border border-warning/30 rounded-2xl p-4 flex items-center justify-between gap-3">
-                    <Caption className="text-warning font-semibold">{analyticsError}</Caption>
-                    <button
-                        onClick={() => void refetchAnalytics()}
-                        className="px-3 py-1.5 rounded-full bg-card border border-warning/40 text-warning text-xs font-heading font-bold hover:bg-warning-light/50 transition-colors"
-                    >
-                        Tải lại analytics
-                    </button>
+                <section className="mb-6">
+                    <Alert
+                        type="warning"
+                        message={analyticsError}
+                        action={
+                            <button
+                                onClick={() => void refetchAnalytics()}
+                                className="px-3 py-1.5 rounded-full bg-card border border-warning/40 text-warning text-xs font-heading font-bold hover:bg-warning-light/50 transition-colors"
+                            >
+                                Tải lại analytics
+                            </button>
+                        }
+                    />
                 </section>
             )}
 

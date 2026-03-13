@@ -310,7 +310,7 @@ export class OfflineQueueService {
   async getDeadLetterQueueItems(
     userId: string,
     deviceId: string,
-  ): Promise<any[]> {
+  ): Promise<unknown[]> {
     const dlqKey = `dlq:${userId}:${deviceId}`;
 
     try {

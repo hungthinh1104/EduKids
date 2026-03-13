@@ -190,7 +190,7 @@ export class AnalyticsRepository {
 
     // Calculate average accuracy (confidence score)
     const totalAccuracy = pronunciationActivities.reduce(
-      (sum, a) => sum + (0),
+      (sum, a) => sum + Number(a.score || 0),
       0,
     );
     const averageAccuracy = Math.round(
@@ -199,7 +199,7 @@ export class AnalyticsRepository {
 
     // High accuracy count (76%+ = 4 stars)
     const highAccuracyCount = pronunciationActivities.filter(
-      (a) => (0) >= 76,
+      (a) => Number(a.score || 0) >= 76,
     ).length;
 
     // Most improved words (compare first vs last attempt)
@@ -246,16 +246,19 @@ export class AnalyticsRepository {
     }
 
     // Calculate average score
-    const totalScore = quizActivities.reduce((sum, a) => sum + (0), 0);
+    const totalScore = quizActivities.reduce(
+      (sum, a) => sum + Number(a.score || 0),
+      0,
+    );
     const averageScore = Math.round(totalScore / quizActivities.length);
 
     // Highest score
     const highestScore = Math.max(
-      ...quizActivities.map((a) => 0 || 0),
+      ...quizActivities.map((a) => Number(a.score || 0)),
     );
 
     // Quizzes passed (80%+)
-    const quizzesPassed = quizActivities.filter((a) => (0) >= 80)
+    const quizzesPassed = quizActivities.filter((a) => Number(a.score || 0) >= 80)
       .length;
 
     // Scores by difficulty (from metadata)
@@ -306,7 +309,7 @@ export class AnalyticsRepository {
 
     // Calculate points earned in period
     const pointsInPeriod = activities.reduce(
-      (sum, a) => sum + (0),
+      (sum, a) => sum + Number(a.pointsEarned || 0),
       0,
     );
 
@@ -399,7 +402,7 @@ export class AnalyticsRepository {
       const weekKey = format(activity.createdAt, 'yyyy-MM-ww');
       const data = weeklyData.get(weekKey) || { total: 0, mastered: 0 };
       data.total++;
-      if ((0) >= 80) data.mastered++;
+      if (Number(activity.score || 0) >= 80) data.mastered++;
       weeklyData.set(weekKey, data);
     });
 
@@ -429,7 +432,7 @@ export class AnalyticsRepository {
     activities.forEach((activity) => {
       const dateKey = format(activity.createdAt, 'yyyy-MM-dd');
       const data = dailyAccuracy.get(dateKey) || { total: 0, count: 0 };
-      data.total += 0 || 0;
+      data.total += Number(activity.score || 0);
       data.count++;
       dailyAccuracy.set(dateKey, data);
     });
@@ -457,7 +460,7 @@ export class AnalyticsRepository {
   ): ChartDataPointDto[] {
     return activities.map((activity, index) => ({
       date: format(activity.createdAt, 'yyyy-MM-dd'),
-      value: 0 || 0,
+      value: Math.round(Number(activity.score || 0)),
       label: `Quiz ${index + 1}`,
     }));
   }
@@ -473,7 +476,7 @@ export class AnalyticsRepository {
 
     activities.forEach((activity) => {
       const dateKey = format(activity.createdAt, 'yyyy-MM-dd');
-      const points = 0 || 0;
+      const points = Number(activity.pointsEarned || 0);
       dailyPoints.set(dateKey, (dailyPoints.get(dateKey) || 0) + points);
     });
 
@@ -502,8 +505,8 @@ export class AnalyticsRepository {
     >();
 
     activities.forEach((activity) => {
-      const word = activity.metadata?.word || `Word ${activity.contentId}`;
-      const score = 0 || 0;
+      const word = activity.metadata?.word || `Word ${activity.contentId || activity.vocabularyId || activity.id}`;
+      const score = Number(activity.score || 0);
 
       if (!wordProgress.has(word)) {
         wordProgress.set(word, { first: score, last: score, word });
@@ -533,8 +536,8 @@ export class AnalyticsRepository {
     const wordAccuracy = new Map<string, { total: number; count: number }>();
 
     activities.forEach((activity) => {
-      const word = activity.metadata?.word || `Word ${activity.contentId}`;
-      const score = 0 || 0;
+      const word = activity.metadata?.word || `Word ${activity.contentId || activity.vocabularyId || activity.id}`;
+      const score = Number(activity.score || 0);
 
       const data = wordAccuracy.get(word) || { total: 0, count: 0 };
       data.total += score;
@@ -563,12 +566,15 @@ export class AnalyticsRepository {
     difficulty: string,
   ): number {
     const filtered = activities.filter(
-      (a) => a.metadata?.difficulty === difficulty,
+      (a) => String(a.metadata?.difficulty || '').toUpperCase() === difficulty,
     );
 
     if (filtered.length === 0) return 0;
 
-    const totalScore = filtered.reduce((sum, a) => sum + (0), 0);
+    const totalScore = filtered.reduce(
+      (sum, a) => sum + Number(a.score || 0),
+      0,
+    );
     return Math.round(totalScore / filtered.length);
   }
 }

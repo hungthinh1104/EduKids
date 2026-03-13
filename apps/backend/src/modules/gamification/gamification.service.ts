@@ -20,10 +20,23 @@ import {
  */
 @Injectable()
 export class GamificationService {
+  private static readonly DEFAULT_AVATAR_URL =
+    process.env.DEFAULT_AVATAR_URL ||
+    "https://cdn.edukids.com/avatars/default.png";
+
+  private static readonly MAX_QUERY_LIMIT = 100;
+
   constructor(
     private readonly gamificationRepository: GamificationRepository,
     private readonly prisma: PrismaService,
   ) {}
+
+  private normalizeLimit(limit: number, fallback: number): number {
+    if (!Number.isFinite(limit)) return fallback;
+    const normalized = Math.floor(limit);
+    if (normalized <= 0) return fallback;
+    return Math.min(normalized, GamificationService.MAX_QUERY_LIMIT);
+  }
 
   /**
    * Get reward summary for child (points, level, badges, streak)
@@ -75,8 +88,10 @@ export class GamificationService {
    * Get shop items by category
    */
   async getShopItemsByCategory(childId: number, category: ShopItemCategory) {
-    const allItems = await this.gamificationRepository.getAllShopItems(childId);
-    return allItems.filter((item) => item.category === category);
+    return this.gamificationRepository.getShopItemsByCategory(
+      childId,
+      category,
+    );
   }
 
   /**
@@ -89,14 +104,17 @@ export class GamificationService {
   ): Promise<PurchaseResultDto> {
     const child = await this.prisma.childProfile.findUnique({
       where: { id: childId },
+      select: { id: true },
     });
 
     if (!child) {
       throw new NotFoundException("Child profile not found");
     }
 
-    const allItems = await this.gamificationRepository.getAllShopItems(childId);
-    const item = allItems.find((i) => i.id === dto.itemId);
+    const item = await this.gamificationRepository.getShopItemById(
+      childId,
+      dto.itemId,
+    );
 
     if (!item) {
       throw new NotFoundException(`Shop item ${dto.itemId} not found`);
@@ -106,13 +124,6 @@ export class GamificationService {
       throw new BadRequestException("You already own this item!");
     }
 
-    if (child.totalPoints < item.price) {
-      const needed = item.price - child.totalPoints;
-      throw new BadRequestException(
-        `Not enough star points! You need ${needed} more points. Keep going! 🌟`,
-      );
-    }
-
     const purchase = await this.gamificationRepository.purchaseItem(
       childId,
       dto.itemId,
@@ -120,7 +131,9 @@ export class GamificationService {
     );
 
     if (!purchase) {
-      throw new BadRequestException("Purchase failed. Please try again.");
+      throw new BadRequestException(
+        "Purchase failed (insufficient points or item already owned).",
+      );
     }
 
     const updatedChild = await this.prisma.childProfile.findUnique({
@@ -134,7 +147,7 @@ export class GamificationService {
       itemName: item.name,
       itemPrice: item.price,
       remainingPoints: updatedChild?.totalPoints || 0,
-      currentLevel: Math.floor((updatedChild?.totalPoints || 0) / 50) + 1,
+      currentLevel: updatedChild?.currentLevel || 1,
     };
   }
 
@@ -143,8 +156,19 @@ export class GamificationService {
    * Validates ownership and applies customization
    */
   async equipItem(childId: number, dto: EquipItemDto) {
-    const allItems = await this.gamificationRepository.getAllShopItems(childId);
-    const item = allItems.find((i) => i.id === dto.itemId);
+    const child = await this.prisma.childProfile.findUnique({
+      where: { id: childId },
+      select: { id: true },
+    });
+
+    if (!child) {
+      throw new NotFoundException("Child profile not found");
+    }
+
+    const item = await this.gamificationRepository.getShopItemById(
+      childId,
+      dto.itemId,
+    );
 
     if (!item) {
       throw new NotFoundException(`Shop item ${dto.itemId} not found`);
@@ -183,13 +207,14 @@ export class GamificationService {
       throw new NotFoundException("Child profile not found");
     }
 
-    const allItems = await this.gamificationRepository.getAllShopItems(childId);
-    const ownedItems = allItems.filter((item) => item.isPurchased);
+    const ownedItems = await this.gamificationRepository.getOwnedShopItems(
+      childId,
+    );
 
     return {
       childId: child.id,
       childName: child.nickname || "Player",
-      avatar: child.avatar || "https://cdn.edukids.com/avatars/default.png",
+      avatar: child.avatar || GamificationService.DEFAULT_AVATAR_URL,
       ownedItems,
     };
   }
@@ -198,9 +223,10 @@ export class GamificationService {
    * Get star transaction history
    */
   async getStarTransactionHistory(childId: number, limit: number = 20) {
+    const safeLimit = this.normalizeLimit(limit, 20);
     return this.gamificationRepository.getStarTransactionHistory(
       childId,
-      limit,
+      safeLimit,
     );
   }
 
@@ -208,7 +234,10 @@ export class GamificationService {
    * Get leaderboard
    */
   async getLeaderboard(childId: number, limit: number = 10) {
-    const leaderboard = await this.gamificationRepository.getLeaderboard(limit);
+    const safeLimit = this.normalizeLimit(limit, 10);
+    const leaderboard = await this.gamificationRepository.getLeaderboard(
+      safeLimit,
+    );
     return leaderboard.map((entry) => ({
       ...entry,
       isCurrentUser: entry.childId === childId,

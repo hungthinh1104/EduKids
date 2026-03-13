@@ -23,17 +23,17 @@ export function AdminSearchBar({
   filterOptions
 }: AdminSearchBarProps) {
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
+    <div className="mb-6 rounded-2xl border border-border/70 bg-card/90 p-4 md:p-6 shadow-sm">
       <div className="flex flex-col md:flex-row gap-4">
         {/* Search Input */}
         <div className="relative flex-1">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-caption" />
           <input
             type="text"
             placeholder={placeholder}
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
-            className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all bg-gray-50/50"
+            className="w-full rounded-xl border border-border bg-background/70 py-3 pl-12 pr-4 text-body outline-none transition-all placeholder:text-caption focus:border-primary focus:bg-card focus:ring-2 focus:ring-primary/25"
           />
         </div>
 
@@ -46,8 +46,8 @@ export function AdminSearchBar({
                 onClick={() => onStatusFilterChange(opt.value)}
                 className={`whitespace-nowrap px-4 py-2.5 rounded-xl font-medium text-sm transition-all ${
                   statusFilter === opt.value
-                    ? 'bg-blue-600 text-white shadow-md shadow-blue-600/20'
-                    : 'bg-gray-100/80 text-gray-600 hover:bg-gray-200 hover:text-gray-900 border border-transparent'
+                    ? 'bg-primary text-white border border-primary shadow-sm'
+                    : 'bg-background text-body hover:bg-card hover:text-primary border border-border/70 hover:border-primary/40'
                 }`}
               >
                 {opt.label}

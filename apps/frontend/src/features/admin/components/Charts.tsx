@@ -27,8 +27,13 @@ interface BarChartProps {
 export function BarChart({ title, data, height = 160, gradient = 'from-primary to-accent', colorByValue = false, action }: BarChartProps) {
     const max = Math.max(...data.map((d) => d.value), 1);
     return (
-        <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="bg-card border-2 border-border rounded-2xl p-6">
+        <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="bg-card border border-border/70 rounded-2xl p-6 shadow-sm">
             <SectionHeader title={title} action={action} />
+            {data.length === 0 ? (
+                <div className="mt-4 grid place-items-center rounded-2xl border border-dashed border-border/70 bg-background/60 text-center" style={{ height }}>
+                    <Caption className="px-6 text-caption">Chưa có dữ liệu trong khoảng thời gian này.</Caption>
+                </div>
+            ) : (
             <div className={`flex items-end gap-2 mt-4`} style={{ height }}>
                 {data.map((d, i) => {
                     const barColor = colorByValue
@@ -49,6 +54,7 @@ export function BarChart({ title, data, height = 160, gradient = 'from-primary t
                     );
                 })}
             </div>
+            )}
         </motion.div>
     );
 }
@@ -65,8 +71,13 @@ interface HorizontalBarListProps {
 export function HorizontalBarList({ title, data, action }: HorizontalBarListProps) {
     const max = Math.max(...data.map((d) => d.maxValue ?? d.value), 1);
     return (
-        <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="bg-card border-2 border-border rounded-2xl p-6">
+        <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="bg-card border border-border/70 rounded-2xl p-6 shadow-sm">
             <SectionHeader title={title} action={action} />
+            {data.length === 0 ? (
+                <div className="mt-2 rounded-2xl border border-dashed border-border/70 bg-background/60 px-4 py-10 text-center">
+                    <Caption className="text-caption">Chưa có dữ liệu để hiển thị.</Caption>
+                </div>
+            ) : (
             <div className="space-y-4 mt-2">
                 {data.map((item, i) => (
                     <motion.div key={item.label} initial={{ opacity: 0, x: -10 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.06 }}>
@@ -86,6 +97,7 @@ export function HorizontalBarList({ title, data, action }: HorizontalBarListProp
                     </motion.div>
                 ))}
             </div>
+            )}
         </motion.div>
     );
 }

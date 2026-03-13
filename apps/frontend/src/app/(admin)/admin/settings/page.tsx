@@ -47,7 +47,7 @@ export default function AdminSettingsPage() {
         <div className="min-h-screen pb-8 pt-24">
             <div className="max-w-4xl mx-auto px-6">
                 {/* Header */}
-                <motion.div initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
+                <motion.div initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }} className="mb-8 rounded-3xl border border-primary/15 bg-gradient-to-r from-primary-light/55 via-card to-accent-light/40 p-5 md:p-6 shadow-sm">
                     <Heading level={2} className="text-heading text-3xl mb-1">Cài đặt Admin ⚙️</Heading>
                     <Body className="text-body">Quản lý tài khoản quản trị viên</Body>
                 </motion.div>
@@ -57,7 +57,7 @@ export default function AdminSettingsPage() {
                     initial={{ opacity: 0, y: 16 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.1 }}
-                    className="bg-gradient-to-br from-primary/20 to-accent/20 rounded-[2rem] p-6 flex items-center gap-5 mb-8"
+                    className="bg-gradient-to-br from-primary/20 to-accent/20 rounded-[2rem] p-6 flex items-center gap-5 mb-8 border border-primary/20 shadow-sm"
                 >
                     <div className="w-16 h-16 bg-gradient-to-br from-primary to-accent rounded-2xl flex items-center justify-center text-white text-2xl font-bold">
                         A
@@ -81,7 +81,7 @@ export default function AdminSettingsPage() {
                     className="space-y-4"
                 >
                     {/* Account Section */}
-                    <div className="bg-card border-2 border-border rounded-2xl px-5">
+                    <div className="bg-card border border-border/70 rounded-2xl px-5 shadow-sm">
                         <SettingRow icon={<User size={16} />} label="Thông tin tài khoản" desc="Email, tên hiển thị">
                             <Caption className="text-caption text-xs">{user?.email}</Caption>
                         </SettingRow>

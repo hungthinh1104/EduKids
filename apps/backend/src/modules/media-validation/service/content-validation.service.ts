@@ -6,6 +6,7 @@ import {
   SafetyFlagDto,
   ValidationStatus,
   SafetySeverity,
+  SafetyFlagType,
 } from "../dto/validation.dto";
 import { SafetyValidationService } from "./safety-validation.service";
 import { randomUUID } from "crypto";
@@ -23,6 +24,20 @@ export class ContentValidationService {
     private prisma: PrismaService,
     private safetyService: SafetyValidationService,
   ) {}
+
+  private getErrorMessage(error: unknown): string {
+    return error instanceof Error ? error.message : "Unknown error";
+  }
+
+  private parseRecommendations(raw: string | null): string[] {
+    if (!raw) return [];
+    try {
+      const parsed = JSON.parse(raw) as unknown;
+      return Array.isArray(parsed) ? (parsed as string[]) : [String(parsed)];
+    } catch {
+      return [raw];
+    }
+  }
 
   /**
    * Validate single content item
@@ -137,9 +152,9 @@ export class ContentValidationService {
       );
 
       return response;
-    } catch (error: any) {
+    } catch (error: unknown) {
       this.logger.error(
-        `Validation failed for ${request.contentId}: ${error.message}`,
+        `Validation failed for ${request.contentId}: ${this.getErrorMessage(error)}`,
       );
       throw error;
     }
@@ -159,9 +174,9 @@ export class ContentValidationService {
       try {
         const result = await this.validateContent(request);
         results.push(result);
-      } catch (error: any) {
+      } catch (error: unknown) {
         this.logger.error(
-          `Batch validation error for ${request.contentId}: ${error.message}`,
+          `Batch validation error for ${request.contentId}: ${this.getErrorMessage(error)}`,
         );
         // Continue with other items even if one fails
       }
@@ -186,17 +201,6 @@ export class ContentValidationService {
 
     if (!result) return null;
 
-    let parsedRecommendations: string[] = [];
-    try {
-      parsedRecommendations = result.recommendations
-        ? JSON.parse(result.recommendations)
-        : [];
-    } catch {
-      parsedRecommendations = result.recommendations
-        ? [result.recommendations]
-        : [];
-    }
-
     return {
       validationId: result.id,
       contentId: result.contentId,
@@ -205,8 +209,8 @@ export class ContentValidationService {
       hasAutoFlags: result.hasAutoFlags,
       safetyFlags: result.safetyFlags.map((flag) => ({
         flagId: flag.id,
-        type: flag.type as any,
-        severity: flag.severity as any,
+        type: flag.type as SafetyFlagType,
+        severity: flag.severity as SafetySeverity,
         description: flag.description,
         detectedText: flag.detectedText || undefined,
         confidence: flag.confidence ? Number(flag.confidence) : undefined,
@@ -215,7 +219,7 @@ export class ContentValidationService {
         detectedAt: flag.detectedAt.toISOString(),
       })),
       safetyScore: result.safetyScore,
-      recommendations: parsedRecommendations,
+      recommendations: this.parseRecommendations(result.recommendations),
       detailedReport: result.detailedReport || undefined,
       validatedAt: result.validatedAt.toISOString(),
       validationTimeMs: result.validationTimeMs,
@@ -454,8 +458,10 @@ export class ContentValidationService {
           },
         },
       });
-    } catch (error: any) {
-      this.logger.error(`Failed to save validation result: ${error.message}`);
+    } catch (error: unknown) {
+      this.logger.error(
+        `Failed to save validation result: ${this.getErrorMessage(error)}`,
+      );
       // Don't throw - validation was successful, just storage failed
     }
   }

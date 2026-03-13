@@ -65,24 +65,26 @@ export class FlashcardRepository {
         id: true,
         translation: true,
       },
+      orderBy: { id: "asc" },
       take: 3,
     });
 
-    // Combine and shuffle options
-    const options = [
-      { id: correct.id, text: correct.translation, isCorrect: true },
-      ...distractors.map((d) => ({
-        id: d.id,
-        text: d.translation,
-        isCorrect: false,
-      })),
-    ];
+    // Deterministic option order so submit validation stays stable across requests.
+    const distractorOptions = distractors.map((d) => ({
+      id: d.id,
+      text: d.translation,
+      isCorrect: false,
+    }));
+    const insertIndex = distractorOptions.length === 0
+      ? 0
+      : vocabularyId % (distractorOptions.length + 1);
 
-    // Fisher-Yates shuffle
-    for (let i = options.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [options[i], options[j]] = [options[j], options[i]];
-    }
+    const options = [...distractorOptions];
+    options.splice(insertIndex, 0, {
+      id: correct.id,
+      text: correct.translation,
+      isCorrect: true,
+    });
 
     return options;
   }

@@ -440,7 +440,7 @@ export class CmsService {
     }
 
     // Validation
-    if (dto.description.trim().length < 3) {
+    if (dto.title.trim().length < 3) {
       throw new BadRequestException("Quiz title must be at least 3 characters");
     }
 
@@ -503,7 +503,7 @@ export class CmsService {
     }
 
     // Validation
-    if (dto.description && dto.description.trim().length < 3) {
+    if (dto.title && dto.title.trim().length < 3) {
       throw new BadRequestException("Quiz title must be at least 3 characters");
     }
 

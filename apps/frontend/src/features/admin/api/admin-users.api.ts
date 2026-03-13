@@ -9,6 +9,8 @@ const normalizeUsers = (payload: unknown): AdminUser[] => {
   const rawList =
     Array.isArray(payload)
       ? payload
+      : isRecord(payload) && Array.isArray(payload.data)
+        ? payload.data
       : isRecord(payload) && Array.isArray(payload.items)
         ? payload.items
         : [];

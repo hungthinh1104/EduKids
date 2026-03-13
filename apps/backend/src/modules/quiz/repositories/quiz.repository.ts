@@ -1,7 +1,5 @@
 import { Injectable } from "@nestjs/common";
 import { PrismaService } from "../../../prisma/prisma.service";
-import { QuizQuestionEntity } from "../entities/quiz-question.entity";
-import { IQuizRepository } from "./quiz.repository.interface";
 import { QuizDifficulty } from "../dto/quiz.dto";
 import { Vocabulary } from "@prisma/client";
 
@@ -13,27 +11,8 @@ interface LearnerPerformance {
 }
 
 @Injectable()
-export class QuizRepository implements IQuizRepository {
+export class QuizRepository {
   constructor(private prisma: PrismaService) {}
-
-  async createQuestion(
-    question: QuizQuestionEntity,
-  ): Promise<QuizQuestionEntity> {
-    // Legacy method - kept for interface compatibility
-    return question;
-  }
-
-  async findQuizByVocabulary(
-    _vocabularyId: string,
-  ): Promise<QuizQuestionEntity | null> {
-    // Legacy method - kept for interface compatibility
-    return null;
-  }
-
-  async findRandomQuiz(_limit: number): Promise<QuizQuestionEntity[]> {
-    // Legacy method - kept for interface compatibility
-    return [];
-  }
 
   /**
    * UC-04: Analyze learner's historical performance for adaptive difficulty
@@ -68,12 +47,27 @@ export class QuizRepository implements IQuizRepository {
       };
     }
 
-    // ActivityLog doesn't have score/metadata fields, estimate based on attempts
-    const averageScore = 70; // Placeholder
+    const scoreList = recentQuizzes
+      .map((quiz) => Number(quiz.score ?? 0))
+      .filter((value) => Number.isFinite(value));
 
-    const accuracyRate = 100; // Placeholder
+    const averageScore =
+      scoreList.length > 0
+        ? scoreList.reduce((sum, value) => sum + value, 0) / scoreList.length
+        : 0;
 
-    const recentErrorRate = 0; // Placeholder
+    const correctCount = recentQuizzes.filter(
+      (quiz) =>
+        (quiz.metadata as { isCorrect?: unknown } | null)?.isCorrect === true,
+    ).length;
+    const accuracyRate = (correctCount / recentQuizzes.length) * 100;
+
+    const recentWindow = recentQuizzes.slice(0, Math.min(10, recentQuizzes.length));
+    const recentIncorrect = recentWindow.filter(
+      (quiz) =>
+        (quiz.metadata as { isCorrect?: unknown } | null)?.isCorrect !== true,
+    ).length;
+    const recentErrorRate = (recentIncorrect / recentWindow.length) * 100;
 
     const vocabularyMastery = new Map<number, number>();
     const progressRecords = await this.prisma.learningProgress.findMany({
@@ -194,17 +188,22 @@ export class QuizRepository implements IQuizRepository {
 
   async recordQuizAttempt(
     childId: number,
-    _vocabularyId: number,
-    _isCorrect: boolean,
-    _score: number,
+    vocabularyId: number,
+    isCorrect: boolean,
+    score: number,
     timeTakenMs: number,
-    _difficulty: QuizDifficulty,
+    difficulty: QuizDifficulty,
   ) {
     return this.prisma.activityLog.create({
       data: {
         childId,
-        vocabularyId: _vocabularyId,
+        vocabularyId,
         activityType: "QUIZ",
+        score,
+        metadata: {
+          isCorrect,
+          difficulty,
+        },
         durationSec: Math.round(timeTakenMs / 1000),
       },
     });
@@ -243,15 +242,28 @@ export class QuizRepository implements IQuizRepository {
     });
 
     const totalQuizzes = quizActivities.length;
-    // ActivityLog doesn't have score/metadata fields
-    const correctAnswers = totalQuizzes; // Placeholder
-    const averageScore = 75; // Placeholder
+    const correctAnswers = quizActivities.filter(
+      (activity) =>
+        (activity.metadata as { isCorrect?: unknown } | null)?.isCorrect ===
+        true,
+    ).length;
+
+    const scores = quizActivities
+      .map((activity) => Number(activity.score ?? 0))
+      .filter((value) => Number.isFinite(value));
+    const averageScore =
+      scores.length > 0
+        ? scores.reduce((sum, value) => sum + value, 0) / scores.length
+        : 0;
+
+    const accuracy =
+      totalQuizzes > 0 ? Math.round((correctAnswers / totalQuizzes) * 100) : 0;
 
     return {
       totalQuizzes,
       correctAnswers,
-      incorrectAnswers: 0,
-      accuracy: 100, // Placeholder
+      incorrectAnswers: totalQuizzes - correctAnswers,
+      accuracy,
       averageScore: Math.round(averageScore),
     };
   }

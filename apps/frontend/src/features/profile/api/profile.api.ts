@@ -1,4 +1,5 @@
 import { apiClient } from '@/shared/services/api.client';
+import { setTopicModeProgressChildScope } from '@/features/learning/utils/topic-mode-progress';
 
 export interface ChildProfile {
   id: number;
@@ -33,16 +34,16 @@ export interface ProfileSwitchResponse {
 
 /**
  * Get all child profiles for current parent
- * GET /api/v1/profiles
+ * GET /api/profiles
  */
 export const getAllProfiles = async (): Promise<ChildProfile[]> => {
   const response = await apiClient.get('/profiles');
-  return response.data.data?.items || response.data.data || [];
+  return response.data.data?.profiles || response.data.data || [];
 };
 
 /**
  * Get currently active child profile
- * GET /api/v1/profiles/active/current
+ * GET /api/profiles/active/current
  */
 export const getActiveProfile = async (): Promise<ChildProfileWithStats | null> => {
   try {
@@ -52,6 +53,8 @@ export const getActiveProfile = async (): Promise<ChildProfileWithStats | null> 
     if (!profile) {
       return null;
     }
+
+    setTopicModeProgressChildScope(typeof profile.id === 'number' ? profile.id : null);
 
     // Backend already includes totalPoints, currentLevel, streakDays
     // Transform to match component expectations
@@ -82,7 +85,7 @@ export const getActiveProfile = async (): Promise<ChildProfileWithStats | null> 
 
 /**
  * Switch to a different child profile
- * POST /api/v1/profiles/switch
+ * POST /api/profiles/switch
  * @returns New JWT tokens with LEARNER role
  */
 export const switchProfile = async (childId: number): Promise<ProfileSwitchResponse> => {
@@ -97,12 +100,17 @@ export const switchProfile = async (childId: number): Promise<ProfileSwitchRespo
     document.cookie = `refresh_token=${data.refreshToken}; path=/; max-age=${7 * 24 * 60 * 60}`; // 7 days
   }
   
+  // CRITICAL: Set role=LEARNER so middleware can validate child routes
+  document.cookie = `role=LEARNER; path=/; max-age=${15 * 60}`; // 15 min, same as access_token
+
+  setTopicModeProgressChildScope(childId);
+  
   return data;
 };
 
 /**
  * Create a new child profile
- * POST /api/v1/profiles
+ * POST /api/profiles
  */
 export const createProfile = async (data: {
   nickname: string;
@@ -115,7 +123,7 @@ export const createProfile = async (data: {
 
 /**
  * Update child profile
- * PUT /api/v1/profiles/:id
+ * PUT /api/profiles/:id
  */
 export const updateProfile = async (
   id: number,
@@ -127,7 +135,7 @@ export const updateProfile = async (
 
 /**
  * Delete child profile
- * DELETE /api/v1/profiles/:id
+ * DELETE /api/profiles/:id
  */
 export const deleteProfile = async (id: number): Promise<void> => {
   await apiClient.delete(`/profiles/${id}`);

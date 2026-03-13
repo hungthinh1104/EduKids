@@ -1,14 +1,18 @@
 'use client';
 
-import { use, useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
-import { ArrowLeft, Brain, Mic, HelpCircle, Play, Star, Lock } from 'lucide-react';
+import { useParams } from 'next/navigation';
+import { ArrowLeft, Brain, Mic, HelpCircle, Play, Star, Lock, CheckCircle2 } from 'lucide-react';
 import { Heading, Body, Caption } from '@/shared/components/Typography';
 import { LoadingScreen } from '@/components/edukids/LoadingScreen';
 import { contentApi, Topic } from '@/features/learning/api/content.api';
+import { readTopicModeProgress, type TopicModeProgress } from '@/features/learning/utils/topic-mode-progress';
 
-type GameMode = { id: string; icon: React.ReactNode; label: string; desc: string; color: string; locked: boolean };
+type GameModeId = 'flashcard' | 'quiz' | 'pronunciation' | 'video';
+type TrackedModeId = 'flashcard' | 'quiz' | 'pronunciation';
+type GameMode = { id: GameModeId; icon: React.ReactNode; label: string; desc: string; color: string; locked: boolean };
 
 const GAME_MODES: GameMode[] = [
     { id: 'flashcard', icon: <Brain size={28} />, label: 'Flashcard', desc: 'Lật thẻ học từ vựng', color: 'success', locked: false },
@@ -44,13 +48,34 @@ const ICON_MAP: Record<string, string> = {
 };
 
 const COLOR_KEYS = ['success', 'accent', 'primary', 'secondary', 'warning'];
+const TRACKED_MODE_IDS: TrackedModeId[] = ['flashcard', 'quiz', 'pronunciation'];
 
-export default function TopicDetailPage({ params }: { params: Promise<{ id: string }> }) {
-    const { id } = use(params);
+export default function TopicDetailPage() {
+    const params = useParams<{ id: string }>();
+    const id = params?.id ?? '';
+    const parsedTopicId = Number.parseInt(id, 10);
     const [topic, setTopic] = useState<Topic | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [is403, setIs403] = useState(false);
+    const [modeProgress, setModeProgress] = useState<TopicModeProgress>({
+        flashcard: false,
+        quiz: false,
+        pronunciation: false,
+        updatedAt: null,
+    });
+
+    useEffect(() => {
+        if (!Number.isInteger(parsedTopicId) || parsedTopicId <= 0) {
+            return;
+        }
+
+        setModeProgress(readTopicModeProgress(parsedTopicId));
+
+        const onStorage = () => setModeProgress(readTopicModeProgress(parsedTopicId));
+        window.addEventListener('storage', onStorage);
+        return () => window.removeEventListener('storage', onStorage);
+    }, [parsedTopicId]);
 
     useEffect(() => {
         async function fetchTopic() {
@@ -58,7 +83,11 @@ export default function TopicDetailPage({ params }: { params: Promise<{ id: stri
                 setLoading(true);
                 setError(null);
                 setIs403(false);
-                const data = await contentApi.getTopicById(Number(id));
+                if (!Number.isInteger(parsedTopicId) || parsedTopicId <= 0) {
+                    setError('Chủ đề không hợp lệ');
+                    return;
+                }
+                const data = await contentApi.getTopicById(parsedTopicId);
                 setTopic(data);
             } catch (err: unknown) {
                 console.error('Failed to fetch topic:', err);
@@ -84,7 +113,7 @@ export default function TopicDetailPage({ params }: { params: Promise<{ id: stri
             }
         }
         fetchTopic();
-    }, [id]);
+    }, [parsedTopicId]);
 
     if (loading) {
         return <LoadingScreen text="Đang tải chủ đề..." />;
@@ -126,12 +155,12 @@ export default function TopicDetailPage({ params }: { params: Promise<{ id: stri
     }
 
     const icon = ICON_MAP[topic.name] || ICON_MAP[topic.description || ''] || '📚';
-    const colorKey = COLOR_KEYS[Number(id) % COLOR_KEYS.length];
+    const colorKey = COLOR_KEYS[(Number.isInteger(parsedTopicId) ? parsedTopicId : 0) % COLOR_KEYS.length];
     const colors = COLOR_MAP[colorKey] ?? COLOR_MAP.primary;
+    const safeTopicId = topic.id || parsedTopicId;
 
-    // TODO: Get real progress from LearningProgress API
-    const completedCount = 0;
-    const starsEarned = 0;
+    const completedCount = topic.progress?.completed ?? 0;
+    const starsEarned = topic.progress?.starsEarned ?? 0;
     const vocabularyCount = topic.vocabularyCount || (topic.vocabularies?.length || 0);
     const progressPct = vocabularyCount > 0 ? (completedCount / vocabularyCount) * 100 : 0;
 
@@ -200,6 +229,8 @@ export default function TopicDetailPage({ params }: { params: Promise<{ id: stri
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                     {GAME_MODES.map((mode, i) => {
                         const mc = COLOR_MAP[mode.color] ?? COLOR_MAP.primary;
+                        const isModeTracked = TRACKED_MODE_IDS.includes(mode.id as TrackedModeId);
+                        const completed = isModeTracked ? modeProgress[mode.id as TrackedModeId] : false;
                         return (
                             <motion.div
                                 key={mode.id}
@@ -207,7 +238,8 @@ export default function TopicDetailPage({ params }: { params: Promise<{ id: stri
                                 animate={{ opacity: 1, scale: 1 }}
                                 transition={{ delay: 0.1 * i }}
                                 whileHover={!mode.locked ? { scale: 1.04, y: -4 } : undefined}
-                                whileTap={!mode.locked ? { scale: 0.97 } : undefined}
+                                whileTap={mode.locked ? { x: [-5, 5, -4, 4, -2, 2, 0] } : { scale: 0.97 }}
+                                className={mode.locked ? "cursor-not-allowed" : ""}
                             >
                                 {mode.locked ? (
                                     <div className="relative bg-background border-2 border-dashed border-border rounded-2xl p-5 opacity-50 cursor-not-allowed flex flex-col items-center gap-3">
@@ -221,14 +253,22 @@ export default function TopicDetailPage({ params }: { params: Promise<{ id: stri
                                         </div>
                                     </div>
                                 ) : (
-                                    <Link href={`/play/topic/${topic.id}/${mode.id}`}>
+                                    <Link href={`/play/topic/${safeTopicId}/${mode.id}`}>
                                         <div className={`relative bg-card border-2 ${mc.border} rounded-2xl p-5 cursor-pointer flex flex-col items-center gap-3 shadow-md hover:shadow-lg transition-shadow group`}>
+                                            {isModeTracked && completed && (
+                                                <div className="absolute top-2 right-2 inline-flex items-center gap-1 bg-success text-white text-[10px] font-bold px-2 py-1 rounded-full">
+                                                    <CheckCircle2 className="w-3 h-3" /> Xong
+                                                </div>
+                                            )}
                                             <div className={`w-14 h-14 rounded-2xl ${mc.light} ${mc.text} flex items-center justify-center group-hover:scale-110 transition-transform`}>
                                                 {mode.icon}
                                             </div>
                                             <div className="text-center">
                                                 <div className={`font-heading font-black text-sm ${mc.text}`}>{mode.label}</div>
                                                 <Caption className="text-caption text-xs">{mode.desc}</Caption>
+                                                {isModeTracked && !completed && (
+                                                    <Caption className="text-caption text-[10px] mt-1">Chưa hoàn thành</Caption>
+                                                )}
                                             </div>
                                         </div>
                                     </Link>
@@ -251,7 +291,8 @@ export default function TopicDetailPage({ params }: { params: Promise<{ id: stri
                                 whileInView={{ opacity: 1, x: 0 }}
                                 viewport={{ once: true }}
                                 transition={{ delay: i * 0.07 }}
-                                className={`flex items-center justify-between p-4 ${i < vocabPreview.length - 1 ? 'border-b border-border' : ''}`}
+                                whileHover={{ x: 4, backgroundColor: 'rgba(0,0,0,0.02)' }}
+                                className={`flex items-center justify-between p-4 transition-colors ${i < vocabPreview.length - 1 ? 'border-b border-border' : ''}`}
                             >
                                 <div>
                                     <span className="font-heading font-black text-heading text-base mr-2">{v.word}</span>

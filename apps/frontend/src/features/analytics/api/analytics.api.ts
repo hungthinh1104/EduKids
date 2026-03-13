@@ -132,8 +132,11 @@ export const getLearningTimeAnalytics = async (
  */
 export const getVocabularyAnalytics = async (
   childId: number,
+  period: '7d' | '30d' | '90d' = '7d',
 ): Promise<VocabularyRetentionAnalytics | NoDataResponse> => {
-  const response = await apiClient.get(`/analytics/vocabulary?childId=${childId}`);
+  const response = await apiClient.get(
+    `/analytics/vocabulary?childId=${childId}&period=${toBackendPeriod(period)}`,
+  );
   return response.data.data;
 };
 
@@ -144,8 +147,11 @@ export const getVocabularyAnalytics = async (
  */
 export const getPronunciationAnalytics = async (
   childId: number,
+  period: '7d' | '30d' | '90d' = '7d',
 ): Promise<PronunciationAccuracyAnalytics | NoDataResponse> => {
-  const response = await apiClient.get(`/analytics/pronunciation?childId=${childId}`);
+  const response = await apiClient.get(
+    `/analytics/pronunciation?childId=${childId}&period=${toBackendPeriod(period)}`,
+  );
   return response.data.data;
 };
 
@@ -156,8 +162,11 @@ export const getPronunciationAnalytics = async (
  */
 export const getQuizAnalytics = async (
   childId: number,
+  period: '7d' | '30d' | '90d' = '7d',
 ): Promise<QuizPerformanceAnalytics | NoDataResponse> => {
-  const response = await apiClient.get(`/analytics/quiz?childId=${childId}`);
+  const response = await apiClient.get(
+    `/analytics/quiz?childId=${childId}&period=${toBackendPeriod(period)}`,
+  );
   return response.data.data;
 };
 
@@ -168,7 +177,10 @@ export const getQuizAnalytics = async (
  */
 export const getGamificationAnalytics = async (
   childId: number,
+  period: '7d' | '30d' | '90d' = '7d',
 ): Promise<GamificationProgressAnalytics | NoDataResponse> => {
-  const response = await apiClient.get(`/analytics/gamification?childId=${childId}`);
+  const response = await apiClient.get(
+    `/analytics/gamification?childId=${childId}&period=${toBackendPeriod(period)}`,
+  );
   return response.data.data;
 };

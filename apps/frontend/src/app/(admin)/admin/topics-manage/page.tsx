@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import axios from 'axios';
 import Image from 'next/image';
 import { Edit2, Trash2, Archive, CheckCircle, Plus } from 'lucide-react';
 import { getCMSTopics, createTopic, updateTopic, deleteTopic, publishTopic, archiveTopic, type CMSTopic } from '@/features/cms/api/cms.api';
@@ -29,8 +30,13 @@ export default function AdminTopicsPage() {
       const result = await getCMSTopics({ status: statusFilter, page: 1, limit: 100 });
       setTopics(result.items);
     } catch (error) {
-      console.error('Failed to load topics:', error);
-      toast.error('Không thể tải danh sách chủ đề');
+      if (axios.isAxiosError(error) && error.response?.status === 403) {
+        setTopics([]);
+        toast.error('Bạn không có quyền ADMIN để xem danh sách chủ đề');
+      } else {
+        console.error('Failed to load topics:', error);
+        toast.error('Không thể tải danh sách chủ đề');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -117,13 +123,20 @@ export default function AdminTopicsPage() {
     setShowCreateModal(true);
   };
 
-  const filteredTopics = topics.filter(t => 
-    t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    t.description?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredTopics = topics.filter((t) => {
+    const matchesSearch =
+      t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      t.description?.toLowerCase().includes(searchQuery.toLowerCase());
+
+    const matchesStatus =
+      statusFilter === 'all' ||
+      (t.status ?? 'DRAFT') === statusFilter;
+
+    return matchesSearch && matchesStatus;
+  });
 
   return (
-    <div className="p-8 max-w-7xl mx-auto">
+    <div className="p-6 md:p-8 max-w-7xl mx-auto">
       {/* 1. Header */}
       <AdminPageHeader 
         title="Quản lý Topics" 
@@ -162,9 +175,9 @@ export default function AdminTopicsPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredTopics.map((topic) => (
-            <div key={topic.id} className="bg-white rounded-3xl shadow-sm hover:shadow-xl transition-all overflow-hidden border border-gray-100 group">
+            <div key={topic.id} className="bg-card rounded-3xl shadow-sm hover:shadow-md transition-all overflow-hidden border border-border/70 group">
               {/* Image Header */}
-              <div className="h-44 bg-gradient-to-br from-blue-100 to-indigo-100 relative overflow-hidden flex items-center justify-center">
+              <div className="h-44 bg-gradient-to-br from-primary-light/40 to-accent-light/35 relative overflow-hidden flex items-center justify-center">
                 {topic.imageUrl ? (
                   <Image
                     src={topic.imageUrl}
@@ -178,7 +191,7 @@ export default function AdminTopicsPage() {
                 )}
                 
                 {/* Status Badge Overlaid */}
-                <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-sm">
+                <div className="absolute top-4 right-4 bg-card/90 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-sm border border-border/60">
                   <span className={`text-xs font-bold tracking-wide ${
                     topic.status === 'PUBLISHED' ? 'text-green-600' :
                     topic.status === 'DRAFT' ? 'text-amber-600' :
@@ -191,15 +204,15 @@ export default function AdminTopicsPage() {
 
               {/* Card Body */}
               <div className="p-6">
-                <h3 className="text-xl font-bold text-gray-800 mb-2 truncate group-hover:text-blue-600 transition-colors">{topic.name}</h3>
-                <p className="text-gray-500 text-sm mb-5 line-clamp-2 leading-relaxed h-10">{topic.description}</p>
+                <h3 className="text-xl font-bold text-heading mb-2 truncate group-hover:text-primary transition-colors">{topic.name}</h3>
+                <p className="text-caption text-sm mb-5 line-clamp-2 leading-relaxed h-10">{topic.description}</p>
 
-                <div className="flex items-center gap-4 text-sm text-gray-500 mb-5 pb-5 border-b border-gray-100">
-                  <div className="flex items-center gap-1.5 bg-gray-50 px-3 py-1.5 rounded-lg">
-                    <span className="font-semibold text-gray-700">Lvl {topic.learningLevel}/5</span>
+                <div className="flex items-center gap-4 text-sm text-caption mb-5 pb-5 border-b border-border/60">
+                  <div className="flex items-center gap-1.5 bg-background px-3 py-1.5 rounded-lg border border-border/60">
+                    <span className="font-semibold text-body">Lvl {topic.learningLevel}/5</span>
                   </div>
-                  <div className="flex items-center gap-1.5 bg-gray-50 px-3 py-1.5 rounded-lg">
-                    <span className="font-semibold text-gray-700">{topic.vocabularyCount || 0}</span>
+                  <div className="flex items-center gap-1.5 bg-background px-3 py-1.5 rounded-lg border border-border/60">
+                    <span className="font-semibold text-body">{topic.vocabularyCount || 0}</span>
                     <span>Từ vựng</span>
                   </div>
                 </div>
@@ -208,7 +221,7 @@ export default function AdminTopicsPage() {
                 <div className="flex gap-2">
                   <button
                     onClick={() => openEditModal(topic)}
-                    className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 bg-gray-50 hover:bg-blue-50 text-gray-600 hover:text-blue-600 rounded-xl transition-colors font-medium text-sm border border-transparent hover:border-blue-100"
+                    className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 bg-background hover:bg-primary-light/40 text-body hover:text-primary rounded-xl transition-colors font-medium text-sm border border-border/60 hover:border-primary/30"
                   >
                     <Edit2 className="w-4 h-4" />
                     <span>Sửa</span>
@@ -217,7 +230,7 @@ export default function AdminTopicsPage() {
                   {topic.status === 'DRAFT' && (
                     <button
                       onClick={() => handlePublish(topic.id)}
-                      className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 bg-green-50/50 hover:bg-green-100/80 text-green-700 rounded-xl transition-colors font-medium text-sm"
+                      className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 bg-success-light hover:bg-success-light/70 text-success rounded-xl transition-colors font-medium text-sm"
                     >
                       <CheckCircle className="w-4 h-4" />
                       <span>Xuất Bản</span>
@@ -227,7 +240,7 @@ export default function AdminTopicsPage() {
                   {topic.status === 'PUBLISHED' && (
                     <button
                       onClick={() => handleArchive(topic.id)}
-                      className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 bg-orange-50/50 hover:bg-orange-100/80 text-orange-700 rounded-xl transition-colors font-medium text-sm"
+                      className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 bg-warning-light hover:bg-warning-light/70 text-warning rounded-xl transition-colors font-medium text-sm"
                     >
                       <Archive className="w-4 h-4" />
                       <span>Lưu trữ</span>
@@ -236,7 +249,7 @@ export default function AdminTopicsPage() {
 
                   <button
                     onClick={() => handleDelete(topic.id)}
-                    className="flex items-center justify-center px-4 py-2.5 bg-gray-50/80 hover:bg-red-50 text-gray-400 hover:text-red-500 rounded-xl transition-colors"
+                    className="flex items-center justify-center px-4 py-2.5 bg-background hover:bg-error-light text-caption hover:text-error rounded-xl transition-colors border border-border/60"
                     title="Xóa chủ đề"
                   >
                     <Trash2 className="w-4 h-4" />

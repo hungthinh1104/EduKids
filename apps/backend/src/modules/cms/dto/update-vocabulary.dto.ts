@@ -24,27 +24,37 @@ export class UpdateVocabularyDto {
 
   @ApiProperty({
     example: "A large striped carnivorous feline",
-    description: "Word definition",
-    minLength: 5,
+    description: "Word definition (stored as translation)",
+    minLength: 1,
     maxLength: 500,
     required: false,
   })
   @IsOptional()
   @IsString()
-  @MinLength(5)
+  @MinLength(1)
   @MaxLength(500)
   definition?: string;
 
   @ApiProperty({
+    example: "/taɪɡər/",
+    description: "Phonetic transcription",
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  phonetic?: string;
+
+  @ApiProperty({
     example: "A fierce wild cat with orange and black stripes",
-    description: "Word example usage",
-    minLength: 5,
+    description: "Word example usage (stored as exampleSentence)",
+    minLength: 1,
     maxLength: 500,
     required: false,
   })
   @IsOptional()
   @IsString()
-  @MinLength(5)
+  @MinLength(1)
   @MaxLength(500)
   example?: string;
 

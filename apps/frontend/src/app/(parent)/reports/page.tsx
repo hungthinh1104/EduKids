@@ -7,8 +7,6 @@ import axios from 'axios';
 import { BookOpen, Flame, Mic, Trophy, Star, TrendingUp, Calendar, Send, Mail, CheckCircle2, Download, Bell } from 'lucide-react';
 import { Heading, Body, Caption } from '@/shared/components/Typography';
 import { useChildProfiles, useChildAnalytics } from '@/features/dashboard/hooks/useChildProfiles';
-import { gamificationApi, EarnedBadge } from '@/features/learning/api/gamification.api';
-import { reviewApi, ReviewItem } from '@/features/learning/api/review.api';
 import { 
   sendReport,
   getReportPreferences, 
@@ -25,26 +23,21 @@ export default function ReportsPage() {
     const { profiles } = useChildProfiles();
     const [selectedChildId, setSelectedChildId] = useState<number | null>(null);
     const [range, setRange] = useState('7 ngày');
-    const [schedule, setSchedule] = useState<'weekly' | 'monthly'>('weekly');
+    const [schedule, setSchedule] = useState<'weekly'>('weekly');
     const [sendStatus, setSendStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
     const [sendError, setSendError] = useState<string | null>(null);
-    const [masteredWords, setMasteredWords] = useState<ReviewItem[]>([]);
-    const [recentBadges, setRecentBadges] = useState<EarnedBadge[]>([]);
     const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
     const [subscriptionPrefs, setSubscriptionPrefs] = useState<ReportPreferences | null>(null);
     const [isLoadingPrefs, setIsLoadingPrefs] = useState(true);
+
+    const analyticsPeriod: 'WEEK' | 'MONTH' | 'ALL' =
+        range === '30 ngày' ? 'MONTH' : range === 'Tất cả' ? 'ALL' : 'WEEK';
 
 
     const activeChild = useMemo(
         () => profiles.find((p) => p.id === selectedChildId) ?? profiles[0],
         [profiles, selectedChildId],
     );
-
-    useEffect(() => {
-        if (!activeChild?.id) return;
-        gamificationApi.getEarnedBadges(activeChild.id).then(setRecentBadges).catch(() => setRecentBadges([]));
-        reviewApi.getMasteredWords(activeChild.id).then(setMasteredWords).catch(() => setMasteredWords([]));
-    }, [activeChild?.id]);
 
     useEffect(() => {
         getReportPreferences()
@@ -59,7 +52,7 @@ export default function ReportsPage() {
         setSendError(null);
 
         try {
-            const period = schedule === 'monthly' ? 'monthly' : 'weekly';
+            const period = 'weekly' as const;
             await sendReport(activeChild.id, period);
 
             setSendStatus('sent');
@@ -84,9 +77,64 @@ export default function ReportsPage() {
         window.print();
     };
 
-    const { analytics } = useChildAnalytics(activeChild?.id ?? 1);
-    const chartData = analytics?.learningTime.chartData ?? [];
+    const { analytics } = useChildAnalytics(activeChild?.id ?? 1, analyticsPeriod);
+    const masteredWords = (analytics?.pronunciation.mostImprovedWords ?? []).map((item, index) => ({
+        vocabularyId: index + 1,
+        word: item.word,
+        phonetic: '',
+        translation: `Cải thiện ${item.improvement}%`,
+        easeFactor: Math.max(1.3, Math.min(3, item.improvement / 20 + 1.5)),
+    }));
+    const recentBadges = (analytics?.gamification.recentBadges ?? []).map((item, index) => ({
+        id: index + 1,
+        name: item.name,
+        description: 'Đạt được từ tiến trình học tập gần đây',
+        icon: '🏆',
+        earnedAt: item.earnedAt,
+    }));
+
+    const allChartData = analytics?.learningTime.chartData ?? [];
+    const chartData =
+        range === '7 ngày'
+            ? allChartData.slice(-7)
+            : range === '30 ngày'
+                ? allChartData.slice(-30)
+                : allChartData;
     const maxMinutes = Math.max(...chartData.map((d) => d.value), 1);
+    const summaryCards = [
+        {
+            icon: <BookOpen size={22} />,
+            label: 'Từ đã học',
+            value: analytics?.vocabulary.wordsMastered ?? 0,
+            sub: 'từ vựng mới',
+            color: 'text-primary',
+            bg: 'bg-primary-light',
+        },
+        {
+            icon: <Flame size={22} />,
+            label: 'Học liên tục',
+            value: activeChild?.streakDays ?? 0,
+            sub: 'ngày streak',
+            color: 'text-warning',
+            bg: 'bg-warning-light',
+        },
+        {
+            icon: <Mic size={22} />,
+            label: 'Điểm phát âm',
+            value: `${analytics?.pronunciation.averageAccuracy ?? 0}%`,
+            sub: 'điểm trung bình',
+            color: 'text-success',
+            bg: 'bg-success-light',
+        },
+        {
+            icon: <Trophy size={22} />,
+            label: 'Tổng XP',
+            value: (activeChild?.totalPoints ?? 0).toLocaleString(),
+            sub: 'điểm kinh nghiệm',
+            color: 'text-accent',
+            bg: 'bg-accent-light',
+        },
+    ];
 
     return (
         <div className="space-y-8 pb-8">
@@ -153,12 +201,7 @@ export default function ReportsPage() {
                         animate="visible"
                         className="grid grid-cols-2 md:grid-cols-4 gap-4"
                     >
-                        {[
-                            { icon: <BookOpen size={22} />, label: 'Từ đã học', value: analytics!.vocabulary.wordsMastered, sub: 'từ vựng mới', color: 'text-primary', bg: 'bg-primary-light' },
-                            { icon: <Flame size={22} />, label: 'Học liên tục', value: activeChild?.streakDays, sub: 'ngày streak', color: 'text-warning', bg: 'bg-warning-light' },
-                            { icon: <Mic size={22} />, label: 'Điểm phát âm', value: `${analytics!.pronunciation.averageAccuracy}%`, sub: 'điểm trung bình', color: 'text-success', bg: 'bg-success-light' },
-                            { icon: <Trophy size={22} />, label: 'Tổng XP', value: activeChild?.totalPoints?.toLocaleString(), sub: 'điểm kinh nghiệm', color: 'text-accent', bg: 'bg-accent-light' },
-                        ].map((s, i) => (
+                        {summaryCards.map((s, i) => (
                             <motion.div key={i} variants={fadeUp} className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-md border border-white/40 dark:border-white/10 shadow-sm rounded-[2rem] p-5 flex flex-col gap-3 hover:shadow-md transition-shadow">
                                 <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${s.bg} ${s.color}`}>{s.icon}</div>
                                 <div>
@@ -295,14 +338,12 @@ export default function ReportsPage() {
 
                         {/* Schedule picker */}
                         <div className="flex gap-2 mb-5">
-                            {(['weekly', 'monthly'] as const).map((s) => (
-                                <button key={s} onClick={() => setSchedule(s)}
-                                    className={`px-4 py-2 rounded-xl font-heading font-bold text-sm border-2 transition-all ${schedule === s ? 'bg-primary-light border-primary text-primary' : 'bg-background border-border text-body'
-                                        }`}
-                                >
-                                    {s === 'weekly' ? '📅 Hàng tuần' : '📆 Hàng tháng'}
-                                </button>
-                            ))}
+                            <button
+                                onClick={() => setSchedule('weekly')}
+                                className={`px-4 py-2 rounded-xl font-heading font-bold text-sm border-2 transition-all ${schedule === 'weekly' ? 'bg-primary-light border-primary text-primary' : 'bg-background border-border text-body'}`}
+                            >
+                                📅 Hàng tuần
+                            </button>
                         </div>
 
                         <button onClick={handleSendReport} disabled={sendStatus !== 'idle'}

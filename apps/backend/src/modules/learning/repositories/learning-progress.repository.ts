@@ -33,6 +33,26 @@ export class LearningProgressRepository {
     });
   }
 
+  async findProgress(childId: number, vocabularyId: number) {
+    return this.prisma.learningProgress.findUnique({
+      where: {
+        childId_vocabularyId: {
+          childId,
+          vocabularyId,
+        },
+      },
+    });
+  }
+
+  async vocabularyExists(vocabularyId: number): Promise<boolean> {
+    const vocabulary = await this.prisma.vocabulary.findUnique({
+      where: { id: vocabularyId },
+      select: { id: true },
+    });
+
+    return Boolean(vocabulary);
+  }
+
   async upsertProgress(
     childId: number,
     vocabularyId: number,

@@ -13,6 +13,20 @@ export interface ParentNavItem {
     label: string;
 }
 
+// Route protection definitions (sync with proxy.ts)
+export const PUBLIC_PATHS = ['/', '/login', '/register', '/privacy', '/terms', '/faq', '/contact'];
+export const PARENT_PATHS = [
+    '/dashboard',
+    '/add-child',
+    '/reports',
+    '/settings',
+    '/analytics',
+    '/recommendations',
+    '/onboarding',
+];
+export const CHILD_PATHS = ['/play'];
+export const ADMIN_PATHS = ['/admin'];
+
 export const ROLE_HOME_ROUTE: Record<AppRole, string> = {
     PARENT: '/dashboard',
     LEARNER: '/play',

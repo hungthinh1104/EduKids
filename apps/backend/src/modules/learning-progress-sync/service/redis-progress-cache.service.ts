@@ -51,7 +51,7 @@ export class RedisProgressCacheService {
     userId: string,
     deviceId: string,
     type: string,
-  ): Promise<{ timestamp: number; value: any } | null> {
+  ): Promise<{ timestamp: number; value: unknown } | null> {
     const key = `progress:${userId}:${deviceId}:${type}`;
 
     try {
@@ -72,11 +72,11 @@ export class RedisProgressCacheService {
   /**
    * Get complete progress snapshot for user across all devices
    */
-  async getUserProgressSnapshot(userId: string): Promise<Map<string, any>> {
+  async getUserProgressSnapshot(userId: string): Promise<Map<string, unknown>> {
     const pattern = `progress:${userId}:*`;
     const keys = await this.redis.keys(pattern);
 
-    const snapshot = new Map<string, any>();
+    const snapshot = new Map<string, unknown>();
 
     for (const key of keys) {
       const data = await this.redis.get(key);
@@ -233,7 +233,7 @@ export class RedisProgressCacheService {
     userId: string,
     deviceId: string,
     eventType: string,
-    details: any,
+    details: unknown,
   ): Promise<boolean> {
     const key = `sync:events:${userId}`;
     const event = {
@@ -258,7 +258,7 @@ export class RedisProgressCacheService {
   /**
    * Get recent sync events
    */
-  async getSyncEvents(userId: string, limit: number = 100): Promise<any[]> {
+  async getSyncEvents(userId: string, limit: number = 100): Promise<unknown[]> {
     const key = `sync:events:${userId}`;
 
     try {
@@ -277,7 +277,7 @@ export class RedisProgressCacheService {
   async recordConflict(
     userId: string,
     conflictId: string,
-    conflictData: any,
+    conflictData: Record<string, unknown>,
   ): Promise<boolean> {
     const key = `conflicts:${userId}`;
 
@@ -302,7 +302,7 @@ export class RedisProgressCacheService {
   async getUnresolvedConflicts(
     userId: string,
     limit: number = 10,
-  ): Promise<any[]> {
+  ): Promise<unknown[]> {
     const key = `conflicts:${userId}`;
 
     try {
@@ -332,7 +332,7 @@ export class RedisProgressCacheService {
   async publishSyncUpdate(
     userId: string,
     channel: string,
-    update: any,
+    update: unknown,
   ): Promise<boolean> {
     try {
       const message = {
@@ -369,7 +369,7 @@ export class RedisProgressCacheService {
   /**
    * Extract numeric value from progress update
    */
-  private extractProgressValue(update: ProgressUpdateDto): any {
+  private extractProgressValue(update: ProgressUpdateDto): unknown {
     if (update.starPoints) return update.starPoints;
     if (update.badge) return update.badge;
     if (update.score) return update.score;
@@ -392,7 +392,7 @@ export class RedisProgressCacheService {
       const sessionKeys = await this.redis.keys("session:*");
 
       return {
-        totalKeys: (await this.redis.dbsize()).toString() as any,
+        totalKeys: await this.redis.dbsize(),
         memoryUsage:
           info
             .split("\r\n")

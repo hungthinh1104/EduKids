@@ -28,6 +28,7 @@ import {
 } from "./dto/content-response.dto";
 import { PaginatedResponseDto } from "../../common/dto/pagination.dto";
 import { TopicDto } from "./dto/topic.dto";
+import { VocabularyDto } from "./dto/vocabulary.dto";
 
 @ApiTags("Content")
 @ApiBearerAuth("JWT-auth")
@@ -135,6 +136,38 @@ export class ContentController {
       }
       throw error;
     }
+  }
+
+  @Get("vocabularies/:id")
+  @Roles("LEARNER")
+  @ApiOperation({
+    summary: "Get vocabulary detail",
+    description:
+      "Returns a single vocabulary item with media so the learner UI can load pronunciation practice content.",
+  })
+  @ApiParam({ name: "id", description: "Vocabulary ID", type: "number" })
+  @ApiResponse({
+    status: 200,
+    description: "Vocabulary retrieved successfully",
+    type: VocabularyDto,
+  })
+  @ApiResponse({
+    status: 401,
+    description: "Unauthorized - JWT token missing or invalid",
+  })
+  @ApiResponse({
+    status: 403,
+    description:
+      "Forbidden - Requires LEARNER role (must switch to child profile first)",
+  })
+  @ApiResponse({
+    status: 404,
+    description: "Vocabulary not found",
+  })
+  async getVocabularyById(
+    @Param("id", ParseIntPipe) vocabularyId: number,
+  ): Promise<VocabularyDto> {
+    return await this.contentService.getVocabularyById(vocabularyId);
   }
 
   // @ApiOperation({ summary: 'Create new vocabulary (Admin only)' })

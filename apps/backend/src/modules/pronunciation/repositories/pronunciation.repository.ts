@@ -27,7 +27,12 @@ export class PronunciationRepository implements IPronunciationRepository {
         activityType: 'PRONUNCIATION',
         score: attempt.aiScore,
         metadata: metadata as Prisma.InputJsonValue,
-        durationSec: 0, // No duration tracked for pronunciation
+        durationSec:
+          typeof attempt.recordingDurationMs === 'number' &&
+          Number.isFinite(attempt.recordingDurationMs) &&
+          attempt.recordingDurationMs > 0
+            ? Math.max(1, Math.round(attempt.recordingDurationMs / 1000))
+            : 0,
       },
     });
 

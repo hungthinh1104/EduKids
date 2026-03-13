@@ -57,7 +57,11 @@ export interface ReportPreferences {
   zaloPhone?: string;
   emailEnabled?: boolean;
   zaloEnabled?: boolean;
+  isSubscribed?: boolean;
+  preferredChannel?: 'EMAIL' | 'ZALO' | 'IN_APP';
   frequency?: 'daily' | 'weekly' | 'monthly';
+  reportDay?: number;
+  reportHour?: number;
   language: 'vi' | 'en';
   includeCharts: boolean;
   subscriptions: ReportSubscription[];
@@ -69,7 +73,7 @@ export interface ReportNotification {
   title: string;
   message: string;
   type: string;
-  relatedId?: number;
+  relatedId?: string;
   isRead: boolean;
   createdAt: string;
   readAt?: string;
@@ -85,7 +89,20 @@ interface BackendReportPreference {
   isSubscribed?: boolean;
   preferredChannel?: string;
   frequency?: string;
+  reportDay?: number;
+  reportHour?: number;
   createdAt?: string;
+}
+
+interface BackendSubscriptionResult {
+  success?: boolean;
+  message?: string;
+  preference?: BackendReportPreference;
+}
+
+interface BackendUnsubscriptionResult {
+  success?: boolean;
+  message?: string;
 }
 
 const isRecord = (value: unknown): value is Dict => {
@@ -119,9 +136,16 @@ const normalizePreferences = (raw: unknown): ReportPreferences => {
   return {
     email: typeof value.email === 'string' ? value.email : '',
     zaloPhone: typeof value.zaloPhoneNumber === 'string' ? value.zaloPhoneNumber : undefined,
+    isSubscribed: Boolean(value.isSubscribed),
+    preferredChannel:
+      preferredChannel === 'ZALO' || preferredChannel === 'IN_APP' || preferredChannel === 'EMAIL'
+        ? (preferredChannel as 'EMAIL' | 'ZALO' | 'IN_APP')
+        : undefined,
     emailEnabled: Boolean(value.isSubscribed) && preferredChannel === 'EMAIL',
     zaloEnabled: Boolean(value.isSubscribed) && preferredChannel === 'ZALO',
     frequency,
+    reportDay: typeof value.reportDay === 'number' ? value.reportDay : undefined,
+    reportHour: typeof value.reportHour === 'number' ? value.reportHour : undefined,
     language: 'vi',
     includeCharts: true,
     subscriptions: [],
@@ -166,11 +190,12 @@ export const sendReport = async (
   period: 'daily' | 'weekly' | 'monthly',
   method: 'email' | 'zalo' | 'both' = 'email'
 ): Promise<{ success: boolean; message: string; reportId: number; report: GeneratedReport }> => {
+  void method;
   const range = toBackendRange(period);
   const response = await apiClient.post('/reports/send', {
     childId,
     range,
-    method,
+    schedule: period,
   });
   return unwrapData<{ success: boolean; message: string; reportId: number; report: GeneratedReport }>(response);
 };
@@ -209,14 +234,15 @@ export const subscribeToReports = async (
         };
 
   const response = await apiClient.post('/reports/subscribe', backendPayload);
-  const raw = unwrapData<BackendReportPreference | { preference?: BackendReportPreference }>(response);
+  const raw = unwrapData<BackendSubscriptionResult | BackendReportPreference | { preference?: BackendReportPreference }>(response);
   const pref = extractBackendPreference(raw);
+  const reportHour = typeof pref?.reportHour === 'number' ? pref.reportHour : 9;
 
   return {
     id: 1,
     childId: typeof subscriptionOrChildId === 'number' ? subscriptionOrChildId : subscriptionOrChildId.childId,
     schedule: schedule ?? 'weekly',
-    time: '09:00',
+    time: `${String(reportHour).padStart(2, '0')}:00`,
     deliveryMethod: effectiveDeliveryMethod,
     isActive: Boolean(pref?.isSubscribed),
     createdAt: pref?.createdAt ?? new Date().toISOString(),
@@ -231,7 +257,7 @@ export const subscribeToReports = async (
  */
 export const unsubscribeFromReports = async (): Promise<{ message: string }> => {
   const response = await apiClient.post('/reports/unsubscribe', {});
-  const data = unwrapData<{ message?: string }>(response);
+  const data = unwrapData<BackendUnsubscriptionResult>(response);
   return { message: data?.message ?? 'Unsubscribed successfully' };
 };
 
@@ -277,6 +303,8 @@ export const updateReportPreferences = async (
           : undefined,
     email: uiPrefs.email,
     zaloPhoneNumber: uiPrefs.zaloPhone,
+    reportDay: uiPrefs.reportDay,
+    reportHour: uiPrefs.reportHour,
   });
 
   return normalizePreferences(unwrapData<unknown>(response));

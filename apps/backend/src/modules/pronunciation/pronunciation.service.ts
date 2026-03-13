@@ -41,12 +41,14 @@ export class PronunciationService {
       throw new BadRequestException('Confidence score must be between 0-100');
     }
 
-    const assessment = this.pronunciationAssessmentService.buildAssessment({
+    const assessment = await this.pronunciationAssessmentService.buildAssessment({
       confidenceScore: dto.confidenceScore,
       word: vocabulary.word,
       targetIpa: vocabulary.phonetic,
       recognizedText: dto.recognizedText,
       recognizedIpa: dto.recognizedIpa,
+      audioBase64: dto.audioBase64,
+      audioMimeType: dto.audioMimeType,
     });
 
     // Step 1: Record the attempt
@@ -55,6 +57,7 @@ export class PronunciationService {
       childId: childId.toString(),
       vocabularyId: vocabularyId.toString(),
       aiScore: assessment.overallScore,
+      recordingDurationMs: dto.recordingDurationMs,
       feedback: dto.evaluationNotes || '',
       assessment,
       createdAt: new Date(),
@@ -86,10 +89,10 @@ export class PronunciationService {
     const currentLevel = this.calculateLevel(child?.totalPoints || 0);
 
     // Step 7: Build response DTO
-    const nativePronunciationAudio = `tts:///${vocabulary.word}`; // TODO: Add media relation to query
-    // vocabulary.media && vocabulary.media.length > 0
-    //   ? vocabulary.media[0].url
-    //   : `tts:///${vocabulary.word}`;
+    const nativePronunciationAudio =
+      vocabulary.media && vocabulary.media.length > 0
+        ? vocabulary.media[0].url
+        : `tts:///${vocabulary.word}`;
 
     return {
       attemptId: parseInt(activity.id as any, 10) || 0,

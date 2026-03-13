@@ -1,3 +1,5 @@
+import { Heading, Body } from '@/shared/components/Typography';
+
 interface AdminEmptyStateProps {
   icon?: string;
   title?: string;
@@ -10,10 +12,10 @@ export function AdminEmptyState({
   description = 'Chưa có mục nào được tìm thấy hoặc tạo mới trong hệ thống.' 
 }: AdminEmptyStateProps) {
   return (
-    <div className="text-center py-20 bg-white rounded-3xl shadow-sm border border-gray-100 border-dashed m-1">
+    <div className="m-1 rounded-3xl border border-dashed border-border/80 bg-card/90 py-20 text-center shadow-sm">
       <div className="text-6xl mb-6 opacity-80 hover:scale-110 transition-transform cursor-default">{icon}</div>
-      <h3 className="text-xl font-bold text-gray-800 mb-2">{title}</h3>
-      <p className="text-gray-500 max-w-sm mx-auto leading-relaxed">{description}</p>
+      <Heading level={3} className="mb-2 text-heading text-xl">{title}</Heading>
+      <Body className="mx-auto max-w-sm leading-relaxed text-caption">{description}</Body>
     </div>
   );
 }

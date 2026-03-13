@@ -91,7 +91,7 @@ export function HeroSection() {
                         <div className="flex items-center gap-4 text-slate-500 dark:text-slate-400 font-medium mt-4 sm:mt-0">
                             <div className="flex -space-x-3">
                                 {[1, 2, 3, 4].map((i) => (
-                                    <Image width={40} height={40} key={i} src={`https://api.dicebear.com/7.x/notionists/svg?seed=${i}&scale=120`} alt={`Avatar ${i}`} className="w-10 h-10 rounded-full border-2 border-white dark:border-slate-900 bg-emerald-100" />
+                                    <Image priority width={40} height={40} key={i} src={`https://api.dicebear.com/7.x/notionists/svg?seed=${i}&scale=120`} alt={`Avatar ${i}`} className="w-10 h-10 rounded-full border-2 border-white dark:border-slate-900 bg-emerald-100" />
                                 ))}
                             </div>
                             <div>Hơn <b>10,000+</b> bé<br />đang học tập</div>
@@ -172,6 +172,7 @@ export function HeroSection() {
                     >
                         <div className="relative">
                             <Image
+                                priority
                                 src="https://api.dicebear.com/7.x/bottts/svg?seed=edukidsAI&backgroundColor=b6e3f4"
                                 alt="AI Avatar"
                                 width={60}

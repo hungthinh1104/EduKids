@@ -5,15 +5,17 @@ import { CMSQuiz } from '@/features/cms/api/cms.api';
 import { useEffect } from 'react';
 
 const quizSchema = z.object({
-  title: z.string().min(1, 'Tiêu đề không được để trống'),
-  description: z.string().optional(),
-  questionText: z.string().min(1, 'Câu hỏi không được để trống'),
+  title: z.string().min(3, 'Tiêu đề phải có ít nhất 3 ký tự').max(100, 'Tiêu đề tối đa 100 ký tự'),
+  description: z.string().min(5, 'Mô tả phải có ít nhất 5 ký tự').max(500, 'Mô tả tối đa 500 ký tự'),
+  questionText: z.string().min(5, 'Câu hỏi phải có ít nhất 5 ký tự').max(500, 'Câu hỏi tối đa 500 ký tự'),
   options: z.array(
     z.object({
       value: z.string().min(1, 'Lựa chọn không được để trống')
     })
   ).length(4, 'Phải có đúng 4 lựa chọn'),
-  correctAnswerIndex: z.number().min(0).max(3),
+  correctAnswerIndex: z
+    .string()
+    .refine((value) => ['0', '1', '2', '3'].includes(value), 'Vui lòng chọn 1 đáp án đúng'),
   difficultyLevel: z.number().min(1).max(5),
 });
 
@@ -47,7 +49,7 @@ export function QuizForm({ initialData, onSubmit, onCancel, isLoading }: QuizFor
       description: '',
       questionText: '',
       options: [{ value: '' }, { value: '' }, { value: '' }, { value: '' }],
-      correctAnswerIndex: 0,
+      correctAnswerIndex: '0',
       difficultyLevel: 1,
     }
   });
@@ -86,7 +88,7 @@ export function QuizForm({ initialData, onSubmit, onCancel, isLoading }: QuizFor
         description: initialData.description || '',
         questionText: initialData.questionText,
         options: finalOptions.map((v: string) => ({ value: v })),
-        correctAnswerIndex: correctIdx,
+        correctAnswerIndex: String(correctIdx) as '0' | '1' | '2' | '3',
         difficultyLevel: difficulty,
       });
     } else {
@@ -95,7 +97,7 @@ export function QuizForm({ initialData, onSubmit, onCancel, isLoading }: QuizFor
         description: '',
         questionText: '',
         options: [{ value: '' }, { value: '' }, { value: '' }, { value: '' }],
-        correctAnswerIndex: 0,
+        correctAnswerIndex: '0',
         difficultyLevel: 1,
       });
     }
@@ -103,11 +105,13 @@ export function QuizForm({ initialData, onSubmit, onCancel, isLoading }: QuizFor
 
   const handleFormSubmit = (data: QuizFormData) => {
     const stringOptions = data.options.map(opt => opt.value);
-    const correctString = stringOptions[data.correctAnswerIndex];
+    const correctIndex = Number.parseInt(data.correctAnswerIndex, 10);
+    const safeCorrectIndex = Number.isInteger(correctIndex) && correctIndex >= 0 && correctIndex <= 3 ? correctIndex : 0;
+    const correctString = stringOptions[safeCorrectIndex];
     
     onSubmit({
       title: data.title,
-      description: data.description || '',
+      description: data.description,
       questionText: data.questionText,
       options: stringOptions,
       correctAnswer: correctString,
@@ -133,13 +137,16 @@ export function QuizForm({ initialData, onSubmit, onCancel, isLoading }: QuizFor
 
         {/* Description */}
         <div>
-          <label className="block text-sm font-bold text-gray-700 mb-2">Mô tả thêm</label>
+          <label className="block text-sm font-bold text-gray-700 mb-2">Mô tả *</label>
           <textarea
             {...register('description')}
             rows={2}
-            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-            placeholder="Mô tả cho bài kiểm tra (tùy chọn)"
+            className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all ${
+              errors.description ? 'border-red-500 bg-red-50' : 'border-gray-300'
+            }`}
+            placeholder="Mô tả ngắn cho bài kiểm tra"
           />
+          {errors.description && <p className="text-red-500 text-sm mt-1">{errors.description.message}</p>}
         </div>
 
         {/* Question */}
@@ -179,8 +186,8 @@ export function QuizForm({ initialData, onSubmit, onCancel, isLoading }: QuizFor
                 <div className="flex items-center gap-3 bg-white p-3 rounded-xl border border-gray-200">
                   <input
                     type="radio"
-                    {...register('correctAnswerIndex', { valueAsNumber: true })}
-                    value={index}
+                    {...register('correctAnswerIndex')}
+                    value={String(index)}
                     className="w-5 h-5 text-blue-600 focus:ring-blue-500"
                   />
                   <input

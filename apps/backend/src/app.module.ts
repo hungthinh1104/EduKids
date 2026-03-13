@@ -3,7 +3,6 @@ import { ThrottlerModule } from "@nestjs/throttler";
 import { APP_GUARD } from "@nestjs/core";
 import { AnalyticsModule } from "./modules/analytics/analytics.module";
 import { AuthModule } from "./modules/auth/auth.module";
-import { ChildModule } from "./modules/child/child.module";
 import { ContentModule } from "./modules/content/content.module";
 import { GamificationModule } from "./modules/gamification/gamification.module";
 import { LearningModule } from "./modules/learning/learning.module";
@@ -21,6 +20,7 @@ import { ChildProfileModule } from "./modules/child-profile/child-profile.module
 import { CmsModule } from "./modules/cms/cms.module";
 import { AdminAnalyticsModule } from "./modules/admin-analytics/admin-analytics.module";
 import { MediaValidationModule } from "./modules/media-validation/media-validation.module";
+import { UsersModule } from "./modules/users/users.module";
 
 @Module({
   imports: [
@@ -33,7 +33,6 @@ import { MediaValidationModule } from "./modules/media-validation/media-validati
     ]),
     PrismaModule,
     AuthModule,
-    ChildModule,
     ContentModule,
     LearningModule,
     QuizModule,
@@ -50,6 +49,7 @@ import { MediaValidationModule } from "./modules/media-validation/media-validati
     CmsModule,
     AdminAnalyticsModule,
     MediaValidationModule,
+    UsersModule,
   ],
   providers: [
     {

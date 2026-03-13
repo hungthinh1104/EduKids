@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsInt, IsString, IsOptional, Min, Max, IsNumber } from 'class-validator';
 import { PronunciationAssessmentResultDto } from './pronunciation-assessment.dto';
 
@@ -26,8 +26,8 @@ export class PronunciationSubmitDto {
   })
   @IsOptional()
   @IsInt()
-  @Min(5000)
-  @Max(10000)
+  @Min(100)
+  @Max(60000)
   recordingDurationMs?: number;
 
   @ApiProperty({
@@ -56,6 +56,23 @@ export class PronunciationSubmitDto {
   @IsOptional()
   @IsString()
   recognizedIpa?: string;
+
+  @ApiPropertyOptional({
+    example: 'UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YQAAAAA=',
+    description:
+      'Optional Base64-encoded WAV audio or WAV data URL for provider-side pronunciation assessment',
+  })
+  @IsOptional()
+  @IsString()
+  audioBase64?: string;
+
+  @ApiPropertyOptional({
+    example: 'audio/wav',
+    description: 'Optional MIME type for the provided audio payload',
+  })
+  @IsOptional()
+  @IsString()
+  audioMimeType?: string;
 }
 
 export class StarRatingDto {

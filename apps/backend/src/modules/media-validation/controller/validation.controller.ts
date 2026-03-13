@@ -53,7 +53,7 @@ export class ValidationController {
     private previewService: PreviewService,
   ) {}
 
-  private getActorId(user: any): string {
+  private getActorId(user: JwtActor): string {
     const actorId = user?.userId ?? user?.sub ?? user?.id;
     if (!actorId) {
       throw new UnauthorizedException("Invalid JWT payload");
@@ -84,7 +84,7 @@ export class ValidationController {
   })
   async validateContent(
     @Body() request: ContentValidationRequestDto,
-    @CurrentUser() user: any,
+    @CurrentUser() user: JwtActor,
   ): Promise<ContentValidationResponseDto> {
     const actorId = this.getActorId(user);
     this.logger.log(
@@ -113,7 +113,7 @@ export class ValidationController {
   })
   async batchValidateContent(
     @Body() request: BatchValidationRequestDto,
-    @CurrentUser() user: any,
+    @CurrentUser() user: JwtActor,
   ): Promise<BatchValidationResponseDto> {
     const actorId = this.getActorId(user);
     this.logger.log(
@@ -215,7 +215,7 @@ export class ValidationController {
   })
   async getContentPreview(
     @Param("contentId") contentId: string,
-    @CurrentUser() user: any,
+    @CurrentUser() user: JwtActor,
   ) {
     const actorId = this.getActorId(user);
     this.logger.log(
@@ -255,7 +255,7 @@ export class ValidationController {
   async approveContent(
     @Param("contentId") contentId: string,
     @Body() request: ApprovalRequestDto,
-    @CurrentUser() user: any,
+    @CurrentUser() user: JwtActor,
   ): Promise<ApprovalResponseDto> {
     const actorId = this.getActorId(user);
     this.logger.log(`Approving content ${contentId} by user ${actorId}`);
@@ -286,7 +286,7 @@ export class ValidationController {
   async conditionalApproveContent(
     @Param("contentId") contentId: string,
     @Body() request: ApprovalRequestDto,
-    @CurrentUser() user: any,
+    @CurrentUser() user: JwtActor,
   ): Promise<ApprovalResponseDto> {
     const actorId = this.getActorId(user);
     this.logger.log(
@@ -319,7 +319,7 @@ export class ValidationController {
     @Param("contentId") contentId: string,
     @Body()
     body: { reason: string; flaggedIssues?: string[]; canResubmit?: boolean },
-    @CurrentUser() user: any,
+    @CurrentUser() user: JwtActor,
   ) {
     const actorId = this.getActorId(user);
     this.logger.log(`Rejecting content ${contentId} by user ${actorId}`);
@@ -444,7 +444,7 @@ export class ValidationController {
   })
   async bulkApproveContent(
     @Body() body: { contentIds: string[]; comments?: string },
-    @CurrentUser() user: any,
+    @CurrentUser() user: JwtActor,
   ) {
     const actorId = this.getActorId(user);
     this.logger.log(
@@ -471,7 +471,7 @@ export class ValidationController {
   })
   async bulkRejectContent(
     @Body() body: { contentIds: string[]; reason: string },
-    @CurrentUser() user: any,
+    @CurrentUser() user: JwtActor,
   ) {
     const actorId = this.getActorId(user);
     this.logger.log(
@@ -503,3 +503,9 @@ export class ValidationController {
     };
   }
 }
+
+type JwtActor = {
+  userId?: string | number;
+  sub?: string | number;
+  id?: string | number;
+};

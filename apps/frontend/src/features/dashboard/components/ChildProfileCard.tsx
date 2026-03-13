@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -27,6 +28,7 @@ function getLevelColor(level: number) {
 }
 
 export function ChildProfileCard({ profile, isActive }: ChildProfileCardProps) {
+    const router = useRouter();
     const [switching, setSwitching] = useState(false);
     const [switchError, setSwitchError] = useState<string | null>(null);
     const levelGradient = getLevelColor(profile.currentLevel);
@@ -41,11 +43,12 @@ export function ChildProfileCard({ profile, isActive }: ChildProfileCardProps) {
             setSwitchError(null);
             setSwitching(true);
             
-            // Switch profile to get LEARNER role JWT
+            // Switch profile to get LEARNER role JWT + set role=LEARNER cookie
             await switchProfile(profile.id);
             
-            // Use window.location for full page reload to ensure new JWT is used
-            window.location.href = '/play';
+            // Use router.push for smooth navigation with new cookies
+            // Middleware will validate role=LEARNER and allow /play access
+            router.push('/play');
         } catch (error) {
             console.error('Failed to switch profile:', error);
             setSwitchError('Không thể chuyển hồ sơ. Vui lòng thử lại.');
@@ -62,9 +65,9 @@ export function ChildProfileCard({ profile, isActive }: ChildProfileCardProps) {
         >
             <div
                 onClick={handleClick}
-                className={`relative rounded-[2.5rem] p-6 border border-white/40 dark:border-white/10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] cursor-pointer transition-all duration-300 overflow-hidden group backdrop-blur-xl
+                className={`relative rounded-[2.25rem] p-6 border border-border/70 shadow-[0_8px_24px_rgba(0,0,0,0.05)] cursor-pointer transition-all duration-300 overflow-hidden group
             ${switching ? 'opacity-60 cursor-wait' : ''}
-            ${isActive ? 'bg-white/80 dark:bg-slate-800/80 shadow-primary/20 shadow-2xl ring-2 ring-primary/50' : 'bg-white/50 dark:bg-slate-800/50 hover:bg-white/70 dark:hover:bg-slate-800/70 hover:shadow-xl hover:shadow-primary/10 hover:border-primary/30'}`}
+            ${isActive ? 'bg-card shadow-primary/15 shadow-xl ring-2 ring-primary/40' : 'bg-card/90 hover:bg-card hover:shadow-lg hover:border-primary/30'}`}
             >
                     {/* Background gradient blob */}
                     <div className={`absolute top-0 right-0 w-40 h-40 bg-gradient-to-br ${levelGradient} opacity-10 rounded-bl-full -z-0`} />
@@ -79,7 +82,7 @@ export function ChildProfileCard({ profile, isActive }: ChildProfileCardProps) {
 
                     <div className="relative z-10 flex flex-col items-center text-center space-y-4">
                         {/* Avatar */}
-                        <div className={`relative w-24 h-24 rounded-full bg-gradient-to-br ${levelGradient} p-1 shadow-lg`}>
+                        <div className={`relative w-24 h-24 rounded-full bg-gradient-to-br ${levelGradient} p-1 shadow-md`}>
                             <div className="w-full h-full rounded-full bg-card flex items-center justify-center overflow-hidden">
                                 <Image
                                     src={profile.avatar}
@@ -113,7 +116,7 @@ export function ChildProfileCard({ profile, isActive }: ChildProfileCardProps) {
 
                         {/* CTA */}
                         <div className={`w-full flex items-center justify-center gap-2 py-3 rounded-2xl font-heading font-bold text-sm transition-all duration-300 
-              bg-primary text-white group-hover:bg-primary-dark shadow-md shadow-primary/25`}
+              bg-primary text-white group-hover:bg-primary-dark shadow-sm`}
                         >
                             {switching ? (
                                 <>
@@ -143,7 +146,7 @@ export function AddChildCard() {
             transition={{ type: 'spring', stiffness: 300, damping: 20 }}
         >
             <Link href="/add-child">
-                <div className="relative bg-white/40 dark:bg-slate-800/40 backdrop-blur-md rounded-[2.5rem] p-6 border-2 border-dashed border-border hover:border-primary/60 hover:bg-white/60 dark:hover:bg-slate-800/60 cursor-pointer transition-all duration-300 group h-full min-h-[280px]">
+                <div className="relative bg-card/85 rounded-[2.25rem] p-6 border-2 border-dashed border-border hover:border-primary/60 hover:bg-card cursor-pointer transition-all duration-300 group h-full min-h-[280px]">
                     <div className="h-full flex flex-col items-center justify-center text-center space-y-4">
                         <div className="w-20 h-20 rounded-full border-4 border-dashed border-border group-hover:border-primary/60 flex items-center justify-center transition-colors duration-300">
                             <span className="text-4xl text-body group-hover:text-primary transition-colors">+</span>
@@ -163,7 +166,7 @@ export function AddChildCard() {
 
 export function LockedChildCard() {
     return (
-        <div className="relative bg-card rounded-[2rem] p-6 border-2 border-dashed border-border opacity-60 cursor-not-allowed">
+        <motion.div whileTap={{ x: [-5, 5, -4, 4, -2, 2, 0] }} className="relative bg-card rounded-[2rem] p-6 border-2 border-dashed border-border opacity-60 cursor-not-allowed">
             <div className="h-full min-h-[280px] flex flex-col items-center justify-center text-center space-y-3">
                 <div className="w-20 h-20 rounded-full bg-background flex items-center justify-center">
                     <Lock size={32} className="text-body" />
@@ -171,6 +174,6 @@ export function LockedChildCard() {
                 <Body className="text-body font-bold">Nâng cấp để thêm bé</Body>
                 <Caption className="text-caption text-xs">Gói Premium hỗ trợ nhiều hồ sơ bé</Caption>
             </div>
-        </div>
+        </motion.div>
     );
 }

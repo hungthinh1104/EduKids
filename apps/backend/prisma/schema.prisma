@@ -21,6 +21,21 @@ enum MediaType {
   VIDEO
 }
 
+enum MediaContext {
+  VOCABULARY
+  TOPIC
+  QUIZ
+  PROFILE
+  GENERAL
+}
+
+enum ProcessingStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
 enum ActivityType {
   FLASHCARD
   QUIZ
@@ -133,6 +148,12 @@ enum UserActionType {
   END_LEARNING
 }
 
+enum CmsContentStatus {
+  DRAFT
+  REVIEW
+  PUBLISHED
+  ARCHIVED
+}
 //////////////////////////////////////
 // AUTH
 //////////////////////////////////////
@@ -238,12 +259,17 @@ model Topic {
   id          Int       @id @default(autoincrement())
   name        String    @unique
   description String?
+  learningLevel Int     @default(1)
+  imageUrl    String?
+  status      CmsContentStatus @default(DRAFT)
+  tags        String[]  @default([])
   deletedAt   DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   vocabularies Vocabulary[]
+  quizzes      TopicQuiz[]
 }
 
 model Vocabulary {
@@ -254,6 +280,9 @@ model Vocabulary {
   translation     String?
   partOfSpeech    String?
   exampleSentence String?
+  imageUrl        String?
+  audioUrl        String?
+  status          CmsContentStatus @default(DRAFT)
   difficulty      Int?
   deletedAt       DateTime?
 
@@ -315,6 +344,42 @@ model QuizOption {
   question QuizQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
 
   @@index([questionId])
+}
+
+//////////////////////////////////////
+// CMS TOPIC QUIZZES
+//////////////////////////////////////
+
+model TopicQuiz {
+  id              Int      @id @default(autoincrement())
+  topicId         Int
+  title           String
+  description     String?
+  questionText    String
+  difficultyLevel Int      @default(3)
+  status          CmsContentStatus @default(DRAFT)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  topic   Topic            @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  options TopicQuizOption[]
+
+  @@index([topicId])
+}
+
+model TopicQuizOption {
+  id        Int     @id @default(autoincrement())
+  quizId    Int
+  text      String
+  isCorrect Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  quiz TopicQuiz @relation(fields: [quizId], references: [id], onDelete: Cascade)
+
+  @@index([quizId])
 }
 
 //////////////////////////////////////
@@ -767,11 +832,32 @@ model Purchase {
 //////////////////////////////////////
 
 model Media {
-  id        String   @id @default(uuid())
-  url       String
-  type      String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                String           @id @default(uuid())
+  mediaType         MediaType        @default(IMAGE)
+  context           MediaContext     @default(GENERAL)
+  originalFilename  String?
+  fileSize          Int              @default(0)
+  mimeType          String?
+  status            ProcessingStatus @default(PENDING)
+  rawUrl            String?
+  optimizedUrl      String?
+  thumbnailUrl      String?
+  cloudinaryPublicId String?
+  description       String?
+  altText           String?
+  uploadedBy        String?
+  uploadedAt        DateTime         @default(now())
+  processedAt       DateTime?
+  errorMessage      String?
+  metadata          Json?
+  url               String?
+  type              String?
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+
+  @@index([mediaType, context])
+  @@index([status])
+  @@index([uploadedBy])
 }
 
 model ShopItem {

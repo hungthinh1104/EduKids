@@ -105,10 +105,29 @@ apiClient.interceptors.response.use(
         isRefreshing = true;
 
         try {
-            // Gọi API refresh token (không cần gửi body, backend tự lấy JWT refresh token từ HttpOnly Cookie)
-            const { data } = await axios.post(`${API_URL}/auth/refresh`, {}, { withCredentials: true });
+            const refreshToken = Cookies.get('refresh_token');
 
-            const newAccessToken = data.data.accessToken;
+            if (!refreshToken) {
+                throw new Error('Missing refresh token');
+            }
+
+            // Backend yêu cầu refreshToken trong body
+            const { data } = await axios.post(
+                `${API_URL}/auth/refresh`,
+                { refreshToken },
+                { withCredentials: true },
+            );
+
+            const newAccessToken = typeof data?.data?.accessToken === 'string'
+                ? data.data.accessToken
+                : typeof data?.accessToken === 'string'
+                    ? data.accessToken
+                    : undefined;
+
+            if (!newAccessToken) {
+                throw new Error('Invalid refresh response');
+            }
+
             // Lưu access token mới vào JS Cookie
             Cookies.set('access_token', newAccessToken, { secure: process.env.NODE_ENV === 'production' });
 

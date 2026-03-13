@@ -15,7 +15,7 @@ export interface ChildProfile {
 
 /**
  * Hook to get current active child profile
- * Fetches from /api/v1/profiles/active/current
+ * Fetches from /api/profiles/active/current
  */
 export function useCurrentChild(): { child: ChildProfileWithStats | null; loading: boolean; error: string | null } {
     const [child, setChild] = useState<ChildProfileWithStats | null>(null);

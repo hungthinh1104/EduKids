@@ -29,6 +29,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
                             alt="EduKids Mascot"
                             width={140}
                             height={140}
+                            priority
                             className="drop-shadow-lg"
                         />
                     </div>
@@ -60,6 +61,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
                             alt="EduKids Mascot"
                             width={80}
                             height={80}
+                            priority
                             className="bg-white/50 backdrop-blur-md shadow-lg rounded-full p-2 border border-white/40"
                         />
                         <Link href="/" className="inline-flex items-center gap-2 text-slate-600 dark:text-slate-300 hover:text-primary transition-colors font-medium bg-white/50 dark:bg-slate-800/50 px-4 py-2 rounded-full backdrop-blur-sm">

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
@@ -93,6 +93,16 @@ export default function SettingsPage() {
     const [epError, setEpError] = useState<string | null>(null);
     const [epSuccess, setEpSuccess] = useState(false);
     const [epLoading, setEpLoading] = useState(false);
+    
+    const pwdTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const profileTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    
+    useEffect(() => {
+        return () => {
+            if (pwdTimeoutRef.current) clearTimeout(pwdTimeoutRef.current);
+            if (profileTimeoutRef.current) clearTimeout(profileTimeoutRef.current);
+        };
+    }, []);
 
     // Load settings: localStorage first, then backend preferences
     useEffect(() => {
@@ -111,9 +121,6 @@ export default function SettingsPage() {
                 const prefs = await getReportPreferences();
                 if (typeof prefs.emailEnabled === 'boolean') {
                     setNotificationsRaw(prefs.emailEnabled || Boolean(prefs.zaloEnabled));
-                }
-                if (prefs.frequency) {
-                    setDailyReminderRaw(prefs.frequency === 'daily');
                 }
             } catch {
                 // keep localStorage values
@@ -134,9 +141,6 @@ export default function SettingsPage() {
             if (typeof patch.notifications === 'boolean') {
                 payload.emailEnabled = patch.notifications;
                 payload.zaloEnabled = false;
-            }
-            if (typeof patch.dailyReminder === 'boolean') {
-                payload.frequency = patch.dailyReminder ? 'daily' : 'weekly';
             }
             await updateReportPreferences(payload);
         } catch {
@@ -175,7 +179,7 @@ export default function SettingsPage() {
             await authApi.changePassword(cpCurrentPwd, cpNewPwd);
             setCpSuccess(true);
             setCpCurrentPwd(''); setCpNewPwd(''); setCpConfirmPwd('');
-            setTimeout(() => { setShowChangePwd(false); setCpSuccess(false); }, 2000);
+            pwdTimeoutRef.current = setTimeout(() => { setShowChangePwd(false); setCpSuccess(false); }, 2000);
         } catch {
             setCpError('Mật khẩu hiện tại không đúng. Vui lòng thử lại.');
         } finally {
@@ -199,7 +203,7 @@ export default function SettingsPage() {
             await authApi.updateProfile(payload);
             patchUser(payload);
             setEpSuccess(true);
-            setTimeout(() => { setShowEditProfile(false); setEpSuccess(false); }, 2000);
+            profileTimeoutRef.current = setTimeout(() => { setShowEditProfile(false); setEpSuccess(false); }, 2000);
         } catch {
             setEpError('Không thể cập nhật thông tin. Vui lòng thử lại.');
         } finally {
@@ -261,7 +265,7 @@ export default function SettingsPage() {
                 className="bg-gradient-candy rounded-[2rem] p-6 flex items-center gap-5 mb-8"
             >
                 <div className="w-16 h-16 rounded-full bg-white/20 border-4 border-white/50 flex items-center justify-center overflow-hidden">
-                    <Image src="https://api.dicebear.com/7.x/bottts/svg?seed=parent" alt="Parent" width={56} height={56} />
+                    <Image src="https://api.dicebear.com/7.x/bottts/svg?seed=parent" alt="Parent" width={56} height={56} priority />
                 </div>
                 <div className="flex-1 text-white">
                     <Heading level={3} className="text-white text-xl mb-0.5">
@@ -345,17 +349,18 @@ export default function SettingsPage() {
                                 <>
                                     <div className="flex gap-2 overflow-x-auto pb-1">
                                         {profilesData.profiles.map((profile) => (
-                                            <button 
+                                            <motion.button 
+                                                whileTap={{ scale: 0.95 }}
                                                 key={profile.id} 
                                                 onClick={() => setSelectedChildId(profile.id)}
                                                 className={`flex-1 min-w-[120px] py-2.5 rounded-2xl border-2 font-heading font-bold text-sm transition-all ${
                                                     selectedChildId === profile.id 
                                                         ? 'border-primary bg-primary-light text-primary' 
-                                                        : 'border-border bg-card text-body'
+                                                        : 'border-border bg-card text-body hover:border-primary/40'
                                                 }`}
                                             >
                                                 {profile.nickname}
-                                            </button>
+                                            </motion.button>
                                         ))}
                                     </div>
 

@@ -313,6 +313,32 @@ export class UserEngagementDto {
   returnRate: number;
 }
 
+export class DbStatsResponseDto {
+  @ApiProperty({ description: "Total topics in DB", example: 12 })
+  totalTopics: number;
+
+  @ApiProperty({ description: "Total vocabularies in DB", example: 340 })
+  totalVocabularies: number;
+
+  @ApiProperty({ description: "Total quiz questions in DB", example: 87 })
+  totalQuizQuestions: number;
+
+  @ApiProperty({ description: "Total topic-level quizzes in DB", example: 25 })
+  totalTopicQuizzes: number;
+
+  @ApiProperty({ description: "Average pronunciation accuracy score (0-100)", example: 72.5 })
+  avgPronunciationScore: number;
+
+  @ApiProperty({ description: "Total pronunciation attempts", example: 1500 })
+  totalPronunciationAttempts: number;
+
+  @ApiProperty({ description: "Average quiz score in learning progress (0-100)", example: 68.3 })
+  avgLearningScore: number;
+
+  @ApiProperty({ description: "Total learning progress records", example: 2200 })
+  totalLearningRecords: number;
+}
+
 export class InsufficientDataResponseDto {
   @ApiProperty({
     description: "Error message",

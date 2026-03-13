@@ -26,9 +26,9 @@ export function MetricCard({ label, value, delta, icon, colorCls, index = 0 }: M
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.07 }}
-            className="bg-card border-2 border-border rounded-2xl p-5 flex flex-col gap-3"
+            className="group rounded-3xl border border-border/70 bg-card/90 p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md"
         >
-            <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${colorCls}`}>
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${colorCls} shadow-sm`}>
                 {icon}
             </div>
             <div>
@@ -36,7 +36,7 @@ export function MetricCard({ label, value, delta, icon, colorCls, index = 0 }: M
                 <Caption className="text-caption text-xs">{label}</Caption>
             </div>
             {Trend && (
-                <div className={`flex items-center gap-1 text-xs font-bold ${trendCls}`}>
+                <div className={`inline-flex w-fit items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold ${trendCls} bg-background border border-border/60`}>
                     <Trend size={13} />
                     {Math.abs(delta!)}% so với tuần trước
                 </div>
@@ -53,7 +53,7 @@ interface SectionHeaderProps {
 export function SectionHeader({ title, action }: SectionHeaderProps) {
     return (
         <div className="flex items-center justify-between mb-4">
-            <Heading level={3} className="text-heading text-xl">{title}</Heading>
+            <Heading level={3} className="text-heading text-xl font-black tracking-tight">{title}</Heading>
             {action}
         </div>
     );

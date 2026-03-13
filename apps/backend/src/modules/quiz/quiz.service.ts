@@ -554,7 +554,7 @@ export class QuizService {
   }
 
   private buildQuestionDto(
-    question: any,
+    question: QuizSession["questions"][number],
     questionNumber: number,
     totalQuestions: number,
     difficulty: QuizDifficulty,

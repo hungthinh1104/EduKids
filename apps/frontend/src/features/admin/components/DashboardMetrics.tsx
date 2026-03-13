@@ -15,7 +15,7 @@ interface DashboardMetricsProps {
 
 export function DashboardMetrics({ platformMetrics }: DashboardMetricsProps) {
     return (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 md:gap-5">
             {platformMetrics.map((m, i) => (
                 <motion.div
                     key={m.label}
@@ -29,6 +29,7 @@ export function DashboardMetrics({ platformMetrics }: DashboardMetricsProps) {
                         icon={m.icon}
                         delta={m.delta}
                         colorCls={m.colorCls}
+                        index={i}
                     />
                 </motion.div>
             ))}

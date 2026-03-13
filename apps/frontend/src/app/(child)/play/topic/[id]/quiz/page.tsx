@@ -1,13 +1,16 @@
 'use client';
 
-import { use, useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
+import { useParams } from 'next/navigation';
 import { X, Heart, Flame, Zap, CheckCircle2, XCircle, ChevronRight, RotateCcw, Star } from 'lucide-react';
 import { Heading, Body, Caption } from '@/shared/components/Typography';
 import { KidButton } from '@/components/edukids/KidButton';
 import { quizApi, QuizQuestion, QuizOption } from '@/features/learning/api/quiz.api';
-import { getActiveProfile } from '@/features/profile/api/profile.api';
+import { markTopicModeCompleted } from '@/features/learning/utils/topic-mode-progress';
+import { playSound } from '@/shared/utils/sound';
+import { useRef } from 'react';
 
 const MAX_HP = 5;
 const STREAK_BONUS_AT = 3;
@@ -50,7 +53,7 @@ function TimerRing({ seconds, total }: { seconds: number; total: number }) {
     const r = 20;
     const circumference = 2 * Math.PI * r;
     const offset = circumference - (seconds / total) * circumference;
-    const color = seconds <= 5 ? '#FF6B6B' : seconds <= 10 ? '#FFB800' : '#1CB0F6';
+    const color = seconds <= 5 ? 'var(--color-error)' : seconds <= 10 ? 'var(--color-warning)' : 'var(--color-primary)';
 
     return (
         <div className="relative w-14 h-14 flex items-center justify-center">
@@ -74,6 +77,7 @@ function TimerRing({ seconds, total }: { seconds: number; total: number }) {
 function QuizComplete({ correct, total, topicId, onRestart }: { correct: number; total: number; topicId: string; onRestart: () => void }) {
     useEffect(() => {
         void import('@/shared/utils/confetti').then((m) => m.fireRewardConfetti());
+        playSound('fanfare');
     }, []);
     const pct = Math.round((correct / total) * 100);
     const stars = pct >= 90 ? 3 : pct >= 60 ? 2 : 1;
@@ -137,14 +141,17 @@ function QuizComplete({ correct, total, topicId, onRestart }: { correct: number;
 }
 
 // ── Main Quiz Page ─────────────────────────────────────────────────────────
-export default function QuizPage({ params }: { params: Promise<{ id: string }> }) {
-    const { id } = use(params);
+export default function QuizPage() {
+    const params = useParams<{ id: string }>();
+    const id = params?.id ?? '';
+    const parsedTopicId = Number.parseInt(id, 10);
     const [questions, setQuestions] = useState<LocalQuizQuestion[]>([]);
     const [loading, setLoading] = useState(true);
     const [loadError, setLoadError] = useState<string | null>(null);
-    const [quizSessionId, setQuizSessionId] = useState<number | null>(null);
+    const [quizSessionId, setQuizSessionId] = useState<string | null>(null);
     const [index, setIndex] = useState(0);
     const [selected, setSelected] = useState<string | null>(null);
+    const [revealedCorrectOptionId, setRevealedCorrectOptionId] = useState<number | null>(null);
     const [answerState, setAnswerState] = useState<AnswerState>('idle');
     const [hp, setHp] = useState(MAX_HP);
     const [streak, setStreak] = useState(0);
@@ -152,32 +159,57 @@ export default function QuizPage({ params }: { params: Promise<{ id: string }> }
     const [done, setDone] = useState(false);
     const [timeLeft, setTimeLeft] = useState(TIME_LIMIT);
 
+    // Refs to track timeouts and prevent memory leaks
+    const answerTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const timeLeftRef = useRef(TIME_LIMIT);
+
+    useEffect(() => {
+        timeLeftRef.current = timeLeft;
+    }, [timeLeft]);
+
+    useEffect(() => {
+        return () => {
+            if (answerTimeoutRef.current) {
+                clearTimeout(answerTimeoutRef.current);
+            }
+        };
+    }, []);
+
     useEffect(() => {
         async function loadQuiz() {
             try {
                 setLoading(true);
-                const activeProfile = await getActiveProfile();
-                const childId = activeProfile?.id;
-                if (!childId) {
-                    setLoadError('Không tìm thấy hồ sơ học sinh. Vui lòng chọn lại hồ sơ.');
+                setLoadError(null);
+
+                if (!Number.isInteger(parsedTopicId) || parsedTopicId <= 0) {
+                    setLoadError('Chủ đề không hợp lệ.');
                     return;
                 }
-                const session = await quizApi.startQuiz(Number(id), childId);
+
+                const session = await quizApi.startQuiz(parsedTopicId);
                 setQuizSessionId(session.quizSessionId);
-                setQuestions(session.questions.map((q: QuizQuestion) => ({
+
+                const questionList = session.questions?.length
+                    ? session.questions
+                    : session.firstQuestion
+                        ? [session.firstQuestion]
+                        : [];
+
+                setQuestions(questionList.map((q: QuizQuestion) => ({
                     ...q,
                     shuffledOptions: shuffleOptions(q.options),
                     image: '❓' // Fallback image since not in schema yet
                 })));
             } catch (error) {
                 console.error('Failed to load quiz:', error);
+                setLoadError('Không thể tải quiz. Vui lòng thử lại.');
                 setQuestions([]);
             } finally {
                 setLoading(false);
             }
         }
         loadQuiz();
-    }, [id]);
+    }, [parsedTopicId]);
 
     const q = questions[index];
 
@@ -188,40 +220,58 @@ export default function QuizPage({ params }: { params: Promise<{ id: string }> }
         const answerText = isTimeout ? '__timeout__' : option.text;
         setSelected(answerText);
 
-        const isCorrect = !isTimeout && option.isCorrect;
+        let isCorrect = false;
+        let correctAnswerId: number | null = null;
+
+        try {
+            const result = await quizApi.submitAnswer({
+                quizSessionId,
+                questionId: q.questionId,
+                selectedOptionId: isTimeout ? 0 : option.id,
+                timeTakenMs: (TIME_LIMIT - timeLeftRef.current) * 1000,
+            });
+
+            isCorrect = Boolean(result.isCorrect);
+            correctAnswerId = Number(result.correctAnswerId);
+        } catch (error) {
+            console.error('Failed to submit answer:', error);
+
+            // Fallback when submit fails: keep UI responsive
+            if (!isTimeout && typeof option.id === 'number') {
+                isCorrect = false;
+                correctAnswerId = option.id;
+            }
+        }
 
         if (isCorrect) {
+            playSound('success');
             setAnswerState('correct');
             setCorrectCount((c) => c + 1);
             setStreak((s) => s + 1);
-        } else {
+        }
+
+        if (!isCorrect) {
+            playSound('error');
             setAnswerState('wrong');
             setHp((h) => Math.max(0, h - 1));
             setStreak(0);
         }
 
-        try {
-            await quizApi.submitAnswer({
-                quizSessionId,
-                questionId: q.questionId,
-                selectedOptionId: isTimeout ? 0 : option.id,
-                timeSpentMs: (TIME_LIMIT - timeLeft) * 1000,
-            });
-        } catch (error) {
-            console.error('Failed to submit answer:', error);
-        }
+        setRevealedCorrectOptionId(correctAnswerId);
 
-        setTimeout(() => {
+        answerTimeoutRef.current = setTimeout(() => {
             setAnswerState('idle');
             setSelected(null);
+            setRevealedCorrectOptionId(null);
             setTimeLeft(TIME_LIMIT);
             if (index + 1 >= questions.length || hp - (isCorrect ? 0 : 1) <= 0) {
+                markTopicModeCompleted(parsedTopicId, 'quiz');
                 setDone(true);
             } else {
                 setIndex((i) => i + 1);
             }
         }, 1000);
-    }, [selected, q, quizSessionId, index, questions.length, hp, timeLeft]);
+    }, [selected, q, quizSessionId, index, questions.length, hp, parsedTopicId]);
 
     // Timer
     useEffect(() => {
@@ -237,7 +287,7 @@ export default function QuizPage({ params }: { params: Promise<{ id: string }> }
     if (done) {
         return (
             <div className="min-h-screen bg-gradient-to-b from-warning-light via-background to-background">
-                <QuizComplete correct={correctCount} total={index + 1} topicId={id} onRestart={() => { setIndex(0); setSelected(null); setAnswerState('idle'); setHp(MAX_HP); setStreak(0); setCorrectCount(0); setDone(false); setTimeLeft(TIME_LIMIT); }} />
+                <QuizComplete correct={correctCount} total={index + 1} topicId={id} onRestart={() => { setIndex(0); setSelected(null); setRevealedCorrectOptionId(null); setAnswerState('idle'); setHp(MAX_HP); setStreak(0); setCorrectCount(0); setDone(false); setTimeLeft(TIME_LIMIT); }} />
             </div>
         );
     }
@@ -352,7 +402,7 @@ export default function QuizPage({ params }: { params: Promise<{ id: string }> }
                             <div className="grid grid-cols-2 gap-3">
                                 {q.shuffledOptions.map((opt: QuizOption, i: number) => {
                                     const isSelected = selected === opt.text;
-                                    const isCorrect = opt.isCorrect;
+                                    const isCorrect = revealedCorrectOptionId === opt.id;
                                     const showFeedback = selected !== null;
 
                                     let optCls = 'bg-card border-2 border-border text-heading hover:border-primary/60 hover:bg-primary-light hover:text-primary';
@@ -366,8 +416,18 @@ export default function QuizPage({ params }: { params: Promise<{ id: string }> }
                                         <motion.button
                                             key={opt.id}
                                             initial={{ opacity: 0, y: 16 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            transition={{ delay: 0.05 * i }}
+                                            animate={
+                                                showFeedback && isCorrect
+                                                    ? { scale: [1, 1.1, 1.05], boxShadow: ['0px 0px 0px rgba(0,0,0,0)', '0px 0px 40px rgba(16, 185, 129, 0.6)', '0px 0px 20px rgba(16, 185, 129, 0.4)'] }
+                                                    : showFeedback && isSelected && !isCorrect
+                                                        ? { x: [0, -10, 10, -10, 10, 0] }
+                                                        : { opacity: 1, y: 0 }
+                                            }
+                                            transition={
+                                                showFeedback && isSelected && !isCorrect
+                                                    ? { duration: 0.4 }
+                                                    : { delay: !showFeedback ? 0.05 * i : 0 }
+                                            }
                                             whileHover={!selected ? { scale: 1.03, y: -3 } : undefined}
                                             whileTap={!selected ? { scale: 0.97 } : undefined}
                                             onClick={() => handleAnswer(opt)}

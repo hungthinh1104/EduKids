@@ -111,7 +111,7 @@
       },
       "targets": [
         {
-          "expr": "sum(rate(edukids_http_requests_total[1m]))",
+          "expr": "sum(rate(edukids_http_requests_total[1m])) or vector(0)",
           "refId": "A"
         }
       ],
@@ -152,7 +152,7 @@
       },
       "targets": [
         {
-          "expr": "sum(rate(edukids_http_requests_total{status_code=~\"5..\"}[5m])) / clamp_min(sum(rate(edukids_http_requests_total[5m])),1)",
+          "expr": "(sum(rate(edukids_http_requests_total{status_code=~\"5..\"}[5m])) / clamp_min(sum(rate(edukids_http_requests_total[5m])),1)) or vector(0)",
           "refId": "A"
         }
       ],
@@ -193,7 +193,7 @@
       },
       "targets": [
         {
-          "expr": "histogram_quantile(0.95, sum(rate(edukids_http_request_duration_seconds_bucket[5m])) by (le))",
+          "expr": "histogram_quantile(0.95, sum(rate(edukids_http_request_duration_seconds_bucket[5m])) by (le)) or vector(0)",
           "refId": "A"
         }
       ],
@@ -227,7 +227,7 @@
       },
       "targets": [
         {
-          "expr": "sum by (status_code) (rate(edukids_http_requests_total[5m]))",
+          "expr": "sum by (status_code) (rate(edukids_http_requests_total[5m])) or vector(0)",
           "legendFormat": "{{status_code}}",
           "refId": "A"
         }
@@ -264,7 +264,7 @@
       },
       "targets": [
         {
-          "expr": "histogram_quantile(0.95, sum(rate(edukids_http_request_duration_seconds_bucket[5m])) by (le, route))",
+          "expr": "histogram_quantile(0.95, sum(rate(edukids_http_request_duration_seconds_bucket[5m])) by (le, route)) or vector(0)",
           "legendFormat": "{{route}}",
           "refId": "A"
         }
@@ -301,12 +301,17 @@
       },
       "targets": [
         {
-          "expr": "sum by (name) (container_memory_usage_bytes{name=~\"edukids-.*\"})",
-          "legendFormat": "{{name}}",
+          "expr": "sum(process_resident_memory_bytes) or vector(0)",
+          "legendFormat": "backend-rss",
           "refId": "A"
+        },
+        {
+          "expr": "sum(nodejs_heap_size_used_bytes) or vector(0)",
+          "legendFormat": "nodejs-heap-used",
+          "refId": "B"
         }
       ],
-      "title": "Container Memory Usage",
+      "title": "Backend Memory Usage",
       "type": "timeseries"
     },
     {
@@ -338,12 +343,17 @@
       },
       "targets": [
         {
-          "expr": "sum by (name) (rate(container_cpu_usage_seconds_total{name=~\"edukids-.*\"}[5m]))",
-          "legendFormat": "{{name}}",
+          "expr": "sum(rate(process_cpu_user_seconds_total[5m]) + rate(process_cpu_system_seconds_total[5m])) or vector(0)",
+          "legendFormat": "cpu-time-rate",
           "refId": "A"
+        },
+        {
+          "expr": "sum(edukids_http_requests_in_flight) or vector(0)",
+          "legendFormat": "in-flight-requests",
+          "refId": "B"
         }
       ],
-      "title": "Container CPU Usage",
+      "title": "Backend CPU & Concurrency",
       "type": "timeseries"
     }
   ],
@@ -353,7 +363,7 @@
   "tags": [
     "edukids",
     "backend",
-    "infra"
+    "report"
   ],
   "templating": {
     "list": []
@@ -366,6 +376,6 @@
   "timezone": "browser",
   "title": "EduKids Monitoring Overview",
   "uid": "edukids-overview",
-  "version": 1,
+  "version": 2,
   "weekStart": ""
 }

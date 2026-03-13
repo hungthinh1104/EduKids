@@ -14,6 +14,7 @@ import {
   ContentPopularityResponseDto,
   ContentPopularityItemDto,
   DashboardSummaryDto,
+  DbStatsResponseDto,
   InsufficientDataResponseDto,
 } from "../dto/analytics-response.dto";
 
@@ -466,6 +467,13 @@ export class AdminAnalyticsService {
       topContent,
       totalContentViews,
     };
+  }
+
+  /**
+   * Get real DB-backed platform statistics
+   */
+  async getDbStats(): Promise<DbStatsResponseDto> {
+    return this.analyticsRepository.getDbStats();
   }
 
   /**

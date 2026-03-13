@@ -1,15 +1,27 @@
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { CMSTopic } from '@/features/cms/api/cms.api';
 import { useEffect } from 'react';
+import { MediaUploadField } from './MediaUploadField';
+
+const isSupportedAssetUrl = (value: string) => {
+  if (!value) return true;
+
+  try {
+    const url = new URL(value);
+    return ['http:', 'https:', 'data:'].includes(url.protocol);
+  } catch {
+    return false;
+  }
+};
 
 // Form validation schema
 const topicSchema = z.object({
-  name: z.string().min(2, 'Tên chủ đề phải có ít nhất 2 ký tự').max(100),
+  name: z.string().min(2, 'Tên chủ đề phải có ít nhất 2 ký tự').max(50, 'Tên chủ đề tối đa 50 ký tự'),
   description: z.string().min(10, 'Mô tả phải có ít nhất 10 ký tự').max(500),
   learningLevel: z.number().min(1).max(5),
-  imageUrl: z.string().url('URL hình ảnh không hợp lệ').optional().or(z.literal('')),
+  imageUrl: z.string().refine(isSupportedAssetUrl, 'URL hình ảnh không hợp lệ').optional().or(z.literal('')),
   tags: z.string() // We handle tags as comma-separated strings in the UI
 });
 
@@ -26,6 +38,8 @@ export function TopicForm({ initialData, onSubmit, onCancel, isLoading }: TopicF
   const {
     register,
     handleSubmit,
+    setValue,
+    control,
     formState: { errors },
     reset
   } = useForm<TopicFormData>({
@@ -38,6 +52,8 @@ export function TopicForm({ initialData, onSubmit, onCancel, isLoading }: TopicF
       tags: '',
     }
   });
+
+  const imageUrlValue = useWatch({ control, name: 'imageUrl' });
 
   useEffect(() => {
     if (initialData) {
@@ -115,6 +131,15 @@ export function TopicForm({ initialData, onSubmit, onCancel, isLoading }: TopicF
             placeholder="https://..."
           />
           {errors.imageUrl && <p className="text-red-500 text-sm mt-1">{errors.imageUrl.message}</p>}
+          <MediaUploadField
+            mediaType="IMAGE"
+            context="TOPIC"
+            accept="image/*"
+            buttonLabel="Tải ảnh lên"
+            currentValue={imageUrlValue}
+            disabled={isLoading}
+            onUploaded={(url) => setValue('imageUrl', url, { shouldDirty: true, shouldValidate: true })}
+          />
         </div>
 
         {/* Tags */}

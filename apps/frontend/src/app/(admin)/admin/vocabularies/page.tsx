@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import axios from 'axios';
 import Image from 'next/image';
 import { Edit2, Trash2, CheckCircle, Plus } from 'lucide-react';
 import { toast } from 'sonner';
@@ -45,8 +46,13 @@ export default function AdminVocabulariesPage() {
         setSelectedTopicId(result.items[0].id);
       }
     } catch (error) {
-      console.error('Failed to load topics:', error);
-      toast.error('Lỗi tải danh sách chủ đề');
+        if (axios.isAxiosError(error) && error.response?.status === 403) {
+          setTopics([]);
+          toast.error('Bạn không có quyền ADMIN để xem danh sách chủ đề');
+        } else {
+          console.error('Failed to load topics:', error);
+          toast.error('Lỗi tải danh sách chủ đề');
+        }
     } finally {
       setIsLoadingTopics(false);
     }
@@ -56,7 +62,7 @@ export default function AdminVocabulariesPage() {
     if (!selectedTopicId) return;
     try {
       setIsLoadingVocabs(true);
-      const vocabs = await getTopicVocabularies(selectedTopicId, 'all');
+      const vocabs = await getTopicVocabularies(selectedTopicId, { page: 1, limit: 100 });
       setVocabularies(vocabs);
     } catch (error) {
       console.error('Failed to load vocabularies:', error);
@@ -144,7 +150,7 @@ export default function AdminVocabulariesPage() {
   );
 
   return (
-    <div className="p-8 max-w-7xl mx-auto">
+    <div className="p-6 md:p-8 max-w-7xl mx-auto">
       {/* 1. Header */}
       <AdminPageHeader 
         title="Quản lý Từ Vựng" 
@@ -157,13 +163,13 @@ export default function AdminVocabulariesPage() {
       />
 
       {/* 2. Topic Selector */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
-        <label className="block text-sm font-bold text-gray-700 mb-3">Chọn Chủ Đề Học</label>
+      <div className="bg-card rounded-2xl shadow-sm border border-border/70 p-6 mb-6">
+        <label className="block text-sm font-bold text-heading mb-3">Chọn Chủ Đề Học</label>
         <select
           value={selectedTopicId ?? ''}
           onChange={(e) => setSelectedTopicId(parseInt(e.target.value))}
           disabled={isLoadingTopics}
-          className="w-full px-4 py-3.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-400 transition-all font-medium text-gray-800"
+          className="w-full px-4 py-3.5 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary disabled:bg-background disabled:text-caption transition-all font-medium text-heading"
         >
           <option value="">-- Chọn chủ đề --</option>
           {topics.map(topic => (
@@ -201,9 +207,9 @@ export default function AdminVocabulariesPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {filteredVocabs.map(vocab => (
-            <div key={vocab.id} className="bg-white rounded-3xl shadow-sm hover:shadow-xl transition-all overflow-hidden border border-gray-100 group flex flex-col">
+            <div key={vocab.id} className="bg-card rounded-3xl shadow-sm hover:shadow-md transition-all overflow-hidden border border-border/70 group flex flex-col">
               {/* Image Header */}
-              <div className="h-40 bg-gradient-to-br from-indigo-50 to-blue-50 relative overflow-hidden flex items-center justify-center">
+              <div className="h-40 bg-gradient-to-br from-primary-light/35 to-accent-light/35 relative overflow-hidden flex items-center justify-center">
                 {vocab.imageUrl ? (
                   <Image
                     src={vocab.imageUrl}
@@ -218,7 +224,7 @@ export default function AdminVocabulariesPage() {
 
                 {/* Status Badge Overlaid */}
                 {vocab.status && (
-                  <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full shadow-sm">
+                  <div className="absolute top-3 left-3 bg-card/90 backdrop-blur-sm px-3 py-1 rounded-full shadow-sm border border-border/60">
                     <span className={`text-[10px] uppercase font-bold tracking-wider ${
                       vocab.status === 'PUBLISHED' ? 'text-green-600' :
                       vocab.status === 'DRAFT' ? 'text-amber-600' :
@@ -233,19 +239,19 @@ export default function AdminVocabulariesPage() {
               {/* Card Content */}
               <div className="p-5 flex-1 flex flex-col">
                 <div className="flex items-start justify-between mb-1">
-                  <h3 className="text-xl font-extrabold text-gray-800 tracking-tight group-hover:text-blue-600 transition-colors">{vocab.word}</h3>
+                  <h3 className="text-xl font-extrabold text-heading tracking-tight group-hover:text-primary transition-colors">{vocab.word}</h3>
                   {vocab.phonetic && (
-                    <span className="bg-gray-100 text-gray-500 px-2 py-1 rounded-md text-xs font-mono">{vocab.phonetic}</span>
+                    <span className="bg-background text-caption px-2 py-1 rounded-md text-xs font-mono border border-border/60">{vocab.phonetic}</span>
                   )}
                 </div>
 
-                <p className="text-gray-600 text-sm mb-3 font-medium">{vocab.definition}</p>
+                <p className="text-body text-sm mb-3 font-medium">{vocab.definition}</p>
 
                 {vocab.example && (
-                  <p className="text-gray-500 text-sm italic mb-4 bg-gray-50 p-2.5 rounded-lg border border-gray-100">&quot;{vocab.example}&quot;</p>
+                  <p className="text-caption text-sm italic mb-4 bg-background p-2.5 rounded-lg border border-border/60">&quot;{vocab.example}&quot;</p>
                 )}
 
-                <div className="mt-auto pt-4 border-t border-gray-50">
+                <div className="mt-auto pt-4 border-t border-border/60">
                   {vocab.audioUrl ? (
                     <div className="mb-4">
                       <audio controls className="w-full h-8 custom-audio-player opacity-70 group-hover:opacity-100 transition-opacity">
@@ -258,7 +264,7 @@ export default function AdminVocabulariesPage() {
                   <div className="flex gap-2">
                     <button
                       onClick={() => openEditModal(vocab)}
-                      className="flex-[2] flex items-center justify-center gap-1.5 px-3 py-2 bg-gray-50 hover:bg-blue-50 text-gray-600 hover:text-blue-600 rounded-xl transition-colors font-medium text-sm border border-transparent hover:border-blue-100"
+                      className="flex-[2] flex items-center justify-center gap-1.5 px-3 py-2 bg-background hover:bg-primary-light/40 text-body hover:text-primary rounded-xl transition-colors font-medium text-sm border border-border/60 hover:border-primary/30"
                     >
                       <Edit2 className="w-4 h-4" />
                       <span>Sửa</span>
@@ -267,7 +273,7 @@ export default function AdminVocabulariesPage() {
                     {vocab.status === 'DRAFT' && (
                       <button
                         onClick={() => handlePublish(vocab.id)}
-                        className="flex-1 flex items-center justify-center px-2 py-2 bg-green-50 hover:bg-green-100 text-green-700 rounded-xl transition-colors"
+                        className="flex-1 flex items-center justify-center px-2 py-2 bg-success-light hover:bg-success-light/70 text-success rounded-xl transition-colors"
                         title="Xuất bản"
                       >
                         <CheckCircle className="w-4 h-4" />
@@ -276,7 +282,7 @@ export default function AdminVocabulariesPage() {
 
                     <button
                       onClick={() => handleDelete(vocab.id)}
-                      className="flex-1 flex items-center justify-center px-2 py-2 bg-gray-50 hover:bg-red-50 text-gray-400 hover:text-red-500 rounded-xl transition-colors"
+                      className="flex-1 flex items-center justify-center px-2 py-2 bg-background hover:bg-error-light text-caption hover:text-error rounded-xl transition-colors border border-border/60"
                       title="Xóa từ vựng"
                     >
                       <Trash2 className="w-4 h-4" />

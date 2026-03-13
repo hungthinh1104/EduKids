@@ -22,6 +22,18 @@ Thumbs.db
 .env
 .env.local
 .env.*.local
+.env.*
+!.env.example
+!**/.env.example
+
+# Secrets / certs
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
+id_rsa
+id_ed25519
 
 # Dependencies lock files (optional - uncomment if needed)
 # package-lock.json

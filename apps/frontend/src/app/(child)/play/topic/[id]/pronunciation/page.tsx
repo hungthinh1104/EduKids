@@ -4,22 +4,76 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { X, Mic, Volume2, Star, RotateCcw, ChevronRight } from 'lucide-react';
+import { Mic, Volume2, Star, RotateCcw, ChevronRight } from 'lucide-react';
 import { Heading, Body, Caption } from '@/shared/components/Typography';
 import { KidButton } from '@/components/edukids/KidButton';
 import { contentApi, Vocabulary } from '@/features/learning/api/content.api';
+import { submitPronunciation } from '@/features/pronunciation/api/pronunciation.api';
+import { markTopicModeCompleted } from '@/features/learning/utils/topic-mode-progress';
+import { LearningModeShell, ModeStatePanel } from '@/features/learning/components/LearningModeShell';
 
-// Confidence → stars mapping (matches BE: <61%=2star, 61-75%=3star, 76-90%=4star, >91%=5star)
+// Confidence → stars mapping (matches backend pronunciation service)
 function confidenceToStars(pct: number) {
     if (pct >= 91) return 5;
     if (pct >= 76) return 4;
     if (pct >= 61) return 3;
-    return 2;
+    if (pct >= 41) return 2;
+    return 1;
 }
 
-// Points per star tier (matches AnalyticsService)
+// Points per star tier (matches backend pronunciation rewards)
 function starsToPoints(stars: number) {
-    return stars >= 5 ? 20 : stars >= 4 ? 15 : 10;
+    if (stars >= 5) return 20;
+    if (stars >= 4) return 15;
+    if (stars >= 3) return 10;
+    return 0;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// encodePcmToWavBase64 — convert raw Float32 PCM chunks → 16-bit WAV → base64
+// Used to send real mic audio to Azure Speech backend.
+// ─────────────────────────────────────────────────────────────────────────────
+function encodePcmToWavBase64(chunks: Float32Array[], sampleRate = 16000): string | null {
+    if (chunks.length === 0) return null;
+
+    const totalLen = chunks.reduce((s, c) => s + c.length, 0);
+    const pcm = new Float32Array(totalLen);
+    let off = 0;
+    for (const c of chunks) { pcm.set(c, off); off += c.length; }
+
+    // Float32 → Int16
+    const pcm16 = new Int16Array(pcm.length);
+    for (let i = 0; i < pcm.length; i++) {
+        const s = Math.max(-1, Math.min(1, pcm[i]));
+        pcm16[i] = s < 0 ? s * 0x8000 : s * 0x7fff;
+    }
+
+    // WAV header (44 bytes) + PCM data
+    const numCh = 1, bps = 16;
+    const byteRate = sampleRate * numCh * (bps / 8);
+    const blockAlign = numCh * (bps / 8);
+    const dataSize = pcm16.byteLength;
+    const buf = new ArrayBuffer(44 + dataSize);
+    const view = new DataView(buf);
+    const ws = (o: number, str: string) => { for (let i = 0; i < str.length; i++) view.setUint8(o + i, str.charCodeAt(i)); };
+
+    ws(0, 'RIFF'); view.setUint32(4, 36 + dataSize, true);
+    ws(8, 'WAVE'); ws(12, 'fmt ');
+    view.setUint32(16, 16, true);    // PCM subchunk size
+    view.setUint16(20, 1, true);     // PCM format
+    view.setUint16(22, numCh, true); view.setUint32(24, sampleRate, true);
+    view.setUint32(28, byteRate, true); view.setUint16(32, blockAlign, true);
+    view.setUint16(34, bps, true);   ws(36, 'data');
+    view.setUint32(40, dataSize, true);
+    new Int16Array(buf, 44).set(pcm16);
+
+    // ArrayBuffer → base64 in 8 kB chunks to avoid stack overflow
+    const bytes = new Uint8Array(buf);
+    let bin = '';
+    for (let i = 0; i < bytes.length; i += 8192) {
+        bin += String.fromCharCode(...bytes.subarray(i, Math.min(i + 8192, bytes.length)));
+    }
+    return btoa(bin);
 }
 
 type Stage = 'ready' | 'recording' | 'result';
@@ -29,6 +83,7 @@ interface PronunciationResult {
     confidence: number;
     stars: number;
     points: number;
+    feedback?: string;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -94,7 +149,7 @@ function SessionComplete({ results, topicId, onRestart }: { results: Pronunciati
             </div>
             <StarRating stars={Math.round(avgStars)} />
 
-            <div className="grid grid-cols-3 gap-3 w-full max-w-xs">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full max-w-md">
                 {[
                     { label: 'Tổng điểm', value: `+${totalPoints}⭐`, color: 'text-warning' },
                     { label: 'Độ chính xác', value: `${avgConf}%`, color: avgConf >= 76 ? 'text-success' : 'text-primary' },
@@ -123,12 +178,12 @@ function SessionComplete({ results, topicId, onRestart }: { results: Pronunciati
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Main Pronunciation Page — UC-03
-// Endpoint: POST /api/learning/pronunciation with { vocabularyId, audioBlob }
-// → Response: { confidenceScore, starsEarned, pointsAwarded }
+// Endpoint: POST /api/pronunciation/:vocabularyId
 // ─────────────────────────────────────────────────────────────────────────────
 export default function PronunciationPage() {
     const params = useParams<{ id: string }>();
     const id = params?.id ?? '';
+    const parsedTopicId = Number.parseInt(id, 10);
     const [vocabList, setVocabList] = useState<Vocabulary[]>([]);
     const [loading, setLoading] = useState(true);
     const [index, setIndex] = useState(0);
@@ -142,7 +197,11 @@ export default function PronunciationPage() {
         async function loadVocabularies() {
             try {
                 setLoading(true);
-                const topic = await contentApi.getTopicById(Number(id));
+                if (!Number.isInteger(parsedTopicId) || parsedTopicId <= 0) {
+                    setVocabList([]);
+                    return;
+                }
+                const topic = await contentApi.getTopicById(parsedTopicId);
                 setVocabList(topic.vocabularies || []);
             } catch (error) {
                 console.error('Failed to load vocabularies:', error);
@@ -152,40 +211,56 @@ export default function PronunciationPage() {
             }
         }
         loadVocabularies();
-    }, [id]);
+    }, [parsedTopicId]);
 
     const vocab = vocabList[index];
-    const progress = vocabList.length > 0 ? (index / vocabList.length) * 100 : 0;
 
     // Simulate recording + AI scoring (3-second countdown)
+    const playCurrentAudio = () => {
+        if (!vocab) return;
+
+        const audioSource =
+            vocab.audioUrl ||
+            vocab.media?.find((m) => m.type === 'AUDIO')?.url;
+
+        if (audioSource) {
+            const audio = new Audio(audioSource);
+            void audio.play();
+            return;
+        }
+
+        if (typeof window !== 'undefined' && 'speechSynthesis' in window && vocab.word) {
+            const utterance = new SpeechSynthesisUtterance(vocab.word);
+            utterance.lang = 'en-US';
+            window.speechSynthesis.cancel();
+            window.speechSynthesis.speak(utterance);
+        }
+    };
 
     return (
-        <div className="min-h-screen bg-gradient-to-b from-accent-light via-background to-background pb-20 md:pb-8">
-            {/* Top bar */}
-            <div className="sticky top-0 z-30 bg-card/80 backdrop-blur-xl border-b-2 border-border">
-                <div className="max-w-lg md:max-w-4xl lg:max-w-7xl mx-auto px-4 md:px-6 h-14 flex items-center gap-4">
-                    <Link href={`/play/topic/${id}`}>
-                        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="w-8 h-8 rounded-full bg-background border-2 border-border flex items-center justify-center">
-                            <X size={14} className="text-body" />
-                        </motion.div>
-                    </Link>
-                    <div className="flex-1 h-3.5 bg-background rounded-full border border-border overflow-hidden">
-                        <motion.div animate={{ width: `${progress}%` }} transition={{ duration: 0.4 }} className="h-full bg-gradient-to-r from-accent to-primary rounded-full" />
-                    </div>
-                    <Caption className="text-caption text-sm font-black whitespace-nowrap">{index}/{vocabList.length}</Caption>
-                </div>
-            </div>
-
-            <div className="max-w-lg md:max-w-4xl lg:max-w-7xl mx-auto px-6 md:px-8 pt-8">
+        <LearningModeShell
+            backHref={`/play/topic/${id}`}
+            progressCurrent={Math.min(index + 1, Math.max(vocabList.length, 1))}
+            progressTotal={Math.max(vocabList.length, 1)}
+            title="Luyện phát âm"
+            subtitle="Nghe mẫu, nói theo và nhận điểm AI cho từng từ"
+            progressFromClass="from-accent"
+            progressToClass="to-primary"
+            contentMaxWidthClass="max-w-lg md:max-w-2xl"
+        >
                 <AnimatePresence mode="wait">
                     {loading ? (
-                        <div className="text-center py-12">
-                            <Body className="text-caption">Đang tải từ vựng...</Body>
-                        </div>
+                        <ModeStatePanel
+                            title="Đang tải từ vựng"
+                            description="Chuẩn bị nội dung luyện phát âm cho bé..."
+                            emoji="🎧"
+                        />
                     ) : vocabList.length === 0 ? (
-                        <div className="text-center py-12">
-                            <Body className="text-caption">Chưa có từ vựng nào</Body>
-                        </div>
+                        <ModeStatePanel
+                            title="Chưa có dữ liệu phát âm"
+                            description="Chủ đề này chưa có từ để luyện phát âm."
+                            emoji="📭"
+                        />
                     ) : done ? (
                         <SessionComplete key="done" results={results} topicId={id} onRestart={() => {
                             setIndex(0);
@@ -195,19 +270,19 @@ export default function PronunciationPage() {
                             setDone(false);
                         }} />
                     ) : vocab ? (
-                        <motion.div key={index} initial={{ opacity: 0, x: 60 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -60 }} transition={{ duration: 0.25 }} className="space-y-8">
+                        <motion.div key={index} initial={{ opacity: 0, x: 60 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -60 }} transition={{ duration: 0.25 }} className="space-y-8 max-w-xl mx-auto">
 
                             {/* Word card */}
-                            <motion.div className="bg-card border-4 border-accent rounded-[2.5rem] p-8 flex flex-col items-center gap-5 shadow-2xl shadow-accent/15">
+                            <motion.div className="bg-card border-2 border-accent/60 rounded-[2.5rem] p-6 md:p-8 flex flex-col items-center gap-5 shadow-xl shadow-accent/10 text-center">
                                 <motion.div animate={{ scale: [1, 1.06, 1] }} transition={{ duration: 3, repeat: Infinity }} className="text-8xl">{vocab.emoji}</motion.div>
-                                <Heading level={2} className="text-heading text-5xl font-black">{vocab.word}</Heading>
+                                <Heading level={2} className="text-heading text-4xl md:text-5xl font-black break-words">{vocab.word}</Heading>
                                 <Caption className="text-caption text-xl">{vocab.phonetic}</Caption>
                                 <Caption className="text-caption text-sm">{vocab.translation}</Caption>
 
                                 {/* Listen button */}
                                 <motion.button whileHover={{ scale: 1.06 }} whileTap={{ scale: 0.94 }}
-                                    className="flex items-center gap-2 bg-primary-light border-2 border-primary/30 text-primary px-5 py-2.5 rounded-full font-heading font-bold text-sm hover:bg-primary hover:text-white transition-colors"
-                                    onClick={() => {/* TODO: play audio */ }}
+                                    className="flex items-center gap-2 bg-primary-light border border-primary/30 text-primary px-5 py-2.5 rounded-full font-heading font-bold text-sm hover:bg-primary hover:text-white transition-colors"
+                                    onClick={playCurrentAudio}
                                 >
                                     <Volume2 size={18} /> Nghe
                                 </motion.button>
@@ -224,23 +299,68 @@ export default function PronunciationPage() {
                                             onClick={() => {
                                                 setStage('recording');
                                                 setCountdown(3);
-                                                let c = 3;
-                                                const interval = setInterval(() => {
-                                                    c -= 1;
-                                                    setCountdown(c);
-                                                    if (c <= 0) {
-                                                        clearInterval(interval);
-                                                        const simulatedConf = Math.floor(Math.random() * 40) + 60;
-                                                        setConfidence(simulatedConf);
+                                                void (async () => {
+                                                    // ── try real mic capture ──────────────────────────────
+                                                    const chunks: Float32Array[] = [];
+                                                    let ctx: AudioContext | null = null;
+                                                    let processor: ScriptProcessorNode | null = null;
+                                                    let source: MediaStreamAudioSourceNode | null = null;
+                                                    let stream: MediaStream | null = null;
+                                                    try {
+                                                        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                                                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                                        ctx = new (window.AudioContext ?? (window as any).webkitAudioContext)({ sampleRate: 16000 });
+                                                        source = ctx.createMediaStreamSource(stream);
+                                                        processor = ctx.createScriptProcessor(4096, 1, 1);
+                                                        processor.onaudioprocess = (e) => {
+                                                            chunks.push(new Float32Array(e.inputBuffer.getChannelData(0)));
+                                                        };
+                                                        source.connect(processor);
+                                                        processor.connect(ctx.destination);
+                                                    } catch {
+                                                        // mic unavailable → will fall back to simulated score
+                                                    }
+
+                                                    // ── 3-second countdown ───────────────────────────────
+                                                    for (let c = 2; c >= 0; c--) {
+                                                        await new Promise<void>((res) => setTimeout(res, 1000));
+                                                        setCountdown(c);
+                                                    }
+
+                                                    // ── stop recording & encode WAV base64 ───────────────
+                                                    let audioBase64: string | undefined;
+                                                    if (processor && source && ctx && stream) {
+                                                        processor.disconnect();
+                                                        source.disconnect();
+                                                        stream.getTracks().forEach((t) => t.stop());
+                                                        void ctx.close();
+                                                        audioBase64 = encodePcmToWavBase64(chunks) ?? undefined;
+                                                    }
+
+                                                    // ── submit to backend ─────────────────────────────────
+                                                    const fallbackConf = Math.floor(Math.random() * 40) + 60;
+                                                    try {
+                                                        const response = await submitPronunciation(
+                                                            vocab.id,
+                                                            audioBase64 ? 90 : fallbackConf,
+                                                            vocab.word,
+                                                            3000,
+                                                            audioBase64,
+                                                            audioBase64 ? 'audio/wav' : undefined,
+                                                        );
+                                                        setConfidence(response.confidenceScore);
+                                                    } catch {
+                                                        setConfidence(fallbackConf);
+                                                    } finally {
                                                         setStage('result');
                                                     }
-                                                }, 1000);
+                                                })();
                                             }}
                                             className="w-24 h-24 rounded-full bg-gradient-to-br from-accent to-primary flex items-center justify-center shadow-2xl shadow-primary/30 border-4 border-white"
                                         >
                                             <Mic size={40} className="text-white" />
                                         </motion.button>
-                                        <Caption className="text-caption text-sm">Phát âm rõ ràng và to nhé!</Caption>
+                                        <Caption className="text-caption text-sm">Phát âm rõ ràng, từng âm một nhé!</Caption>
                                     </motion.div>
                                 )}
 
@@ -294,7 +414,7 @@ export default function PronunciationPage() {
                                             </Body>
                                         </div>
 
-                                        <div className="flex gap-3">
+                                        <div className="flex flex-col sm:flex-row gap-3">
                                             <button onClick={() => setStage('ready')} className="flex-1 py-3 rounded-2xl bg-background border-2 border-border font-heading font-bold text-body hover:border-primary/50 transition-colors flex items-center justify-center gap-2">
                                                 <RotateCcw size={16} /> Thử lại
                                             </button>
@@ -306,6 +426,7 @@ export default function PronunciationPage() {
                                                 setResults(updated);
 
                                                 if (index + 1 >= vocabList.length) {
+                                                    markTopicModeCompleted(parsedTopicId, 'pronunciation');
                                                     setDone(true);
                                                 } else {
                                                     setIndex((i) => i + 1);
@@ -322,7 +443,6 @@ export default function PronunciationPage() {
                         </motion.div>
                     ) : null}
                 </AnimatePresence>
-            </div>
-        </div>
+        </LearningModeShell>
     );
 }

@@ -3,15 +3,18 @@
 import { useState, useEffect } from 'react';
 import { Lightbulb, ChevronRight, TrendingUp, Sparkles } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { Heading, Body, Caption } from '@/shared/components/Typography';
 import { useChildProfiles } from '@/features/dashboard/hooks/useChildProfiles';
-import { getRecommendations, type Recommendation } from '@/features/recommendations/api/recommendations.api';
+import { getRecommendations, regenerateRecommendations, type Recommendation } from '@/features/recommendations/api/recommendations.api';
 
 
 export default function ParentRecommendationsPage() {
   const { profiles, activeProfileId, switchActiveProfile } = useChildProfiles();
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isRegenerating, setIsRegenerating] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string>('all');
+  const [emptyMessage, setEmptyMessage] = useState('Chưa có gợi ý nào');
 
   const activeChild = profiles.find((p) => p.id === activeProfileId) ?? profiles[0] ?? null;
 
@@ -26,11 +29,41 @@ export default function ParentRecommendationsPage() {
       setIsLoading(true);
       const data = await getRecommendations(childId);
       setRecommendations(data?.recommendations || []);
+      setEmptyMessage(data?.noRecommendationMessage || 'Chưa có gợi ý nào');
+
+      if ((data?.recommendations?.length ?? 0) === 0) {
+        try {
+          setIsRegenerating(true);
+          const regenerated = await regenerateRecommendations(childId);
+          setRecommendations(regenerated?.recommendations || []);
+          setEmptyMessage(regenerated?.noRecommendationMessage || 'Hệ thống chưa tạo được gợi ý phù hợp.');
+        } catch (regenerateError) {
+          console.error('Failed to regenerate recommendations:', regenerateError);
+        } finally {
+          setIsRegenerating(false);
+        }
+      }
     } catch (error) {
       console.error('Failed to load recommendations:', error);
       setRecommendations([]);
+      setEmptyMessage('Không thể tải gợi ý học tập lúc này.');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleRegenerate = async () => {
+    if (!activeChild?.id || isRegenerating) return;
+    try {
+      setIsRegenerating(true);
+      const data = await regenerateRecommendations(activeChild.id);
+      setRecommendations(data?.recommendations || []);
+      setEmptyMessage(data?.noRecommendationMessage || 'Hệ thống chưa tạo được gợi ý phù hợp.');
+    } catch (error) {
+      console.error('Failed to regenerate recommendations:', error);
+      setEmptyMessage('Không thể tạo gợi ý mới lúc này. Vui lòng thử lại sau.');
+    } finally {
+      setIsRegenerating(false);
     }
   };
 
@@ -89,23 +122,24 @@ export default function ParentRecommendationsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 p-6 pb-32">
+    <div className="min-h-screen bg-gradient-to-b from-primary-light/25 via-background to-background pb-28">
+      <div className="max-w-6xl mx-auto px-4 md:px-6 pt-6">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="mb-8"
+        className="mb-6 rounded-3xl border border-primary/15 bg-gradient-to-r from-primary-light/45 via-card to-accent-light/35 p-6 md:p-7 shadow-sm"
       >
         <div className="flex items-center gap-3 mb-2">
-          <Sparkles className="w-8 h-8 text-purple-600" />
-          <h1 className="text-3xl font-bold text-gray-800">Gợi Ý Học Tập</h1>
+          <Sparkles className="w-7 h-7 text-primary" />
+          <Heading level={2} className="text-heading text-2xl md:text-3xl">Gợi Ý Học Tập</Heading>
         </div>
-        <p className="text-gray-600">AI cá nhân hóa dựa trên tiến bộ học của {activeChild?.nickname || 'bé'}</p>
+        <Body className="text-body">AI cá nhân hóa dựa trên tiến bộ học của {activeChild?.nickname || 'bé'}</Body>
       </motion.div>
 
       {/* Child Selector */}
-      <div className="mb-6 bg-white rounded-2xl shadow-md p-4">
-        <p className="text-sm font-bold text-gray-700 mb-3">Xem gợi ý cho</p>
+      <div className="mb-5 bg-card/90 rounded-2xl border border-border/70 shadow-sm p-4">
+        <Caption className="text-sm font-bold text-heading mb-3 block">Xem gợi ý cho</Caption>
         <div className="flex gap-2 overflow-x-auto pb-2">
           {profiles.map((child) => (
             <button
@@ -113,10 +147,10 @@ export default function ParentRecommendationsPage() {
               onClick={async () => {
                 await switchActiveProfile(child.id);
               }}
-              className={`px-4 py-2 rounded-full font-bold transition-all whitespace-nowrap ${
+              className={`px-4 py-2 rounded-full font-bold transition-all whitespace-nowrap border ${
                 activeProfileId === child.id
-                  ? 'bg-blue-600 text-white shadow-lg'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  ? 'bg-primary text-white border-primary shadow-sm'
+                  : 'bg-background text-body border-border hover:border-primary/50 hover:text-primary'
               }`}
             >
               {child.nickname}
@@ -127,9 +161,9 @@ export default function ParentRecommendationsPage() {
 
       {/* Category Filter */}
       {profiles.length === 0 ? (
-        <div className="text-center py-12 bg-white rounded-2xl shadow-md">
-          <Lightbulb className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-          <p className="text-gray-500">Tài khoản hiện tại chưa có hồ sơ bé</p>
+        <div className="text-center py-12 bg-card/90 rounded-2xl border border-border/70 shadow-sm">
+          <Lightbulb className="w-12 h-12 text-caption mx-auto mb-3" />
+          <Body className="text-caption">Tài khoản hiện tại chưa có hồ sơ bé</Body>
         </div>
       ) : (
       <>
@@ -137,10 +171,10 @@ export default function ParentRecommendationsPage() {
         <div className="flex gap-2">
           <button
             onClick={() => setActiveCategory('all')}
-            className={`px-4 py-2 rounded-full font-bold transition-all whitespace-nowrap ${
+            className={`px-4 py-2 rounded-full font-bold transition-all whitespace-nowrap border ${
               activeCategory === 'all'
-                ? 'bg-indigo-600 text-white shadow-lg'
-                : 'bg-white text-gray-700 hover:bg-gray-100'
+                ? 'bg-primary text-white border-primary shadow-sm'
+                : 'bg-card text-body border-border hover:border-primary/50 hover:text-primary'
             }`}
           >
             Tất Cả
@@ -149,10 +183,10 @@ export default function ParentRecommendationsPage() {
             <button
               key={category}
               onClick={() => setActiveCategory(category)}
-              className={`px-4 py-2 rounded-full font-bold transition-all whitespace-nowrap ${
+              className={`px-4 py-2 rounded-full font-bold transition-all whitespace-nowrap border ${
                 activeCategory === category
-                  ? 'bg-indigo-600 text-white shadow-lg'
-                  : 'bg-white text-gray-700 hover:bg-gray-100'
+                  ? 'bg-primary text-white border-primary shadow-sm'
+                  : 'bg-card text-body border-border hover:border-primary/50 hover:text-primary'
               }`}
             >
               {getRecommendationLabel(category)}
@@ -162,15 +196,22 @@ export default function ParentRecommendationsPage() {
       </div>
 
       {/* Recommendations */}
-      {isLoading ? (
-        <div className="text-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Đang tải gợi ý...</p>
+      {isLoading || isRegenerating ? (
+        <div className="text-center py-12 bg-card/90 rounded-2xl border border-border/70 shadow-sm">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <Body className="mt-4 text-body">{isRegenerating ? 'Đang tạo gợi ý mới...' : 'Đang tải gợi ý...'}</Body>
         </div>
       ) : filteredRecommendations.length === 0 ? (
-        <div className="text-center py-12 bg-white rounded-2xl shadow-md">
-          <Lightbulb className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-          <p className="text-gray-500">Chưa có gợi ý nào</p>
+        <div className="text-center py-12 bg-card/90 rounded-2xl border border-border/70 shadow-sm">
+          <Lightbulb className="w-12 h-12 text-caption mx-auto mb-3" />
+          <Body className="text-caption">{emptyMessage}</Body>
+          <button
+            type="button"
+            onClick={handleRegenerate}
+            className="mt-5 inline-flex items-center gap-2 rounded-full border border-primary bg-primary px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-primary-dark"
+          >
+            <Sparkles className="h-4 w-4" /> Tạo gợi ý mới
+          </button>
         </div>
       ) : (
         <div className="space-y-4">
@@ -182,7 +223,7 @@ export default function ParentRecommendationsPage() {
               transition={{ delay: idx * 0.05 }}
               className="group"
             >
-              <div className="bg-white rounded-2xl shadow-md hover:shadow-xl transition-all overflow-hidden">
+              <div className="bg-card rounded-2xl border border-border/70 shadow-sm hover:shadow-md transition-all overflow-hidden">
                 <div className={`bg-gradient-to-r ${getRecommendationColor(rec.type)} h-1`} />
                 
                 <div className="p-6">
@@ -194,40 +235,40 @@ export default function ParentRecommendationsPage() {
                       {/* Content */}
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2">
-                          <h3 className="text-lg font-bold text-gray-800">{rec.title}</h3>
+                          <Heading level={4} className="text-heading text-lg">{rec.title}</Heading>
                           <span className={`px-3 py-1 rounded-full text-xs font-bold text-white bg-gradient-to-r ${getRecommendationColor(rec.type)}`}>
                             {getRecommendationLabel(rec.type)}
                           </span>
                         </div>
 
-                        <p className="text-gray-600 text-sm mb-3">{rec.description}</p>
+                        <Body className="text-body text-sm mb-3">{rec.description}</Body>
 
                         {/* Details */}
                         <div className="flex flex-wrap gap-4 text-sm">
                           {rec.difficulty && (
                             <div>
-                              <p className="text-gray-500 text-xs">Mức Độ</p>
-                              <p className="font-bold text-gray-700">{rec.difficulty}</p>
+                              <Caption className="text-caption text-xs">Mức Độ</Caption>
+                              <p className="font-bold text-body">{rec.difficulty}</p>
                             </div>
                           )}
                           {(rec.estimatedMinutes ?? rec.estimatedTime) && (
                             <div>
-                              <p className="text-gray-500 text-xs">Thời Gian</p>
-                              <p className="font-bold text-gray-700">~{rec.estimatedMinutes ?? rec.estimatedTime} phút</p>
+                              <Caption className="text-caption text-xs">Thời Gian</Caption>
+                              <p className="font-bold text-body">~{rec.estimatedMinutes ?? rec.estimatedTime} phút</p>
                             </div>
                           )}
                           {rec.masteryPercentage !== undefined && (
                             <div>
-                              <p className="text-gray-500 text-xs">Độ Thành Thạo</p>
-                              <p className="font-bold text-gray-700">{rec.masteryPercentage}%</p>
+                              <Caption className="text-caption text-xs">Độ Thành Thạo</Caption>
+                              <p className="font-bold text-body">{rec.masteryPercentage}%</p>
                             </div>
                           )}
                         </div>
 
                         {/* Reason */}
                         {rec.reason && (
-                          <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-                            <p className="text-xs text-blue-700">
+                          <div className="mt-4 p-3 bg-primary-light/40 border border-primary/20 rounded-lg">
+                            <p className="text-xs text-primary-dark">
                               <span className="font-bold">Lý do: </span>
                               {rec.reason}
                             </p>
@@ -241,7 +282,7 @@ export default function ParentRecommendationsPage() {
                       type="button"
                       disabled
                       title="Tính năng chi tiết sẽ mở ở bản tiếp theo"
-                      className="ml-4 p-3 rounded-lg bg-gray-100 text-gray-400 cursor-not-allowed"
+                      className="ml-4 p-3 rounded-lg bg-background border border-border text-caption cursor-not-allowed"
                     >
                       <ChevronRight className="w-5 h-5" />
                     </button>
@@ -249,7 +290,7 @@ export default function ParentRecommendationsPage() {
 
                   {/* Progress Bar */}
                   {rec.masteryPercentage !== undefined && (
-                    <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                    <div className="h-2 bg-background rounded-full overflow-hidden border border-border/50">
                       <div
                         className="h-full bg-gradient-to-r from-blue-500 to-purple-500"
                         style={{ width: `${rec.masteryPercentage}%` }}
@@ -268,13 +309,13 @@ export default function ParentRecommendationsPage() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
-        className="mt-8 bg-gradient-to-r from-purple-100 to-pink-100 rounded-2xl p-6 border-2 border-purple-200"
+        className="mt-8 bg-gradient-to-r from-primary-light/45 to-accent-light/45 rounded-2xl p-6 border border-primary/20 shadow-sm"
       >
         <div className="flex gap-3 mb-4">
-          <TrendingUp className="w-6 h-6 text-purple-600 flex-shrink-0" />
+          <TrendingUp className="w-6 h-6 text-primary flex-shrink-0" />
           <div>
-            <h3 className="font-bold text-gray-800 mb-2">Cách Gợi Ý Được Tạo</h3>
-            <ul className="space-y-1 text-sm text-gray-700">
+            <Heading level={4} className="text-heading text-base mb-2">Cách Gợi Ý Được Tạo</Heading>
+            <ul className="space-y-1 text-sm text-body">
               <li>• Phân tích tiến bộ học của {activeChild?.nickname || 'bé'}</li>
               <li>• Xác định các chủ đề yếu và các kỹ năng cần cải thiện</li>
               <li>• Gợi ý bài học tiếp theo để tối đa hóa học tập</li>
@@ -285,6 +326,7 @@ export default function ParentRecommendationsPage() {
       </motion.div>
       </>
       )}
+      </div>
     </div>
   );
 }

@@ -21,14 +21,14 @@ export function ContentStatsTable({ contentStats }: ContentStatsTableProps) {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.1 }}
-            className="lg:col-span-2 bg-card border-2 border-border rounded-2xl p-6"
+            className="rounded-2xl"
         >
             <SectionHeader title="Hiệu quả chủ đề"
                 action={<button className="text-primary text-sm font-heading font-bold hover:underline flex items-center gap-1"><Eye size={14} /> Xem tất cả</button>}
             />
             <div className="overflow-x-auto mt-2">
                 <table className="w-full text-sm">
-                    <thead className="bg-background border-b-2 border-border">
+                    <thead className="bg-background/80 border-b border-border">
                         <tr>
                             {['Chủ đề', 'Khối lượng', 'Tỉ lệ HT', 'Điểm số'].map((h) => (
                                 <th key={h} className="text-left py-3 px-4 font-heading font-bold text-caption text-xs">{h}</th>
@@ -36,6 +36,13 @@ export function ContentStatsTable({ contentStats }: ContentStatsTableProps) {
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-border">
+                        {contentStats.length === 0 && (
+                            <tr>
+                                <td colSpan={4} className="py-10 text-center text-sm text-caption font-medium">
+                                    Chưa có dữ liệu hiệu quả chủ đề.
+                                </td>
+                            </tr>
+                        )}
                         {contentStats.map((c, i) => (
                             <motion.tr
                                 key={c.topic}
@@ -43,7 +50,7 @@ export function ContentStatsTable({ contentStats }: ContentStatsTableProps) {
                                 whileInView={{ opacity: 1, x: 0 }}
                                 viewport={{ once: true }}
                                 transition={{ delay: i * 0.05 }}
-                                className="group hover:bg-background transition-colors"
+                                className="group hover:bg-background/70 transition-colors"
                             >
                                 <td className="py-3 px-4 font-heading font-bold text-heading text-sm">{c.topic}</td>
                                 <td className="py-3 px-4 text-caption text-xs">

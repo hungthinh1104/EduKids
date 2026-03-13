@@ -9,8 +9,8 @@ import { FloatingNavbar } from '@/shared/components/layout/FloatingNavbar';
 
 const NAV = [
     { href: '/admin', icon: <LayoutDashboard size={18} />, label: 'Dashboard' },
-    { href: '/admin/topics', icon: <BookOpen size={18} />, label: 'Chủ đề' },
-    { href: '/admin/vocabulary', icon: <Package size={18} />, label: 'Từ vựng' },
+    { href: '/admin/topics-manage', icon: <BookOpen size={18} />, label: 'Chủ đề' },
+    { href: '/admin/vocabularies', icon: <Package size={18} />, label: 'Từ vựng' },
     { href: '/admin/quizzes', icon: <HelpCircle size={18} />, label: 'Quiz' },
     { href: '/admin/users', icon: <Users size={18} />, label: 'Người dùng' },
     { href: '/admin/analytics', icon: <BarChart2 size={18} />, label: 'Phân tích' },

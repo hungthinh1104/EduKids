@@ -64,10 +64,10 @@ function VocabularyFormModalContent({ initialData, topics, onClose, onSave }: Om
 
     return (
         <>
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} className="fixed inset-0 bg-black/50 z-40 backdrop-blur-sm overflow-y-auto" />
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} className="fixed inset-0 bg-black/50 z-[190] backdrop-blur-sm overflow-y-auto" />
             <motion.div
                 initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9 }}
-                className="fixed inset-0 z-50 flex flex-col items-center justify-center p-4 pointer-events-none"
+                className="fixed inset-0 z-[200] flex flex-col items-center justify-center p-4 pointer-events-none"
             >
                 <div className="bg-card border-2 border-border rounded-3xl p-6 w-full max-w-lg shadow-2xl pointer-events-auto max-h-full overflow-y-auto hidden-scrollbar">
                     <div className="flex items-center justify-between mb-6 border-b-2 border-border pb-4">

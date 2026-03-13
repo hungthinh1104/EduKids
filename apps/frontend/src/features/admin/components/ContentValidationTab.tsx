@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Clock, ShieldCheck, ShieldX } from 'lucide-react';
 import { TableBadge } from '@/features/admin/components/AdminUI';
-import { apiClient } from '@/shared/services/api.client';
 import { toast } from 'sonner';
 
 export interface PendingItem {
@@ -18,16 +17,20 @@ export interface PendingItem {
 
 interface ContentValidationTabProps {
     pendingItems: PendingItem[];
-    onItemsChange: (ids: number[]) => void; // Called after approve/reject to remove from list
+    onItemsChange: (ids: number[]) => void;
+    onApproveItem?: (item: PendingItem) => Promise<void>;
+    onRejectItem?: (item: PendingItem) => Promise<void>;
 }
 
-export function ContentValidationTab({ pendingItems, onItemsChange }: ContentValidationTabProps) {
+export function ContentValidationTab({ pendingItems, onItemsChange, onApproveItem, onRejectItem }: ContentValidationTabProps) {
     const [processing, setProcessing] = useState<Set<number>>(new Set());
 
     async function handleApprove(item: PendingItem) {
         setProcessing((prev) => new Set([...prev, item.id]));
         try {
-            await apiClient.post('/admin/content/validate/approve', { itemId: item.id, type: item.type });
+            if (onApproveItem) {
+                await onApproveItem(item);
+            }
             toast.success(`✅ Đã duyệt: ${item.word}`);
             onItemsChange([item.id]);
         } catch {
@@ -40,7 +43,9 @@ export function ContentValidationTab({ pendingItems, onItemsChange }: ContentVal
     async function handleReject(item: PendingItem) {
         setProcessing((prev) => new Set([...prev, item.id]));
         try {
-            await apiClient.post('/admin/content/validate/reject', { itemId: item.id, reason: 'Admin rejected' });
+            if (onRejectItem) {
+                await onRejectItem(item);
+            }
             toast.success(`❌ Đã từ chối: ${item.word}`);
             onItemsChange([item.id]);
         } catch {

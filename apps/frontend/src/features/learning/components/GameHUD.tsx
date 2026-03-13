@@ -14,6 +14,7 @@ interface GameHUDProps {
     hp?: number;
     maxHp?: number;
     backHref?: string;
+    onBackClick?: () => void;
     activeNav?: 'map' | 'achievements' | 'shop' | 'review';
 }
 
@@ -21,7 +22,7 @@ interface GameHUDProps {
  * GameHUD — sticky top bar for all child game screens.
  * Used by: /play, /play/topic/[id], /play/topic/[id]/flashcard, /play/topic/[id]/quiz
  */
-export function GameHUD({ nickname, avatarUrl, rewards, hp = 5, maxHp = 5, backHref = '/play', activeNav = 'map' }: GameHUDProps) {
+export function GameHUD({ nickname, avatarUrl, rewards, hp = 5, maxHp = 5, backHref = '/play', onBackClick, activeNav = 'map' }: GameHUDProps) {
     return (
         <motion.div
             initial={{ opacity: 0, y: -20 }}
@@ -33,15 +34,27 @@ export function GameHUD({ nickname, avatarUrl, rewards, hp = 5, maxHp = 5, backH
                 {/* Left section: Back + Avatar */}
                 <div className="flex items-center gap-3 md:gap-4">
                     {/* Back */}
-                    <Link href={backHref}>
-                        <motion.div
+                    {onBackClick ? (
+                        <motion.button
+                            type="button"
+                            onClick={onBackClick}
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
                             className="w-9 h-9 md:w-12 md:h-12 rounded-full bg-background border-2 border-border hover:border-primary transition-colors flex items-center justify-center"
                         >
                             <ArrowLeft size={16} className="text-body md:w-5 md:h-5" />
-                        </motion.div>
-                    </Link>
+                        </motion.button>
+                    ) : (
+                        <Link href={backHref}>
+                            <motion.div
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                                className="w-9 h-9 md:w-12 md:h-12 rounded-full bg-background border-2 border-border hover:border-primary transition-colors flex items-center justify-center"
+                            >
+                                <ArrowLeft size={16} className="text-body md:w-5 md:h-5" />
+                            </motion.div>
+                        </Link>
+                    )}
 
                     {/* Avatar + name */}
                     <div className="flex items-center gap-2.5 md:gap-3">

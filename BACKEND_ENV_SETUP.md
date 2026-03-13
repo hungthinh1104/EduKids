@@ -29,6 +29,20 @@
 
 ## Optional Variables (Have Defaults)
 
+### Pronunciation / Azure Speech
+- **PRONUNCIATION_PROVIDER** - Provider dùng để chấm pronunciation
+  - Values: `CUSTOM`, `AZURE_SPEECH`, `GOOGLE_SPEECH`
+  - Demo recommendation: `AZURE_SPEECH`
+
+- **AZURE_SPEECH_KEY** - Azure Speech subscription key
+  - Required when `PRONUNCIATION_PROVIDER=AZURE_SPEECH`
+
+- **AZURE_SPEECH_REGION** - Azure Speech region, ví dụ `southeastasia`
+  - Required when `PRONUNCIATION_PROVIDER=AZURE_SPEECH`
+
+- **AZURE_SPEECH_LANGUAGE** - Speech recognition language
+  - Default: `en-US`
+
 ### CORS Configuration
 - **CORS_ORIGIN** - Allowed frontend origin
   - Default: `http://localhost:3000`
@@ -48,10 +62,10 @@
 
 ```bash
 # Database
-DATABASE_URL="postgresql://postgres:password@localhost:5432/edukids"
+DATABASE_URL="postgresql://<db_user>:<db_password>@localhost:5432/edukids"
 
 # Authentication  
-JWT_SECRET="your-super-secret-key-min-32-characters-for-production"
+JWT_SECRET="<set-strong-jwt-secret-min-32-chars>"
 
 # Redis Configuration
 REDIS_HOST="localhost"
@@ -64,6 +78,12 @@ CORS_ORIGIN="http://localhost:3000"
 
 # Content Delivery
 CLOUDINARY_BASE_URL="https://res.cloudinary.com/edukids"
+
+# Pronunciation / Azure Speech
+PRONUNCIATION_PROVIDER="CUSTOM"
+AZURE_SPEECH_KEY=""
+AZURE_SPEECH_REGION=""
+AZURE_SPEECH_LANGUAGE="en-US"
 ```
 
 ## Setup Steps for Local Development
@@ -74,7 +94,7 @@ CLOUDINARY_BASE_URL="https://res.cloudinary.com/edukids"
    createdb edukids
    
    # Set DATABASE_URL
-   export DATABASE_URL="postgresql://localhost/edukids"
+  export DATABASE_URL="postgresql://<db_user>:<db_password>@localhost:5432/edukids"
    ```
 
 2. **Redis Server**

@@ -89,7 +89,7 @@ services:
     restart: unless-stopped
     container_name: edukids-frontend
     environment:
-      NODE_ENV: ${NODE_ENV:-production}
+      NODE_ENV: production
       NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3001/api}
       NEXT_PUBLIC_WS_URL: ${NEXT_PUBLIC_WS_URL:-ws://localhost:3001}
       NEXT_TELEMETRY_DISABLED: 1
@@ -119,10 +119,6 @@ services:
       - "127.0.0.1:9090:9090"
     depends_on:
       - backend
-      - postgres
-      - redis
-      - alertmanager
-      - blackbox-exporter
     networks:
       - edukids-network
 
@@ -148,107 +144,12 @@ services:
     networks:
       - edukids-network
 
-  # Alertmanager (alert routing)
-  alertmanager:
-    image: prom/alertmanager:v0.27.0
-    restart: unless-stopped
-    container_name: edukids-alertmanager
-    command:
-      - "--config.file=/etc/alertmanager/alertmanager.yml"
-      - "--storage.path=/alertmanager"
-    volumes:
-      - ./docker/monitoring/alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
-      - alertmanager_data:/alertmanager
-    ports:
-      - "127.0.0.1:9093:9093"
-    networks:
-      - edukids-network
-
-  # Blackbox exporter for HTTP probes
-  blackbox-exporter:
-    image: prom/blackbox-exporter:v0.25.0
-    restart: unless-stopped
-    container_name: edukids-blackbox-exporter
-    command:
-      - "--config.file=/etc/blackbox/blackbox.yml"
-    volumes:
-      - ./docker/monitoring/blackbox/blackbox.yml:/etc/blackbox/blackbox.yml:ro
-    ports:
-      - "127.0.0.1:9115:9115"
-    networks:
-      - edukids-network
-
-  # Node (host) metrics exporter
-  node-exporter:
-    image: prom/node-exporter:v1.8.2
-    restart: unless-stopped
-    container_name: edukids-node-exporter
-    command:
-      - "--path.rootfs=/host"
-      - "--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($|/)"
-    volumes:
-      - /:/host:ro,rslave
-    ports:
-      - "127.0.0.1:9100:9100"
-    networks:
-      - edukids-network
-
-  # Docker container metrics exporter
-  cadvisor:
-    image: gcr.io/cadvisor/cadvisor:v0.49.1
-    restart: unless-stopped
-    container_name: edukids-cadvisor
-    volumes:
-      - /:/rootfs:ro
-      - /var/run:/var/run:ro
-      - /sys:/sys:ro
-      - /var/lib/docker/:/var/lib/docker:ro
-      - /dev/disk/:/dev/disk:ro
-    ports:
-      - "127.0.0.1:8080:8080"
-    privileged: true
-    devices:
-      - /dev/kmsg
-    networks:
-      - edukids-network
-
-  # PostgreSQL metrics exporter
-  postgres-exporter:
-    image: prometheuscommunity/postgres-exporter:v0.17.1
-    restart: unless-stopped
-    container_name: edukids-postgres-exporter
-    environment:
-      DATA_SOURCE_NAME: postgresql://${DB_USER:-edukids}:${DB_PASSWORD:?DB_PASSWORD is required}@postgres:5432/${DB_NAME:-edukids_db}?sslmode=disable
-    ports:
-      - "127.0.0.1:9187:9187"
-    depends_on:
-      postgres:
-        condition: service_healthy
-    networks:
-      - edukids-network
-
-  # Redis metrics exporter
-  redis-exporter:
-    image: oliver006/redis_exporter:v1.64.0
-    restart: unless-stopped
-    container_name: edukids-redis-exporter
-    environment:
-      REDIS_ADDR: redis://redis:6379
-      REDIS_PASSWORD: ${REDIS_PASSWORD:?REDIS_PASSWORD is required}
-    ports:
-      - "127.0.0.1:9121:9121"
-    depends_on:
-      redis:
-        condition: service_healthy
-    networks:
-      - edukids-network
 
 volumes:
   postgres_data:
   redis_data:
   prometheus_data:
   grafana_data:
-  alertmanager_data:
 
 networks:
   edukids-network:

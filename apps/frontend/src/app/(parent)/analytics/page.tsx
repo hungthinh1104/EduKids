@@ -83,10 +83,10 @@ export default function ParentAnalyticsPage() {
         await Promise.all([
           getAnalyticsOverview(activeChild.id, period),
           getLearningTimeAnalytics(activeChild.id, period),
-          getVocabularyAnalytics(activeChild.id),
-          getPronunciationAnalytics(activeChild.id),
-          getQuizAnalytics(activeChild.id),
-          getGamificationAnalytics(activeChild.id),
+          getVocabularyAnalytics(activeChild.id, period),
+          getPronunciationAnalytics(activeChild.id, period),
+          getQuizAnalytics(activeChild.id, period),
+          getGamificationAnalytics(activeChild.id, period),
         ]);
 
       setAnalytics({

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import axios from 'axios';
 import { apiClient as axiosInstance } from '@/shared/services/api.client';
+import { setTopicModeProgressChildScope } from '@/features/learning/utils/topic-mode-progress';
 import type { ApiEnvelope } from '@/features/auth/types';
 import type {
     ChildProfile,
@@ -14,113 +15,11 @@ import type {
     NoDataResponse,
 } from '@/features/profile/types/child-profile.types';
 
-// ─────────────────────────────────────────────────────────
-// Mock data — field names verified against:
-// GET /api/profiles         → ProfileListDto
-// GET /api/analytics/overview?childId=X → AnalyticsOverviewDto
-// ─────────────────────────────────────────────────────────
-
-const MOCK_PROFILE_LIST: ProfileListDto = {
-    profiles: [
-        {
-            id: 1,
-            nickname: 'Bé Bông',
-            age: 7,
-            avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=bong',
-            totalPoints: 1250,
-            currentLevel: 5,
-            badgesEarned: 4,
-            streakDays: 12,        // ← streakDays (from BE DTO, not streakCount)
-            isActive: true,
-            createdAt: '2026-01-01T00:00:00Z',
-            lastActivityAt: new Date().toISOString(),
-        },
-        {
-            id: 2,
-            nickname: 'Bé Chip',
-            age: 9,
-            avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=chip',
-            totalPoints: 3400,
-            currentLevel: 12,
-            badgesEarned: 9,
-            streakDays: 7,
-            isActive: false,
-            createdAt: '2026-01-15T00:00:00Z',
-            lastActivityAt: new Date(Date.now() - 86400000).toISOString(),
-        },
-    ],
-    totalCount: 2,
-    maxProfiles: 5,
-    activeProfileId: 1,
-};
-
 const EMPTY_PROFILE_LIST: ProfileListDto = {
     profiles: [],
     totalCount: 0,
     maxProfiles: 5,
     activeProfileId: null,
-};
-
-// Matches: AnalyticsOverviewDto from /api/analytics/overview
-const MOCK_ANALYTICS: Record<number, AnalyticsOverview> = {
-    1: {
-        childId: 1,
-        childNickname: 'Bé Bông',
-        period: 'WEEK',
-        hasData: true,
-        insightMessage: 'Bé Bông học rất chăm chỉ tuần này! 🌟',
-        generatedAt: new Date().toISOString(),
-        learningTime: {
-            totalMinutes: 132,
-            averageSessionMinutes: 22,
-            totalSessions: 6,
-            daysActive: 6,
-            currentStreak: 12,
-            chartData: [
-                { date: '2026-03-02', value: 15, label: 'CN' },
-                { date: '2026-03-03', value: 22, label: 'T2' },
-                { date: '2026-03-04', value: 10, label: 'T3' },
-                { date: '2026-03-05', value: 30, label: 'T4' },
-                { date: '2026-03-06', value: 18, label: 'T5' },
-                { date: '2026-03-07', value: 25, label: 'T6' },
-                { date: '2026-03-08', value: 12, label: 'T7' },
-            ],
-        },
-        vocabulary: {
-            totalWordsEncountered: 75,
-            wordsMastered: 48,
-            retentionRate: 64,
-            wordsReviewed: 124,
-            chartData: [],
-            wordsByLevel: { mastered: 48, learning: 18, new: 9 },
-        },
-        pronunciation: {
-            averageAccuracy: 82,
-            totalPractices: 38,
-            highAccuracyCount: 28,
-            challengingSoundsCount: 3,
-            chartData: [],
-            mostImprovedWords: [{ word: 'Apple', improvement: 25 }],
-            wordsNeedingPractice: [{ word: 'Three', accuracy: 58 }],
-        },
-        quizPerformance: {
-            totalQuizzes: 8,
-            averageScore: 78,
-            highestScore: 100,
-            quizzesPassed: 6,
-            chartData: [],
-            scoresByDifficulty: { easy: 95, medium: 80, hard: 65 },
-        },
-        gamification: {
-            totalPoints: 1250,
-            currentLevel: 5,
-            badgesEarned: 4,
-            totalBadges: 12,
-            itemsPurchased: 2,
-            chartData: [],
-            recentBadges: [{ name: 'Streak 7 ngày', earnedAt: '2026-03-05T00:00:00Z' }],
-        },
-    },
 };
 
 const buildEmptyAnalytics = (
@@ -178,11 +77,6 @@ const buildEmptyAnalytics = (
     },
 });
 
-// ─────────────────────────────────────────────────────────
-// Hooks — shape matches real API contract
-// Swap useState → useSWR('/profiles') when BE is ready
-// ─────────────────────────────────────────────────────────
-
 export function useChildProfiles() {
     const [data, setData] = useState<ProfileListDto>(EMPTY_PROFILE_LIST);
     const [loading, setLoading] = useState(false);
@@ -233,12 +127,14 @@ export function useChildProfiles() {
                     setData(EMPTY_PROFILE_LIST);
                     setError('Bạn không có quyền truy cập hồ sơ bé.');
                 } else {
-                    setData(MOCK_PROFILE_LIST);
-                    setError('Không thể tải hồ sơ bé từ máy chủ. Đang hiển thị dữ liệu mẫu.');
+                    // Don't use mock data - show error state so user knows API failed
+                    setData(EMPTY_PROFILE_LIST);
+                    setError('Không thể tải hồ sơ bé từ máy chủ. Vui lòng kiểm tra kết nối và thử lại.');
                 }
             } else {
-                setData(MOCK_PROFILE_LIST);
-                setError('Không thể tải hồ sơ bé. Đang hiển thị dữ liệu mẫu.');
+                // Don't use mock data - show error state so user knows API failed
+                setData(EMPTY_PROFILE_LIST);
+                setError('Không thể tải hồ sơ bé. Vui lòng kiểm tra kết nối và thử lại.');
             }
         } finally {
             setLoading(false);
@@ -269,6 +165,11 @@ export function useChildProfiles() {
             if (result.refreshToken) {
                 document.cookie = `refresh_token=${result.refreshToken}; path=/; max-age=${7 * 24 * 60 * 60}`; // 7 days
             }
+            
+            // CRITICAL: Set role=LEARNER so middleware can validate child routes
+            document.cookie = `role=LEARNER; path=/; max-age=${15 * 60}`; // 15 min, same as access_token
+
+            setTopicModeProgressChildScope(switchedProfileId);
 
             setData((prev) => ({
                 ...prev,
@@ -294,7 +195,10 @@ export function useChildProfiles() {
     }; // spreads: profiles, totalCount, maxProfiles, activeProfileId
 }
 
-export function useChildAnalytics(childId: number) {
+export function useChildAnalytics(
+    childId: number,
+    period: 'WEEK' | 'MONTH' | 'QUARTER' | 'YEAR' | 'ALL' = 'WEEK',
+) {
     const [data, setData] = useState<AnalyticsOverview | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -310,7 +214,7 @@ export function useChildAnalytics(childId: number) {
 
         try {
             const response = await axiosInstance.get<ApiEnvelope<AnalyticsOverview | NoDataResponse>>(
-                `analytics/overview?childId=${childId}`,
+                `analytics/overview?childId=${childId}&period=${period}`,
             );
             const payload = response.data.data;
 
@@ -344,17 +248,19 @@ export function useChildAnalytics(childId: number) {
                     setData(null);
                     setError('Bạn cần đăng nhập để xem analytics.');
                 } else {
-                    setData(MOCK_ANALYTICS[childId] ?? null);
-                    setError('Không thể tải analytics từ máy chủ. Đang hiển thị dữ liệu mẫu.');
+                    // Don't use mock data - show error state
+                    setData(null);
+                    setError('Không thể tải analytics từ máy chủ. Vui lòng kiểm tra kết nối và thử lại.');
                 }
             } else {
-                setData(MOCK_ANALYTICS[childId] ?? null);
-                setError('Không thể tải analytics. Đang hiển thị dữ liệu mẫu.');
+                // Don't use mock data - show error state
+                setData(null);
+                setError('Không thể tải analytics. Vui lòng kiểm tra kết nối và thử lại.');
             }
         } finally {
             setLoading(false);
         }
-    }, [childId]);
+    }, [childId, period]);
 
     useEffect(() => {
         void loadAnalytics();
@@ -365,6 +271,6 @@ export function useChildAnalytics(childId: number) {
 
 // Convenience: get just the learning time chart data
 export function useLearningTime(childId: number): { data: LearningTimeAnalytics | null } {
-    const analytics = MOCK_ANALYTICS[childId];
+    const { analytics } = useChildAnalytics(childId);
     return { data: analytics?.learningTime ?? null };
 }

@@ -24,10 +24,10 @@ export function RecentUsersTable({ recentUsers }: RecentUsersTableProps) {
             <SectionHeader title="Người dùng mới đăng ký"
                 action={<button className="text-primary text-sm font-heading font-bold hover:underline flex items-center gap-1"><Eye size={14} /> Quản lý</button>}
             />
-            <div className="bg-card border-2 border-border rounded-2xl overflow-hidden">
+            <div className="bg-card rounded-2xl overflow-hidden border border-border/70">
                 <div className="overflow-x-auto">
                     <table className="w-full text-sm">
-                        <thead className="bg-background border-b-2 border-border">
+                        <thead className="bg-background/80 border-b border-border">
                             <tr>
                                 {['Email', 'Số bé', 'Tổng điểm', 'Trạng thái', 'Ngày tham gia'].map((h) => (
                                     <th key={h} className="text-left px-5 py-3 font-heading font-bold text-caption text-xs">{h}</th>
@@ -35,6 +35,13 @@ export function RecentUsersTable({ recentUsers }: RecentUsersTableProps) {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-border">
+                            {recentUsers.length === 0 && (
+                                <tr>
+                                    <td colSpan={5} className="px-5 py-10 text-center text-sm text-caption font-medium">
+                                        Chưa có người dùng mới trong giai đoạn này.
+                                    </td>
+                                </tr>
+                            )}
                             {recentUsers.map((u, i) => (
                                 <motion.tr
                                     key={u.id}
@@ -42,7 +49,7 @@ export function RecentUsersTable({ recentUsers }: RecentUsersTableProps) {
                                     whileInView={{ opacity: 1 }}
                                     viewport={{ once: true }}
                                     transition={{ delay: i * 0.05 }}
-                                    className="hover:bg-background transition-colors"
+                                    className="hover:bg-background/70 transition-colors"
                                 >
                                     <td className="px-5 py-3 font-heading font-bold text-heading text-sm">{u.email}</td>
                                     <td className="px-5 py-3 text-body">{u.children}</td>

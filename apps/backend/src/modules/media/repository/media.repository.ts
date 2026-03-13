@@ -16,10 +16,16 @@ export class MediaRepository {
     originalFilename: string;
     fileSize: number;
     mimeType: string;
-    rawUrl: string;
+    rawUrl?: string | null;
+    optimizedUrl?: string | null;
+    thumbnailUrl?: string | null;
+    cloudinaryPublicId?: string | null;
     description?: string;
     altText?: string;
     uploadedBy: string;
+    status?: ProcessingStatus;
+    processedAt?: Date | null;
+    metadata?: Record<string, any> | null;
   }) {
     return this.prisma.media.create({
       data: {
@@ -28,12 +34,19 @@ export class MediaRepository {
         originalFilename: data.originalFilename,
         fileSize: data.fileSize,
         mimeType: data.mimeType,
-        status: ProcessingStatus.PENDING,
-        rawUrl: data.rawUrl,
+        status: data.status ?? ProcessingStatus.PENDING,
+        rawUrl: data.rawUrl ?? null,
+        optimizedUrl: data.optimizedUrl ?? null,
+        thumbnailUrl: data.thumbnailUrl ?? null,
+        cloudinaryPublicId: data.cloudinaryPublicId ?? null,
         description: data.description,
         altText: data.altText,
         uploadedBy: data.uploadedBy,
         uploadedAt: new Date(),
+        processedAt: data.processedAt ?? null,
+        metadata: data.metadata ?? null,
+        url: data.optimizedUrl ?? data.rawUrl ?? null,
+        type: data.mediaType,
       },
     });
   }
@@ -67,6 +80,7 @@ export class MediaRepository {
       data: {
         status,
         ...data,
+        url: data?.optimizedUrl,
       },
     });
   }
@@ -86,7 +100,7 @@ export class MediaRepository {
     const skip = (page - 1) * limit;
 
     const where: any = {};
-    if (mediaType) where.type = mediaType;
+    if (mediaType) where.mediaType = mediaType;
     if (context) where.context = context;
     if (status) where.status = status;
     if (uploadedBy) where.uploadedBy = uploadedBy;

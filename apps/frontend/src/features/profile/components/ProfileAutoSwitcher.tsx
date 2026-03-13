@@ -23,7 +23,6 @@ export function ProfileAutoSwitcher({ activeChildId }: { activeChildId: number |
       try {
         // Switch profile to get LEARNER role JWT
         await switchProfile(activeChildId);
-        console.log(`[ProfileAutoSwitcher] Switched to child profile ${activeChildId}`);
         
         // Force router refresh to use new JWT
         router.refresh();

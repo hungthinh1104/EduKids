@@ -43,6 +43,19 @@ export interface ApiEnvelope<T> {
   message?: string;
 }
 
+interface TopicDetailPayload {
+  topic?: {
+    id: number;
+    name: string;
+    description: string | null;
+    vocabularyCount?: number;
+    createdAt: string;
+  };
+  vocabularies?: unknown[];
+  completedCount?: number;
+  progressPercentage?: number;
+}
+
 export interface PaginatedResponse<T> {
   page: number;
   limit: number;
@@ -63,6 +76,9 @@ const isRecord = (value: unknown): value is Dict => typeof value === 'object' &&
 
 const normalizeVocabulary = (raw: unknown): Vocabulary => {
   const data = isRecord(raw) ? raw : {};
+  const media = Array.isArray(data.media) ? (data.media as VocabularyMedia[]) : undefined;
+  const audioMedia = media?.find((item) => item.type === 'AUDIO');
+  const imageMedia = media?.find((item) => item.type === 'IMAGE');
   const translation =
     typeof data.translation === 'string'
       ? data.translation
@@ -88,9 +104,19 @@ const normalizeVocabulary = (raw: unknown): Vocabulary => {
     example: exampleSentence,
     emoji: typeof data.emoji === 'string' ? data.emoji : undefined,
     difficulty: typeof data.difficulty === 'number' ? data.difficulty : 1,
-    audioUrl: typeof data.audioUrl === 'string' ? data.audioUrl : undefined,
-    imageUrl: typeof data.imageUrl === 'string' ? data.imageUrl : undefined,
-    media: Array.isArray(data.media) ? (data.media as VocabularyMedia[]) : undefined,
+    audioUrl:
+      typeof data.audioUrl === 'string'
+        ? data.audioUrl
+        : typeof audioMedia?.url === 'string'
+          ? audioMedia.url
+          : undefined,
+    imageUrl:
+      typeof data.imageUrl === 'string'
+        ? data.imageUrl
+        : typeof imageMedia?.url === 'string'
+          ? imageMedia.url
+          : undefined,
+    media,
   };
 };
 
@@ -103,8 +129,66 @@ export const contentApi = {
 
   // Get topic by ID
   getTopicById: async (id: number): Promise<Topic> => {
-    const response = await axiosInstance.get<ApiEnvelope<Topic>>(`content/topics/${id}`);
-    return response.data.data;
+    if (!Number.isInteger(id) || id <= 0) {
+      throw new Error('Invalid topic ID');
+    }
+    const response = await axiosInstance.get<ApiEnvelope<unknown>>(`content/topics/${id}`);
+    const payload = response.data.data;
+
+    // New BE shape: { topic, vocabularies, completedCount, progressPercentage }
+    if (isRecord(payload) && isRecord(payload.topic)) {
+      const detail = payload as TopicDetailPayload;
+      const baseTopic = detail.topic;
+      if (!baseTopic) {
+        throw new Error('Invalid topic detail response');
+      }
+      const normalizedVocabs = Array.isArray(detail.vocabularies)
+        ? detail.vocabularies.map(normalizeVocabulary)
+        : [];
+
+      const completed = typeof detail.completedCount === 'number' ? detail.completedCount : 0;
+      const total =
+        typeof baseTopic.vocabularyCount === 'number'
+          ? baseTopic.vocabularyCount
+          : normalizedVocabs.length;
+      const progressPercentage =
+        typeof detail.progressPercentage === 'number' ? detail.progressPercentage : 0;
+
+      const starsEarned =
+        progressPercentage >= 90 ? 3 : progressPercentage >= 60 ? 2 : progressPercentage > 0 ? 1 : 0;
+
+      return {
+        id: baseTopic.id,
+        name: baseTopic.name,
+        description: baseTopic.description,
+        vocabularyCount: total,
+        createdAt: baseTopic.createdAt,
+        vocabularies: normalizedVocabs,
+        progress: {
+          completed,
+          total,
+          starsEarned,
+        },
+      };
+    }
+
+    // Backward compatibility: flat topic shape
+    if (isRecord(payload)) {
+      const flatTopic = payload as Partial<Topic>;
+      return {
+        id: typeof flatTopic.id === 'number' ? flatTopic.id : id,
+        name: typeof flatTopic.name === 'string' ? flatTopic.name : '',
+        description: typeof flatTopic.description === 'string' || flatTopic.description === null ? flatTopic.description : null,
+        vocabularyCount: typeof flatTopic.vocabularyCount === 'number' ? flatTopic.vocabularyCount : 0,
+        createdAt: typeof flatTopic.createdAt === 'string' ? flatTopic.createdAt : new Date().toISOString(),
+        vocabularies: Array.isArray(flatTopic.vocabularies)
+          ? flatTopic.vocabularies.map(normalizeVocabulary)
+          : [],
+        progress: flatTopic.progress,
+      };
+    }
+
+    throw new Error('Invalid topic detail response');
   },
 
   // Get vocabulary by ID

@@ -7,6 +7,7 @@ import {
 import { FlashcardRepository } from "./repositories/flashcard.repository";
 import { FlashcardActivityRepository } from "./repositories/flashcard-activity.repository";
 import { LearningProgressRepository } from "../learning/repositories/learning-progress.repository";
+import { PrismaService } from "../../prisma/prisma.service";
 import {
   FlashcardDto,
   DragDropActivityDto,
@@ -29,6 +30,7 @@ export class FlashcardService {
     private flashcardRepository: FlashcardRepository,
     private activityRepository: FlashcardActivityRepository,
     private learningProgressRepository: LearningProgressRepository,
+    private prisma: PrismaService,
   ) {}
 
   /**
@@ -49,21 +51,22 @@ export class FlashcardService {
         );
       }
 
-      // Find audio and image URLs (VocabularyMedia doesn't have activityType, use first available)
-      const audioUrl =
-        vocabulary.media && vocabulary.media.length > 0
-          ? vocabulary.media[0].url
-          : this.getFallbackAudioUrl(vocabulary.word);
-      const imageUrl =
-        vocabulary.media && vocabulary.media.length > 0
-          ? vocabulary.media[0].url
-          : this.PLACEHOLDER_IMAGE;
+      const audioMedia = vocabulary.media.find((m) => m.type === "AUDIO");
+      const imageMedia = vocabulary.media.find((m) => m.type === "IMAGE");
+      const audioUrl = audioMedia?.url || this.getFallbackAudioUrl(vocabulary.word);
+      const imageUrl = imageMedia?.url || this.PLACEHOLDER_IMAGE;
 
       // Generate drag-drop options (correct + 3 distractors)
       const options = await this.flashcardRepository.generateDragDropOptions(
         vocabularyId,
         vocabulary.topicId,
       );
+
+      if (!options || options.length === 0) {
+        throw new BadRequestException(
+          'No drag-drop options available for this vocabulary',
+        );
+      }
 
       return {
         id: vocabulary.id,
@@ -85,10 +88,12 @@ export class FlashcardService {
           // Don't expose isCorrect to client
         })),
       };
-    } catch (error) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      const stack = error instanceof Error ? error.stack : undefined;
       this.logger.error(
-        `Failed to get flashcard ${vocabularyId}: ${error.message}`,
-        error.stack,
+        `Failed to get flashcard ${vocabularyId}: ${message}`,
+        stack,
       );
       throw error;
     }
@@ -122,6 +127,12 @@ export class FlashcardService {
         vocabulary.topicId,
       );
 
+      if (!options || options.length === 0) {
+        throw new BadRequestException(
+          'No drag-drop options available for this vocabulary',
+        );
+      }
+
       // Validate selected option
       const selectedOption = options.find((o) => o.id === dto.selectedOptionId);
       if (!selectedOption) {
@@ -129,16 +140,6 @@ export class FlashcardService {
       }
 
       const isCorrect = selectedOption.isCorrect;
-
-      // Save activity
-      const activity = await this.activityRepository.createActivity({
-        childId,
-        vocabularyId: dto.vocabularyId,
-        activityType: dto.activityType,
-        isCorrect,
-        timeTakenMs: dto.timeTakenMs,
-        selectedOptionId: dto.selectedOptionId,
-      });
 
       // Calculate points earned
       const pointsEarned = this.calculatePoints(isCorrect, dto.timeTakenMs);
@@ -151,38 +152,99 @@ export class FlashcardService {
         isCorrect,
       );
 
-      // Update learning progress
-      if (isCorrect) {
-        await this.learningProgressRepository.upsertProgress(
-          childId,
-          dto.vocabularyId,
-          {
-            completedAt: new Date(),
+      const result = await this.prisma.$transaction(async (tx) => {
+        const activity = await tx.activityLog.create({
+          data: {
+            childId,
+            vocabularyId: dto.vocabularyId,
+            activityType: 'FLASHCARD',
+            pointsEarned,
+            score: isCorrect ? 100 : 0,
+            metadata: {
+              selectedOptionId: dto.selectedOptionId,
+              isCorrect,
+              activityType: dto.activityType,
+              timeTakenMs: dto.timeTakenMs ?? null,
+            },
+            durationSec: dto.timeTakenMs
+              ? Math.floor(dto.timeTakenMs / 1000)
+              : 0,
           },
-        );
-      }
+        });
 
-      // Award star points and update child level
-      const updatedChild = await this.awardStarPoints(childId, pointsEarned);
+        if (isCorrect) {
+          const existingProgress = await tx.learningProgress.findUnique({
+            where: {
+              childId_vocabularyId: {
+                childId,
+                vocabularyId: dto.vocabularyId,
+              },
+            },
+            select: { completedAt: true },
+          });
 
-      // Check audio playback failure
-      const audioPlaybackFailed =
-        !vocabulary.media || vocabulary.media.length === 0;
+          if (!existingProgress?.completedAt) {
+            await tx.learningProgress.upsert({
+              where: {
+                childId_vocabularyId: {
+                  childId,
+                  vocabularyId: dto.vocabularyId,
+                },
+              },
+              create: {
+                childId,
+                vocabularyId: dto.vocabularyId,
+                completedAt: new Date(),
+              },
+              update: {
+                completedAt: new Date(),
+              },
+            });
+          }
+        }
+
+        const updatedPoints = await tx.childProfile.update({
+          where: { id: childId },
+          data: {
+            totalPoints: { increment: pointsEarned },
+          },
+          select: { totalPoints: true, currentLevel: true },
+        });
+
+        const calculatedLevel = Math.floor(updatedPoints.totalPoints / 50) + 1;
+        const updatedChild =
+          updatedPoints.currentLevel === calculatedLevel
+            ? updatedPoints
+            : await tx.childProfile.update({
+                where: { id: childId },
+                data: { currentLevel: calculatedLevel },
+                select: { totalPoints: true, currentLevel: true },
+              });
+
+        return { activity, updatedChild };
+      });
+
+      const audioPlaybackFailed = !vocabulary.media?.some(
+        (media) => media.type === "AUDIO",
+      );
 
       return {
-        activityId: activity.id,
+        activityId: result.activity.id,
         feedback: {
           ...feedback,
+          pointsEarned,
           audioUrl: feedback.audioUrl || "",
         },
         audioPlaybackFailed,
-        totalPoints: updatedChild.totalPoints,
-        currentLevel: updatedChild.currentLevel,
+        totalPoints: result.updatedChild.totalPoints,
+        currentLevel: result.updatedChild.currentLevel,
       };
-    } catch (error) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      const stack = error instanceof Error ? error.stack : undefined;
       this.logger.error(
-        `Failed to submit drag-drop activity for child ${childId}: ${error.message}`,
-        error.stack,
+        `Failed to submit drag-drop activity for child ${childId}: ${message}`,
+        stack,
       );
       throw error;
     }
@@ -216,22 +278,20 @@ export class FlashcardService {
       id: number;
       word: string;
       translation?: string;
-      media?: Array<{ url: string }>;
+      media?: Array<{ url: string; type?: string }>;
     },
     selectedOption: { id: number; text: string; isCorrect: boolean },
     options: Array<{ id: number; text: string; isCorrect: boolean }>,
     isCorrect: boolean,
   ): FeedbackDto {
     const audioUrl =
-      vocabulary.media && vocabulary.media.length > 0
-        ? vocabulary.media[0].url
-        : this.getFallbackAudioUrl(vocabulary.word);
+      vocabulary.media?.find((m) => m.type === "AUDIO")?.url ||
+      this.getFallbackAudioUrl(vocabulary.word);
 
     if (isCorrect) {
       return {
         isCorrect: true,
         message: "Excellent! You got it right! 🎉",
-        pointsEarned: this.calculatePoints(true),
         audioUrl,
         hint: "Great job! Keep practicing to master this word.",
       };
@@ -242,39 +302,9 @@ export class FlashcardService {
         message: "Not quite right. Try again!",
         pointsEarned: 0,
         audioUrl,
-        hint: `The correct answer is: ${correctOption.text}. Listen to the pronunciation again.`,
+        hint: `The correct answer is: ${correctOption?.text || vocabulary.translation || vocabulary.word}. Listen to the pronunciation again.`,
       };
     }
-  }
-
-  /**
-   * Award star points and update child's level
-   * Levels: 0-50pts: Level 1, 51-150pts: Level 2, etc.
-   */
-  private async awardStarPoints(childId: number, points: number) {
-    const currentChild = await this.learningProgressRepository[
-      "prisma"
-    ].childProfile.findUnique({
-      where: { id: childId },
-      select: { totalPoints: true, currentLevel: true },
-    });
-
-    const newTotalPoints = (currentChild?.totalPoints || 0) + points;
-    const newLevel = Math.floor(newTotalPoints / 50) + 1;
-
-    // Update child profile
-    const updatedChild = await this.learningProgressRepository[
-      "prisma"
-    ].childProfile.update({
-      where: { id: childId },
-      data: {
-        totalPoints: newTotalPoints,
-        currentLevel: newLevel,
-      },
-      select: { totalPoints: true, currentLevel: true },
-    });
-
-    return updatedChild;
   }
 
   /**

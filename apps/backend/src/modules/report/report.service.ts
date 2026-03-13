@@ -297,6 +297,7 @@ export class ReportService {
       quizAgg,
       pronunciationAgg,
       activityCount,
+      activityDurationAgg,
       wordsLearned,
       reviewAgg,
       newBadges,
@@ -348,6 +349,13 @@ export class ReportService {
           ...(createdAtFilter ? { createdAt: createdAtFilter } : {}),
         },
       }),
+      this.prisma.activityLog.aggregate({
+        where: {
+          childId,
+          ...(createdAtFilter ? { createdAt: createdAtFilter } : {}),
+        },
+        _sum: { durationSec: true },
+      }),
       this.prisma.learningProgress.count({
         where: {
           childId,
@@ -374,9 +382,19 @@ export class ReportService {
       throw new NotFoundException('Child profile not found');
     }
 
-    const minutesLearned = Math.round((dailyProgressAgg._sum.totalTimeSec || 0) / 60);
-    const sessionsCompleted =
-      dailyProgressAgg._count._all > 0 ? dailyProgressAgg._count._all : activityCount;
+    const minutesFromDailyProgress = Math.round(
+      (dailyProgressAgg._sum.totalTimeSec || 0) / 60,
+    );
+    const minutesFromActivityLog = Math.round(
+      (activityDurationAgg._sum.durationSec || 0) / 60,
+    );
+    // DailyProgress.totalTimeSec is currently not guaranteed to be updated by all learning flows,
+    // so fallback to ActivityLog duration when needed.
+    const minutesLearned =
+      minutesFromDailyProgress > 0
+        ? minutesFromDailyProgress
+        : minutesFromActivityLog;
+    const sessionsCompleted = activityCount;
     const quizzesCompleted = quizAgg._count._all;
     const averageQuizScore = Math.round(quizAgg._avg.score || 0);
     const pronunciationAccuracy = Math.round(pronunciationAgg._avg.score || 0);

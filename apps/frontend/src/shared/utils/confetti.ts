@@ -1,4 +1,5 @@
 import confetti from 'canvas-confetti';
+import { colors } from '@/shared/utils/design-tokens';
 
 export const fireConfetti = () => {
     const duration = 3000;
@@ -25,6 +26,6 @@ export const fireRewardConfetti = () => {
         particleCount: 150,
         spread: 100,
         origin: { y: 0.6 },
-        colors: ['#FFC107', '#4CAF50', '#2196F3', '#E91E63']
+        colors: [colors.yellow[400], colors.green[500], colors.blue[500], colors.pink[500]]
     });
 };

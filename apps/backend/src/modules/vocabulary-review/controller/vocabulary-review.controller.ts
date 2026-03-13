@@ -10,7 +10,9 @@ import {
   HttpStatus,
   ParseIntPipe,
   Query,
+  BadRequestException,
 } from "@nestjs/common";
+import { Request as ExpressRequest } from "express";
 import {
   ApiTags,
   ApiBearerAuth,
@@ -34,6 +36,15 @@ import {
 export class VocabularyReviewController {
   constructor(private reviewService: VocabularyReviewService) {}
 
+  private getChildId(req: RequestWithUser): number {
+    if (!req.user.childId) {
+      throw new BadRequestException(
+        "Active child profile required. Please switch profile first.",
+      );
+    }
+    return req.user.childId;
+  }
+
   /**
    * Get items due for review
    */
@@ -41,10 +52,10 @@ export class VocabularyReviewController {
   @ApiOperation({ summary: "Get vocabulary items due for review" })
   @ApiResponse({ status: 200, type: ReviewSessionDto })
   async getReviewSession(
-    @Request() req: any,
+    @Request() req: RequestWithUser,
     @Query("limit", new ParseIntPipe({ optional: true })) limit?: number,
   ) {
-    const childId = req.user.childId;
+    const childId = this.getChildId(req);
     return this.reviewService.getReviewSession(childId, limit || 20);
   }
 
@@ -55,8 +66,11 @@ export class VocabularyReviewController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: "Submit review result for vocabulary item" })
   @ApiResponse({ status: 200, type: ReviewResultDto })
-  async submitReview(@Request() req: any, @Body() dto: SubmitReviewRequestDto) {
-    const childId = req.user.childId;
+  async submitReview(
+    @Request() req: RequestWithUser,
+    @Body() dto: SubmitReviewRequestDto,
+  ) {
+    const childId = this.getChildId(req);
     return this.reviewService.submitReview(childId, dto);
   }
 
@@ -68,10 +82,10 @@ export class VocabularyReviewController {
   @ApiOperation({ summary: "Submit multiple review results" })
   @ApiResponse({ status: 200, description: "Array of review results" })
   async submitBulkReviews(
-    @Request() req: any,
+    @Request() req: RequestWithUser,
     @Body() reviews: SubmitReviewRequestDto[],
   ) {
-    const childId = req.user.childId;
+    const childId = this.getChildId(req);
     return this.reviewService.submitBulkReviews(childId, reviews);
   }
 
@@ -81,8 +95,8 @@ export class VocabularyReviewController {
   @Get("progress")
   @ApiOperation({ summary: "Get today review progress" })
   @ApiResponse({ status: 200, type: ReviewProgressDto })
-  async getProgress(@Request() req: any) {
-    const childId = req.user.childId;
+  async getProgress(@Request() req: RequestWithUser) {
+    const childId = this.getChildId(req);
     return this.reviewService.getProgress(childId);
   }
 
@@ -92,8 +106,8 @@ export class VocabularyReviewController {
   @Get("stats")
   @ApiOperation({ summary: "Get review statistics" })
   @ApiResponse({ status: 200, type: ReviewStatsDto })
-  async getStatistics(@Request() req: any) {
-    const childId = req.user.childId;
+  async getStatistics(@Request() req: RequestWithUser) {
+    const childId = this.getChildId(req);
     return this.reviewService.getStatistics(childId);
   }
 
@@ -104,10 +118,10 @@ export class VocabularyReviewController {
   @ApiOperation({ summary: "Get review history for vocabulary item" })
   @ApiResponse({ status: 200, description: "Review history" })
   async getHistory(
-    @Request() req: any,
+    @Request() req: RequestWithUser,
     @Param("vocabularyId", ParseIntPipe) vocabularyId: number,
   ) {
-    const childId = req.user.childId;
+    const childId = this.getChildId(req);
     return this.reviewService.getHistory(childId, vocabularyId);
   }
 
@@ -117,8 +131,8 @@ export class VocabularyReviewController {
   @Get("mastered")
   @ApiOperation({ summary: "Get mastered vocabulary items" })
   @ApiResponse({ status: 200, description: "Mastered vocabulary list" })
-  async getMastered(@Request() req: any) {
-    const childId = req.user.childId;
+  async getMastered(@Request() req: RequestWithUser) {
+    const childId = this.getChildId(req);
     return this.reviewService.getMasteredVocabulary(childId);
   }
 
@@ -129,10 +143,10 @@ export class VocabularyReviewController {
   @ApiOperation({ summary: "Get suggested vocabulary to learn" })
   @ApiResponse({ status: 200, description: "Suggested vocabulary" })
   async getSuggestions(
-    @Request() req: any,
+    @Request() req: RequestWithUser,
     @Query("limit", new ParseIntPipe({ optional: true })) limit?: number,
   ) {
-    const childId = req.user.childId;
+    const childId = this.getChildId(req);
     return this.reviewService.getSuggestions(childId, limit || 10);
   }
 
@@ -142,8 +156,14 @@ export class VocabularyReviewController {
   @Get("items")
   @ApiOperation({ summary: "Get all vocabulary review items" })
   @ApiResponse({ status: 200, description: "All review items" })
-  async getAllItems(@Request() req: any) {
-    const childId = req.user.childId;
+  async getAllItems(@Request() req: RequestWithUser) {
+    const childId = this.getChildId(req);
     return this.reviewService.getAllReviewItems(childId);
   }
 }
+
+type RequestWithUser = ExpressRequest & {
+  user: {
+    childId?: number;
+  };
+};

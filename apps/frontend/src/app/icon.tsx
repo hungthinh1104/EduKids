@@ -1,4 +1,5 @@
 import { ImageResponse } from 'next/og';
+import { semanticColors } from '@/shared/utils/design-tokens';
 
 export const size = {
   width: 32,
@@ -17,8 +18,8 @@ export default function Icon() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: 'linear-gradient(135deg, #60A5FA 0%, #8B5CF6 100%)',
-          color: 'white',
+          background: `linear-gradient(135deg, ${semanticColors.primaryLight} 0%, ${semanticColors.interactive} 100%)`,
+          color: semanticColors.textInverse,
           fontSize: 18,
           fontWeight: 800,
           borderRadius: 8,

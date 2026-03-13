@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import { X, Volume2, RotateCcw, Star, ChevronRight, Clock } from 'lucide-react';
@@ -147,6 +147,15 @@ export default function ReviewPage() {
     const [leaving, setLeaving] = useState(false);
     const [reviewDeck, setReviewDeck] = useState<ReviewItem[]>([]);
     const [loading, setLoading] = useState(true);
+    const transitionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+    useEffect(() => {
+        return () => {
+            if (transitionTimeoutRef.current) {
+                clearTimeout(transitionTimeoutRef.current);
+            }
+        };
+    }, []);
 
     useEffect(() => {
         const childId = child?.id;
@@ -195,8 +204,9 @@ export default function ReviewPage() {
         try {
             // Submit review to backend
             const submission: ReviewSubmission = {
-                reviewId: card.reviewId,
-                quality: difficulty === 'EASY' ? 5 : difficulty === 'MEDIUM' ? 3 : 1,
+                vocabularyId: card.vocabularyId,
+                difficulty,
+                correct,
             };
             await reviewApi.submitReview(child.id, submission);
         } catch (err) {
@@ -210,7 +220,7 @@ export default function ReviewPage() {
             setDone(true);
         } else {
             setLeaving(true);
-            setTimeout(() => {
+            transitionTimeoutRef.current = setTimeout(() => {
                 setIndex((i) => i + 1);
                 setFlipped(false);
                 setLeaving(false);

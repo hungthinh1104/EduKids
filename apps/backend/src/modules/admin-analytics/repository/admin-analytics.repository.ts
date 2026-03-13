@@ -275,6 +275,53 @@ export class AdminAnalyticsRepository {
   }
 
   /**
+   * Get real DB-backed platform statistics (independent of Redis/activity tracking)
+   */
+  async getDbStats() {
+    const [
+      totalTopics,
+      totalVocabularies,
+      totalQuizQuestions,
+      totalTopicQuizzes,
+      pronunciationStats,
+      learningStats,
+    ] = await Promise.all([
+      this.prisma.topic.count(),
+      this.prisma.vocabulary.count(),
+      this.prisma.quizQuestion.count(),
+      // Use raw count on topicQuiz table – gracefully returns 0 if table doesn't exist yet
+      this.prisma.topicQuiz.count().catch(() => 0),
+      this.prisma.pronunciationAttempt.aggregate({
+        _avg: { accuracyScore: true },
+        _count: { id: true },
+      }),
+      this.prisma.learningProgress.aggregate({
+        _avg: { quizScore: true },
+        _count: { id: true },
+      }),
+    ]);
+
+    const topicQuizCount = Array.isArray(totalTopicQuizzes)
+      ? Number(totalTopicQuizzes[0]?.count ?? 0)
+      : 0;
+
+    return {
+      totalTopics,
+      totalVocabularies,
+      totalQuizQuestions,
+      totalTopicQuizzes: topicQuizCount,
+      avgPronunciationScore: Math.round(
+        (pronunciationStats._avg.accuracyScore ?? 0) * 100,
+      ) / 100,
+      totalPronunciationAttempts: pronunciationStats._count.id,
+      avgLearningScore: Math.round(
+        (learningStats._avg.quizScore ?? 0) * 100,
+      ) / 100,
+      totalLearningRecords: learningStats._count.id,
+    };
+  }
+
+  /**
    * Store aggregated analytics snapshot (for historical data)
    */
   async storeAnalyticsSnapshot(data: {

@@ -63,16 +63,29 @@ export interface GeminiRecommendationOutput {
 
 const ALLOWED_TYPES = new Set(Object.values(RecommendationType));
 const ALLOWED_PRIORITIES = new Set(Object.values(RecommendationPriority));
+const ALLOWED_DIFFICULTY_LEVELS = new Set([
+  'BEGINNER',
+  'INTERMEDIATE',
+  'ADVANCED',
+]);
+
+interface NormalizeOptions {
+  maxRecommendations?: number;
+  maxPathItems?: number;
+  allowedTopicIds?: number[];
+}
 
 export function buildGeminiRecommendationPrompt(
   context: GeminiRecommendationContext,
 ): string {
+  const sanitizedContext = sanitizeContextForPrompt(context);
+
   const maxRecommendations = Math.min(
-    Math.max(1, Number(context.constraints?.maxRecommendations ?? 3)),
+    Math.max(1, Number(sanitizedContext.constraints?.maxRecommendations ?? 3)),
     3,
   );
   const maxPathItems = Math.min(
-    Math.max(1, Number(context.constraints?.maxPathItems ?? 3)),
+    Math.max(1, Number(sanitizedContext.constraints?.maxPathItems ?? 3)),
     3,
   );
 
@@ -141,31 +154,57 @@ export function buildGeminiRecommendationPrompt(
           },
         ],
       },
-      null,
-      2,
     ),
     '',
     'Input context:',
-    JSON.stringify(context, null, 2),
+    JSON.stringify(sanitizedContext),
   ].join('\n');
 }
 
 export function normalizeGeminiRecommendationOutput(
   raw: unknown,
+  options: NormalizeOptions = {},
 ): GeminiRecommendationOutput {
   const parsed = parseModelJson(raw);
   const root = isRecord(parsed) ? parsed : {};
   const list = Array.isArray(root.recommendations) ? root.recommendations : [];
 
+  const maxRecommendations = Math.min(
+    Math.max(1, Number(options.maxRecommendations ?? 3)),
+    3,
+  );
+  const maxPathItems = Math.min(
+    Math.max(1, Number(options.maxPathItems ?? 3)),
+    3,
+  );
+  const allowedTopicIds = new Set(options.allowedTopicIds || []);
+
+  const seenTypes = new Set<RecommendationType>();
   const recommendations = list
-    .map((r) => normalizeRecommendation(r))
+    .map((r) =>
+      normalizeRecommendation(r, {
+        maxPathItems,
+        allowedTopicIds,
+      }),
+    )
     .filter((r): r is NonNullable<typeof r> => !!r)
-    .slice(0, 3);
+    .filter((r) => {
+      if (seenTypes.has(r.type)) return false;
+      seenTypes.add(r.type);
+      return true;
+    })
+    .slice(0, maxRecommendations);
 
   return { recommendations };
 }
 
-function normalizeRecommendation(item: unknown) {
+function normalizeRecommendation(
+  item: unknown,
+  options: {
+    maxPathItems: number;
+    allowedTopicIds: Set<number>;
+  },
+) {
   if (!isRecord(item)) return null;
 
   const type = String(item.type || 'TOPIC_REVIEW') as RecommendationType;
@@ -175,9 +214,16 @@ function normalizeRecommendation(item: unknown) {
   if (!ALLOWED_PRIORITIES.has(priority)) return null;
 
   const scoreBreakdown = normalizeScoreBreakdown(item.scoreBreakdown);
-  const learningPath = normalizeLearningPath(item.learningPath);
+  const learningPath = normalizeLearningPath(
+    item.learningPath,
+    options.maxPathItems,
+    options.allowedTopicIds,
+  );
 
   if (learningPath.length === 0) return null;
+  if (!isPriorityScoreConsistent(priority, scoreBreakdown.overallScore)) {
+    return null;
+  }
 
   return {
     type,
@@ -203,13 +249,27 @@ function normalizeScoreBreakdown(value: unknown): AIScoreBreakdown {
   };
 }
 
-function normalizeLearningPath(value: unknown): LearningPathItemDto[] {
+function normalizeLearningPath(
+  value: unknown,
+  maxPathItems: number,
+  allowedTopicIds: Set<number>,
+): LearningPathItemDto[] {
   if (!Array.isArray(value)) return [];
 
-  return value
+  const seenContentIds = new Set<number>();
+
+  const normalized = value
     .map((item, idx) => {
       if (!isRecord(item)) return null;
       const contentId = Math.max(0, Number(item.contentId || 0));
+      if (allowedTopicIds.size > 0 && !allowedTopicIds.has(contentId)) {
+        return null;
+      }
+      if (seenContentIds.has(contentId)) {
+        return null;
+      }
+      seenContentIds.add(contentId);
+
       const contentName = safeText(item.contentName, 255, 'Chủ đề');
       if (!contentId || !contentName) return null;
 
@@ -221,7 +281,10 @@ function normalizeLearningPath(value: unknown): LearningPathItemDto[] {
       };
 
       if (item.difficultyLevel) {
-        pathItem.difficultyLevel = safeText(item.difficultyLevel, 50, 'BEGINNER');
+        const normalizedDifficulty = safeText(item.difficultyLevel, 50, 'BEGINNER').toUpperCase();
+        pathItem.difficultyLevel = ALLOWED_DIFFICULTY_LEVELS.has(normalizedDifficulty)
+          ? normalizedDifficulty
+          : 'BEGINNER';
       }
 
       if (item.rationale) {
@@ -235,7 +298,12 @@ function normalizeLearningPath(value: unknown): LearningPathItemDto[] {
       return pathItem;
     })
     .filter((x): x is LearningPathItemDto => x !== null)
-    .slice(0, 3);
+    .slice(0, maxPathItems);
+
+  return normalized.map((item, index) => ({
+    ...item,
+    sequenceOrder: index + 1,
+  }));
 }
 
 function parseModelJson(raw: unknown): unknown {
@@ -249,9 +317,88 @@ function parseModelJson(raw: unknown): unknown {
 
   try {
     return JSON.parse(noFence);
-  } catch {
+  } catch (error) {
+    const preview = noFence.slice(0, 500);
+    // eslint-disable-next-line no-console
+    console.warn('[Recommendation][Gemini] Failed to parse model JSON output', {
+      message: error instanceof Error ? error.message : 'Unknown parse error',
+      preview,
+    });
     return {};
   }
+}
+
+function isPriorityScoreConsistent(
+  priority: RecommendationPriority,
+  overallScore: number,
+): boolean {
+  if (priority === RecommendationPriority.CRITICAL || priority === RecommendationPriority.HIGH) {
+    return overallScore >= 70;
+  }
+
+  if (priority === RecommendationPriority.MEDIUM) {
+    return overallScore >= 45 && overallScore <= 85;
+  }
+
+  return overallScore <= 70;
+}
+
+function sanitizeContextForPrompt(
+  context: GeminiRecommendationContext,
+): GeminiRecommendationContext {
+  const sanitizeNumberArray = (values: number[], maxItems: number) =>
+    (Array.isArray(values) ? values : [])
+      .filter((v) => Number.isInteger(v) && v > 0)
+      .slice(0, maxItems);
+
+  const sanitizeStringArray = (values: string[], maxItems: number, maxLen: number) =>
+    (Array.isArray(values) ? values : [])
+      .map((v) => sanitizePromptText(v, maxLen))
+      .filter((v) => v.length > 0)
+      .slice(0, maxItems);
+
+  const candidateTopics = (Array.isArray(context.candidateTopics) ? context.candidateTopics : [])
+    .slice(0, 25)
+    .map((topic) => ({
+      id: Number(topic.id) || 0,
+      name: sanitizePromptText(topic.name, 120),
+      estimatedMinutes: Number(topic.estimatedMinutes) || 20,
+      difficulty: topic.difficulty ? sanitizePromptText(topic.difficulty, 30) : undefined,
+    }))
+    .filter((topic) => topic.id > 0 && topic.name.length > 0);
+
+  return {
+    ...context,
+    age: Number(context.age) || undefined,
+    timezone: context.timezone ? sanitizePromptText(context.timezone, 60) : undefined,
+    recentMetrics: {
+      ...context.recentMetrics,
+      weakTopicIds: sanitizeNumberArray(context.recentMetrics.weakTopicIds || [], 25),
+      weakTopicNames: sanitizeStringArray(context.recentMetrics.weakTopicNames || [], 20, 120),
+      strongTopicNames: sanitizeStringArray(context.recentMetrics.strongTopicNames || [], 20, 120),
+    },
+    candidateTopics,
+    constraints: {
+      maxRecommendations: Math.min(Math.max(1, Number(context.constraints?.maxRecommendations ?? 3)), 3),
+      maxPathItems: Math.min(Math.max(1, Number(context.constraints?.maxPathItems ?? 3)), 3),
+      maxMinutesPerPath: Math.min(Math.max(30, Number(context.constraints?.maxMinutesPerPath ?? 120)), 180),
+    },
+  };
+}
+
+function sanitizePromptText(value: unknown, maxLen: number): string {
+  const input = String(value ?? '')
+    .replace(/[\u0000-\u001F\u007F]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  const withoutPromptInjectionMarkers = input
+    .replace(/ignore\s+previous\s+instructions?/gi, '')
+    .replace(/system\s+prompt/gi, '')
+    .replace(/developer\s+message/gi, '')
+    .trim();
+
+  return withoutPromptInjectionMarkers.slice(0, maxLen);
 }
 
 function isRecord(value: unknown): value is Record<string, any> {
