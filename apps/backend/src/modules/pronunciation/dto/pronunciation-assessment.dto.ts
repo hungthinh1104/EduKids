@@ -18,6 +18,38 @@ export enum PronunciationAssessmentProvider {
   CUSTOM = 'CUSTOM',
 }
 
+export enum PronunciationWordErrorType {
+  NONE = 'NONE',
+  MISPRONUNCIATION = 'MISPRONUNCIATION',
+  OMISSION = 'OMISSION',
+  INSERTION = 'INSERTION',
+  UNEXPECTED_BREAK = 'UNEXPECTED_BREAK',
+  MISSING_BREAK = 'MISSING_BREAK',
+  UNKNOWN = 'UNKNOWN',
+}
+
+export class SyllableAssessmentDto {
+  @ApiProperty({ example: 'ap' })
+  @IsString()
+  syllable: string;
+
+  @ApiProperty({ example: 84, description: 'Syllable score (0-100)' })
+  @IsNumber()
+  @Min(0)
+  @Max(100)
+  score: number;
+
+  @ApiPropertyOptional({ example: 30, description: 'Start time in ms' })
+  @IsOptional()
+  @IsNumber()
+  startMs?: number;
+
+  @ApiPropertyOptional({ example: 130, description: 'End time in ms' })
+  @IsOptional()
+  @IsNumber()
+  endMs?: number;
+}
+
 export class PhonemeAssessmentDto {
   @ApiProperty({ example: '/d/' })
   @IsString()
@@ -62,6 +94,36 @@ export class WordAssessmentDto {
   @Min(0)
   @Max(100)
   score: number;
+
+  @ApiPropertyOptional({
+    enum: PronunciationWordErrorType,
+    description: 'Azure word-level diagnosis for this token',
+  })
+  @IsOptional()
+  @IsEnum(PronunciationWordErrorType)
+  errorType?: PronunciationWordErrorType;
+
+  @ApiPropertyOptional({ example: 0, description: 'Start time in ms' })
+  @IsOptional()
+  @IsNumber()
+  startMs?: number;
+
+  @ApiPropertyOptional({ example: 420, description: 'End time in ms' })
+  @IsOptional()
+  @IsNumber()
+  endMs?: number;
+
+  @ApiPropertyOptional({ example: true, description: 'Whether the spoken word matches expectation' })
+  @IsOptional()
+  @IsBoolean()
+  isMatch?: boolean;
+
+  @ApiPropertyOptional({ type: [SyllableAssessmentDto] })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => SyllableAssessmentDto)
+  syllables?: SyllableAssessmentDto[];
 
   @ApiPropertyOptional({ type: [PhonemeAssessmentDto] })
   @IsOptional()
@@ -117,6 +179,11 @@ export class PronunciationAssessmentResultDto {
   @IsOptional()
   @IsString()
   recognizedIpa?: string;
+
+  @ApiPropertyOptional({ example: 'dog', description: 'Reference text sent to the provider' })
+  @IsOptional()
+  @IsString()
+  referenceText?: string;
 
   @ApiPropertyOptional({ type: [WordAssessmentDto] })
   @IsOptional()

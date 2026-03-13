@@ -1,13 +1,13 @@
 import { authApi } from './auth.api';
 import { apiClient } from '@/shared/services/api.client';
 import { LoginRequest, RegisterRequest } from '../types';
-import { describe, it, expect, beforeEach, jest } from '@jest/globals';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 describe('authApi', () => {
-  let mockedPost: ReturnType<typeof jest.spyOn>;
+  let mockedPost: ReturnType<typeof vi.spyOn>;
 
   beforeEach(() => {
-    mockedPost = jest.spyOn(apiClient, 'post');
+    mockedPost = vi.spyOn(apiClient, 'post');
     mockedPost.mockReset();
   });
 

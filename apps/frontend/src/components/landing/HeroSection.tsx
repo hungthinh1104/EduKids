@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -16,8 +16,16 @@ export function HeroSection() {
     const { scrollY } = useScroll();
     const heroY = useTransform(scrollY, [0, 800], [0, 200]);
 
-    const { isAuthenticated, user } = useAuthStore();
-    const targetHref = isAuthenticated
+    const { isAuthenticated, user, isLoading } = useAuthStore();
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    const isReady = mounted && !isLoading;
+
+    const targetHref = isReady && isAuthenticated
         ? (user?.role === 'ADMIN' ? '/admin' : user?.role === 'PARENT' ? '/dashboard' : '/play')
         : '/register';
 
@@ -84,7 +92,10 @@ export function HeroSection() {
                             <MagneticButton className="group">
                                 <KidButton variant="secondary" size="lg" className="text-xl sm:text-2xl px-10 py-7 shadow-xl shadow-secondary/30 hover:shadow-secondary/50 group-hover:-translate-y-2 transition-all overflow-hidden relative w-full h-full pointer-events-none">
                                     <div className="absolute inset-0 bg-white/20 transform -skew-x-12 -translate-x-[150%] group-hover:translate-x-[150%] transition-transform duration-700 ease-out"></div>
-                                    {isAuthenticated ? 'Tiếp tục học' : 'Khám phá ngay'} <Sparkles className="ml-3 w-6 h-6 group-hover:rotate-12 transition-transform" />
+                                    <span className="inline-block min-w-[140px] text-center transition-all duration-300">
+                                        {!isReady ? 'Khám phá ngay' : isAuthenticated ? 'Tiếp tục học' : 'Khám phá ngay'}
+                                    </span>
+                                    <Sparkles className="ml-2 w-6 h-6 group-hover:rotate-12 transition-transform shrink-0" />
                                 </KidButton>
                             </MagneticButton>
                         </Link>

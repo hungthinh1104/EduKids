@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { PronunciationAttemptEntity } from '../entities/pronunciation-attempt.entity';
 import { IPronunciationRepository } from './pronunciation.repository.interface';
-import { ActivityLog, LearningProgress } from '@prisma/client';
+import { ActivityLog, LearningProgress, PronunciationProvider } from '@prisma/client';
 import { Prisma } from '@prisma/client';
 
 @Injectable()
@@ -20,29 +20,64 @@ export class PronunciationRepository implements IPronunciationRepository {
       assessment: attempt.assessment ? JSON.parse(JSON.stringify(attempt.assessment)) : null,
     };
 
-    const activity = await this.prisma.activityLog.create({
-      data: {
-        childId: parseInt(attempt.childId, 10),
-        vocabularyId: parseInt(attempt.vocabularyId, 10),
-        activityType: 'PRONUNCIATION',
-        score: attempt.aiScore,
-        metadata: metadata as Prisma.InputJsonValue,
-        durationSec:
-          typeof attempt.recordingDurationMs === 'number' &&
-          Number.isFinite(attempt.recordingDurationMs) &&
-          attempt.recordingDurationMs > 0
-            ? Math.max(1, Math.round(attempt.recordingDurationMs / 1000))
-            : 0,
-      },
+    const childId = parseInt(attempt.childId, 10);
+    const vocabularyId = parseInt(attempt.vocabularyId, 10);
+    const recordingDurationMs =
+      typeof attempt.recordingDurationMs === 'number' &&
+      Number.isFinite(attempt.recordingDurationMs) &&
+      attempt.recordingDurationMs > 0
+        ? attempt.recordingDurationMs
+        : undefined;
+
+    const result = await this.prisma.$transaction(async (tx) => {
+      const pronunciationAttempt = await tx.pronunciationAttempt.create({
+        data: {
+          childId,
+          vocabularyId,
+          provider: (attempt.assessment?.provider ||
+            'CUSTOM') as PronunciationProvider,
+          overallScore: attempt.aiScore,
+          accuracyScore: attempt.assessment?.accuracyScore,
+          fluencyScore: attempt.assessment?.fluencyScore,
+          completenessScore: attempt.assessment?.completenessScore,
+          prosodyScore: attempt.assessment?.prosodyScore,
+          recognizedText: attempt.assessment?.recognizedText,
+          recognizedIpa: attempt.assessment?.recognizedIpa,
+          feedback: attempt.feedback || null,
+          recordingDurationMs,
+          passed: attempt.assessment?.passed,
+          assessment: attempt.assessment
+            ? (JSON.parse(JSON.stringify(attempt.assessment)) as Prisma.InputJsonValue)
+            : Prisma.JsonNull,
+        },
+      });
+
+      const activity = await tx.activityLog.create({
+        data: {
+          childId,
+          vocabularyId,
+          activityType: 'PRONUNCIATION',
+          score: attempt.aiScore,
+          metadata: metadata as Prisma.InputJsonValue,
+          durationSec:
+            typeof recordingDurationMs === 'number'
+              ? Math.max(1, Math.round(recordingDurationMs / 1000))
+              : 0,
+        },
+      });
+
+      return { pronunciationAttempt, activity };
     });
 
     return {
-      id: activity.id.toString(),
-      childId: activity.childId.toString(),
-      vocabularyId: activity.vocabularyId.toString(),
-      aiScore: (activity.metadata as any)?.confidenceScore || 0,
-      feedback: (activity.metadata as any)?.evaluationNotes || '',
-      createdAt: activity.createdAt,
+      id: result.pronunciationAttempt.id.toString(),
+      childId: result.pronunciationAttempt.childId.toString(),
+      vocabularyId: result.pronunciationAttempt.vocabularyId.toString(),
+      aiScore: result.pronunciationAttempt.overallScore || 0,
+      recordingDurationMs: result.pronunciationAttempt.recordingDurationMs || undefined,
+      feedback: result.pronunciationAttempt.feedback || '',
+      assessment: attempt.assessment,
+      createdAt: result.pronunciationAttempt.createdAt,
     };
   }
 
@@ -50,23 +85,24 @@ export class PronunciationRepository implements IPronunciationRepository {
    * Get all pronunciation attempts for a child
    */
   async findByChild(childId: string): Promise<PronunciationAttemptEntity[]> {
-    const activities = await this.prisma.activityLog.findMany({
+    const attempts = await this.prisma.pronunciationAttempt.findMany({
       where: {
         childId: parseInt(childId, 10),
-        activityType: 'PRONUNCIATION',
       },
       orderBy: {
         createdAt: 'desc',
       },
     });
 
-    return activities.map((a) => ({
-      id: a.id.toString(),
-      childId: a.childId.toString(),
-      vocabularyId: a.vocabularyId.toString(),
-      aiScore: (a.metadata as any)?.confidenceScore || 0,
-      feedback: (a.metadata as any)?.evaluationNotes || '',
-      createdAt: a.createdAt,
+    return attempts.map((attempt) => ({
+      id: attempt.id.toString(),
+      childId: attempt.childId.toString(),
+      vocabularyId: attempt.vocabularyId.toString(),
+      aiScore: attempt.overallScore || 0,
+      recordingDurationMs: attempt.recordingDurationMs || undefined,
+      feedback: attempt.feedback || '',
+      assessment: attempt.assessment as any,
+      createdAt: attempt.createdAt,
     }));
   }
 
@@ -158,9 +194,11 @@ export class PronunciationRepository implements IPronunciationRepository {
       create: {
         childId,
         vocabularyId,
+        pronunciationScore: confidenceScore,
         lastReviewedAt: new Date(),
       },
       update: {
+        pronunciationScore: confidenceScore,
         lastReviewedAt: new Date(),
       },
     });

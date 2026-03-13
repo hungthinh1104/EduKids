@@ -23,6 +23,8 @@ import {
 // [C-4] Redis client for rate limiting — persistent across server restarts,
 // works correctly with multiple instances (load balancer).
 let redisClient: RedisClientType | null = null;
+const localLoginAttemptStore = new Map<string, { count: number; expiresAt: number }>();
+
 async function getRedisClient(): Promise<RedisClientType | null> {
   if (!process.env.REDIS_URL) return null;
   if (!redisClient) {
@@ -41,6 +43,45 @@ async function getRedisClient(): Promise<RedisClientType | null> {
 const MAX_LOGIN_ATTEMPTS = 5;
 /** Lockout duration in seconds */
 const LOCKOUT_SECONDS = 5 * 60; // 5 minutes
+
+function normalizeEmailForRateLimit(email: string): string {
+  return email.trim().toLowerCase();
+}
+
+function getLocalLoginAttempts(email: string): { count: number; expiresAt: number } | null {
+  const key = normalizeEmailForRateLimit(email);
+  const entry = localLoginAttemptStore.get(key);
+  if (!entry) return null;
+
+  if (entry.expiresAt <= Date.now()) {
+    localLoginAttemptStore.delete(key);
+    return null;
+  }
+
+  return entry;
+}
+
+function recordLocalFailedAttempt(email: string): void {
+  const key = normalizeEmailForRateLimit(email);
+  const current = getLocalLoginAttempts(key);
+
+  if (!current) {
+    localLoginAttemptStore.set(key, {
+      count: 1,
+      expiresAt: Date.now() + LOCKOUT_SECONDS * 1000,
+    });
+    return;
+  }
+
+  localLoginAttemptStore.set(key, {
+    count: current.count + 1,
+    expiresAt: current.expiresAt,
+  });
+}
+
+function resetLocalFailedAttempts(email: string): void {
+  localLoginAttemptStore.delete(normalizeEmailForRateLimit(email));
+}
 
 @Injectable()
 export class AuthService {
@@ -406,12 +447,15 @@ export class AuthService {
       },
     });
 
-    // In production: send email with link /reset-password?token=<resetToken>
-    // For demo: return token directly in response
-    return {
+    const response: { message: string; resetToken?: string } = {
       message: "If this email is registered, a reset link has been sent.",
-      resetToken,
     };
+
+    if (process.env.NODE_ENV !== "production") {
+      response.resetToken = resetToken;
+    }
+
+    return response;
   }
 
   /**
@@ -628,18 +672,24 @@ export class AuthService {
    * Checks if the email is locked out.
    */
   private async checkRateLimit(email: string): Promise<void> {
+    const normalizedEmail = normalizeEmailForRateLimit(email);
     const redis = await getRedisClient();
 
     if (!redis) {
-      // Redis unavailable — fail open with a warning (in-memory fallback removed intentionally)
-      console.warn(
-        "[Security] Redis unavailable — login rate limiting bypassed for:",
-        email,
-      );
+      const localEntry = getLocalLoginAttempts(normalizedEmail);
+      if (!localEntry) return;
+
+      if (localEntry.count >= MAX_LOGIN_ATTEMPTS) {
+        const minutesLeft = Math.ceil((localEntry.expiresAt - Date.now()) / 60000);
+        throw new ForbiddenException(
+          `Account temporarily locked. Try again in ${Math.max(1, minutesLeft)} minute(s).`,
+        );
+      }
+
       return;
     }
 
-    const key = `login_attempts:${email}`;
+    const key = `login_attempts:${normalizedEmail}`;
     const attemptsStr = await redis.get(key);
     if (!attemptsStr) return;
 
@@ -657,10 +707,14 @@ export class AuthService {
    * [C-4 Security Fix] Record a failed login attempt in Redis.
    */
   private async recordFailedAttempt(email: string): Promise<void> {
+    const normalizedEmail = normalizeEmailForRateLimit(email);
     const redis = await getRedisClient();
-    if (!redis) return;
+    if (!redis) {
+      recordLocalFailedAttempt(normalizedEmail);
+      return;
+    }
 
-    const key = `login_attempts:${email}`;
+    const key = `login_attempts:${normalizedEmail}`;
     const current = await redis.incr(key);
     if (current === 1) {
       // Set expiry only on first attempt (so it resets after LOCKOUT_SECONDS)
@@ -672,8 +726,11 @@ export class AuthService {
    * [C-4 Security Fix] Clear rate limit counter after successful login.
    */
   private async resetRateLimit(email: string): Promise<void> {
+    const normalizedEmail = normalizeEmailForRateLimit(email);
+    resetLocalFailedAttempts(normalizedEmail);
+
     const redis = await getRedisClient();
     if (!redis) return;
-    await redis.del(`login_attempts:${email}`);
+    await redis.del(`login_attempts:${normalizedEmail}`);
   }
 }

@@ -154,6 +154,12 @@ enum CmsContentStatus {
   PUBLISHED
   ARCHIVED
 }
+
+enum PronunciationProvider {
+  AZURE_SPEECH
+  GOOGLE_SPEECH
+  CUSTOM
+}
 //////////////////////////////////////
 // AUTH
 //////////////////////////////////////
@@ -458,9 +464,18 @@ model PronunciationAttempt {
   childId      Int
   vocabularyId Int
 
+  provider          PronunciationProvider @default(CUSTOM)
+  overallScore      Float?
   accuracyScore     Float?
   fluencyScore      Float?
   completenessScore Float?
+  prosodyScore      Float?
+  recognizedText    String?
+  recognizedIpa     String?
+  feedback          String?
+  recordingDurationMs Int?
+  passed            Boolean?
+  assessment        Json?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -468,8 +483,9 @@ model PronunciationAttempt {
   child      ChildProfile @relation(fields: [childId], references: [id], onDelete: Cascade)
   vocabulary Vocabulary   @relation(fields: [vocabularyId], references: [id], onDelete: Cascade)
 
-  @@index([childId])
-  @@index([vocabularyId])
+  @@index([childId, createdAt(sort: Desc)])
+  @@index([vocabularyId, createdAt(sort: Desc)])
+  @@index([provider])
 }
 
 //////////////////////////////////////

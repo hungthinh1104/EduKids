@@ -1,7 +1,6 @@
 import { NestFactory } from "@nestjs/core";
 import { ValidationPipe } from "@nestjs/common";
 import { AppModule } from "./app.module";
-import { setupSwagger } from "./config/swagger.config";
 import { HttpExceptionFilter } from "./common/filters/http-exception.filter";
 import { ResponseInterceptor } from "./common/interceptors/response.interceptor";
 import {
@@ -15,6 +14,19 @@ import {
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const httpAdapter = app.getHttpAdapter().getInstance();
+  const isProduction = process.env.NODE_ENV === "production";
+  const metricsEnabled = process.env.METRICS_ENABLED === "true" || !isProduction;
+
+  httpAdapter.disable?.("x-powered-by");
+
+  httpAdapter.use((req, res, next) => {
+    res.setHeader("X-Content-Type-Options", "nosniff");
+    res.setHeader("X-Frame-Options", "DENY");
+    res.setHeader("Referrer-Policy", "no-referrer");
+    res.setHeader("X-DNS-Prefetch-Control", "off");
+    res.setHeader("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
+    next();
+  });
 
   // Prometheus metrics registry (single-process)
   const metricsRegistry = new Registry();
@@ -45,40 +57,42 @@ async function bootstrap() {
     registers: [metricsRegistry],
   });
 
-  httpAdapter.use((req, res, next) => {
-    // Ignore metrics endpoint itself to avoid self-scrape noise
-    if (req.path === "/api/metrics") {
+  if (metricsEnabled) {
+    httpAdapter.use((req, res, next) => {
+      // Ignore metrics endpoint itself to avoid self-scrape noise
+      if (req.path === "/api/metrics") {
+        next();
+        return;
+      }
+
+      const method = req.method;
+      const start = process.hrtime.bigint();
+      const routeForInFlight = req.path || "unknown";
+      httpRequestsInFlight.inc({ method, route: routeForInFlight });
+
+      res.on("finish", () => {
+        const statusCode = String(res.statusCode);
+        const resolvedRoute = req.route?.path
+          ? `${req.baseUrl || ""}${req.route.path}`
+          : req.path || "unknown";
+        const durationSeconds = Number(process.hrtime.bigint() - start) / 1e9;
+
+        httpRequestsInFlight.dec({ method, route: routeForInFlight });
+        httpRequestsTotal.inc({ method, route: resolvedRoute, status_code: statusCode });
+        httpRequestDuration.observe(
+          { method, route: resolvedRoute, status_code: statusCode },
+          durationSeconds,
+        );
+      });
+
       next();
-      return;
-    }
-
-    const method = req.method;
-    const start = process.hrtime.bigint();
-    const routeForInFlight = req.path || "unknown";
-    httpRequestsInFlight.inc({ method, route: routeForInFlight });
-
-    res.on("finish", () => {
-      const statusCode = String(res.statusCode);
-      const resolvedRoute = req.route?.path
-        ? `${req.baseUrl || ""}${req.route.path}`
-        : req.path || "unknown";
-      const durationSeconds = Number(process.hrtime.bigint() - start) / 1e9;
-
-      httpRequestsInFlight.dec({ method, route: routeForInFlight });
-      httpRequestsTotal.inc({ method, route: resolvedRoute, status_code: statusCode });
-      httpRequestDuration.observe(
-        { method, route: resolvedRoute, status_code: statusCode },
-        durationSeconds,
-      );
     });
 
-    next();
-  });
-
-  httpAdapter.get("/api/metrics", async (_req, res) => {
-    res.setHeader("Content-Type", metricsRegistry.contentType);
-    res.end(await metricsRegistry.metrics());
-  });
+    httpAdapter.get("/api/metrics", async (_req, res) => {
+      res.setHeader("Content-Type", metricsRegistry.contentType);
+      res.end(await metricsRegistry.metrics());
+    });
+  }
 
   const configuredOrigins = (process.env.CORS_ORIGIN || "http://localhost:3000")
     .split(",")
@@ -136,15 +150,13 @@ async function bootstrap() {
   // Global response interceptor for standardized format
   app.useGlobalInterceptors(new ResponseInterceptor());
 
-  // Swagger API documentation
-  setupSwagger(app);
-
   const port = process.env.PORT || 3001;
   await app.listen(port);
 
   console.log(`🚀 Application is running on: http://localhost:${port}`);
-  console.log(`📚 API Documentation: http://localhost:${port}/api/docs`);
-  console.log(`📈 Metrics Endpoint: http://localhost:${port}/api/metrics`);
+  if (metricsEnabled) {
+    console.log(`📈 Metrics Endpoint: http://localhost:${port}/api/metrics`);
+  }
 }
 
 bootstrap();

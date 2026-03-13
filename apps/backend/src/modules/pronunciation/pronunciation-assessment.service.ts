@@ -4,6 +4,8 @@ import {
   PhonemeAssessmentDto,
   PronunciationAssessmentProvider,
   PronunciationAssessmentResultDto,
+  PronunciationWordErrorType,
+  SyllableAssessmentDto,
   WordAssessmentDto,
 } from './dto/pronunciation-assessment.dto';
 
@@ -64,6 +66,7 @@ export class PronunciationAssessmentService {
       prosodyScore,
       recognizedText: input.recognizedText || input.word,
       recognizedIpa: spokenIpa || undefined,
+      referenceText: input.word,
       words: [wordAssessment],
       passed: overallScore >= 80,
     };
@@ -190,6 +193,7 @@ export class PronunciationAssessmentService {
         prosodyScore,
         recognizedText,
         recognizedIpa: input.recognizedIpa,
+        referenceText: input.word,
         words: this.mapAzureWords(wordResults, input),
         passed: overallScore >= 80,
       };
@@ -215,6 +219,8 @@ export class PronunciationAssessmentService {
           targetIpa: input.targetIpa || '',
           spokenIpa: input.recognizedIpa || input.targetIpa || '',
           score: this.clampScore(input.confidenceScore),
+          errorType: PronunciationWordErrorType.UNKNOWN,
+          isMatch: true,
         },
       ];
     }
@@ -231,7 +237,42 @@ export class PronunciationAssessmentService {
           wordResult?.PronunciationAssessment?.AccuracyScore ?? input.confidenceScore,
         ),
       ),
+      errorType: this.mapAzureWordErrorType(wordResult?.PronunciationAssessment?.ErrorType),
+      startMs: this.convertAzureTimeToMs(wordResult?.Offset),
+      endMs: this.convertAzureTimeToMs(
+        typeof wordResult?.Offset === 'number' && typeof wordResult?.Duration === 'number'
+          ? wordResult.Offset + wordResult.Duration
+          : undefined,
+      ),
+      isMatch:
+        this.mapAzureWordErrorType(wordResult?.PronunciationAssessment?.ErrorType) ===
+        PronunciationWordErrorType.NONE,
+      syllables: this.mapAzureSyllables(wordResult?.Syllables),
       phonemes: this.mapAzurePhonemes(wordResult?.Phonemes),
+    }));
+  }
+
+  private mapAzureSyllables(
+    syllables: Record<string, any>[] | undefined,
+  ): SyllableAssessmentDto[] | undefined {
+    if (!Array.isArray(syllables) || syllables.length === 0) {
+      return undefined;
+    }
+
+    return syllables.map((syllable) => ({
+      syllable:
+        typeof syllable?.Syllable === 'string' && syllable.Syllable.length > 0
+          ? syllable.Syllable
+          : '',
+      score: this.clampScore(
+        Number(syllable?.PronunciationAssessment?.AccuracyScore ?? 0),
+      ),
+      startMs: this.convertAzureTimeToMs(syllable?.Offset),
+      endMs: this.convertAzureTimeToMs(
+        typeof syllable?.Offset === 'number' && typeof syllable?.Duration === 'number'
+          ? syllable.Offset + syllable.Duration
+          : undefined,
+      ),
     }));
   }
 
@@ -283,6 +324,25 @@ export class PronunciationAssessmentService {
       return Buffer.from(normalized, 'base64');
     } catch {
       return null;
+    }
+  }
+
+  private mapAzureWordErrorType(value: unknown): PronunciationWordErrorType {
+    switch (value) {
+      case 'None':
+        return PronunciationWordErrorType.NONE;
+      case 'Mispronunciation':
+        return PronunciationWordErrorType.MISPRONUNCIATION;
+      case 'Omission':
+        return PronunciationWordErrorType.OMISSION;
+      case 'Insertion':
+        return PronunciationWordErrorType.INSERTION;
+      case 'UnexpectedBreak':
+        return PronunciationWordErrorType.UNEXPECTED_BREAK;
+      case 'MissingBreak':
+        return PronunciationWordErrorType.MISSING_BREAK;
+      default:
+        return PronunciationWordErrorType.UNKNOWN;
     }
   }
 

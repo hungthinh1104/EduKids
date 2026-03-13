@@ -112,6 +112,7 @@ export class AuthController {
     status: 401,
     description: "Session expired, please log in again",
   })
+  @Throttle(20, 60) // 20 refresh attempts per 60 seconds
   @Post("refresh")
   async refresh(
     @Body() dto: RefreshTokenDto,
@@ -234,6 +235,7 @@ export class AuthController {
   })
   @ApiResponse({ status: 200, description: "Password reset successfully" })
   @ApiResponse({ status: 400, description: "Invalid or expired token" })
+  @Throttle(5, 60) // 5 reset attempts per 60 seconds
   @HttpCode(HttpStatus.OK)
   @Post("reset-password")
   async resetPassword(

@@ -302,7 +302,11 @@ export class PronunciationService {
       vocabularyId: a.vocabularyId,
       word: a.vocabularyId ? vocabularyMap.get(a.vocabularyId) || '' : '',
       confidenceScore: ((a.metadata as any)?.confidenceScore as number) || 0,
-      stars: this.convertScoreToStars(((a.metadata as any)?.confidenceScore as number) || 0),
+      rating: this.generateKidFriendlyFeedback(
+        ((a.metadata as any)?.confidenceScore as number) || 0,
+        this.convertScoreToStars(((a.metadata as any)?.confidenceScore as number) || 0),
+      ),
+      assessment: ((a.metadata as any)?.assessment as PronunciationFeedbackDto['assessment']) || undefined,
       attemptedAt: a.createdAt,
     }));
   }
@@ -331,6 +335,9 @@ export class PronunciationService {
       averageScore,
       highestScore: scores.length > 0 ? Math.max(...scores) : 0,
       accuracyRate: `${Math.round((perfectScores / Math.max(activities.length, 1)) * 100)}%`,
+      masteredWords: scores.filter((s) => s >= 80).length,
+      improvingWords: scores.filter((s) => s >= 60 && s < 80).length,
+      needsPractice: scores.filter((s) => s < 60).length,
     };
   }
 }

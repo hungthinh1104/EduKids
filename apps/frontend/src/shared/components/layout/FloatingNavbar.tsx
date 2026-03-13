@@ -69,10 +69,11 @@ export function FloatingNavbar({ links, rightActions, showThemeToggle = false }:
                 {showThemeToggle && (
                     <button
                         onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
-                        className="p-3 rounded-full bg-white/50 dark:bg-slate-800/50 backdrop-blur-md border border-slate-200/50 dark:border-slate-700/50 text-slate-600 dark:text-slate-300 hover:text-primary transition-all hover:scale-110 shadow-sm"
+                        className="p-3 rounded-full bg-white/50 dark:bg-slate-800/50 backdrop-blur-md border border-slate-200/50 dark:border-slate-700/50 text-slate-600 dark:text-slate-300 hover:text-primary transition-all hover:scale-110 shadow-sm min-h-[46px] min-w-[46px] flex items-center justify-center group"
                         aria-label="Toggle Dark Mode"
                     >
-                        {resolvedTheme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+                        <Sun size={20} className="hidden dark:block group-hover:rotate-12 transition-transform" />
+                        <Moon size={20} className="block dark:hidden group-hover:-rotate-12 transition-transform" />
                     </button>
                 )}
                 {rightActions}

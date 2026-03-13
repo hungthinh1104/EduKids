@@ -20,6 +20,59 @@ export interface PronunciationAttempt {
   currentLevel: number;
   badgeUnlocked?: string;
   attemptedAt: string;
+  assessment?: PronunciationAssessment;
+}
+
+export type PronunciationProvider = 'AZURE_SPEECH' | 'GOOGLE_SPEECH' | 'CUSTOM';
+export type PronunciationWordErrorType =
+  | 'NONE'
+  | 'MISPRONUNCIATION'
+  | 'OMISSION'
+  | 'INSERTION'
+  | 'UNEXPECTED_BREAK'
+  | 'MISSING_BREAK'
+  | 'UNKNOWN';
+
+export interface PronunciationPhonemeAssessment {
+  phoneme: string;
+  expectedPhoneme: string;
+  score: number;
+  startMs?: number;
+  endMs?: number;
+}
+
+export interface PronunciationSyllableAssessment {
+  syllable: string;
+  score: number;
+  startMs?: number;
+  endMs?: number;
+}
+
+export interface PronunciationWordAssessment {
+  word: string;
+  targetIpa: string;
+  spokenIpa: string;
+  score: number;
+  errorType?: PronunciationWordErrorType;
+  startMs?: number;
+  endMs?: number;
+  isMatch?: boolean;
+  syllables?: PronunciationSyllableAssessment[];
+  phonemes?: PronunciationPhonemeAssessment[];
+}
+
+export interface PronunciationAssessment {
+  provider: PronunciationProvider;
+  overallScore: number;
+  accuracyScore: number;
+  fluencyScore: number;
+  completenessScore?: number;
+  prosodyScore?: number;
+  recognizedText?: string;
+  recognizedIpa?: string;
+  referenceText?: string;
+  words?: PronunciationWordAssessment[];
+  passed?: boolean;
 }
 
 export interface PronunciationProgress {
