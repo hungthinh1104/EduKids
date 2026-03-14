@@ -21,7 +21,7 @@ export function ShopGrid({ filteredItems, handleBuy, setPreviewItem, stars, coin
                     <motion.div
                         key={item.id}
                         layout
-                        initial={{ opacity: 0, scale: 0.8 }}
+                        initial={{ opacity: 1, scale: 0.8 }}
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.8 }}
                         transition={{ delay: i * 0.04 }}

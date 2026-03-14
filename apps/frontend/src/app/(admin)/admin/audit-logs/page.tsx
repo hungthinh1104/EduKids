@@ -328,7 +328,7 @@ export default function AdminAuditLogsPage() {
         ].map((card, index) => (
           <motion.div
             key={card.label}
-            initial={{ opacity: 0, y: 14 }}
+            initial={{ opacity: 1, y: 14 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.06 }}
             className={`rounded-3xl border bg-gradient-to-br ${card.shell} p-5 shadow-sm`}
@@ -492,7 +492,7 @@ export default function AdminAuditLogsPage() {
             return (
               <motion.div
                 key={log.id}
-                initial={{ opacity: 0, y: 14 }}
+                initial={{ opacity: 1, y: 14 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.04 }}
                 className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg"

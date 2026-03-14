@@ -19,7 +19,7 @@ export function DashboardMetrics({ platformMetrics }: DashboardMetricsProps) {
             {platformMetrics.map((m, i) => (
                 <motion.div
                     key={m.label}
-                    initial={{ opacity: 0, y: 16 }}
+                    initial={{ opacity: 1, y: 16 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.05 }}
                 >

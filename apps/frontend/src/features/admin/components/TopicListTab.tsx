@@ -40,7 +40,7 @@ export function TopicListTab({ topics, onEdit, onDelete }: TopicListTabProps) {
                         <tbody className="divide-y divide-border">
                             {paginatedTopics.map((topic, i) => (
                                 <motion.tr key={topic.id}
-                                    initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.05 }}
+                                    initial={{ opacity: 1 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.05 }}
                                     className="hover:bg-background group"
                                 >
                                     <td className="px-5 py-3 text-caption text-xs">#{topic.id}</td>

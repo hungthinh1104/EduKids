@@ -17,7 +17,7 @@ interface ContentStatsTableProps {
 export function ContentStatsTable({ contentStats }: ContentStatsTableProps) {
     return (
         <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 1, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.1 }}
@@ -46,7 +46,7 @@ export function ContentStatsTable({ contentStats }: ContentStatsTableProps) {
                         {contentStats.map((c, i) => (
                             <motion.tr
                                 key={c.topic}
-                                initial={{ opacity: 0, x: -10 }}
+                                initial={{ opacity: 1, x: -10 }}
                                 whileInView={{ opacity: 1, x: 0 }}
                                 viewport={{ once: true }}
                                 transition={{ delay: i * 0.05 }}

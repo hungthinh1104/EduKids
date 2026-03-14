@@ -30,7 +30,7 @@ export function VocabularyListTab({ vocabularies, topics, onEdit, onDelete }: Vo
     const paginatedVocabularies = vocabularies.slice((effectivePage - 1) * PAGE_SIZE, effectivePage * PAGE_SIZE);
 
     return (
-        <motion.div key="vocabulary" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+        <motion.div key="vocabulary" initial={{ opacity: 1, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
             <div className="bg-card border-2 border-border rounded-2xl overflow-hidden flex flex-col">
                 <div className="overflow-x-auto">
                     <table className="w-full text-sm">
@@ -46,7 +46,7 @@ export function VocabularyListTab({ vocabularies, topics, onEdit, onDelete }: Vo
                                 const topic = topics.find((t) => t.id === v.topicId);
                                 return (
                                     <motion.tr key={v.id}
-                                        initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.04 }}
+                                        initial={{ opacity: 1 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.04 }}
                                         className="hover:bg-background group"
                                     >
                                         <td className="px-5 py-3 font-heading font-black text-heading">{v.word}</td>

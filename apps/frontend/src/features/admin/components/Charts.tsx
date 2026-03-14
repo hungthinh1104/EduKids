@@ -80,7 +80,7 @@ export function HorizontalBarList({ title, data, action }: HorizontalBarListProp
             ) : (
             <div className="space-y-4 mt-2">
                 {data.map((item, i) => (
-                    <motion.div key={item.label} initial={{ opacity: 0, x: -10 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.06 }}>
+                    <motion.div key={item.label} initial={{ opacity: 1, x: -10 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.06 }}>
                         <div className="flex items-center justify-between mb-1.5">
                             <span className="font-heading font-bold text-heading text-sm">{item.label}</span>
                             {item.meta && <span>{item.meta}</span>}

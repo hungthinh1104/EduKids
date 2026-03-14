@@ -200,7 +200,7 @@ export default function AdminUsersPage() {
             <AnimatePresence>
                 {selectedUserIds.length > 0 && (
                     <motion.div
-                        initial={{ opacity: 0, height: 0, marginBottom: 0 }}
+                        initial={{ opacity: 1, height: 0, marginBottom: 0 }}
                         animate={{ opacity: 1, height: 'auto', marginBottom: 24 }}
                         exit={{ opacity: 0, height: 0, marginBottom: 0 }}
                         className="bg-primary-light/50 border border-primary/20 rounded-2xl p-4 flex items-center justify-between overflow-hidden"

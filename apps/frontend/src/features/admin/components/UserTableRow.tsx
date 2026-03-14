@@ -47,7 +47,7 @@ interface UserTableRowProps {
 export function UserTableRow({ user, index, isSelected, onToggle, onView }: UserTableRowProps) {
     return (
         <motion.tr
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: index * 0.04 }}
+            initial={{ opacity: 1 }} animate={{ opacity: 1 }} transition={{ delay: index * 0.04 }}
             className={`transition-colors group ${isSelected ? 'bg-primary/5' : 'hover:bg-background'}`}
         >
             <td className="px-5 py-3 w-10">
