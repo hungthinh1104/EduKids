@@ -102,7 +102,7 @@ export default function AdminDashboardPage() {
 
     return (
         <div className="p-6 md:p-10 space-y-8 max-w-[1600px] mx-auto">
-            <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
+            <motion.div initial={{ opacity: 1, x: -20 }} animate={{ opacity: 1, x: 0 }}>
                 <div className="rounded-3xl border border-primary/15 bg-gradient-to-r from-primary-light/55 via-card to-accent-light/40 p-6 md:p-7 shadow-sm">
                     <div className="flex items-center gap-2 mb-2">
                         <Sparkles className="w-5 h-5 text-primary" />

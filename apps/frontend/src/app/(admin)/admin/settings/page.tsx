@@ -47,14 +47,14 @@ export default function AdminSettingsPage() {
         <div className="min-h-screen pb-8 pt-24">
             <div className="max-w-4xl mx-auto px-6">
                 {/* Header */}
-                <motion.div initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }} className="mb-8 rounded-3xl border border-primary/15 bg-gradient-to-r from-primary-light/55 via-card to-accent-light/40 p-5 md:p-6 shadow-sm">
+                <motion.div initial={{ opacity: 1, y: -16 }} animate={{ opacity: 1, y: 0 }} className="mb-8 rounded-3xl border border-primary/15 bg-gradient-to-r from-primary-light/55 via-card to-accent-light/40 p-5 md:p-6 shadow-sm">
                     <Heading level={2} className="text-heading text-3xl mb-1">Cài đặt Admin ⚙️</Heading>
                     <Body className="text-body">Quản lý tài khoản quản trị viên</Body>
                 </motion.div>
 
                 {/* Profile card */}
                 <motion.div
-                    initial={{ opacity: 0, y: 16 }}
+                    initial={{ opacity: 1, y: 16 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.1 }}
                     className="bg-gradient-to-br from-primary/20 to-accent/20 rounded-[2rem] p-6 flex items-center gap-5 mb-8 border border-primary/20 shadow-sm"
@@ -75,7 +75,7 @@ export default function AdminSettingsPage() {
 
                 {/* Settings */}
                 <motion.div
-                    initial={{ opacity: 0, y: 16 }}
+                    initial={{ opacity: 1, y: 16 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.2 }}
                     className="space-y-4"

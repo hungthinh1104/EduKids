@@ -122,7 +122,7 @@ export default function AdminUsersPage() {
     return (
         <div className="space-y-8">
             {/* Header */}
-            <motion.div initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }} className="flex items-start justify-between rounded-3xl border border-primary/15 bg-gradient-to-r from-primary-light/55 via-card to-accent-light/40 p-5 md:p-6 shadow-sm">
+            <motion.div initial={{ opacity: 1, y: -16 }} animate={{ opacity: 1, y: 0 }} className="flex items-start justify-between rounded-3xl border border-primary/15 bg-gradient-to-r from-primary-light/55 via-card to-accent-light/40 p-5 md:p-6 shadow-sm">
                 <div>
                     <Heading level={2} className="text-heading text-3xl mb-1">Người dùng 👥</Heading>
                     <Caption className="text-caption">Quản lý tài khoản phụ huynh và học sinh</Caption>

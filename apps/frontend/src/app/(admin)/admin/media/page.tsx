@@ -233,7 +233,7 @@ export default function AdminMediaPage() {
             return (
               <motion.div
                 key={file.id}
-                initial={{ opacity: 0, x: -20 }}
+                initial={{ opacity: 1, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: idx * 0.05 }}
                 className="bg-card rounded-2xl border border-border/70 shadow-sm hover:shadow-md transition p-4"
