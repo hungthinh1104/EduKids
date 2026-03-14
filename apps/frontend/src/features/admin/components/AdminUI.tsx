@@ -23,7 +23,7 @@ export function MetricCard({ label, value, delta, icon, colorCls, index = 0 }: M
 
     return (
         <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 1, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.07 }}
             className="group rounded-3xl border border-border/70 bg-card/90 p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md"

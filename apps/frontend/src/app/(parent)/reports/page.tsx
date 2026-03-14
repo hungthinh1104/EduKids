@@ -412,7 +412,7 @@ export default function ReportsPage() {
             {showSubscriptionModal && (
                 <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
                     <motion.div
-                        initial={{ opacity: 0, scale: 0.95 }}
+                        initial={{ opacity: 1, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
                         className="bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full"
                     >

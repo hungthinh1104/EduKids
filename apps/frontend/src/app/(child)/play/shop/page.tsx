@@ -174,7 +174,7 @@ export default function ShopPage() {
 
             <div className="max-w-lg md:max-w-4xl lg:max-w-7xl mx-auto px-4 md:px-6 pt-5 space-y-5">
                 {/* Avatar preview strip */}
-                <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="bg-gradient-candy rounded-[2rem] p-5 flex items-center gap-5">
+                <motion.div initial={{ opacity: 1, y: 12 }} animate={{ opacity: 1, y: 0 }} className="bg-gradient-candy rounded-[2rem] p-5 flex items-center gap-5">
                     <div className="relative w-20 h-20 flex-shrink-0">
                         <div className="w-full h-full rounded-full bg-white/20 border-4 border-white/50 flex items-center justify-center overflow-hidden">
                             <Image src={child.avatarUrl} alt={child.nickname} width={72} height={72} className="object-contain p-1" />
@@ -245,7 +245,7 @@ export default function ShopPage() {
             <AnimatePresence>
                 {purchased && (
                     <motion.div
-                        initial={{ opacity: 0, y: 60, scale: 0.8 }}
+                        initial={{ opacity: 1, y: 60, scale: 0.8 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 60, scale: 0.8 }}
                         className="fixed bottom-28 md:bottom-8 left-1/2 -translate-x-1/2 bg-success text-white px-6 py-3 rounded-2xl shadow-xl font-heading font-black text-sm flex items-center gap-2 z-50"
