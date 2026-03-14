@@ -159,14 +159,10 @@ export const retryMediaUpload = async (id: string): Promise<{ message: string }>
  */
 export const getPendingMediaStats = async (): Promise<{
   pending: number;
-  processing: number;
-  failed: number;
 }> => {
   const response = await apiClient.get('/media/stats/pending');
   const data = response.data.data as { pendingCount?: number };
   return {
     pending: data.pendingCount ?? 0,
-    processing: 0,
-    failed: 0,
   };
 };

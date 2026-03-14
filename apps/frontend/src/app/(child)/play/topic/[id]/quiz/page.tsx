@@ -85,7 +85,7 @@ function QuizComplete({ correct, total, topicId, onRestart }: { correct: number;
 
     return (
         <motion.div
-            initial={{ opacity: 0, scale: 0.85 }}
+            initial={{ opacity: 1, scale: 0.85 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ type: 'spring', bounce: 0.4 }}
             className="flex flex-col items-center justify-center min-h-[70vh] gap-7 text-center px-6"
@@ -358,7 +358,7 @@ export default function QuizPage() {
             <AnimatePresence mode="wait">
                 <motion.div
                     key={index}
-                    initial={{ opacity: 0, y: 30 }}
+                    initial={{ opacity: 1, y: 30 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -20 }}
                     transition={{ duration: 0.3 }}

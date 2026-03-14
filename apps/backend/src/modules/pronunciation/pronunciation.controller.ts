@@ -27,23 +27,24 @@ export class PronunciationController {
 
   /**
    * UC-03 Main Endpoint: Submit pronunciation attempt and receive instant feedback
-   * Browser sends Web Speech API confidence score (0-100)
-   * Backend returns kid-friendly stars, feedback, and points
+   * Browser sends WAV audio + reference text
+   * Backend evaluates with configured pronunciation provider and returns feedback
    *
    * Request Flow:
    * 1. Child records 5-10 second audio
-   * 2. Browser evaluates with Web Speech API
-   * 3. Browser sends confidenceScore to backend
-   * 4. Backend converts to stars + generates feedback
+   * 2. Browser encodes WAV audio and sends it to backend
+   * 3. Backend calls provider assessment and computes stars/rewards
+   * 4. Backend returns detailed feedback + progress update
    * 5. Response includes rewards + progress update
    *
-   * NFR-03: Audio NOT stored permanently - only confidence score recorded
+   * NFR-03: Audio is processed transiently and not stored permanently
    */
   @ApiOperation({
-    summary: 'Submit pronunciation attempt with Web Speech API score',
+    summary: 'Submit pronunciation attempt with WAV audio',
     description: `
-      Child records pronunciation, browser evaluates with Web Speech API, sends confidence score.
-      Backend converts to stars (1-5), generates kid-friendly feedback, awards points.
+      Child records pronunciation, browser sends WAV audio plus reference text.
+      Backend evaluates pronunciation using the configured provider, converts score to stars (1-5),
+      generates kid-friendly feedback, and awards points.
       
       Score Conversion:
       - 0-40: 1 star (0 points)
@@ -52,7 +53,7 @@ export class PronunciationController {
       - 76-90: 4 stars (+15 points)
       - 91-100: 5 stars (+20 points)
       
-      Privacy: Audio is NOT stored (NFR-03). Only confidence score + metadata recorded.
+      Privacy: Audio is NOT stored permanently (NFR-03). Assessment metadata and scores are recorded.
     `,
   })
   @ApiResponse({
@@ -63,7 +64,7 @@ export class PronunciationController {
   @ApiResponse({
     status: 400,
     description:
-      'Invalid confidence score (not 0-100), vocabulary not found, or microphone permission denied',
+      'Invalid payload, missing/invalid WAV audio, vocabulary not found, or microphone permission denied',
   })
   @ApiResponse({
     status: 401,

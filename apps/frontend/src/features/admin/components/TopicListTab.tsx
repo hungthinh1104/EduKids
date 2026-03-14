@@ -26,7 +26,7 @@ export function TopicListTab({ topics, onEdit, onDelete }: TopicListTabProps) {
     const paginatedTopics = topics.slice((effectivePage - 1) * PAGE_SIZE, effectivePage * PAGE_SIZE);
 
     return (
-        <motion.div key="topics" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+        <motion.div key="topics" initial={{ opacity: 1, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
             <div className="bg-card border-2 border-border rounded-2xl overflow-hidden flex flex-col">
                 <div className="overflow-x-auto">
                     <table className="w-full text-sm">

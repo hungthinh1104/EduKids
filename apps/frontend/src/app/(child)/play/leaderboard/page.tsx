@@ -76,7 +76,7 @@ export default function LeaderboardPage() {
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-50 p-6 pb-32">
       {/* Header */}
       <motion.div
-        initial={{ opacity: 0, y: -20 }}
+        initial={{ opacity: 1, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         className="text-center mb-8"
       >
@@ -91,7 +91,7 @@ export default function LeaderboardPage() {
       {/* Your Rank Card */}
       {userRank && (
         <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
+          initial={{ opacity: 1, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           className="mb-8 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-2xl p-6 shadow-lg"
         >
@@ -151,7 +151,7 @@ export default function LeaderboardPage() {
           leaderboard.slice(0, 50).map((entry, index) => (
             <motion.div
               key={entry.childId}
-              initial={{ opacity: 0, x: -20 }}
+              initial={{ opacity: 1, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: index * 0.05 }}
               className={`${getMedalColor(entry.rank)} border-2 rounded-2xl p-4 transition-all hover:shadow-lg`}

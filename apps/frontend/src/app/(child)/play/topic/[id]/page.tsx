@@ -180,7 +180,7 @@ export default function TopicDetailPage() {
                         </motion.div>
                     </Link>
 
-                    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="text-center">
+                    <motion.div initial={{ opacity: 1, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="text-center">
                         <motion.div
                             animate={{ rotate: [0, -5, 5, 0], scale: [1, 1.05, 1] }}
                             transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
@@ -203,7 +203,7 @@ export default function TopicDetailPage() {
             {/* Progress panel (overlapping) */}
             <div className="max-w-lg md:max-w-4xl lg:max-w-7xl mx-auto px-6 md:px-8 -mt-6 mb-8">
                 <motion.div
-                    initial={{ opacity: 0, y: 20 }}
+                    initial={{ opacity: 1, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.2 }}
                     className="bg-card border-2 border-border rounded-2xl p-5 shadow-xl"
@@ -234,7 +234,7 @@ export default function TopicDetailPage() {
                         return (
                             <motion.div
                                 key={mode.id}
-                                initial={{ opacity: 0, scale: 0.9 }}
+                                initial={{ opacity: 1, scale: 0.9 }}
                                 animate={{ opacity: 1, scale: 1 }}
                                 transition={{ delay: 0.1 * i }}
                                 whileHover={!mode.locked ? { scale: 1.04, y: -4 } : undefined}
@@ -287,7 +287,7 @@ export default function TopicDetailPage() {
                         {vocabPreview.map((v, i) => (
                             <motion.div
                                 key={v.id}
-                                initial={{ opacity: 0, x: -10 }}
+                                initial={{ opacity: 1, x: -10 }}
                                 whileInView={{ opacity: 1, x: 0 }}
                                 viewport={{ once: true }}
                                 transition={{ delay: i * 0.07 }}

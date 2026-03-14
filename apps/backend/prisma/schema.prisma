@@ -160,6 +160,11 @@ enum PronunciationProvider {
   GOOGLE_SPEECH
   CUSTOM
 }
+
+enum PronunciationAssessmentMode {
+  WORD
+  PARAGRAPH
+}
 //////////////////////////////////////
 // AUTH
 //////////////////////////////////////
@@ -465,6 +470,8 @@ model PronunciationAttempt {
   vocabularyId Int
 
   provider          PronunciationProvider @default(CUSTOM)
+  mode              PronunciationAssessmentMode @default(WORD)
+  referenceText     String?
   overallScore      Float?
   accuracyScore     Float?
   fluencyScore      Float?

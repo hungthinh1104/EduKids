@@ -45,3 +45,10 @@ Thumbs.db
 # Cache
 .eslintcache
 .stylelintcache
+*.tsbuildinfo
+
+# Local analysis outputs
+lint_output.txt
+lint2.txt
+type_output.txt
+type2.txt

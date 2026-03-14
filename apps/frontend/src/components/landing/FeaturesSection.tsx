@@ -10,7 +10,7 @@ export function FeaturesSection() {
         <section id="features" className="relative z-10 py-32 px-4 bg-white dark:bg-slate-900 border-y border-slate-200 dark:border-slate-800">
             <div className="max-w-7xl mx-auto">
                 <motion.div
-                    initial={{ opacity: 0, y: 30 }}
+                    initial={{ opacity: 1, y: 18 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true, margin: "-100px" }}
                     transition={{ duration: 0.6 }}
@@ -25,7 +25,7 @@ export function FeaturesSection() {
 
                 <div className="grid md:grid-cols-3 gap-8 px-4 sm:px-0">
                     {/* Feature 1 */}
-                    <motion.div initial={{ opacity: 0, y: 40 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.1 }} viewport={{ once: true, margin: "-50px" }} className="h-full">
+                    <motion.div initial={{ opacity: 1, y: 20 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.1 }} viewport={{ once: true, margin: "-50px" }} className="h-full">
                         <SpotlightCard spotlightColor="rgba(16, 185, 129, 0.2)" className="h-full group p-8 sm:p-10 hover:border-success/50 transition-all duration-500 hover:shadow-[0_20px_40px_-15px_rgba(16,185,129,0.2)] hover:-translate-y-2 flex flex-col">
                             <div className="absolute top-0 right-0 w-64 h-64 bg-success/5 rounded-bl-full -z-10 group-hover:scale-150 transition-transform duration-700 ease-out" />
                             <div className="w-20 h-20 bg-white dark:bg-slate-800 rounded-2xl flex items-center justify-center mb-8 shadow-[0_10px_20px_-10px_rgba(16,185,129,0.3)] group-hover:bg-success group-hover:-translate-y-2 transition-all duration-300">
@@ -37,7 +37,7 @@ export function FeaturesSection() {
                     </motion.div>
 
                     {/* Feature 2 */}
-                    <motion.div initial={{ opacity: 0, y: 40 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.2 }} viewport={{ once: true, margin: "-50px" }} className="h-full">
+                    <motion.div initial={{ opacity: 1, y: 20 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.2 }} viewport={{ once: true, margin: "-50px" }} className="h-full">
                         <SpotlightCard spotlightColor="rgba(99, 102, 241, 0.2)" className="h-full group p-8 sm:p-10 hover:border-primary/50 transition-all duration-500 hover:shadow-[0_20px_40px_-15px_rgba(99,102,241,0.2)] hover:-translate-y-2 flex flex-col">
                             <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-bl-full -z-10 group-hover:scale-150 transition-transform duration-700 ease-out" />
                             <div className="w-20 h-20 bg-white dark:bg-slate-800 rounded-2xl flex items-center justify-center mb-8 shadow-[0_10px_20px_-10px_rgba(99,102,241,0.3)] group-hover:bg-primary group-hover:-translate-y-2 transition-all duration-300">
@@ -49,7 +49,7 @@ export function FeaturesSection() {
                     </motion.div>
 
                     {/* Feature 3 */}
-                    <motion.div initial={{ opacity: 0, y: 40 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.3 }} viewport={{ once: true, margin: "-50px" }} className="h-full">
+                    <motion.div initial={{ opacity: 1, y: 20 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.3 }} viewport={{ once: true, margin: "-50px" }} className="h-full">
                         <SpotlightCard spotlightColor="rgba(244, 63, 94, 0.2)" className="h-full group p-8 sm:p-10 hover:border-accent/50 transition-all duration-500 hover:shadow-[0_20px_40px_-15px_rgba(244,63,94,0.2)] hover:-translate-y-2 flex flex-col">
                             <div className="absolute top-0 right-0 w-64 h-64 bg-accent/5 rounded-bl-full -z-10 group-hover:scale-150 transition-transform duration-700 ease-out" />
                             <div className="w-20 h-20 bg-white dark:bg-slate-800 rounded-2xl flex items-center justify-center mb-8 shadow-[0_10px_20px_-10px_rgba(244,63,94,0.3)] group-hover:bg-accent group-hover:-translate-y-2 transition-all duration-300">

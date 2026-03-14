@@ -1,33 +1,65 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsInt, IsString, IsOptional, Min, Max, IsNumber } from 'class-validator';
-import { PronunciationAssessmentResultDto } from './pronunciation-assessment.dto';
+import {
+  IsEnum,
+  IsInt,
+  IsOptional,
+  IsString,
+  Max,
+  Min,
+  IsNumber,
+} from 'class-validator';
+import {
+  PronunciationAssessmentMode,
+  PronunciationAssessmentResultDto,
+} from './pronunciation-assessment.dto';
 
 export class PronunciationSubmitDto {
-  @ApiProperty({
+  @ApiPropertyOptional({
     example: 1,
-    description: 'Vocabulary ID to practice pronunciation',
+    description: 'Vocabulary ID to practice pronunciation. Path param is the source of truth.',
+    required: false,
   })
+  @IsOptional()
   @IsInt()
-  vocabularyId: number;
+  vocabularyId?: number;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     example: 85,
-    description: 'Confidence score from Web Speech API (0-100)',
+    description: 'Optional legacy confidence score from client-side evaluation. Backend/provider score is authoritative.',
+    required: false,
   })
+  @IsOptional()
   @IsNumber()
   @Min(0)
   @Max(100)
-  confidenceScore: number;
+  confidenceScore?: number;
+
+  @ApiPropertyOptional({
+    enum: PronunciationAssessmentMode,
+    description: 'Assessment mode. WORD is optimized for single-word practice; PARAGRAPH uses reference text and continuous recognition.',
+    default: PronunciationAssessmentMode.WORD,
+  })
+  @IsOptional()
+  @IsEnum(PronunciationAssessmentMode)
+  mode?: PronunciationAssessmentMode;
+
+  @ApiPropertyOptional({
+    example: 'Today was a beautiful day.',
+    description: 'Reference text for Azure pronunciation assessment. Defaults to the vocabulary word in WORD mode.',
+  })
+  @IsOptional()
+  @IsString()
+  referenceText?: string;
 
   @ApiProperty({
     example: 2500,
-    description: 'Duration of recording in milliseconds (5000-10000ms = 5-10s)',
+    description: 'Duration of recording in milliseconds',
     required: false,
   })
   @IsOptional()
   @IsInt()
   @Min(100)
-  @Max(60000)
+  @Max(120000)
   recordingDurationMs?: number;
 
   @ApiProperty({
@@ -108,6 +140,9 @@ export class PronunciationFeedbackDto {
 
   @ApiProperty({ example: 85 })
   confidenceScore: number;
+
+  @ApiProperty({ enum: PronunciationAssessmentMode })
+  mode: PronunciationAssessmentMode;
 
   @ApiProperty({
     type: StarRatingDto,

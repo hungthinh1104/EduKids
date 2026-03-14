@@ -8,6 +8,7 @@ export interface PronunciationAttempt {
   vocabularyId: number;
   word: string;
   confidenceScore: number; // 0-100
+  mode: PronunciationAssessmentMode;
   rating: {
     stars: number;
     starEmoji: string;
@@ -24,6 +25,7 @@ export interface PronunciationAttempt {
 }
 
 export type PronunciationProvider = 'AZURE_SPEECH' | 'GOOGLE_SPEECH' | 'CUSTOM';
+export type PronunciationAssessmentMode = 'WORD' | 'PARAGRAPH';
 export type PronunciationWordErrorType =
   | 'NONE'
   | 'MISPRONUNCIATION'
@@ -62,6 +64,7 @@ export interface PronunciationWordAssessment {
 }
 
 export interface PronunciationAssessment {
+  mode: PronunciationAssessmentMode;
   provider: PronunciationProvider;
   overallScore: number;
   accuracyScore: number;
@@ -73,6 +76,17 @@ export interface PronunciationAssessment {
   referenceText?: string;
   words?: PronunciationWordAssessment[];
   passed?: boolean;
+}
+
+export interface SubmitPronunciationPayload {
+  vocabularyId: number;
+  mode?: PronunciationAssessmentMode;
+  referenceText?: string;
+  recognizedText?: string;
+  recordingDurationMs?: number;
+  audioBase64: string;
+  audioMimeType?: string;
+  confidenceScore?: number;
 }
 
 export interface PronunciationProgress {
@@ -100,25 +114,22 @@ export interface PronunciationStats {
  * @body { audioBase64: string }
  */
 export const submitPronunciation = async (
-  vocabularyId: number,
-  confidenceScore: number,
-  recognizedText?: string,
-  recordingDurationMs?: number,
-  audioBase64?: string,
-  audioMimeType?: string,
+  payload: SubmitPronunciationPayload,
 ): Promise<PronunciationAttempt> => {
   const safeDuration =
-    recordingDurationMs === undefined
+    payload.recordingDurationMs === undefined
       ? undefined
-      : Math.min(10000, Math.max(5000, recordingDurationMs));
+      : Math.min(120000, Math.max(100, payload.recordingDurationMs));
 
-  const response = await apiClient.post(`/pronunciation/${vocabularyId}`, {
-    vocabularyId,
-    confidenceScore,
-    recognizedText,
+  const response = await apiClient.post(`/pronunciation/${payload.vocabularyId}`, {
+    vocabularyId: payload.vocabularyId,
+    mode: payload.mode,
+    referenceText: payload.referenceText,
+    confidenceScore: payload.confidenceScore,
+    recognizedText: payload.recognizedText,
     recordingDurationMs: safeDuration,
-    audioBase64,
-    audioMimeType,
+    audioBase64: payload.audioBase64,
+    audioMimeType: payload.audioMimeType,
   });
   return response.data.data;
 };

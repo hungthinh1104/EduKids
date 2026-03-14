@@ -5,6 +5,8 @@ export class PronunciationAttemptEntity {
   childId: string;
   vocabularyId: string;
   aiScore: number;
+  mode?: string;
+  referenceText?: string;
   recordingDurationMs?: number;
   feedback: string;
   assessment?: PronunciationAssessmentResultDto;

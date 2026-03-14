@@ -2,7 +2,11 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { PronunciationAttemptEntity } from '../entities/pronunciation-attempt.entity';
 import { IPronunciationRepository } from './pronunciation.repository.interface';
-import { ActivityLog, LearningProgress, PronunciationProvider } from '@prisma/client';
+import {
+  LearningProgress,
+  PronunciationAssessmentMode,
+  PronunciationProvider,
+} from '@prisma/client';
 import { Prisma } from '@prisma/client';
 
 @Injectable()
@@ -36,6 +40,11 @@ export class PronunciationRepository implements IPronunciationRepository {
           vocabularyId,
           provider: (attempt.assessment?.provider ||
             'CUSTOM') as PronunciationProvider,
+          mode: (attempt.mode ||
+            attempt.assessment?.mode ||
+            PronunciationAssessmentMode.WORD) as PronunciationAssessmentMode,
+          referenceText:
+            attempt.referenceText || attempt.assessment?.referenceText || null,
           overallScore: attempt.aiScore,
           accuracyScore: attempt.assessment?.accuracyScore,
           fluencyScore: attempt.assessment?.fluencyScore,
@@ -74,9 +83,11 @@ export class PronunciationRepository implements IPronunciationRepository {
       childId: result.pronunciationAttempt.childId.toString(),
       vocabularyId: result.pronunciationAttempt.vocabularyId.toString(),
       aiScore: result.pronunciationAttempt.overallScore || 0,
+      mode: result.pronunciationAttempt.mode,
+      referenceText: result.pronunciationAttempt.referenceText || undefined,
       recordingDurationMs: result.pronunciationAttempt.recordingDurationMs || undefined,
       feedback: result.pronunciationAttempt.feedback || '',
-      assessment: attempt.assessment,
+      assessment: result.pronunciationAttempt.assessment as any,
       createdAt: result.pronunciationAttempt.createdAt,
     };
   }
@@ -99,6 +110,8 @@ export class PronunciationRepository implements IPronunciationRepository {
       childId: attempt.childId.toString(),
       vocabularyId: attempt.vocabularyId.toString(),
       aiScore: attempt.overallScore || 0,
+      mode: attempt.mode,
+      referenceText: attempt.referenceText || undefined,
       recordingDurationMs: attempt.recordingDurationMs || undefined,
       feedback: attempt.feedback || '',
       assessment: attempt.assessment as any,
@@ -113,12 +126,11 @@ export class PronunciationRepository implements IPronunciationRepository {
     childId: number,
     vocabularyId: number,
     limit: number = 10,
-  ): Promise<ActivityLog[]> {
-    return this.prisma.activityLog.findMany({
+  ) {
+    return this.prisma.pronunciationAttempt.findMany({
       where: {
         childId,
         vocabularyId,
-        activityType: 'PRONUNCIATION',
       },
       orderBy: {
         createdAt: 'desc',
@@ -153,7 +165,7 @@ export class PronunciationRepository implements IPronunciationRepository {
 
     // Extract confidence scores from metadata
     const scores = attempts
-      .map((a) => (a.metadata as any)?.confidenceScore || 0)
+      .map((a) => a.overallScore || 0)
       .filter((s) => s > 0);
 
     // Calculate perfect streak (consecutive scores >= 80)
@@ -172,6 +184,21 @@ export class PronunciationRepository implements IPronunciationRepository {
       lastAttemptedAt: attempts[0].createdAt,
       perfectStreak,
     };
+  }
+
+  async getHistory(childId: number, limit: number = 10) {
+    return this.prisma.pronunciationAttempt.findMany({
+      where: { childId },
+      orderBy: { createdAt: 'desc' },
+      take: limit,
+    });
+  }
+
+  async getOverallStats(childId: number) {
+    return this.prisma.pronunciationAttempt.findMany({
+      where: { childId },
+      orderBy: { createdAt: 'desc' },
+    });
   }
 
   /**

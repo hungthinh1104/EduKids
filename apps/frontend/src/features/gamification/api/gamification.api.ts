@@ -33,7 +33,7 @@ export interface ShopItem {
   description: string;
   imageUrl: string;
   price: number;
-  category: 'AVATAR' | 'BACKGROUND' | 'POWER_UP' | 'SPECIAL';
+  category: 'AVATAR_HAIR' | 'AVATAR_OUTFIT' | 'AVATAR_ACCESSORY' | 'AVATAR_PET' | 'BACKGROUND';
   isOwned: boolean;
   isEquipped: boolean;
 }

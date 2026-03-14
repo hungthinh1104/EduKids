@@ -18,6 +18,11 @@ export enum PronunciationAssessmentProvider {
   CUSTOM = 'CUSTOM',
 }
 
+export enum PronunciationAssessmentMode {
+  WORD = 'WORD',
+  PARAGRAPH = 'PARAGRAPH',
+}
+
 export enum PronunciationWordErrorType {
   NONE = 'NONE',
   MISPRONUNCIATION = 'MISPRONUNCIATION',
@@ -134,6 +139,10 @@ export class WordAssessmentDto {
 }
 
 export class PronunciationAssessmentResultDto {
+  @ApiProperty({ enum: PronunciationAssessmentMode })
+  @IsEnum(PronunciationAssessmentMode)
+  mode: PronunciationAssessmentMode;
+
   @ApiProperty({ enum: PronunciationAssessmentProvider })
   @IsEnum(PronunciationAssessmentProvider)
   provider: PronunciationAssessmentProvider;

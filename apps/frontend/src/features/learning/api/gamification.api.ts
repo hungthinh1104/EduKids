@@ -33,10 +33,12 @@ export interface ShopItem {
   price: number;
   currency: string;
   category: string;
+  rawCategory: 'AVATAR_HAIR' | 'AVATAR_OUTFIT' | 'AVATAR_ACCESSORY' | 'AVATAR_PET' | 'BACKGROUND';
   imageUrl?: string;
   emoji?: string;
   rarity: string;
   owned: boolean;
+  isEquipped?: boolean;
 }
 
 export interface PurchaseResult {
@@ -71,6 +73,42 @@ export interface ApiEnvelope<T> {
   data: T;
   message?: string;
 }
+
+const mapShopCategoryToLabel = (category: unknown): ShopItem['category'] => {
+  switch (String(category ?? '')) {
+    case 'AVATAR_HAIR':
+      return 'Mũ';
+    case 'AVATAR_OUTFIT':
+      return 'Áo';
+    case 'AVATAR_ACCESSORY':
+      return 'Phụ kiện';
+    case 'AVATAR_PET':
+      return 'Thú cưng';
+    case 'BACKGROUND':
+      return 'Nền';
+    default:
+      return 'Khác';
+  }
+};
+
+const normalizeShopItem = (item: Record<string, unknown>): ShopItem => {
+  const rawCategory = String(item.category ?? 'BACKGROUND') as ShopItem['rawCategory'];
+
+  return {
+    id: Number(item.id ?? 0),
+    name: String(item.name ?? ''),
+    description: typeof item.description === 'string' ? item.description : undefined,
+    price: Number(item.price ?? 0),
+    currency: 'stars',
+    category: mapShopCategoryToLabel(rawCategory),
+    rawCategory,
+    imageUrl: typeof item.imageUrl === 'string' ? item.imageUrl : undefined,
+    emoji: typeof item.emoji === 'string' ? item.emoji : '🎁',
+    rarity: typeof item.rarity === 'string' ? item.rarity.toLowerCase() : 'common',
+    owned: Boolean(item.isPurchased),
+    isEquipped: Boolean(item.isEquipped),
+  };
+};
 
 export const gamificationApi = {
   // Get rewards summary
@@ -135,18 +173,7 @@ export const gamificationApi = {
   // Get shop items
   getShopItems: async (): Promise<ShopItem[]> => {
     const response = await axiosInstance.get<ApiEnvelope<Array<Record<string, unknown>>>>('gamification/shop/items');
-    return (response.data.data ?? []).map((item) => ({
-      id: Number(item.id ?? 0),
-      name: String(item.name ?? ''),
-      description: typeof item.description === 'string' ? item.description : undefined,
-      price: Number(item.price ?? 0),
-      currency: 'stars',
-      category: String(item.category ?? 'Khác'),
-      imageUrl: typeof item.imageUrl === 'string' ? item.imageUrl : undefined,
-      emoji: typeof item.emoji === 'string' ? item.emoji : '🎁',
-      rarity: typeof item.rarity === 'string' ? item.rarity.toLowerCase() : 'common',
-      owned: Boolean(item.isPurchased),
-    }));
+    return (response.data.data ?? []).map(normalizeShopItem);
   },
 
   // Purchase item
@@ -171,9 +198,11 @@ export const gamificationApi = {
         name: '',
         price: 0,
         currency: 'stars',
-        category: '',
+        category: 'Khác',
+        rawCategory: 'BACKGROUND',
         rarity: 'common',
         owned: true,
+        isEquipped: false,
       },
     };
   },
@@ -193,16 +222,19 @@ export const gamificationApi = {
     void childId;
     const response = await axiosInstance.get<ApiEnvelope<{
       childId?: number;
-      equippedItems?: ShopItem[];
-      ownedItems?: ShopItem[];
+      ownedItems?: Array<Record<string, unknown>>;
     }>>(
       'gamification/avatar/customization'
     );
     const payload = response.data.data;
+    const ownedItems = Array.isArray(payload.ownedItems)
+      ? payload.ownedItems.map(normalizeShopItem)
+      : [];
+
     return {
       childId: Number(payload.childId ?? 0),
-      equippedItems: Array.isArray(payload.equippedItems) ? payload.equippedItems : [],
-      availableItems: Array.isArray(payload.ownedItems) ? payload.ownedItems : [],
+      equippedItems: ownedItems.filter((item) => item.isEquipped),
+      availableItems: ownedItems,
     };
   },
 

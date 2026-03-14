@@ -6,11 +6,11 @@ import { PronunciationRepository } from './repositories/pronunciation.repository
 import { PronunciationSubmitDto, StarRatingDto, PronunciationFeedbackDto } from './dto/pronunciation.dto';
 import { PronunciationAssessmentService } from './pronunciation-assessment.service';
 import { PrismaService } from '../../prisma/prisma.service';
+import {
+  PronunciationAssessmentMode,
+  PronunciationWordErrorType,
+} from './dto/pronunciation-assessment.dto';
 
-/**
- * UC-03 Service: Practice Pronunciation with AI
- * Handles pronunciation scoring, feedback generation, and gamification rewards
- */
 @Injectable()
 export class PronunciationService {
   constructor(
@@ -20,16 +20,11 @@ export class PronunciationService {
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
 
-  /**
-   * Submit pronunciation attempt from Web Speech API
-   * Converts confidence score to stars, generates feedback, updates progress
-   */
   async submitPronunciationAttempt(
     childId: number,
     vocabularyId: number,
     dto: PronunciationSubmitDto,
   ): Promise<PronunciationFeedbackDto> {
-    // Validate vocabulary exists
     const vocabulary = await this.pronunciationRepository.getVocabularyWithPronunciationData(
       vocabularyId,
     );
@@ -37,13 +32,23 @@ export class PronunciationService {
       throw new NotFoundException(`Vocabulary ${vocabularyId} not found`);
     }
 
-    if (dto.confidenceScore < 0 || dto.confidenceScore > 100) {
+    if (dto.confidenceScore !== undefined && (dto.confidenceScore < 0 || dto.confidenceScore > 100)) {
       throw new BadRequestException('Confidence score must be between 0-100');
     }
 
+    if (!dto.audioBase64) {
+      throw new BadRequestException('A WAV audio recording is required for pronunciation assessment');
+    }
+
+    const mode = this.resolveMode(dto);
+    const referenceText = this.resolveReferenceText(dto, vocabulary.word);
+    const normalizedDuration = this.normalizeDuration(dto.recordingDurationMs);
+
     const assessment = await this.pronunciationAssessmentService.buildAssessment({
       confidenceScore: dto.confidenceScore,
+      mode,
       word: vocabulary.word,
+      referenceText,
       targetIpa: vocabulary.phonetic,
       recognizedText: dto.recognizedText,
       recognizedIpa: dto.recognizedIpa,
@@ -51,25 +56,22 @@ export class PronunciationService {
       audioMimeType: dto.audioMimeType,
     });
 
-    // Step 1: Record the attempt
     const activity = await this.pronunciationRepository.create({
       id: undefined,
       childId: childId.toString(),
       vocabularyId: vocabularyId.toString(),
       aiScore: assessment.overallScore,
-      recordingDurationMs: dto.recordingDurationMs,
+      mode,
+      referenceText,
+      recordingDurationMs: normalizedDuration,
       feedback: dto.evaluationNotes || '',
       assessment,
       createdAt: new Date(),
     });
 
-    // Step 2: Convert confidence score to star rating
     const starRating = this.convertScoreToStars(assessment.overallScore);
-
-    // Step 3: Generate kid-friendly feedback
     const rating = this.generateKidFriendlyFeedback(assessment.overallScore, starRating);
 
-    // Step 4: Update learning progress
     await this.pronunciationRepository.updatePronunciationProgress(
       childId,
       vocabularyId,
@@ -77,18 +79,14 @@ export class PronunciationService {
       starRating,
     );
 
-    // Step 5: Check and award points/badges
     const rewardInfo = await this.checkRewardTriggers(childId, vocabularyId, starRating);
 
-    // Step 6: Get updated child profile
     const child = await this.prisma.childProfile.findUnique({
       where: { id: childId },
       select: { totalPoints: true },
     });
 
     const currentLevel = this.calculateLevel(child?.totalPoints || 0);
-
-    // Step 7: Build response DTO
     const nativePronunciationAudio =
       vocabulary.media && vocabulary.media.length > 0
         ? vocabulary.media[0].url
@@ -99,9 +97,10 @@ export class PronunciationService {
       vocabularyId,
       word: vocabulary.word,
       confidenceScore: assessment.overallScore,
+      mode,
       rating,
       nativePronunciationAudio,
-      detailedFeedback: this.generateDetailedFeedback(assessment.overallScore, vocabulary),
+      detailedFeedback: this.generateDetailedFeedback(assessment, vocabulary.word),
       totalPoints: child?.totalPoints || 0,
       currentLevel,
       badgeUnlocked: rewardInfo.badgeUnlocked,
@@ -110,10 +109,32 @@ export class PronunciationService {
     };
   }
 
-  /**
-   * Convert Web Speech API confidence score (0-100) to star rating (1-5)
-   * Scoring: 0-40 = 1 star, 41-60 = 2 stars, 61-75 = 3 stars, 76-90 = 4 stars, 91-100 = 5 stars
-   */
+  private resolveMode(dto: PronunciationSubmitDto): PronunciationAssessmentMode {
+    if (dto.mode) {
+      return dto.mode;
+    }
+
+    if (dto.referenceText && dto.referenceText.trim().split(/\s+/).length > 1) {
+      return PronunciationAssessmentMode.PARAGRAPH;
+    }
+
+    return PronunciationAssessmentMode.WORD;
+  }
+
+  private resolveReferenceText(dto: PronunciationSubmitDto, fallbackWord: string): string {
+    const referenceText = dto.referenceText?.trim();
+    if (!referenceText) {
+      return fallbackWord;
+    }
+
+    return referenceText;
+  }
+
+  private normalizeDuration(recordingDurationMs?: number): number | undefined {
+    if (recordingDurationMs === undefined) return undefined;
+    return Math.min(120000, Math.max(100, Math.round(recordingDurationMs)));
+  }
+
   private convertScoreToStars(confidenceScore: number): number {
     if (confidenceScore >= 91) return 5;
     if (confidenceScore >= 76) return 4;
@@ -122,11 +143,8 @@ export class PronunciationService {
     return 1;
   }
 
-  /**
-   * Generate kid-friendly feedback with emojis and messages
-   */
   private generateKidFriendlyFeedback(
-    confidenceScore: number,
+    _confidenceScore: number,
     starRating: number,
   ): StarRatingDto {
     const messages = {
@@ -167,28 +185,45 @@ export class PronunciationService {
     };
   }
 
-  /**
-   * Generate detailed constructive feedback based on score
-   */
-  private generateDetailedFeedback(confidenceScore: number, vocabulary: any): string {
+  private generateDetailedFeedback(
+    assessment: PronunciationFeedbackDto['assessment'],
+    vocabularyWord: string,
+  ): string {
+    const confidenceScore = assessment?.overallScore || 0;
+    const weakWords =
+      assessment?.words?.filter(
+        (word) =>
+          word.errorType &&
+          word.errorType !== PronunciationWordErrorType.NONE &&
+          word.errorType !== PronunciationWordErrorType.UNKNOWN,
+      ) || [];
+
+    if (assessment?.mode === PronunciationAssessmentMode.PARAGRAPH) {
+      if (confidenceScore >= 91) {
+        return 'Amazing reading! Your pronunciation, rhythm, and expression sounded very natural.';
+      }
+      if (weakWords.length > 0) {
+        const sample = weakWords.slice(0, 3).map((word) => word.word).join(', ');
+        return `Nice effort! Review these words again: ${sample}. Focus on clear sounds and smooth pacing.`;
+      }
+      return 'Good job! Try again and make your pacing even smoother for a higher score.';
+    }
+
     if (confidenceScore >= 91) {
-      return `Amazing! Your pronunciation of "${vocabulary.word}" was perfect. Your pronunciation closely matches the native speaker! Keep up the great work!`;
+      return `Amazing! Your pronunciation of "${vocabularyWord}" was perfect.`;
     }
     if (confidenceScore >= 76) {
-      return `Great job! Your pronunciation of "${vocabulary.word}" was very good. You're very close to perfect. Try emphasizing the vowels more clearly!`;
+      return `Great job! Your pronunciation of "${vocabularyWord}" was very good.`;
     }
     if (confidenceScore >= 61) {
-      return `Nice try! Your pronunciation of "${vocabulary.word}" was fairly good. Keep practicing to match the native pronunciation more closely!`;
+      return `Nice try! Your pronunciation of "${vocabularyWord}" was fairly good.`;
     }
     if (confidenceScore >= 41) {
-      return `Good effort! Your pronunciation of "${vocabulary.word}" needs a bit more practice. Listen to the native pronunciation again and try once more!`;
+      return `Good effort! Listen to "${vocabularyWord}" once more and try again.`;
     }
-    return `Keep trying! Your pronunciation of "${vocabulary.word}" needs practice. Make sure you're pronouncing all the syllables clearly. Try again!`;
+    return `Keep trying! Focus on pronouncing each sound in "${vocabularyWord}" clearly.`;
   }
 
-  /**
-   * Check for reward triggers (badges, star bonuses, streaks)
-   */
   private async checkRewardTriggers(
     childId: number,
     vocabularyId: number,
@@ -197,7 +232,6 @@ export class PronunciationService {
     let pointsAwarded = 0;
     let badgeUnlocked: string | undefined;
 
-    // Award star points based on rating
     const pointsByRating = {
       1: 0,
       2: 0,
@@ -208,7 +242,6 @@ export class PronunciationService {
 
     pointsAwarded = pointsByRating[starRating];
 
-    // Update child's total points
     if (pointsAwarded > 0) {
       await this.prisma.childProfile.update({
         where: { id: childId },
@@ -220,10 +253,7 @@ export class PronunciationService {
       });
     }
 
-    // Check for badge unlock (every 50 perfect attempts = 5-star ratings)
     const stats = await this.pronunciationRepository.getPronunciationStats(childId, vocabularyId);
-
-    // Simple badge logic: unlock badge after 5 perfect attempts
     if (stats.perfectStreak >= 5 && stats.perfectStreak % 5 === 0) {
       badgeUnlocked = `🏅 Pronunciation Master: ${stats.perfectStreak} Perfect Attempts!`;
     }
@@ -231,17 +261,10 @@ export class PronunciationService {
     return { badgeUnlocked, pointsAwarded };
   }
 
-  /**
-   * Calculate level based on total points
-   * Level = floor(totalPoints / 50) + 1
-   */
   private calculateLevel(totalPoints: number): number {
     return Math.floor(totalPoints / 50) + 1;
   }
 
-  /**
-   * Get pronunciation progress for a vocabulary
-   */
   async getPronunciationProgress(childId: number, vocabularyId: number) {
     const vocabulary = await this.prisma.vocabulary.findUnique({
       where: { id: vocabularyId },
@@ -265,79 +288,54 @@ export class PronunciationService {
     };
   }
 
-  /**
-   * Get pronunciation history for current child
-   */
   async getPronunciationHistory(childId: number, limit: number = 10) {
-    const activities = await this.prisma.activityLog.findMany({
-      where: {
-        childId,
-        activityType: 'PRONUNCIATION',
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-      take: limit,
-    });
-
-    const vocabularyIds = [
-      ...new Set(activities.map((a) => a.vocabularyId).filter((id): id is number => !!id)),
-    ];
+    const attempts = await this.pronunciationRepository.getHistory(childId, limit);
+    const vocabularyIds = [...new Set(attempts.map((attempt) => attempt.vocabularyId))];
     const vocabularies = await this.prisma.vocabulary.findMany({
-      where: {
-        id: {
-          in: vocabularyIds,
-        },
-      },
-      select: {
-        id: true,
-        word: true,
-      },
+      where: { id: { in: vocabularyIds } },
+      select: { id: true, word: true },
     });
 
-    const vocabularyMap = new Map(vocabularies.map((v) => [v.id, v.word]));
+    const vocabularyMap = new Map(vocabularies.map((vocabulary) => [vocabulary.id, vocabulary.word]));
 
-    return activities.map((a) => ({
-      attemptId: a.id,
-      vocabularyId: a.vocabularyId,
-      word: a.vocabularyId ? vocabularyMap.get(a.vocabularyId) || '' : '',
-      confidenceScore: ((a.metadata as any)?.confidenceScore as number) || 0,
+    return attempts.map((attempt) => ({
+      attemptId: attempt.id,
+      vocabularyId: attempt.vocabularyId,
+      word: vocabularyMap.get(attempt.vocabularyId) || '',
+      confidenceScore: attempt.overallScore || 0,
+      mode:
+        ((attempt.assessment as unknown as PronunciationFeedbackDto['assessment'])?.mode ??
+          PronunciationAssessmentMode.WORD),
       rating: this.generateKidFriendlyFeedback(
-        ((a.metadata as any)?.confidenceScore as number) || 0,
-        this.convertScoreToStars(((a.metadata as any)?.confidenceScore as number) || 0),
+        attempt.overallScore || 0,
+        this.convertScoreToStars(attempt.overallScore || 0),
       ),
-      assessment: ((a.metadata as any)?.assessment as PronunciationFeedbackDto['assessment']) || undefined,
-      attemptedAt: a.createdAt,
+      assessment: attempt.assessment as unknown as PronunciationFeedbackDto['assessment'],
+      attemptedAt: attempt.createdAt,
     }));
   }
 
-  /**
-   * Get overall pronunciation statistics for child
-   */
   async getPronunciationStats(childId: number) {
-    const activities = await this.prisma.activityLog.findMany({
-      where: {
-        childId,
-        activityType: 'PRONUNCIATION',
-      },
-    });
+    const attempts = await this.pronunciationRepository.getOverallStats(childId);
+    const scores = attempts
+      .map((attempt) => attempt.overallScore || 0)
+      .filter((score) => score > 0);
 
-    const scores = activities
-      .map((a) => ((a.metadata as any)?.confidenceScore as number) || 0)
-      .filter((s) => s > 0);
-
-    const perfectScores = scores.filter((s) => s >= 80).length;
-    const averageScore = scores.length > 0 ? Math.round(scores.reduce((a, b) => a + b) / scores.length) : 0;
+    const perfectScores = scores.filter((score) => score >= 80).length;
+    const averageScore =
+      scores.length > 0
+        ? Math.round(scores.reduce((total, score) => total + score, 0) / scores.length)
+        : 0;
 
     return {
-      totalAttempts: activities.length,
+      totalAttempts: attempts.length,
       perfectAttempts: perfectScores,
       averageScore,
       highestScore: scores.length > 0 ? Math.max(...scores) : 0,
-      accuracyRate: `${Math.round((perfectScores / Math.max(activities.length, 1)) * 100)}%`,
-      masteredWords: scores.filter((s) => s >= 80).length,
-      improvingWords: scores.filter((s) => s >= 60 && s < 80).length,
-      needsPractice: scores.filter((s) => s < 60).length,
+      accuracyRate: `${Math.round((perfectScores / Math.max(attempts.length, 1)) * 100)}%`,
+      masteredWords: scores.filter((score) => score >= 80).length,
+      improvingWords: scores.filter((score) => score >= 60 && score < 80).length,
+      needsPractice: scores.filter((score) => score < 60).length,
     };
   }
 }

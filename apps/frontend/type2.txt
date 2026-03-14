@@ -1,6 +1,0 @@
-
-> edukids-frontend@1.0.0 type-check
-> tsc --noEmit
-
-src/app/(admin)/admin/quizzes/page.tsx(23,12): error TS6133: 'loading' is declared but its value is never read.
-src/app/(admin)/admin/users/page.tsx(22,12): error TS6133: 'loading' is declared but its value is never read.

@@ -126,7 +126,7 @@ export default function ParentRecommendationsPage() {
       <div className="max-w-6xl mx-auto px-4 md:px-6 pt-6">
       {/* Header */}
       <motion.div
-        initial={{ opacity: 0, y: -20 }}
+        initial={{ opacity: 1, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         className="mb-6 rounded-3xl border border-primary/15 bg-gradient-to-r from-primary-light/45 via-card to-accent-light/35 p-6 md:p-7 shadow-sm"
       >
@@ -218,7 +218,7 @@ export default function ParentRecommendationsPage() {
           {filteredRecommendations.map((rec, idx) => (
             <motion.div
               key={rec.id}
-              initial={{ opacity: 0, x: -20 }}
+              initial={{ opacity: 1, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: idx * 0.05 }}
               className="group"
@@ -306,7 +306,7 @@ export default function ParentRecommendationsPage() {
 
       {/* Info Section */}
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 1, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
         className="mt-8 bg-gradient-to-r from-primary-light/45 to-accent-light/45 rounded-2xl p-6 border border-primary/20 shadow-sm"

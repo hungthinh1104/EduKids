@@ -25,6 +25,7 @@ export default function ShopPage() {
     const [activeCategory, setActiveCategory] = useState('Tất cả');
     const [previewItem, setPreviewItem] = useState<ShopItem | null>(null);
     const [loading, setLoading] = useState(true);
+    const [loadError, setLoadError] = useState<string | null>(null);
     const [purchased, setPurchased] = useState<number | null>(null);
     const purchaseTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -41,30 +42,54 @@ export default function ShopPage() {
         'Áo': null,
         'Thú cưng': null,
         'Phụ kiện': null,
+        'Nền': null,
     });
 
     useEffect(() => {
         async function fetchShopData() {
+            if (!childId) {
+                return;
+            }
             try {
                 setLoading(true);
-                const [items, rewards] = await Promise.all([
+                setLoadError(null);
+                const [items, rewards, customization] = await Promise.all([
                     gamificationApi.getShopItems(),
                     gamificationApi.getRewardsSummary(childId),
+                    gamificationApi.getAvatarCustomization(childId),
                 ]);
                 setShopItems(items);
                 setStars(rewards.stars);
                 setCoins(rewards.coins);
+                setEquippedBySlot({
+                    'Mũ': customization.equippedItems.find((item) => item.category === 'Mũ')?.id ?? null,
+                    'Áo': customization.equippedItems.find((item) => item.category === 'Áo')?.id ?? null,
+                    'Thú cưng': customization.equippedItems.find((item) => item.category === 'Thú cưng')?.id ?? null,
+                    'Phụ kiện': customization.equippedItems.find((item) => item.category === 'Phụ kiện')?.id ?? null,
+                    'Nền': customization.equippedItems.find((item) => item.category === 'Nền')?.id ?? null,
+                });
             } catch (err) {
                 console.error('Failed to fetch shop data:', err);
+                setLoadError('Không thể tải dữ liệu cửa hàng lúc này. Vui lòng thử lại sau.');
             } finally {
                 setLoading(false);
             }
         }
-        fetchShopData();
+        if (!childId) {
+            return;
+        }
+        void fetchShopData();
     }, [childId]);
 
     const equippedIds = Object.values(equippedBySlot).filter(Boolean) as number[];
     const filteredItems = shopItems.filter((i) => activeCategory === 'Tất cả' || i.category === activeCategory);
+    const equippedLabels = Object.entries(equippedBySlot)
+        .filter(([, itemId]) => Boolean(itemId))
+        .map(([slot, itemId]) => {
+            const item = shopItems.find((shopItem) => shopItem.id === itemId);
+            return item ? `${slot}: ${item.name}` : null;
+        })
+        .filter((label): label is string => Boolean(label));
 
     async function handleBuy(item: ShopItem) {
         try {
@@ -88,6 +113,13 @@ export default function ShopPage() {
     async function handleEquip(item: ShopItem) {
         try {
             await gamificationApi.equipItem(childId, item.id);
+            setShopItems((prev) =>
+                prev.map((shopItem) =>
+                    shopItem.category === item.category
+                        ? { ...shopItem, isEquipped: shopItem.id === item.id ? !shopItem.isEquipped : false }
+                        : shopItem
+                )
+            );
             setEquippedBySlot((prev) => ({
                 ...prev,
                 [item.category]: equippedBySlot[item.category] === item.id ? null : item.id,
@@ -145,7 +177,7 @@ export default function ShopPage() {
                 <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="bg-gradient-candy rounded-[2rem] p-5 flex items-center gap-5">
                     <div className="relative w-20 h-20 flex-shrink-0">
                         <div className="w-full h-full rounded-full bg-white/20 border-4 border-white/50 flex items-center justify-center overflow-hidden">
-                            <Image src="https://api.dicebear.com/7.x/bottts/svg?seed=bong" alt="avatar" width={72} height={72} />
+                            <Image src={child.avatarUrl} alt={child.nickname} width={72} height={72} className="object-contain p-1" />
                         </div>
                         {/* Show equipped hat emoji on avatar */}
                         {equippedBySlot['Mũ'] && (
@@ -164,6 +196,11 @@ export default function ShopPage() {
                             })}
                             {equippedIds.length === 0 && <Caption className="text-white/60 text-xs">Chưa trang bị gì</Caption>}
                         </div>
+                        {equippedLabels.length > 0 && (
+                            <Caption className="text-white/80 text-xs mt-2 block">
+                                {equippedLabels.join(' • ')}
+                            </Caption>
+                        )}
                     </div>
                 </motion.div>
 
@@ -183,6 +220,12 @@ export default function ShopPage() {
                 </div>
 
                 {/* Grid */}
+                {loadError && (
+                    <div className="bg-error/10 border-2 border-error/20 rounded-[2rem] p-5 text-center">
+                        <Heading level={4} className="text-heading text-lg mb-2">Không tải được cửa hàng</Heading>
+                        <Caption className="text-body">{loadError}</Caption>
+                    </div>
+                )}
                 <ShopGrid
                     filteredItems={filteredItems}
                     handleBuy={handleBuy}
@@ -190,6 +233,12 @@ export default function ShopPage() {
                     stars={stars}
                     coins={coins}
                 />
+                {filteredItems.length === 0 && (
+                    <div className="bg-card border-2 border-dashed border-border rounded-[2rem] p-8 text-center">
+                        <Heading level={4} className="text-heading text-lg mb-2">Chưa có item trong mục này</Heading>
+                        <Caption className="text-caption">Thử chuyển sang danh mục khác hoặc quay lại sau khi shop được cập nhật.</Caption>
+                    </div>
+                )}
             </div>
 
             {/* Purchase success toast */}
@@ -209,7 +258,6 @@ export default function ShopPage() {
             {/* Preview drawer */}
             <ItemPreviewDrawer
                 previewItem={previewItem}
-                shopItems={shopItems}
                 equippedBySlot={equippedBySlot}
                 handleEquip={handleEquip}
                 handleBuy={handleBuy}

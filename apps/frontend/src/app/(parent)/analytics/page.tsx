@@ -194,7 +194,7 @@ export default function ParentAnalyticsPage() {
         <div className="max-w-7xl mx-auto space-y-8">
           {analytics.overview && (
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 1, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               className="grid grid-cols-2 md:grid-cols-4 gap-4"
             >
@@ -227,7 +227,7 @@ export default function ParentAnalyticsPage() {
 
           {analytics.learningTime && (
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 1, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
               className="bg-white rounded-2xl shadow-md p-8"
@@ -263,7 +263,7 @@ export default function ParentAnalyticsPage() {
 
           {analytics.vocabulary && (
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 1, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
               className="bg-white rounded-2xl shadow-md p-8"
@@ -316,7 +316,7 @@ export default function ParentAnalyticsPage() {
 
           {analytics.pronunciation && (
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 1, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
               className="bg-white rounded-2xl shadow-md p-8"
@@ -351,7 +351,7 @@ export default function ParentAnalyticsPage() {
 
           {analytics.quiz && (
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 1, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}
               className="bg-white rounded-2xl shadow-md p-8"
@@ -402,7 +402,7 @@ export default function ParentAnalyticsPage() {
 
           {analytics.gamification && (
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 1, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5 }}
               className="bg-white rounded-2xl shadow-md p-8"

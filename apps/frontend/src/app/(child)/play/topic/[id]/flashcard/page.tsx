@@ -300,7 +300,7 @@ export default function FlashcardPage() {
                     <AnimatePresence mode="wait">
                         <motion.div
                             key={index}
-                            initial={{ opacity: 0, x: leaving ? -60 : 60, scale: 0.95 }}
+                            initial={{ opacity: 1, x: leaving ? -60 : 60, scale: 0.95 }}
                             animate={{ opacity: leaving ? 0 : 1, x: leaving ? -60 : 0, scale: leaving ? 0.95 : 1 }}
                             exit={{ opacity: 0, x: -60, scale: 0.95 }}
                             transition={{ duration: 0.28 }}

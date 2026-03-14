@@ -8,8 +8,6 @@ export interface ReportConfig {
   childId: number;
   period: 'daily' | 'weekly' | 'monthly';
   format: 'email' | 'zalo' | 'both';
-  includeCharts: boolean;
-  language: 'vi' | 'en';
 }
 
 export interface GeneratedReport {
@@ -40,18 +38,6 @@ export interface GeneratedReport {
   deliveryChannel?: 'EMAIL' | 'ZALO' | 'IN_APP';
 }
 
-export interface ReportSubscription {
-  id: number;
-  childId: number;
-  schedule: 'daily' | 'weekly' | 'monthly';
-  dayOfWeek?: number; // 0-6 for weekly
-  dayOfMonth?: number; // 1-31 for monthly
-  time: string; // HH:mm
-  deliveryMethod: 'email' | 'zalo' | 'both';
-  isActive: boolean;
-  createdAt: string;
-}
-
 export interface ReportPreferences {
   email: string;
   zaloPhone?: string;
@@ -59,12 +45,12 @@ export interface ReportPreferences {
   zaloEnabled?: boolean;
   isSubscribed?: boolean;
   preferredChannel?: 'EMAIL' | 'ZALO' | 'IN_APP';
-  frequency?: 'daily' | 'weekly' | 'monthly';
+  frequency?: 'weekly';
   reportDay?: number;
   reportHour?: number;
-  language: 'vi' | 'en';
-  includeCharts: boolean;
-  subscriptions: ReportSubscription[];
+  createdAt?: string;
+  updatedAt?: string;
+  lastReportSentAt?: string;
 }
 
 export interface ReportNotification {
@@ -125,13 +111,6 @@ const toBackendRange = (period: 'daily' | 'weekly' | 'monthly'): 'WEEK' | 'MONTH
 const normalizePreferences = (raw: unknown): ReportPreferences => {
   const value = isRecord(raw) ? raw : {};
   const preferredChannel = String(value.preferredChannel ?? '').toUpperCase();
-  const frequencyRaw = String(value.frequency ?? 'WEEKLY').toLowerCase();
-  const frequency: 'daily' | 'weekly' | 'monthly' =
-    frequencyRaw.includes('day')
-      ? 'daily'
-      : frequencyRaw.includes('month')
-        ? 'monthly'
-        : 'weekly';
 
   return {
     email: typeof value.email === 'string' ? value.email : '',
@@ -143,12 +122,13 @@ const normalizePreferences = (raw: unknown): ReportPreferences => {
         : undefined,
     emailEnabled: Boolean(value.isSubscribed) && preferredChannel === 'EMAIL',
     zaloEnabled: Boolean(value.isSubscribed) && preferredChannel === 'ZALO',
-    frequency,
+    frequency: 'weekly',
     reportDay: typeof value.reportDay === 'number' ? value.reportDay : undefined,
     reportHour: typeof value.reportHour === 'number' ? value.reportHour : undefined,
-    language: 'vi',
-    includeCharts: true,
-    subscriptions: [],
+    createdAt: typeof value.createdAt === 'string' ? value.createdAt : undefined,
+    updatedAt: typeof value.updatedAt === 'string' ? value.updatedAt : undefined,
+    lastReportSentAt:
+      typeof value.lastReportSentAt === 'string' ? value.lastReportSentAt : undefined,
   };
 };
 
@@ -207,46 +187,19 @@ export const sendReport = async (
  * @body ReportSubscription data
  */
 export const subscribeToReports = async (
-  subscriptionOrChildId: Omit<ReportSubscription, 'id' | 'createdAt' | 'isActive'> | number,
-  method?: 'email' | 'zalo' | 'both',
-  schedule?: 'daily' | 'weekly' | 'monthly'
-): Promise<ReportSubscription> => {
+  preferredChannel: 'email' | 'zalo' = 'email'
+): Promise<ReportPreferences> => {
   const currentEmail = useAuthStore.getState().user?.email;
-  const requestedMethod = method ?? 'email';
-  const channel = requestedMethod.toUpperCase();
-  const effectiveDeliveryMethod: 'email' | 'zalo' | 'both' =
-    typeof subscriptionOrChildId === 'number'
-      ? requestedMethod
-      : subscriptionOrChildId.deliveryMethod;
-  const backendPayload =
-    typeof subscriptionOrChildId === 'number'
-      ? {
-          preferredChannel: channel === 'ZALO' ? 'ZALO' : 'EMAIL',
-          email: channel === 'ZALO' ? undefined : currentEmail,
-          reportDay: schedule === 'monthly' ? 1 : 1,
-          reportHour: 9,
-        }
-      : {
-          preferredChannel: subscriptionOrChildId.deliveryMethod === 'zalo' ? 'ZALO' : 'EMAIL',
-          email: currentEmail,
-          reportDay: 1,
-          reportHour: 9,
-        };
+  const backendPayload = {
+    preferredChannel: preferredChannel === 'zalo' ? 'ZALO' : 'EMAIL',
+    email: preferredChannel === 'email' ? currentEmail : undefined,
+    reportDay: 1,
+    reportHour: 9,
+  };
 
   const response = await apiClient.post('/reports/subscribe', backendPayload);
   const raw = unwrapData<BackendSubscriptionResult | BackendReportPreference | { preference?: BackendReportPreference }>(response);
-  const pref = extractBackendPreference(raw);
-  const reportHour = typeof pref?.reportHour === 'number' ? pref.reportHour : 9;
-
-  return {
-    id: 1,
-    childId: typeof subscriptionOrChildId === 'number' ? subscriptionOrChildId : subscriptionOrChildId.childId,
-    schedule: schedule ?? 'weekly',
-    time: `${String(reportHour).padStart(2, '0')}:00`,
-    deliveryMethod: effectiveDeliveryMethod,
-    isActive: Boolean(pref?.isSubscribed),
-    createdAt: pref?.createdAt ?? new Date().toISOString(),
-  };
+  return normalizePreferences(extractBackendPreference(raw));
 };
 
 /**

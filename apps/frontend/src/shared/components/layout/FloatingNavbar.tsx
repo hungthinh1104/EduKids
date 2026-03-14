@@ -34,9 +34,9 @@ export function FloatingNavbar({ links, rightActions, showThemeToggle = false }:
 
     return (
         <motion.nav
-            initial={{ y: -100 }}
-            animate={{ y: 0 }}
-            transition={{ duration: 0.8, type: 'spring', bounce: 0.3 }}
+            initial={{ y: -18, opacity: 1 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ duration: 0.45, ease: 'easeOut' }}
             className={`fixed z-[100] flex items-center justify-between px-6 max-w-7xl mx-auto transition-all duration-500 ease-out left-0 right-0 ${isScrolled
                 ? 'top-4 py-3 bg-white/70 dark:bg-slate-900/70 backdrop-blur-2xl border border-white/50 dark:border-slate-800/50 shadow-[0_8px_30px_rgb(0,0,0,0.08)] rounded-full'
                 : 'top-6 py-5 bg-transparent border-transparent shadow-none rounded-3xl'

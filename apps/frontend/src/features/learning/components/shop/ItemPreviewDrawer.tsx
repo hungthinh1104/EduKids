@@ -6,7 +6,6 @@ import { RARITY_STYLE } from './constants';
 
 interface ItemPreviewDrawerProps {
     previewItem: ShopItem | null;
-    shopItems: ShopItem[];
     equippedBySlot: Record<string, number | null>;
     handleEquip: (item: ShopItem) => void;
     handleBuy: (item: ShopItem) => void;
@@ -15,7 +14,6 @@ interface ItemPreviewDrawerProps {
 
 export function ItemPreviewDrawer({
     previewItem,
-    shopItems,
     equippedBySlot,
     handleEquip,
     handleBuy,
@@ -42,7 +40,7 @@ export function ItemPreviewDrawer({
                                 <Caption className="text-caption">{previewItem.category}</Caption>
                             </div>
                         </div>
-                        {shopItems.find(i => i.id === previewItem.id)?.owned ? (
+                        {previewItem.owned ? (
                             <div className="space-y-2">
                                 <div className="w-full py-3 bg-success-light text-success font-heading font-black text-center rounded-2xl flex items-center justify-center gap-2">
                                     <Check size={16} /> Đã sở hữu

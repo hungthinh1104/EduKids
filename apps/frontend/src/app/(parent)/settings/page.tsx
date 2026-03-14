@@ -119,8 +119,8 @@ export default function SettingsPage() {
         void (async () => {
             try {
                 const prefs = await getReportPreferences();
-                if (typeof prefs.emailEnabled === 'boolean') {
-                    setNotificationsRaw(prefs.emailEnabled || Boolean(prefs.zaloEnabled));
+                if (typeof prefs.isSubscribed === 'boolean') {
+                    setNotificationsRaw(prefs.isSubscribed);
                 }
             } catch {
                 // keep localStorage values
@@ -139,8 +139,8 @@ export default function SettingsPage() {
         try {
             const payload: Parameters<typeof updateReportPreferences>[0] = {};
             if (typeof patch.notifications === 'boolean') {
-                payload.emailEnabled = patch.notifications;
-                payload.zaloEnabled = false;
+                payload.isSubscribed = patch.notifications;
+                payload.preferredChannel = patch.notifications ? 'EMAIL' : undefined;
             }
             await updateReportPreferences(payload);
         } catch {
@@ -252,14 +252,14 @@ export default function SettingsPage() {
     return (
         <div className="min-h-screen pb-8">
             {/* Header */}
-            <motion.div initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
+            <motion.div initial={{ opacity: 1, y: -16 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
                 <Heading level={2} className="text-heading text-3xl mb-1">Cài đặt ⚙️</Heading>
                 <Body className="text-body">Quản lý tài khoản và tùy chỉnh trải nghiệm</Body>
             </motion.div>
 
             {/* Profile card */}
             <motion.div
-                initial={{ opacity: 0, y: 16 }}
+                initial={{ opacity: 1, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 }}
                 className="bg-gradient-candy rounded-[2rem] p-6 flex items-center gap-5 mb-8"
@@ -300,7 +300,7 @@ export default function SettingsPage() {
             <AnimatePresence mode="wait">
                 <motion.div
                     key={activeTab}
-                    initial={{ opacity: 0, y: 12 }}
+                    initial={{ opacity: 1, y: 12 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -8 }}
                     transition={{ duration: 0.2 }}

@@ -25,7 +25,7 @@ interface GameHUDProps {
 export function GameHUD({ nickname, avatarUrl, rewards, hp = 5, maxHp = 5, backHref = '/play', onBackClick, activeNav = 'map' }: GameHUDProps) {
     return (
         <motion.div
-            initial={{ opacity: 0, y: -20 }}
+            initial={{ opacity: 1, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4 }}
             className="sticky top-0 z-50 w-full bg-card/90 backdrop-blur-xl border-b-2 border-border"

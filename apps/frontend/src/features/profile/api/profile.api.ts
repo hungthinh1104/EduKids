@@ -27,9 +27,11 @@ export interface ChildProfileWithStats extends ChildProfile {
 }
 
 export interface ProfileSwitchResponse {
-  accessToken: string;
-  refreshToken: string;
+  success: boolean;
+  message: string;
   profile: ChildProfile;
+  accessToken?: string;
+  refreshToken?: string;
 }
 
 /**

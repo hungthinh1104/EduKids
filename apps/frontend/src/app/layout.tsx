@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { Baloo_2, Lexend } from 'next/font/google';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 import './globals.css';
 
 // ==========================================
@@ -165,6 +166,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
           disableTransitionOnChange
         >
           {children}
+          <SpeedInsights />
           {/* Global Toast Notifications */}
           <Toaster
             position="bottom-center"

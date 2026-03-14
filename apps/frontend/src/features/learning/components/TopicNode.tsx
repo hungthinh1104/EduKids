@@ -36,7 +36,7 @@ export function TopicNode({ id, name, icon, color, starsEarned, completed, total
 
     return (
         <motion.div
-            initial={{ opacity: 0, x: isRight ? 40 : -40 }}
+            initial={{ opacity: 1, x: isRight ? 40 : -40 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true, margin: '-80px' }}
             transition={{ duration: 0.5, delay: index * 0.05 }}

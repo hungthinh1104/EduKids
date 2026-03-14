@@ -29,7 +29,7 @@ export function XPProgressBar({ currentLevel, currentPoints }: XPProgressBarProp
     const levelProgress = Math.min(100, Math.max(0, (currentPoints / pointsForNextLevel) * 100));
     return (
         <motion.div
-            initial={{ opacity: 0 }}
+            initial={{ opacity: 1 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.3 }}
             className="bg-card border-2 border-border rounded-2xl p-4 flex items-center gap-4"

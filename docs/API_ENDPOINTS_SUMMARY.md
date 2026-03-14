@@ -1,8 +1,9 @@
 # API Endpoints Summary
 
 ## Base URL
-- Development: `http://localhost:3001/api/v1`
-- Production: Configure via `API_BASE_URL` environment variable
+- Development: `http://localhost:3001/api`
+- Production: Configure via `API_BASE_URL` or `NEXT_PUBLIC_API_URL` with `/api`
+- Note: Backend global prefix is `/api`, not `/api/v1`
 
 ## Authentication
 All endpoints (except Public ones) require JWT Bearer token:

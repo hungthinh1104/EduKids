@@ -4,31 +4,33 @@ import { useMemo, useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
 import axios from 'axios';
-import { BookOpen, Flame, Mic, Trophy, Star, TrendingUp, Calendar, Send, Mail, CheckCircle2, Download, Bell } from 'lucide-react';
+import { BookOpen, Flame, Mic, Trophy, Star, TrendingUp, Calendar, Send, Mail, CheckCircle2, Download, Bell, Loader2 } from 'lucide-react';
 import { Heading, Body, Caption } from '@/shared/components/Typography';
 import { useChildProfiles, useChildAnalytics } from '@/features/dashboard/hooks/useChildProfiles';
 import { 
   sendReport,
   getReportPreferences, 
-  updateReportPreferences,
+  subscribeToReports,
+  unsubscribeFromReports,
   type ReportPreferences 
 } from '@/features/reports/api/reports.api';
 
 const RANGE_OPTIONS = ['7 ngày', '30 ngày', 'Tất cả'];
 
-const fadeUp = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } };
+const fadeUp = { hidden: { opacity: 1, y: 20 }, visible: { opacity: 1, y: 0 } };
 const stagger = { hidden: {}, visible: { transition: { staggerChildren: 0.08 } } };
 
 export default function ReportsPage() {
     const { profiles } = useChildProfiles();
     const [selectedChildId, setSelectedChildId] = useState<number | null>(null);
     const [range, setRange] = useState('7 ngày');
-    const [schedule, setSchedule] = useState<'weekly'>('weekly');
     const [sendStatus, setSendStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
     const [sendError, setSendError] = useState<string | null>(null);
     const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
     const [subscriptionPrefs, setSubscriptionPrefs] = useState<ReportPreferences | null>(null);
     const [isLoadingPrefs, setIsLoadingPrefs] = useState(true);
+    const [isSavingPrefs, setIsSavingPrefs] = useState(false);
+    const [subscriptionMessage, setSubscriptionMessage] = useState<string | null>(null);
 
     const analyticsPeriod: 'WEEK' | 'MONTH' | 'ALL' =
         range === '30 ngày' ? 'MONTH' : range === 'Tất cả' ? 'ALL' : 'WEEK';
@@ -45,6 +47,31 @@ export default function ReportsPage() {
             .catch(() => setSubscriptionPrefs(null))
             .finally(() => setIsLoadingPrefs(false));
     }, []);
+
+    async function toggleReportChannel(channel: 'email' | 'zalo', enabled: boolean) {
+        setIsSavingPrefs(true);
+        setSubscriptionMessage(null);
+        try {
+            const nextPrefs = enabled
+                ? await subscribeToReports(channel)
+                : await (async () => {
+                    await unsubscribeFromReports();
+                    return getReportPreferences();
+                })();
+
+            setSubscriptionPrefs(nextPrefs);
+            setSubscriptionMessage(
+                enabled
+                    ? `Đã bật gửi báo cáo tự động qua ${channel === 'zalo' ? 'Zalo' : 'email'}.`
+                    : 'Đã tắt gửi báo cáo tự động.'
+            );
+        } catch (err) {
+            console.error(`Failed to ${enabled ? 'enable' : 'disable'} ${channel} reports:`, err);
+            setSubscriptionMessage('Không thể cập nhật cài đặt gửi báo cáo. Vui lòng thử lại.');
+        } finally {
+            setIsSavingPrefs(false);
+        }
+    }
 
     async function handleSendReport() {
         if (!activeChild) return;
@@ -135,21 +162,32 @@ export default function ReportsPage() {
             bg: 'bg-accent-light',
         },
     ];
+    const subscriptionLabel =
+        subscriptionPrefs?.preferredChannel === 'ZALO'
+            ? 'Zalo'
+            : subscriptionPrefs?.preferredChannel === 'EMAIL'
+                ? 'Email'
+                : 'Chưa bật';
+    const immediateChannelLabel =
+        subscriptionPrefs?.preferredChannel === 'ZALO' ? 'Zalo' : 'email';
 
     return (
         <div className="space-y-8 pb-8">
             {/* Header */}
-            <motion.div initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }} className="flex items-start justify-between">
+            <motion.div initial={{ opacity: 1, y: -16 }} animate={{ opacity: 1, y: 0 }} className="flex items-start justify-between">
                 <div>
                     <Heading level={2} className="text-heading text-3xl mb-1">Báo cáo học tập 📊</Heading>
                     <Body className="text-body">Theo dõi hành trình tiến bộ của bé</Body>
+                    <Caption className="text-caption text-xs mt-2 block">
+                        Gửi tự động: {subscriptionPrefs?.isSubscribed ? `${subscriptionLabel} lúc ${String(subscriptionPrefs.reportHour ?? 9).padStart(2, '0')}:00` : 'Chưa bật'}
+                    </Caption>
                 </div>
                 <div className="flex gap-2">
                     <button 
                         onClick={() => setShowSubscriptionModal(true)} 
                         className="flex items-center gap-2 px-4 py-2.5 bg-white border border-border rounded-xl text-sm font-heading font-bold text-body hover:bg-purple-50 hover:border-purple-400 transition-colors shadow-sm print:hidden"
                     >
-                        <Bell size={16} /> Đăng ký gửi tự động
+                        <Bell size={16} /> {subscriptionPrefs?.isSubscribed ? 'Chỉnh lịch gửi tự động' : 'Thiết lập gửi tự động'}
                     </button>
                     <button onClick={handleExportPDF} className="flex items-center gap-2 px-4 py-2.5 bg-white border border-border rounded-xl text-sm font-heading font-bold text-body hover:bg-primary hover:text-white hover:border-primary transition-colors shadow-sm print:hidden">
                         <Download size={16} /> Xuất PDF
@@ -214,7 +252,7 @@ export default function ReportsPage() {
                     </motion.div>
 
                     {/* Activity chart with range selector */}
-                    <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-md border border-white/40 dark:border-white/10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-[2.5rem] p-8 mt-6 mb-8">
+                    <motion.div initial={{ opacity: 1, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-md border border-white/40 dark:border-white/10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-[2.5rem] p-8 mt-6 mb-8">
                         <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
                             <div className="flex items-center gap-2">
                                 <TrendingUp size={20} className="text-primary" />
@@ -257,7 +295,7 @@ export default function ReportsPage() {
                     {/* Two-column: Mastered words + Badges */}
                     <div className="grid md:grid-cols-2 gap-6 mb-8">
                         {/* Mastered Vocabulary */}
-                        <motion.div initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-md border border-white/40 dark:border-white/10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-[2.5rem] p-8">
+                        <motion.div initial={{ opacity: 1, x: -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-md border border-white/40 dark:border-white/10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-[2.5rem] p-8">
                             <div className="flex items-center gap-2 mb-5">
                                 <Star size={20} className="text-star fill-star" />
                                 <Heading level={4} className="text-heading text-lg">Từ đã thuộc tốt nhất</Heading>
@@ -268,7 +306,7 @@ export default function ReportsPage() {
                                     return (
                                         <motion.div
                                             key={v.vocabularyId}
-                                            initial={{ opacity: 0, x: -10 }}
+                                            initial={{ opacity: 1, x: -10 }}
                                             whileInView={{ opacity: 1, x: 0 }}
                                             viewport={{ once: true }}
                                             transition={{ delay: i * 0.06 }}
@@ -291,7 +329,7 @@ export default function ReportsPage() {
                             </div>
                         </motion.div>
                         {/* Recent Badges */}
-                        <motion.div initial={{ opacity: 0, x: 20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-md border border-white/40 dark:border-white/10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-[2.5rem] p-8">
+                        <motion.div initial={{ opacity: 1, x: 20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-md border border-white/40 dark:border-white/10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-[2.5rem] p-8">
                             <div className="flex items-center gap-2 mb-5">
                                 <Trophy size={20} className="text-accent" />
                                 <Heading level={4} className="text-heading text-lg">Huy hiệu gần đây</Heading>
@@ -300,7 +338,7 @@ export default function ReportsPage() {
                                 {recentBadges.slice(0, 5).map((b, i) => (
                                     <motion.div
                                         key={b.id}
-                                        initial={{ opacity: 0, y: 10 }}
+                                        initial={{ opacity: 1, y: 10 }}
                                         whileInView={{ opacity: 1, y: 0 }}
                                         viewport={{ once: true }}
                                         transition={{ delay: i * 0.1 }}
@@ -325,22 +363,22 @@ export default function ReportsPage() {
                     </div>
 
                     {/* UC-09: Send Report ─────────────────────────────── */}
-                    <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
+                    <motion.div initial={{ opacity: 1, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
                         className="bg-card border-2 border-border rounded-2xl p-6"
                     >
                         <div className="flex items-center gap-2 mb-4">
                             <Mail size={20} className="text-primary" />
-                            <Heading level={4} className="text-heading text-lg">Gửi báo cáo email</Heading>
+                            <Heading level={4} className="text-heading text-lg">Gửi báo cáo ngay</Heading>
                         </div>
                         <Body className="text-body text-sm mb-4">
-                            Gửi báo cáo học tập của <strong>{activeChild?.nickname}</strong> tới email của bạn.
+                            Gửi ngay báo cáo học tập của <strong>{activeChild?.nickname}</strong> qua {immediateChannelLabel} hiện tại của bạn.
                         </Body>
 
                         {/* Schedule picker */}
                         <div className="flex gap-2 mb-5">
                             <button
-                                onClick={() => setSchedule('weekly')}
-                                className={`px-4 py-2 rounded-xl font-heading font-bold text-sm border-2 transition-all ${schedule === 'weekly' ? 'bg-primary-light border-primary text-primary' : 'bg-background border-border text-body'}`}
+                                disabled
+                                className="px-4 py-2 rounded-xl font-heading font-bold text-sm border-2 transition-all bg-primary-light border-primary text-primary cursor-default"
                             >
                                 📅 Hàng tuần
                             </button>
@@ -364,7 +402,7 @@ export default function ReportsPage() {
                             </Caption>
                         )}
                         <Caption className="text-caption text-xs mt-2 text-center">
-                            Chế độ này gửi báo cáo ngay. Lịch gửi tự động được quản lý trong phần cài đặt bên dưới.
+                            Gửi ngay dùng child đang chọn. Lịch gửi tự động ở trên áp dụng cho tài khoản phụ huynh, không tách riêng theo từng bé.
                         </Caption>
                     </motion.div>
                 </>
@@ -395,6 +433,12 @@ export default function ReportsPage() {
                             </div>
                         ) : (
                             <div className="space-y-6">
+                                <div className="rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-600">
+                                    {subscriptionPrefs?.isSubscribed
+                                        ? `Hiện đang bật gửi tự động qua ${subscriptionLabel} vào ${String(subscriptionPrefs.reportHour ?? 9).padStart(2, '0')}:00 mỗi tuần.`
+                                        : 'Hiện tại bạn chưa bật gửi báo cáo tự động.'}
+                                </div>
+
                                 {/* Email Subscription */}
                                 <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-4">
                                     <div className="flex items-center justify-between mb-3">
@@ -410,16 +454,12 @@ export default function ReportsPage() {
                                                     const enabled = e.target.checked;
 
                                                     try {
-                                                        await updateReportPreferences({
-                                                            emailEnabled: enabled,
-                                                            zaloEnabled: enabled ? false : (subscriptionPrefs?.zaloEnabled ?? false),
-                                                        });
-                                                        const updated = await getReportPreferences();
-                                                        setSubscriptionPrefs(updated);
+                                                        await toggleReportChannel('email', enabled);
                                                     } catch (err) {
                                                         console.error('Failed to update email subscription:', err);
                                                     }
                                                 }}
+                                                disabled={isSavingPrefs}
                                                 className="sr-only peer"
                                             />
                                             <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
@@ -443,16 +483,12 @@ export default function ReportsPage() {
                                                     const enabled = e.target.checked;
 
                                                     try {
-                                                        await updateReportPreferences({
-                                                            zaloEnabled: enabled,
-                                                            emailEnabled: enabled ? false : (subscriptionPrefs?.emailEnabled ?? false),
-                                                        });
-                                                        const updated = await getReportPreferences();
-                                                        setSubscriptionPrefs(updated);
+                                                        await toggleReportChannel('zalo', enabled);
                                                     } catch (err) {
                                                         console.error('Failed to update Zalo subscription:', err);
                                                     }
                                                 }}
+                                                disabled={isSavingPrefs}
                                                 className="sr-only peer"
                                             />
                                             <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
@@ -473,7 +509,33 @@ export default function ReportsPage() {
                                         </button>
                                     </div>
                                     <p className="mt-2 text-xs text-gray-500">Hiện tại hệ thống hỗ trợ gửi báo cáo tự động theo tuần.</p>
+                                    {subscriptionPrefs?.isSubscribed && (
+                                        <p className="mt-2 text-xs text-gray-600">
+                                            Kênh hiện tại: {subscriptionPrefs.preferredChannel === 'ZALO' ? 'Zalo' : 'Email'}
+                                            {' • '}
+                                            Thời gian: {String(subscriptionPrefs.reportHour ?? 9).padStart(2, '0')}:00
+                                            {subscriptionPrefs.lastReportSentAt ? (
+                                                <>
+                                                    {' • '}
+                                                    Lần gần nhất: {new Date(subscriptionPrefs.lastReportSentAt).toLocaleDateString('vi-VN')}
+                                                </>
+                                            ) : null}
+                                        </p>
+                                    )}
                                 </div>
+
+                                {subscriptionMessage && (
+                                    <div className={`rounded-2xl px-4 py-3 text-sm ${subscriptionMessage.includes('Không thể') ? 'bg-red-50 text-red-600' : 'bg-emerald-50 text-emerald-700'}`}>
+                                        {subscriptionMessage}
+                                    </div>
+                                )}
+
+                                {isSavingPrefs && (
+                                    <div className="flex items-center justify-center gap-2 text-sm text-gray-500">
+                                        <Loader2 size={16} className="animate-spin" />
+                                        Đang lưu cài đặt...
+                                    </div>
+                                )}
 
                                 <button
                                     onClick={() => setShowSubscriptionModal(false)}

@@ -1,6 +1,6 @@
 // Constants
 
-export const CATEGORIES = ['Tất cả', 'Mũ', 'Áo', 'Thú cưng', 'Phụ kiện'];
+export const CATEGORIES = ['Tất cả', 'Mũ', 'Áo', 'Thú cưng', 'Phụ kiện', 'Nền'];
 
 export const RARITY_STYLE: Record<string, { label: string; cls: string; glow: string }> = {
     common: { label: 'Thường', cls: 'bg-background text-caption border-border', glow: '' },

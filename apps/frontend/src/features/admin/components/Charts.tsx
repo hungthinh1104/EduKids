@@ -27,7 +27,7 @@ interface BarChartProps {
 export function BarChart({ title, data, height = 160, gradient = 'from-primary to-accent', colorByValue = false, action }: BarChartProps) {
     const max = Math.max(...data.map((d) => d.value), 1);
     return (
-        <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="bg-card border border-border/70 rounded-2xl p-6 shadow-sm">
+        <motion.div initial={{ opacity: 1, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="bg-card border border-border/70 rounded-2xl p-6 shadow-sm">
             <SectionHeader title={title} action={action} />
             {data.length === 0 ? (
                 <div className="mt-4 grid place-items-center rounded-2xl border border-dashed border-border/70 bg-background/60 text-center" style={{ height }}>
@@ -71,7 +71,7 @@ interface HorizontalBarListProps {
 export function HorizontalBarList({ title, data, action }: HorizontalBarListProps) {
     const max = Math.max(...data.map((d) => d.maxValue ?? d.value), 1);
     return (
-        <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="bg-card border border-border/70 rounded-2xl p-6 shadow-sm">
+        <motion.div initial={{ opacity: 1, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="bg-card border border-border/70 rounded-2xl p-6 shadow-sm">
             <SectionHeader title={title} action={action} />
             {data.length === 0 ? (
                 <div className="mt-2 rounded-2xl border border-dashed border-border/70 bg-background/60 px-4 py-10 text-center">

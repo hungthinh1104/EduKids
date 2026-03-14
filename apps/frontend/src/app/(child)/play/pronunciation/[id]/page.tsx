@@ -94,6 +94,7 @@ export default function PronunciationPage({ params }: PronunciationPageProps) {
     const [countdown, setCountdown] = useState(3);
     const [confidence, setConfidence] = useState(0);
     const [detailedFeedback, setDetailedFeedback] = useState<string | undefined>();
+    const [practiceError, setPracticeError] = useState<string | null>(null);
 
     useEffect(() => {
         async function loadVocab() {
@@ -131,6 +132,8 @@ export default function PronunciationPage({ params }: PronunciationPageProps) {
 
     const startPractice = () => {
         if (!vocab) return;
+        setPracticeError(null);
+        setDetailedFeedback(undefined);
         setStage('recording');
         setCountdown(3);
         void (async () => {
@@ -150,7 +153,11 @@ export default function PronunciationPage({ params }: PronunciationPageProps) {
                 };
                 source.connect(processor);
                 processor.connect(ctx.destination);
-            } catch { /* mic unavailable - fallback below */ }
+            } catch {
+                if (stream) {
+                    stream.getTracks().forEach((track) => track.stop());
+                }
+            }
 
             for (let c = 2; c >= 0; c--) {
                 await new Promise<void>((res) => setTimeout(res, 1000));
@@ -166,23 +173,27 @@ export default function PronunciationPage({ params }: PronunciationPageProps) {
                 audioBase64 = encodePcmToWavBase64(chunks) ?? undefined;
             }
 
-            const fallbackConf = Math.floor(Math.random() * 40) + 60;
             try {
-                const res = await submitPronunciation(
-                    vocab.id,
-                    audioBase64 ? 90 : fallbackConf,
-                    vocab.word,
-                    3000,
+                if (!audioBase64) {
+                    throw new Error('Không thể thu âm. Vui lòng kiểm tra quyền micro và thử lại.');
+                }
+                const res = await submitPronunciation({
+                    vocabularyId: vocab.id,
+                    mode: 'WORD',
+                    referenceText: vocab.word,
+                    recognizedText: vocab.word,
+                    recordingDurationMs: 3000,
                     audioBase64,
-                    audioBase64 ? 'audio/wav' : undefined,
-                );
+                    audioMimeType: 'audio/wav',
+                });
                 setConfidence(res.confidenceScore);
                 setDetailedFeedback(res.detailedFeedback ?? undefined);
-            } catch {
-                setConfidence(fallbackConf);
-                setDetailedFeedback(undefined);
-            } finally {
                 setStage('result');
+            } catch {
+                setConfidence(0);
+                setDetailedFeedback(undefined);
+                setPracticeError('Chưa thể chấm phát âm lúc này. Kiểm tra micro rồi thử lại nhé.');
+                setStage('ready');
             }
         })();
     };
@@ -271,6 +282,9 @@ export default function PronunciationPage({ params }: PronunciationPageProps) {
                                 <Mic size={40} className="text-white" />
                             </motion.button>
                             <Caption className="text-caption text-sm">Phát âm rõ ràng, từng âm một nhé!</Caption>
+                            {practiceError && (
+                                <Caption className="text-error text-center max-w-sm">{practiceError}</Caption>
+                            )}
                         </motion.div>
                     )}
 
