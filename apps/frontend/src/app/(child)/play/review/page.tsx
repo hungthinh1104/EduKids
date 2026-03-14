@@ -93,7 +93,7 @@ function ReviewSessionComplete({ logs, onRestart }: { logs: ReviewLog[]; onResta
     const hardCount = logs.filter((l) => l.difficulty === 'HARD').length;
     const stars = easyCount >= logs.length * 0.8 ? 3 : easyCount >= logs.length * 0.5 ? 2 : 1;
     return (
-        <motion.div initial={{ opacity: 0, scale: 0.85 }} animate={{ opacity: 1, scale: 1 }} transition={{ type: 'spring', bounce: 0.4 }}
+        <motion.div initial={{ opacity: 1, scale: 0.85 }} animate={{ opacity: 1, scale: 1 }} transition={{ type: 'spring', bounce: 0.4 }}
             className="flex flex-col items-center gap-8 py-8 text-center px-4"
         >
             <motion.div animate={{ rotate: [0, -10, 10, 0], scale: [1, 1.1, 1] }} transition={{ duration: 1, delay: 0.3 }} className="text-7xl">🎓</motion.div>

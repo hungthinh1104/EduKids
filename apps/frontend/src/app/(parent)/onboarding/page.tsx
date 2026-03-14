@@ -24,7 +24,7 @@ const AGES = [4, 5, 6, 7, 8, 9, 10, 11, 12];
 const STEPS = ['Chào mừng', 'Đặt tên bé', 'Tuổi của bé', 'Chọn avatar', 'Hoàn thành'];
 
 const slideVariants = {
-    enter: (dir: number) => ({ x: dir > 0 ? 60 : -60, opacity: 0 }),
+    enter: (dir: number) => ({ x: dir > 0 ? 60 : -60, opacity: 1 }),
     center: { x: 0, opacity: 1 },
     exit: (dir: number) => ({ x: dir > 0 ? -60 : 60, opacity: 0 }),
 };

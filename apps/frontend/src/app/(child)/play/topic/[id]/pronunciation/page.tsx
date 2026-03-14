@@ -139,8 +139,8 @@ function SessionComplete({ results, topicId, onRestart }: { results: Pronunciati
     const avgConf = Math.round(results.reduce((a, r) => a + r.confidence, 0) / results.length);
 
     return (
-        <motion.div initial={{ opacity: 0, scale: 0.85 }} animate={{ opacity: 1, scale: 1 }} transition={{ type: 'spring', bounce: 0.4 }}
-            className="flex flex-col items-center gap-8 text-center px-4 py-8"
+        <motion.div initial={{ opacity: 1, scale: 0.85 }} animate={{ opacity: 1, scale: 1 }} transition={{ type: 'spring', bounce: 0.4 }}
+                className="flex flex-col items-center gap-8 text-center px-4 py-8"
         >
             <motion.div animate={{ rotate: [0, -10, 10, 0], scale: [1, 1.1, 1] }} transition={{ duration: 1, delay: 0.3 }} className="text-7xl">🎤</motion.div>
             <div>

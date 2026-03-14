@@ -112,7 +112,7 @@ function SessionComplete({ logs, topicId, onRestart }: { logs: SRSLog[]; topicId
 
     return (
         <motion.div
-            initial={{ opacity: 0, scale: 0.85 }}
+            initial={{ opacity: 1, scale: 0.85 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ type: 'spring', bounce: 0.4 }}
             className="flex flex-col items-center justify-center min-h-[60vh] gap-8 text-center px-4 md:px-6"
