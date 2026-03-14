@@ -22,7 +22,7 @@ export default function GlobalError({
     return (
         <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6 text-center">
             <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
+                initial={{ opacity: 1, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 className="max-w-md w-full bg-card border-4 border-error/50 rounded-[2.5rem] p-8 shadow-xl"
             >

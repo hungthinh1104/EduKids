@@ -219,7 +219,7 @@ export default function LeaderboardPage() {
 
       {/* Info Card */}
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 1, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
         className="mt-8 bg-white rounded-2xl shadow-md p-6 border border-gray-200"

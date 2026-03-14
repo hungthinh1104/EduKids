@@ -215,7 +215,7 @@ export default function AdminAnalyticsPage() {
                     </div>
 
                     {/* Game mode breakdown */}
-                    <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="bg-card border border-border/70 rounded-2xl p-6 shadow-sm">
+                    <motion.div initial={{ opacity: 1, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="bg-card border border-border/70 rounded-2xl p-6 shadow-sm">
                         <SectionHeader title="Phân bổ theo chế độ học" />
                         {data.gameModes.length === 0 ? (
                             <div className="mt-2 rounded-2xl border border-dashed border-border/70 bg-background/60 px-4 py-10 text-center">
@@ -224,7 +224,7 @@ export default function AdminAnalyticsPage() {
                         ) : (
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-2">
                             {data.gameModes.map((m, i) => (
-                                <motion.div key={m.mode} initial={{ opacity: 0, scale: 0.95 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }} transition={{ delay: i * 0.07 }} className="bg-background border border-border/70 rounded-2xl p-4">
+                                <motion.div key={m.mode} initial={{ opacity: 1, scale: 0.95 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }} transition={{ delay: i * 0.07 }} className="bg-background border border-border/70 rounded-2xl p-4">
                                     <div className={`text-lg font-heading font-black mb-1 ${m.color}`}>{m.mode}</div>
                                     <div className="text-2xl font-heading font-black text-heading">{m.sessions.toLocaleString()}</div>
                                     <Caption className="text-caption text-xs mb-3">phiên học</Caption>
@@ -244,7 +244,7 @@ export default function AdminAnalyticsPage() {
                     {/* Pronunciation + gamification */}
                     <div className="grid md:grid-cols-2 gap-6">
                         {/* Pronunciation — uses DonutRing */}
-                        <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="bg-card border border-border/70 rounded-2xl p-6 shadow-sm">
+                        <motion.div initial={{ opacity: 1, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="bg-card border border-border/70 rounded-2xl p-6 shadow-sm">
                             <SectionHeader title="Điểm phát âm" action={<Mic size={16} className="text-accent" />} />
                             <div className="flex items-center gap-6 mt-4">
                                 <DonutRing pct={Math.min(100, Math.max(0, Math.round(data.avgPronunciationScore)))} label="avg" />
@@ -264,7 +264,7 @@ export default function AdminAnalyticsPage() {
                         </motion.div>
 
                         {/* Gamification */}
-                        <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.1 }} className="bg-card border border-border/70 rounded-2xl p-6 shadow-sm">
+                        <motion.div initial={{ opacity: 1, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.1 }} className="bg-card border border-border/70 rounded-2xl p-6 shadow-sm">
                             <SectionHeader title="Gamification" action={<Star size={16} className="text-warning" />} />
                             <div className="grid grid-cols-2 gap-4 mt-2">
                                 {[
@@ -273,7 +273,7 @@ export default function AdminAnalyticsPage() {
                                     { label: 'Quiz đã tạo', value: data.totalQuizzes.toLocaleString(), icon: '🏅' },
                                     { label: 'Phiên học TB', value: `${data.averageSessionLength} phút`, icon: '🔥' },
                                 ].map((s, i) => (
-                                    <motion.div key={s.label} initial={{ opacity: 0, scale: 0.95 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }} transition={{ delay: i * 0.07 }} className="bg-background border border-border/70 rounded-xl p-3">
+                                    <motion.div key={s.label} initial={{ opacity: 1, scale: 0.95 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }} transition={{ delay: i * 0.07 }} className="bg-background border border-border/70 rounded-xl p-3">
                                         <div className="text-xl mb-1">{s.icon}</div>
                                         <div className="font-heading font-black text-heading text-base">{s.value}</div>
                                         <Caption className="text-caption text-xs">{s.label}</Caption>
