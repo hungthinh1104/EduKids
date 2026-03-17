@@ -1,5 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { PrismaService } from "../../../prisma/prisma.service";
+import { CmsContentStatus } from "@prisma/client";
 
 @Injectable()
 export class FlashcardRepository {
@@ -10,8 +11,16 @@ export class FlashcardRepository {
    * UC-02: Display flashcard (image + text + audio)
    */
   async getFlashcardByVocabularyId(vocabularyId: number) {
-    return await this.prisma.vocabulary.findUnique({
-      where: { id: vocabularyId },
+    return await this.prisma.vocabulary.findFirst({
+      where: {
+        id: vocabularyId,
+        status: CmsContentStatus.PUBLISHED,
+        deletedAt: null,
+        topic: {
+          status: CmsContentStatus.PUBLISHED,
+          deletedAt: null,
+        },
+      },
       include: {
         media: true,
         topic: {
@@ -30,7 +39,15 @@ export class FlashcardRepository {
    */
   async getVocabulariesByTopicId(topicId: number) {
     return await this.prisma.vocabulary.findMany({
-      where: { topicId },
+      where: {
+        topicId,
+        status: CmsContentStatus.PUBLISHED,
+        deletedAt: null,
+        topic: {
+          status: CmsContentStatus.PUBLISHED,
+          deletedAt: null,
+        },
+      },
       select: {
         id: true,
         word: true,
@@ -45,8 +62,17 @@ export class FlashcardRepository {
    */
   async generateDragDropOptions(vocabularyId: number, topicId: number) {
     // Get correct vocabulary
-    const correct = await this.prisma.vocabulary.findUnique({
-      where: { id: vocabularyId },
+    const correct = await this.prisma.vocabulary.findFirst({
+      where: {
+        id: vocabularyId,
+        topicId,
+        status: CmsContentStatus.PUBLISHED,
+        deletedAt: null,
+        topic: {
+          status: CmsContentStatus.PUBLISHED,
+          deletedAt: null,
+        },
+      },
       select: {
         id: true,
         translation: true,
@@ -60,6 +86,12 @@ export class FlashcardRepository {
       where: {
         topicId,
         id: { not: vocabularyId },
+        status: CmsContentStatus.PUBLISHED,
+        deletedAt: null,
+        topic: {
+          status: CmsContentStatus.PUBLISHED,
+          deletedAt: null,
+        },
       },
       select: {
         id: true,

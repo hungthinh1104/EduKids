@@ -4,6 +4,7 @@ import { PassportModule } from "@nestjs/passport";
 import { AuthController } from "./auth.controller";
 import { AuthService } from "./auth.service";
 import { JwtStrategy } from "./jwt.strategy";
+import { MailModule } from "../mail/mail.module";
 import { UserRepository } from "./repositories/user.repository";
 
 // [C-2 Security Fix] JWT_SECRET must be explicitly set — no insecure fallback.
@@ -16,6 +17,7 @@ if (!process.env.JWT_SECRET) {
 
 @Module({
   imports: [
+    MailModule,
     PassportModule.register({ defaultStrategy: "jwt" }),
     JwtModule.register({
       secret: process.env.JWT_SECRET,

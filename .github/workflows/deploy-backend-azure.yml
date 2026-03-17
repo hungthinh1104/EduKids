@@ -1,0 +1,184 @@
+name: Deploy Backend → Azure
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "apps/backend/**"
+      - "docker/Dockerfile.backend"
+      - ".github/workflows/deploy-backend-azure.yml"
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Target environment"
+        required: true
+        default: "production"
+        type: choice
+        options:
+          - production
+          - staging
+
+env:
+  IMAGE_NAME: edukids-backend
+
+jobs:
+  # ─────────────────────────────────────────────
+  # 1. Build & push image to Azure Container Registry
+  # ─────────────────────────────────────────────
+  build-and-push:
+    name: Build & Push to ACR
+    runs-on: ubuntu-latest
+    outputs:
+      image_tag: ${{ steps.meta.outputs.tag }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set image tag
+        id: meta
+        run: |
+          SHORT_SHA="${GITHUB_SHA::8}"
+          echo "tag=${SHORT_SHA}" >> "$GITHUB_OUTPUT"
+          echo "full_image=${{ secrets.ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:${SHORT_SHA}" >> "$GITHUB_OUTPUT"
+
+      - name: Log in to Azure Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ secrets.ACR_LOGIN_SERVER }}
+          username: ${{ secrets.ACR_USERNAME }}
+          password: ${{ secrets.ACR_PASSWORD }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push backend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./apps/backend
+          file: ./docker/Dockerfile.backend
+          push: true
+          tags: |
+            ${{ secrets.ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.tag }}
+            ${{ secrets.ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:latest
+          cache-from: type=registry,ref=${{ secrets.ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:cache
+          cache-to: type=registry,ref=${{ secrets.ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:cache,mode=max
+
+      - name: Image summary
+        run: |
+          echo "✅ Pushed: ${{ secrets.ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.tag }}"
+
+  # ─────────────────────────────────────────────
+  # 2a. Deploy to Azure VM (via SSH)
+  # ─────────────────────────────────────────────
+  deploy-vm:
+    name: Deploy to Azure VM
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    # Switch to deploy-container-app if using Container Apps instead
+    if: ${{ vars.DEPLOY_TARGET == 'vm' || vars.DEPLOY_TARGET == '' }}
+    environment: ${{ github.event.inputs.environment || 'production' }}
+    steps:
+      - name: Deploy to VM via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VM_HOST }}
+          username: ${{ secrets.VM_USERNAME }}
+          key: ${{ secrets.VM_SSH_PRIVATE_KEY }}
+          port: 22
+          script: |
+            set -e
+
+            IMAGE="${{ secrets.ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:${{ needs.build-and-push.outputs.image_tag }}"
+            echo "▶ Pulling image: $IMAGE"
+
+            # Log in to ACR on VM
+            docker login ${{ secrets.ACR_LOGIN_SERVER }} \
+              -u ${{ secrets.ACR_USERNAME }} \
+              -p ${{ secrets.ACR_PASSWORD }}
+
+            docker pull "$IMAGE"
+
+            # Stop + remove old container gracefully
+            docker stop edukids-backend 2>/dev/null || true
+            docker rm   edukids-backend 2>/dev/null || true
+
+            # Run new container
+            docker run -d \
+              --name edukids-backend \
+              --restart unless-stopped \
+              -p 3001:3001 \
+              -e NODE_ENV=production \
+              -e PORT=3001 \
+              -e DATABASE_URL="${{ secrets.DATABASE_URL }}" \
+              -e REDIS_URL="${{ secrets.REDIS_URL }}" \
+              -e REDIS_HOST="${{ secrets.REDIS_HOST }}" \
+              -e REDIS_PORT="${{ secrets.REDIS_PORT }}" \
+              -e REDIS_PASSWORD="${{ secrets.REDIS_PASSWORD }}" \
+              -e JWT_SECRET="${{ secrets.JWT_SECRET }}" \
+              -e JWT_EXPIRY="${{ vars.JWT_EXPIRY || '24h' }}" \
+              -e FRONTEND_URL="${{ vars.FRONTEND_URL }}" \
+              -e CORS_ORIGIN="${{ vars.CORS_ORIGIN }}" \
+              -e PUBLIC_API_BASE_URL="${{ vars.PUBLIC_API_BASE_URL }}" \
+              -e SMTP_HOST="${{ vars.SMTP_HOST }}" \
+              -e SMTP_PORT="${{ vars.SMTP_PORT || '587' }}" \
+              -e SMTP_USER="${{ secrets.SMTP_USER }}" \
+              -e SMTP_PASSWORD="${{ secrets.SMTP_PASSWORD }}" \
+              -e SMTP_FROM="${{ vars.SMTP_FROM }}" \
+              -e AZURE_SPEECH_KEY="${{ secrets.AZURE_SPEECH_KEY }}" \
+              -e AZURE_SPEECH_REGION="${{ vars.AZURE_SPEECH_REGION }}" \
+              -e AZURE_SPEECH_LANGUAGE="${{ vars.AZURE_SPEECH_LANGUAGE || 'en-US' }}" \
+              -e METRICS_TOKEN="${{ secrets.METRICS_TOKEN }}" \
+              -e SENTRY_RELEASE="${{ github.sha }}" \
+              "$IMAGE"
+
+            # Run migrations inside newly started container
+            echo "▶ Running Prisma migrations..."
+            sleep 5
+            docker exec edukids-backend npm run prisma:migrate:deploy
+
+            # Health check (30 attempts × 3s = 90s timeout)
+            echo "▶ Waiting for health..."
+            for i in $(seq 1 30); do
+              STATUS=$(curl -sf -o /dev/null -w "%{http_code}" http://localhost:3001/api/system/health || echo "000")
+              if [[ "$STATUS" == "200" ]]; then
+                echo "✅ Backend healthy (attempt $i)"
+                break
+              fi
+              echo "  attempt $i/30 — HTTP $STATUS"
+              sleep 3
+              if [[ "$i" == "30" ]]; then
+                echo "❌ Backend failed to start"
+                docker logs edukids-backend --tail=60
+                exit 1
+              fi
+            done
+
+            # Cleanup old images (keep last 3)
+            docker images ${{ secrets.ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }} --format "{{.ID}}" \
+              | tail -n +4 | xargs docker rmi --force 2>/dev/null || true
+
+            echo "🚀 Deploy complete: $IMAGE"
+
+  # ─────────────────────────────────────────────
+  # 2b. Deploy to Azure Container Apps (alternative)
+  # ─────────────────────────────────────────────
+  deploy-container-app:
+    name: Deploy to Azure Container Apps
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    if: ${{ vars.DEPLOY_TARGET == 'container-app' }}
+    environment: ${{ github.event.inputs.environment || 'production' }}
+    steps:
+      - name: Azure login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Update Container App revision
+        uses: azure/container-apps-deploy-action@v2
+        with:
+          acrName: ${{ secrets.ACR_LOGIN_SERVER }}
+          containerAppName: ${{ vars.CONTAINER_APP_NAME }}
+          resourceGroup: ${{ vars.AZURE_RESOURCE_GROUP }}
+          imageToDeploy: ${{ secrets.ACR_LOGIN_SERVER }}/${{ env.IMAGE_NAME }}:${{ needs.build-and-push.outputs.image_tag }}
+          environmentVariables: SENTRY_RELEASE=${{ github.sha }}

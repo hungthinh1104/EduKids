@@ -1,4 +1,5 @@
 import { Process, Processor } from '@nestjs/bull';
+import { Logger } from '@nestjs/common';
 import { Job } from 'bull';
 import { ConfigService } from '@nestjs/config';
 import { v2 as cloudinary } from 'cloudinary';
@@ -19,6 +20,8 @@ interface MediaProcessingJob {
 
 @Processor('media-processing')
 export class MediaProcessor {
+  private readonly logger = new Logger(MediaProcessor.name);
+
   constructor(
     private readonly mediaRepository: MediaRepository,
     private readonly configService: ConfigService,
@@ -74,7 +77,7 @@ export class MediaProcessor {
 
       return { success: true, mediaId };
     } catch (error) {
-      console.error('Media processing failed:', error);
+      this.logger.error('Media processing failed', error instanceof Error ? error.stack : String(error));
 
       // Update status to failed
       await this.mediaRepository.updateMediaStatus(mediaId, ProcessingStatus.FAILED, {
@@ -256,7 +259,7 @@ export class MediaProcessor {
               });
               thumbnailUrl = thumbnailUploadResult.secure_url;
             } catch (error) {
-              console.error('Failed to upload thumbnail:', error);
+              this.logger.error('Failed to upload thumbnail', error instanceof Error ? error.stack : String(error));
             }
 
             await job.progress(90);
@@ -270,7 +273,7 @@ export class MediaProcessor {
             try {
               await fs.unlink(thumbnailPath);
             } catch (error) {
-              console.error('Failed to delete thumbnail:', error);
+              this.logger.warn('Failed to delete thumbnail', error instanceof Error ? error.message : String(error));
             }
 
             resolve({
@@ -306,7 +309,7 @@ export class MediaProcessor {
     try {
       await fs.unlink(filePath);
     } catch (error) {
-      console.error('Failed to delete temp file:', error);
+      this.logger.warn('Failed to delete temp file', error instanceof Error ? error.message : String(error));
     }
   }
 }

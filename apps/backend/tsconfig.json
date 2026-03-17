@@ -29,7 +29,7 @@
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "removeComments": true,
-    "sourceMap": false,
+    "sourceMap": true,
     "declaration": true,
     "declarationMap": false,
     "noEmitOnError": false

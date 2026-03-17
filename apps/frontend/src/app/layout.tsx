@@ -3,6 +3,8 @@ import { Baloo_2, Lexend } from 'next/font/google';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import './globals.css';
 
+const IS_VERCEL = process.env.VERCEL === '1' || process.env.VERCEL_ENV !== undefined;
+
 // ==========================================
 // FONT LOADING CONFIGURATION
 // ==========================================
@@ -166,7 +168,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
           disableTransitionOnChange
         >
           {children}
-          <SpeedInsights />
+          {IS_VERCEL && <SpeedInsights />}
           {/* Global Toast Notifications */}
           <Toaster
             position="bottom-center"

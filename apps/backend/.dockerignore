@@ -1,13 +1,43 @@
+# Dependencies
 node_modules
-npm-debug.log
+
+# Build output
 dist
+
+# Git
 .git
 .gitignore
+
+# Docker
 Dockerfile*
+.dockerignore
+
+# Docs
 *.md
+README*
+
+# Env files (injected at runtime)
 .env
 .env.*
 !.env.example
+
+# Tests & coverage
 test
+tests
+**/*.spec.ts
+**/*.test.ts
 coverage
+jest.config*
+
+# Logs
 *.log
+npm-debug.log*
+
+# Editor
+.vscode
+.idea
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db

@@ -20,10 +20,10 @@ export function TestimonialsSection() {
                         <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 font-bold text-sm tracking-widest mb-6">
                             <HeartPulse size={16} /> GÓC PHỤ HUYNH
                         </div>
-                        <h2 className="font-heading font-black text-4xl sm:text-5xl lg:text-6xl text-slate-900 dark:text-white mb-8 leading-[1.15]">
+                        <h2 className="font-heading font-black text-4xl sm:text-5xl lg:text-6xl text-heading mb-8 leading-[1.15]">
                             Đồng hành cùng con, <br /> <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-500 to-orange-400">An tâm tuyệt đối.</span>
                         </h2>
-                        <p className="text-xl mb-10 leading-relaxed text-slate-600 dark:text-slate-400">
+                        <p className="text-xl mb-10 leading-relaxed text-body">
                             Hàng ngàn phụ huynh Việt Nam đã tin tưởng chọn <b>EduKids</b> làm người bạn đồng hành giúp bé phát triển tư duy ngoại ngữ một cách tự nhiên và an toàn nhất.
                         </p>
 
@@ -38,8 +38,8 @@ export function TestimonialsSection() {
                                         <CheckCircle2 className="text-success" size={24} />
                                     </div>
                                     <div>
-                                        <h4 className="font-heading font-bold text-xl text-slate-900 dark:text-white mb-1">{item.title}</h4>
-                                        <p className="text-slate-600 dark:text-slate-400">{item.desc}</p>
+                                        <h4 className="font-heading font-bold text-xl text-heading mb-1">{item.title}</h4>
+                                        <p className="text-body">{item.desc}</p>
                                     </div>
                                 </div>
                             ))}
@@ -64,14 +64,14 @@ export function TestimonialsSection() {
                                 <div className="flex items-center gap-1.5 text-warning mb-6">
                                     {[1, 2, 3, 4, 5].map(i => <Star key={i} className="fill-current" size={22} />)}
                                 </div>
-                                <p className="italic text-slate-700 dark:text-slate-300 mb-8 text-xl leading-relaxed">
+                                <p className="italic text-body mb-8 text-xl leading-relaxed">
                                     &quot;Bé Bi nhà mình từ hồi học EduKids tự giác hẳn. Tối nào ăn cơm xong cũng đòi vọc iPad đọc từ mới lấy phần thưởng. Phát âm của con dạo này tây lắm luôn!&quot;
                                 </p>
                                 <div className="flex items-center gap-5 border-t border-slate-100 dark:border-slate-800 pt-6">
                                     <Image src="https://api.dicebear.com/7.x/notionists/svg?seed=Trinh" alt="Avatar" width={60} height={60} className="rounded-full bg-slate-100 border-2 border-white" />
                                     <div>
-                                        <h5 className="font-heading font-bold text-slate-900 dark:text-white text-lg">Trần Thu Trà</h5>
-                                        <span className="text-slate-500 text-sm">Mẹ bé Bi (7 tuổi)</span>
+                                        <h5 className="font-heading font-bold text-heading text-lg">Trần Thu Trà</h5>
+                                        <span className="text-muted text-sm">Mẹ bé Bi (7 tuổi)</span>
                                     </div>
                                 </div>
                             </motion.div>
@@ -87,14 +87,14 @@ export function TestimonialsSection() {
                                 <div className="flex items-center gap-1.5 text-warning mb-6">
                                     {[1, 2, 3, 4, 5].map(i => <Star key={i} className="fill-current" size={22} />)}
                                 </div>
-                                <p className="italic text-slate-700 dark:text-slate-300 mb-8 text-xl leading-relaxed">
+                                <p className="italic text-body mb-8 text-xl leading-relaxed">
                                     &quot;App màu sắc siêu đẹp, thiết kế nhân vật giống y chơi game nên hai đứa nhà mình khoái lắm. Hơn cả học tiếng Anh, nó giúp bé rèn luyện tư duy rất tốt.&quot;
                                 </p>
                                 <div className="flex items-center gap-5 border-t border-slate-100 dark:border-slate-800 pt-6">
                                     <Image src="https://api.dicebear.com/7.x/notionists/svg?seed=HoangPhat" alt="Avatar" width={60} height={60} className="rounded-full bg-slate-100 border-2 border-white" />
                                     <div>
-                                        <h5 className="font-heading font-bold text-slate-900 dark:text-white text-lg">Lê Hoàng Phát</h5>
-                                        <span className="text-slate-500 text-sm">Ba cặp song sinh Nhím & Thỏ</span>
+                                        <h5 className="font-heading font-bold text-heading text-lg">Lê Hoàng Phát</h5>
+                                        <span className="text-muted text-sm">Ba cặp song sinh Nhím & Thỏ</span>
                                     </div>
                                 </div>
                             </motion.div>

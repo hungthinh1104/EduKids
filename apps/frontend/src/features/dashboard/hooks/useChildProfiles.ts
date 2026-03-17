@@ -3,12 +3,11 @@
 import { useCallback, useEffect, useState } from 'react';
 import axios from 'axios';
 import { apiClient as axiosInstance } from '@/shared/services/api.client';
+import { setActiveProfile } from '@/features/profile/api/profile.api';
 import { setTopicModeProgressChildScope } from '@/features/learning/utils/topic-mode-progress';
 import type { ApiEnvelope } from '@/features/auth/types';
 import type {
     ChildProfile,
-    SwitchChildProfileRequest,
-    ProfileActionResultDto,
     ProfileListDto,
     LearningTimeAnalytics,
     AnalyticsOverview,
@@ -147,27 +146,8 @@ export function useChildProfiles() {
 
     const switchActiveProfile = useCallback(async (childId: number) => {
         try {
-            const response = await axiosInstance.post<ApiEnvelope<ProfileActionResultDto>, { data: ApiEnvelope<ProfileActionResultDto> }, SwitchChildProfileRequest>(
-                'profiles/switch',
-                { childId },
-            );
-
-            const result = response.data.data as ProfileActionResultDto & {
-                accessToken?: string;
-                refreshToken?: string;
-            };
+            const result = await setActiveProfile(childId);
             const switchedProfileId = result.profile.id;
-
-            // Store new JWT tokens with LEARNER role (matching api.client.ts cookie names)
-            if (result.accessToken) {
-                document.cookie = `access_token=${result.accessToken}; path=/; max-age=${15 * 60}`; // 15 min
-            }
-            if (result.refreshToken) {
-                document.cookie = `refresh_token=${result.refreshToken}; path=/; max-age=${7 * 24 * 60 * 60}`; // 7 days
-            }
-            
-            // CRITICAL: Set role=LEARNER so middleware can validate child routes
-            document.cookie = `role=LEARNER; path=/; max-age=${15 * 60}`; // 15 min, same as access_token
 
             setTopicModeProgressChildScope(switchedProfileId);
 

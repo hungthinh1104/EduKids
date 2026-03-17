@@ -111,6 +111,15 @@ export const switchProfile = async (childId: number): Promise<ProfileSwitchRespo
 };
 
 /**
+ * Set active child for parent pages without switching auth role.
+ * POST /api/profiles/active
+ */
+export const setActiveProfile = async (childId: number): Promise<ProfileSwitchResponse> => {
+  const response = await apiClient.post('/profiles/active', { childId });
+  return response.data.data;
+};
+
+/**
  * Create a new child profile
  * POST /api/profiles
  */

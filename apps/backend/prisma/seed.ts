@@ -28,7 +28,7 @@ async function main() {
     throw new Error('ADMIN_SEED_PASSWORD is required when seeding in production');
   }
 
-  const hashedPassword = await bcrypt.hash(adminPassword, 10);
+  const hashedPassword = await bcrypt.hash(adminPassword, 12);
   
   const adminUser = await prisma.user.upsert({
     where: { email: 'admin@edukids.com' },
@@ -385,7 +385,11 @@ async function main() {
   console.log('');
   console.log('🔐 Admin Credentials:');
   console.log('   Email: admin@edukids.com');
-  console.log('   Password: Admin@123456');
+  if (process.env.SHOW_SEED_CREDENTIALS === 'true') {
+    console.log(`   Password: ${adminPassword}`);
+  } else {
+    console.log('   Password: [hidden] set SHOW_SEED_CREDENTIALS=true to reveal');
+  }
   console.log('   ⚠️  CHANGE PASSWORD IN PRODUCTION!');
 }
 

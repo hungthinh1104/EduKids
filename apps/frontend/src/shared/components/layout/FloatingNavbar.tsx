@@ -46,7 +46,7 @@ export function FloatingNavbar({ links, rightActions, showThemeToggle = false }:
                 <div className="bg-gradient-to-br from-primary to-primary-dark text-white p-2.5 rounded-2xl rotate-3 shadow-lg transform transition-all group-hover:-rotate-12 group-hover:scale-110 duration-300">
                     <Sparkles size={24} className="animate-pulse" />
                 </div>
-                <span className="font-heading font-black text-2xl text-slate-800 dark:text-white tracking-wider flex items-center">
+                <span className="font-heading font-black text-2xl text-heading tracking-wider flex items-center">
                     EduKids<span className="text-primary text-4xl leading-none">.</span>
                 </span>
             </Link>
@@ -57,7 +57,7 @@ export function FloatingNavbar({ links, rightActions, showThemeToggle = false }:
                     <Link
                         key={link.href}
                         href={link.href}
-                        className="flex items-center gap-1.5 text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-primary-light transition-colors relative after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-0 hover:after:w-full after:bg-primary after:transition-all after:duration-300"
+                        className="flex items-center gap-1.5 text-body hover:text-primary transition-colors relative after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-0 hover:after:w-full after:bg-primary after:transition-all after:duration-300"
                     >
                         {link.icon && <span className="mb-0.5">{link.icon}</span>}
                         {link.label}
@@ -69,7 +69,7 @@ export function FloatingNavbar({ links, rightActions, showThemeToggle = false }:
                 {showThemeToggle && (
                     <button
                         onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
-                        className="p-3 rounded-full bg-white/50 dark:bg-slate-800/50 backdrop-blur-md border border-slate-200/50 dark:border-slate-700/50 text-slate-600 dark:text-slate-300 hover:text-primary transition-all hover:scale-110 shadow-sm min-h-[46px] min-w-[46px] flex items-center justify-center group"
+                        className="p-3 rounded-full bg-white/50 dark:bg-slate-800/50 backdrop-blur-md border border-slate-200/50 dark:border-slate-700/50 text-body hover:text-primary transition-all hover:scale-110 shadow-sm min-h-[46px] min-w-[46px] flex items-center justify-center group"
                         aria-label="Toggle Dark Mode"
                     >
                         <Sun size={20} className="hidden dark:block group-hover:rotate-12 transition-transform" />

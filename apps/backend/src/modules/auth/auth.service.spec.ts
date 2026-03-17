@@ -4,19 +4,30 @@ import { ConflictException } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import { AuthService } from "./auth.service";
 import { PrismaService } from "../../prisma/prisma.service";
+import { MailService } from "../mail/mail.service";
+import { MailTemplateService } from "../mail/mail-template.service";
 import { RegisterDto } from "./dto/register.dto";
 
 describe("AuthService - register", () => {
   let service: AuthService;
 
   const prismaMock = {
-    $queryRawUnsafe: jest.fn() as jest.Mock,
+    $queryRaw: jest.fn() as jest.Mock,
     session: { create: jest.fn() as jest.Mock },
     auditLog: { create: jest.fn() as jest.Mock },
   };
 
   const jwtServiceMock = {
     sign: jest.fn() as jest.Mock,
+  };
+
+  const mailServiceMock = {
+    sendMail: jest.fn() as jest.Mock,
+  };
+
+  const mailTemplateServiceMock = {
+    renderResetPasswordEmail: jest.fn() as jest.Mock,
+    renderWeeklyProgressReportEmail: jest.fn() as jest.Mock,
   };
 
   beforeEach(async () => {
@@ -27,6 +38,8 @@ describe("AuthService - register", () => {
         AuthService,
         { provide: PrismaService, useValue: prismaMock },
         { provide: JwtService, useValue: jwtServiceMock },
+        { provide: MailService, useValue: mailServiceMock },
+        { provide: MailTemplateService, useValue: mailTemplateServiceMock },
       ],
     }).compile();
 
@@ -41,12 +54,12 @@ describe("AuthService - register", () => {
       lastName: "Doe",
     };
 
-    prismaMock.$queryRawUnsafe.mockImplementationOnce(async () => [{ id: 1 }]);
+    prismaMock.$queryRaw.mockImplementationOnce(async () => [{ id: 1 }]);
 
     await expect(service.register(dto)).rejects.toBeInstanceOf(
       ConflictException,
     );
-    expect(prismaMock.$queryRawUnsafe).toHaveBeenCalledTimes(1);
+    expect(prismaMock.$queryRaw).toHaveBeenCalledTimes(1);
     expect(prismaMock.session.create).not.toHaveBeenCalled();
   });
 
@@ -58,7 +71,7 @@ describe("AuthService - register", () => {
       lastName: "Nguyen",
     };
 
-    prismaMock.$queryRawUnsafe
+    prismaMock.$queryRaw
       .mockImplementationOnce(async () => [])
       .mockImplementationOnce(async () => [
         {
@@ -91,9 +104,9 @@ describe("AuthService - register", () => {
       },
     });
 
-    expect(prismaMock.$queryRawUnsafe).toHaveBeenCalledTimes(2);
+    expect(prismaMock.$queryRaw).toHaveBeenCalledTimes(2);
 
-    const secondCallArgs = prismaMock.$queryRawUnsafe.mock.calls[1];
+    const secondCallArgs = prismaMock.$queryRaw.mock.calls[1];
     expect(secondCallArgs[1]).toBe(dto.email);
     expect(secondCallArgs[2]).not.toBe(dto.password);
     expect(secondCallArgs[5]).toBe("PARENT");

@@ -8,7 +8,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import axios from 'axios';
 import * as z from 'zod';
 import { Heading, Body, Caption } from '@/shared/components/Typography';
-import { Mail, Lock, Loader2, AlertCircle } from 'lucide-react';
+import { Mail, Lock, Loader2, AlertCircle, MoveLeft } from 'lucide-react';
 import { authApi } from '@/features/auth/api/auth.api';
 import { useAuthStore } from '@/shared/store/auth.store';
 import { motion } from 'framer-motion';
@@ -117,8 +117,13 @@ function LoginPageContent() {
             className="w-full"
         >
             <motion.div variants={fadeInUp} className="text-center mb-8">
-                <Heading level={2} className="text-3xl text-primary mb-2">Đăng Nhập</Heading>
-                <Body className="text-text-muted">Chào mừng ba mẹ quay lại cùng bé!</Body>
+                <div className="flex items-center justify-center gap-2 mb-2">
+                    <Heading level={2} className="text-3xl text-primary">Đăng Nhập</Heading>
+                    <Link href="/" className="inline-flex items-center gap-1 text-sm font-semibold text-primary hover:text-primary-dark">
+                        <MoveLeft size={16} /> Trang chủ
+                    </Link>
+                </div>
+                <Body className="text-text-heading">Chào mừng ba mẹ quay lại cùng bé!</Body>
             </motion.div>
 
             {globalError && (
@@ -133,7 +138,7 @@ function LoginPageContent() {
                 <motion.div variants={fadeInUp} className="space-y-2 group">
                     <label className="text-sm font-bold text-text-heading ml-1 block">Email</label>
                     <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-text-muted">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-text-heading">
                             <Mail size={18} />
                         </div>
                         <input
@@ -158,7 +163,7 @@ function LoginPageContent() {
                         </Link>
                     </div>
                     <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-text-muted">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-text-heading">
                             <Lock size={18} />
                         </div>
                         <input
@@ -206,7 +211,7 @@ function LoginPageContent() {
                     onClick={() => {
                         setGlobalError('Đăng nhập Google hiện chưa khả dụng. Vui lòng dùng email và mật khẩu.');
                     }}
-                    className="w-full flex justify-center items-center gap-3 px-4 py-3 border-2 border-border rounded-xl bg-white hover:bg-background hover:border-primary/50 transition-colors shadow-sm font-heading font-bold text-text-heading"
+                    className="w-full flex justify-center items-center gap-3 px-4 py-3 border-2 border-border rounded-xl bg-card hover:bg-background hover:border-primary/50 transition-colors shadow-sm font-heading font-bold text-text-heading"
                 >
                     <svg className="w-5 h-5" viewBox="0 0 24 24">
                         <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill={colors.blue[500]} />

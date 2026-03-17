@@ -3,12 +3,16 @@ import {
   BadRequestException,
   NotFoundException,
   Inject,
+  Logger,
 } from "@nestjs/common";
+import * as Sentry from "@sentry/nestjs";
+import { SentryTraced } from "@sentry/nestjs";
 import { CACHE_MANAGER } from "@nestjs/cache-manager";
 import { Cache } from "cache-manager";
 import { randomUUID } from "crypto";
 import { QuizRepository } from "./repositories/quiz.repository";
 import { PrismaService } from "../../prisma/prisma.service";
+import { CmsContentStatus, TopicQuiz, TopicQuizOption } from "@prisma/client";
 import {
   QuizStartDto,
   QuizDifficulty,
@@ -28,7 +32,8 @@ interface QuizSession {
   topicName: string;
   questions: Array<{
     questionId: number;
-    vocabularyId: number;
+    vocabularyId?: number;
+    promptText: string;
     word: string;
     translation: string;
     imageUrl?: string;
@@ -58,17 +63,40 @@ interface QuizSession {
  */
 @Injectable()
 export class QuizService {
+  private readonly logger = new Logger(QuizService.name);
+
   constructor(
     private readonly quizRepository: QuizRepository,
     private readonly prisma: PrismaService,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
 
+  private recordBreadcrumb(
+    action: string,
+    data: Record<string, string | number | boolean | undefined>,
+    level: "info" | "warning" = "info",
+  ): void {
+    Sentry.addBreadcrumb({
+      category: "quiz",
+      message: action,
+      level,
+      data,
+    });
+  }
+
   /**
    * Start a new adaptive quiz
    * Analyzes learner history and generates questions
    */
+  @SentryTraced("quiz.start")
   async startQuiz(childId: number, dto: QuizStartDto): Promise<QuizSessionDto> {
+    this.recordBreadcrumb("quiz.start.requested", {
+      childId,
+      topicId: dto.topicId,
+      questionCount: dto.questionCount,
+      initialDifficulty: dto.initialDifficulty,
+    });
+
     const topic = await this.quizRepository.getTopicById(dto.topicId);
     if (!topic) {
       throw new NotFoundException(`Topic ${dto.topicId} not found`);
@@ -76,6 +104,20 @@ export class QuizService {
 
     const questionCount = dto.questionCount || 10;
     const initialDifficulty = dto.initialDifficulty || QuizDifficulty.MEDIUM;
+    const publishedTopicQuizzes =
+      await this.quizRepository.getPublishedTopicQuizzes(
+        dto.topicId,
+        questionCount,
+      );
+
+    if (publishedTopicQuizzes.length > 0) {
+      this.recordBreadcrumb("quiz.start.cms_selected", {
+        childId,
+        topicId: dto.topicId,
+        availableQuestions: publishedTopicQuizzes.length,
+      });
+      return this.startCmsQuiz(topic, childId, dto, publishedTopicQuizzes);
+    }
 
     try {
       // Analyze learner performance for adaptive difficulty
@@ -130,6 +172,7 @@ export class QuizService {
           return {
             questionId: index + 1,
             vocabularyId: vocab.id,
+            promptText: "What is this in English?",
             word: vocab.word,
             translation: vocab.translation,
             imageUrl: undefined,
@@ -172,6 +215,14 @@ export class QuizService {
         questions.length,
         initialDifficulty,
       );
+      const questionDtos = questions.map((question, questionIndex) =>
+        this.buildQuestionDto(
+          question,
+          questionIndex + 1,
+          questions.length,
+          question.difficulty,
+        ),
+      );
 
       return {
         quizSessionId,
@@ -183,13 +234,21 @@ export class QuizService {
         currentScore: 0,
         questionsAnswered: 0,
         firstQuestion,
+        questions: questionDtos,
       };
     } catch (error) {
-      // Fallback to static quiz if adaptive fails
-      console.error(
-        "Adaptive quiz generation failed, falling back to static:",
-        error,
+      this.logger.error(
+        "Adaptive quiz generation failed, falling back to static",
+        error instanceof Error ? error.stack : undefined,
       );
+      this.recordBreadcrumb(
+        "quiz.start.adaptive_fallback",
+        { childId, topicId: dto.topicId },
+        "warning",
+      );
+      Sentry.captureMessage("Adaptive quiz generation fell back to static quiz", {
+        level: "warning",
+      });
       return this.startStaticQuiz(childId, dto);
     }
   }
@@ -197,6 +256,7 @@ export class QuizService {
   /**
    * Fallback: Generate static quiz without adaptation
    */
+  @SentryTraced("quiz.start.static")
   private async startStaticQuiz(
     childId: number,
     dto: QuizStartDto,
@@ -205,7 +265,15 @@ export class QuizService {
     const questionCount = dto.questionCount || 10;
 
     const allVocabulary = await this.prisma.vocabulary.findMany({
-      where: { topicId: dto.topicId },
+      where: {
+        topicId: dto.topicId,
+        status: CmsContentStatus.PUBLISHED,
+        deletedAt: null,
+        topic: {
+          status: CmsContentStatus.PUBLISHED,
+          deletedAt: null,
+        },
+      },
       take: questionCount,
       include: { media: { where: { type: "IMAGE" }, take: 1 } },
     });
@@ -240,6 +308,7 @@ export class QuizService {
         return {
           questionId: index + 1,
           vocabularyId: vocab.id,
+          promptText: "What is this in English?",
           word: vocab.word,
           translation: vocab.translation,
           imageUrl: vocab.media?.[0]?.url,
@@ -288,12 +357,96 @@ export class QuizService {
         questions.length,
         QuizDifficulty.MEDIUM,
       ),
+      questions: questions.map((question, questionIndex) =>
+        this.buildQuestionDto(
+          question,
+          questionIndex + 1,
+          questions.length,
+          question.difficulty,
+        ),
+      ),
+    };
+  }
+
+  private async startCmsQuiz(
+    topic: { id: number; name: string; description: string | null },
+    childId: number,
+    dto: QuizStartDto,
+    quizzes: Array<TopicQuiz & { options: TopicQuizOption[] }>,
+  ): Promise<QuizSessionDto> {
+    this.recordBreadcrumb("quiz.start.cms_session_created", {
+      childId,
+      topicId: dto.topicId,
+      questionCount: quizzes.length,
+    });
+
+    const questions = quizzes
+      .map((quiz, index) => this.buildCmsQuestion(quiz, index))
+      .filter(
+        (
+          question,
+        ): question is NonNullable<ReturnType<typeof this.buildCmsQuestion>> =>
+          question !== null,
+      );
+
+    if (questions.length === 0) {
+      throw new BadRequestException(
+        `No published quiz questions available for topic ${dto.topicId}.`,
+      );
+    }
+
+    const quizSessionId = randomUUID();
+    const session: QuizSession = {
+      quizSessionId,
+      childId,
+      topicId: dto.topicId,
+      topicName: topic.name,
+      questions,
+      currentQuestionIndex: 0,
+      answers: [],
+      currentScore: 0,
+      currentDifficulty: questions[0].difficulty,
+      consecutiveCorrect: 0,
+      consecutiveIncorrect: 0,
+      startedAt: new Date(),
+    };
+
+    await this.cacheManager.set(
+      `quiz:session:${quizSessionId}`,
+      session,
+      3600000,
+    );
+
+    return {
+      quizSessionId,
+      topicId: dto.topicId,
+      topicName: topic.name,
+      totalQuestions: questions.length,
+      currentDifficulty: session.currentDifficulty,
+      startedAt: session.startedAt,
+      currentScore: 0,
+      questionsAnswered: 0,
+      firstQuestion: this.buildQuestionDto(
+        questions[0],
+        1,
+        questions.length,
+        questions[0].difficulty,
+      ),
+      questions: questions.map((question, questionIndex) =>
+        this.buildQuestionDto(
+          question,
+          questionIndex + 1,
+          questions.length,
+          question.difficulty,
+        ),
+      ),
     };
   }
 
   /**
    * Submit answer and get instant feedback with adaptive difficulty
    */
+  @SentryTraced("quiz.answer.submit")
   async submitAnswer(
     childId: number,
     dto: QuizAnswerDto,
@@ -357,21 +510,23 @@ export class QuizService {
     session.currentDifficulty = nextDifficulty;
 
     // Record attempt in database
-    await this.quizRepository.recordQuizAttempt(
-      childId,
-      currentQuestion.vocabularyId,
-      isCorrect,
-      pointsEarned,
-      dto.timeTakenMs,
-      currentQuestion.difficulty,
-    );
+    if (currentQuestion.vocabularyId) {
+      await this.quizRepository.recordQuizAttempt(
+        childId,
+        currentQuestion.vocabularyId,
+        isCorrect,
+        pointsEarned,
+        dto.timeTakenMs,
+        currentQuestion.difficulty,
+      );
 
-    // Update learning progress
-    await this.quizRepository.updateQuizProgress(
-      childId,
-      currentQuestion.vocabularyId,
-      isCorrect,
-    );
+      // Update learning progress only for vocabulary-backed quiz questions.
+      await this.quizRepository.updateQuizProgress(
+        childId,
+        currentQuestion.vocabularyId,
+        isCorrect,
+      );
+    }
 
     // Update cache
     await this.cacheManager.set(
@@ -383,6 +538,26 @@ export class QuizService {
     const correctAnswer = currentQuestion.options.find(
       (o) => o.id === currentQuestion.correctOptionId,
     );
+
+    this.recordBreadcrumb("quiz.answer.submitted", {
+      childId,
+      quizSessionId: dto.quizSessionId,
+      questionId: dto.questionId,
+      isCorrect,
+      pointsEarned,
+      nextDifficulty,
+      questionsAnswered: session.answers.length,
+    });
+
+    Sentry.logger.info("Quiz answer submitted", {
+      childId,
+      topicId: session.topicId,
+      quizSessionId: dto.quizSessionId,
+      questionId: dto.questionId,
+      isCorrect,
+      pointsEarned,
+      nextDifficulty,
+    });
 
     return {
       isCorrect,
@@ -403,6 +578,7 @@ export class QuizService {
   /**
    * Get quiz results with gamification rewards
    */
+  @SentryTraced("quiz.results")
   async getQuizResults(
     childId: number,
     quizSessionId: string,
@@ -473,13 +649,33 @@ export class QuizService {
 
       return {
         questionId: answer.questionId,
-        questionText: question?.translation || "",
+        questionText: question?.promptText || "",
         isCorrect: answer.isCorrect,
         selectedAnswer: selectedOption?.text || "",
         correctAnswer: correctOption?.text || "",
         pointsEarned: answer.pointsEarned,
         timeTaken: answer.timeTakenMs,
       };
+    });
+
+    this.recordBreadcrumb("quiz.results.generated", {
+      childId,
+      quizSessionId,
+      topicId: session.topicId,
+      accuracy,
+      starsEarned,
+      totalQuestions,
+      pointsAwarded,
+    });
+
+    Sentry.logger.info("Quiz results generated", {
+      childId,
+      quizSessionId,
+      topicId: session.topicId,
+      accuracy,
+      starsEarned,
+      pointsAwarded,
+      totalQuestions,
     });
 
     return {
@@ -564,12 +760,79 @@ export class QuizService {
       questionNumber,
       totalQuestions,
       questionType: QuestionType.MULTIPLE_CHOICE,
-      questionText: `What is this in English?`,
+      questionText: question.promptText,
       questionImage: question.imageUrl,
       options: question.options,
       difficulty,
       pointsValue: question.pointsValue,
       timeLimit: 15,
     };
+  }
+
+  private buildCmsQuestion(
+    quiz: TopicQuiz & { options: TopicQuizOption[] },
+    index: number,
+  ): QuizSession["questions"][number] | null {
+    const options = [...quiz.options];
+    const correctOption = options.find((option) => option.isCorrect);
+
+    if (!correctOption || options.length < 2) {
+      return null;
+    }
+
+    const shuffledOptions = this.shuffleOptions(
+      options.map((option, optionIndex) => ({
+        id: optionIndex + 1,
+        text: option.text,
+      })),
+    );
+    const correctAnswer = shuffledOptions.find(
+      (option) => option.text === correctOption.text,
+    );
+    const difficulty = this.mapDifficultyLevel(quiz.difficultyLevel);
+
+    if (!correctAnswer) {
+      return null;
+    }
+
+    return {
+      questionId: index + 1,
+      promptText: quiz.questionText,
+      word: correctAnswer.text,
+      translation: quiz.questionText,
+      correctOptionId: correctAnswer.id,
+      options: shuffledOptions,
+      difficulty,
+      pointsValue: this.calculatePointsValue(difficulty),
+    };
+  }
+
+  private mapDifficultyLevel(level: number): QuizDifficulty {
+    if (level >= 4) {
+      return QuizDifficulty.HARD;
+    }
+    if (level <= 2) {
+      return QuizDifficulty.EASY;
+    }
+    return QuizDifficulty.MEDIUM;
+  }
+
+  private shuffleOptions(
+    options: Array<{ id: number; text: string; imageUrl?: string }>,
+  ): Array<{ id: number; text: string; imageUrl?: string }> {
+    const shuffled = [...options];
+
+    for (let index = shuffled.length - 1; index > 0; index--) {
+      const swapIndex = Math.floor(Math.random() * (index + 1));
+      [shuffled[index], shuffled[swapIndex]] = [
+        shuffled[swapIndex],
+        shuffled[index],
+      ];
+    }
+
+    return shuffled.map((option, index) => ({
+      ...option,
+      id: index + 1,
+    }));
   }
 }

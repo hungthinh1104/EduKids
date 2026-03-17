@@ -1,7 +1,9 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException, Logger } from '@nestjs/common';
 import { Inject } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
+import * as Sentry from '@sentry/nestjs';
+import { SentryTraced } from '@sentry/nestjs';
 import { PronunciationRepository } from './repositories/pronunciation.repository';
 import { PronunciationSubmitDto, StarRatingDto, PronunciationFeedbackDto } from './dto/pronunciation.dto';
 import { PronunciationAssessmentService } from './pronunciation-assessment.service';
@@ -13,6 +15,8 @@ import {
 
 @Injectable()
 export class PronunciationService {
+  private readonly logger = new Logger(PronunciationService.name);
+
   constructor(
     private readonly pronunciationRepository: PronunciationRepository,
     private readonly pronunciationAssessmentService: PronunciationAssessmentService,
@@ -20,11 +24,33 @@ export class PronunciationService {
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
 
+  private recordBreadcrumb(
+    action: string,
+    data: Record<string, string | number | boolean | undefined>,
+    level: 'info' | 'warning' = 'info',
+  ): void {
+    Sentry.addBreadcrumb({
+      category: 'pronunciation',
+      message: action,
+      level,
+      data,
+    });
+  }
+
+  @SentryTraced('pronunciation.submit')
   async submitPronunciationAttempt(
     childId: number,
     vocabularyId: number,
     dto: PronunciationSubmitDto,
   ): Promise<PronunciationFeedbackDto> {
+    this.recordBreadcrumb('pronunciation.submit.requested', {
+      childId,
+      vocabularyId,
+      mode: dto.mode,
+      hasAudio: Boolean(dto.audioBase64),
+      recordingDurationMs: dto.recordingDurationMs,
+    });
+
     const vocabulary = await this.pronunciationRepository.getVocabularyWithPronunciationData(
       vocabularyId,
     );
@@ -55,6 +81,22 @@ export class PronunciationService {
       audioBase64: dto.audioBase64,
       audioMimeType: dto.audioMimeType,
     });
+
+    if (assessment.provider !== 'AZURE_SPEECH') {
+      this.recordBreadcrumb(
+        'pronunciation.submit.provider_fallback',
+        {
+          childId,
+          vocabularyId,
+          provider: assessment.provider,
+          mode,
+        },
+        'warning',
+      );
+      Sentry.captureMessage('Pronunciation assessment used fallback provider', {
+        level: 'warning',
+      });
+    }
 
     const activity = await this.pronunciationRepository.create({
       id: undefined,
@@ -91,6 +133,28 @@ export class PronunciationService {
       vocabulary.media && vocabulary.media.length > 0
         ? vocabulary.media[0].url
         : `tts:///${vocabulary.word}`;
+
+    this.recordBreadcrumb('pronunciation.submit.completed', {
+      childId,
+      vocabularyId,
+      mode,
+      overallScore: assessment.overallScore,
+      starRating,
+      provider: assessment.provider,
+    });
+
+    Sentry.logger.info('Pronunciation attempt assessed', {
+      childId,
+      vocabularyId,
+      mode,
+      overallScore: assessment.overallScore,
+      provider: assessment.provider,
+      starRating,
+    });
+
+    this.logger.log(
+      `Pronunciation scored for child=${childId} vocabulary=${vocabularyId} score=${assessment.overallScore} provider=${assessment.provider}`,
+    );
 
     return {
       attemptId: parseInt(activity.id as any, 10) || 0,
@@ -266,6 +330,11 @@ export class PronunciationService {
   }
 
   async getPronunciationProgress(childId: number, vocabularyId: number) {
+    this.recordBreadcrumb('pronunciation.progress.requested', {
+      childId,
+      vocabularyId,
+    });
+
     const vocabulary = await this.prisma.vocabulary.findUnique({
       where: { id: vocabularyId },
       select: { word: true },
@@ -289,6 +358,11 @@ export class PronunciationService {
   }
 
   async getPronunciationHistory(childId: number, limit: number = 10) {
+    this.recordBreadcrumb('pronunciation.history.requested', {
+      childId,
+      limit,
+    });
+
     const attempts = await this.pronunciationRepository.getHistory(childId, limit);
     const vocabularyIds = [...new Set(attempts.map((attempt) => attempt.vocabularyId))];
     const vocabularies = await this.prisma.vocabulary.findMany({
@@ -316,6 +390,10 @@ export class PronunciationService {
   }
 
   async getPronunciationStats(childId: number) {
+    this.recordBreadcrumb('pronunciation.stats.requested', {
+      childId,
+    });
+
     const attempts = await this.pronunciationRepository.getOverallStats(childId);
     const scores = attempts
       .map((attempt) => attempt.overallScore || 0)

@@ -24,11 +24,14 @@ export function AdminModal({ isOpen, onClose, title, children, maxWidth = '2xl' 
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
+      document.body.dataset.adminModalOpen = 'true';
     } else {
       document.body.style.overflow = 'unset';
+      delete document.body.dataset.adminModalOpen;
     }
     return () => {
       document.body.style.overflow = 'unset';
+      delete document.body.dataset.adminModalOpen;
     };
   }, [isOpen]);
 

@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ScheduleModule } from '@nestjs/schedule';
+import { MailModule } from '../mail/mail.module';
 import { ReportController } from './report.controller';
 import { ReportService } from './report.service';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -16,7 +17,7 @@ import { PrismaService } from 'src/prisma/prisma.service';
  * - Preference customization (day/hour/channel)
  */
 @Module({
-  imports: [ScheduleModule.forRoot()],
+  imports: [ScheduleModule.forRoot(), MailModule],
   controllers: [ReportController],
   providers: [ReportService, PrismaService],
   exports: [ReportService],

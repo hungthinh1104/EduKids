@@ -308,10 +308,13 @@ export default function PronunciationPage() {
                                                     let processor: ScriptProcessorNode | null = null;
                                                     let source: MediaStreamAudioSourceNode | null = null;
                                                     let stream: MediaStream | null = null;
+                                                    let recordedSampleRate = 16000;
                                                     try {
                                                         stream = await navigator.mediaDevices.getUserMedia({ audio: true });
                                                         // eslint-disable-next-line @typescript-eslint/no-explicit-any
                                                         ctx = new (window.AudioContext ?? (window as any).webkitAudioContext)({ sampleRate: 16000 });
+                                                        await ctx.resume();
+                                                        recordedSampleRate = ctx.sampleRate || 16000;
                                                         source = ctx.createMediaStreamSource(stream);
                                                         processor = ctx.createScriptProcessor(4096, 1, 1);
                                                         processor.onaudioprocess = (e) => {
@@ -338,7 +341,7 @@ export default function PronunciationPage() {
                                                         source.disconnect();
                                                         stream.getTracks().forEach((t) => t.stop());
                                                         void ctx.close();
-                                                        audioBase64 = encodePcmToWavBase64(chunks) ?? undefined;
+                                                        audioBase64 = encodePcmToWavBase64(chunks, recordedSampleRate) ?? undefined;
                                                     }
 
                                                     // ── submit to backend ─────────────────────────────────
@@ -350,7 +353,6 @@ export default function PronunciationPage() {
                                                             vocabularyId: vocab.id,
                                                             mode: 'WORD',
                                                             referenceText: vocab.word,
-                                                            recognizedText: vocab.word,
                                                             recordingDurationMs: 3000,
                                                             audioBase64,
                                                             audioMimeType: 'audio/wav',

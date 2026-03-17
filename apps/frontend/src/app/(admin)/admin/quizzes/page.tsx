@@ -7,12 +7,14 @@ import { toast } from 'sonner';
 import {
   getCMSTopics,
   getTopicQuizzes,
+  getTopicVocabularies,
   createQuiz,
   updateQuiz,
   deleteQuiz,
   publishQuiz,
   type CMSTopic,
   type CMSQuiz,
+  type CMSVocabulary,
 } from '@/features/cms/api/cms.api';
 
 // Shared Components
@@ -26,6 +28,7 @@ import { QuizForm } from '@/features/cms/components/forms/QuizForm';
 export default function AdminQuizzesPage() {
   const [topics, setTopics] = useState<CMSTopic[]>([]);
   const [quizzes, setQuizzes] = useState<CMSQuiz[]>([]);
+  const [topicVocabularies, setTopicVocabularies] = useState<CMSVocabulary[]>([]);
   const [selectedTopicId, setSelectedTopicId] = useState<number | null>(null);
   
   const [isLoadingTopics, setIsLoadingTopics] = useState(true);
@@ -41,9 +44,16 @@ export default function AdminQuizzesPage() {
       setIsLoadingTopics(true);
       const result = await getCMSTopics({ status: 'all', page: 1, limit: 100 });
       setTopics(result.items);
-      if (result.items.length > 0) {
-        setSelectedTopicId(result.items[0].id);
-      }
+      setSelectedTopicId((currentSelectedTopicId) => {
+        if (
+          currentSelectedTopicId &&
+          result.items.some((topic) => topic.id === currentSelectedTopicId)
+        ) {
+          return currentSelectedTopicId;
+        }
+
+        return result.items.length > 0 ? result.items[0].id : null;
+      });
     } catch (error) {
       if (axios.isAxiosError(error) && error.response?.status === 403) {
         setTopics([]);
@@ -71,6 +81,22 @@ export default function AdminQuizzesPage() {
     }
   }, [selectedTopicId]);
 
+  const loadTopicVocabularies = useCallback(async () => {
+    if (!selectedTopicId) {
+      setTopicVocabularies([]);
+      return;
+    }
+
+    try {
+      const vocabularies = await getTopicVocabularies(selectedTopicId, { page: 1, limit: 100 });
+      setTopicVocabularies(vocabularies);
+    } catch (error) {
+      console.error('Failed to load topic vocabularies:', error);
+      setTopicVocabularies([]);
+      toast.error('Không thể tải danh sách từ của chủ đề');
+    }
+  }, [selectedTopicId]);
+
   useEffect(() => {
     void loadTopics();
   }, [loadTopics]);
@@ -79,12 +105,16 @@ export default function AdminQuizzesPage() {
     void loadQuizzes();
   }, [loadQuizzes]);
 
+  useEffect(() => {
+    void loadTopicVocabularies();
+  }, [loadTopicVocabularies]);
+
   const handleSubmit = async (data: {
     title: string;
     description: string;
     questionText: string;
-    correctAnswer: string;
     options: string[];
+    correctAnswerIndex: 0 | 1 | 2 | 3;
     difficultyLevel: 1 | 2 | 3 | 4 | 5;
   }) => {
     if (!selectedTopicId) return;
@@ -92,9 +122,9 @@ export default function AdminQuizzesPage() {
     try {
       setIsSubmitting(true);
       // Map options to {text, isCorrect} format matching backend CreateQuizStructureDto
-      const optionsPayload = data.options.map((text) => ({
+      const optionsPayload = data.options.map((text, index) => ({
         text,
-        isCorrect: text === data.correctAnswer,
+        isCorrect: index === data.correctAnswerIndex,
       }));
 
       const payload: Parameters<typeof createQuiz>[0] = {
@@ -119,7 +149,10 @@ export default function AdminQuizzesPage() {
       void loadQuizzes();
     } catch (error) {
       console.error('Failed to save quiz:', error);
-      toast.error('Lỗi khi lưu bài tập');
+      const message = axios.isAxiosError(error)
+        ? String(error.response?.data?.message || 'Lỗi khi lưu bài tập')
+        : 'Lỗi khi lưu bài tập';
+      toast.error(message);
     } finally {
       setIsSubmitting(false);
     }
@@ -167,6 +200,7 @@ export default function AdminQuizzesPage() {
     q.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
     q.questionText?.toLowerCase().includes(searchQuery.toLowerCase())
   );
+  const selectedTopic = topics.find((topic) => topic.id === selectedTopicId) ?? null;
 
   const getDifficultyColor = (level: number) => {
     switch (level) {
@@ -228,6 +262,48 @@ export default function AdminQuizzesPage() {
           onSearchChange={setSearchQuery}
           placeholder="Tìm tiêu đề hoặc nội dung câu hỏi..."
         />
+      )}
+
+      {selectedTopicId && (
+        <div className="bg-card rounded-2xl shadow-sm border border-border/70 p-6 mb-6">
+          <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
+            <div>
+              <h3 className="text-lg font-bold text-heading">Chọn nhanh từ trong chủ đề</h3>
+              <p className="text-sm text-caption">
+                {selectedTopic?.name ?? 'Chủ đề hiện tại'} đang hiển thị tối đa {topicVocabularies.length} từ để pick nhanh khi tạo quiz.
+              </p>
+            </div>
+            <span className="px-3 py-1 rounded-full bg-primary-light text-primary text-xs font-bold">
+              {topicVocabularies.length} từ
+            </span>
+          </div>
+
+          {topicVocabularies.length === 0 ? (
+            <p className="text-sm text-caption">
+              Chủ đề này chưa có từ vựng nào để gợi ý nhanh cho quiz.
+            </p>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              {topicVocabularies.slice(0, 16).map((vocabulary) => (
+                <span
+                  key={vocabulary.id}
+                  className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary-light/40 px-3 py-1.5 text-xs font-semibold text-primary-dark"
+                  title={vocabulary.definition}
+                >
+                  <span>{vocabulary.word}</span>
+                  {vocabulary.definition ? (
+                    <span className="text-caption font-medium">• {vocabulary.definition}</span>
+                  ) : null}
+                </span>
+              ))}
+              {topicVocabularies.length > 16 ? (
+                <span className="inline-flex items-center rounded-full border border-border px-3 py-1.5 text-xs font-semibold text-caption">
+                  +{topicVocabularies.length - 16} từ khác
+                </span>
+              ) : null}
+            </div>
+          )}
+        </div>
       )}
 
       {/* 4. Data List */}
@@ -350,6 +426,8 @@ export default function AdminQuizzesPage() {
       >
         <QuizForm 
           initialData={editingQuiz}
+          topicName={selectedTopic?.name ?? ''}
+          topicVocabularies={topicVocabularies}
           onSubmit={handleSubmit}
           onCancel={() => setShowCreateModal(false)}
           isLoading={isSubmitting}

@@ -15,6 +15,10 @@ scrape_configs:
 
   - job_name: edukids-backend
     metrics_path: /api/metrics
+    # When METRICS_TOKEN is set on the backend, provide it here.
+    # Set bearer_token via a file or env substitution in production:
+    #   authorization:
+    #     credentials: <your-token>
     static_configs:
       - targets: ["backend:3001"]
         labels:

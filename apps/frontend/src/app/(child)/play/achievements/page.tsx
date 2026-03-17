@@ -22,6 +22,7 @@ export default function AchievementsPage() {
     const [allBadges, setAllBadges] = useState<Badge[]>([]);
     const [earnedBadges, setEarnedBadges] = useState<Badge[]>([]);
     const [loading, setLoading] = useState(true);
+    const [loadError, setLoadError] = useState<string | null>(null);
     const [activeCategory, setActiveCategory] = useState('Tất cả');
     const [selectedBadge, setSelectedBadge] = useState<Badge | null>(null);
 
@@ -31,6 +32,7 @@ export default function AchievementsPage() {
         async function loadBadges(resolvedChildId: number) {
             try {
                 setLoading(true);
+                setLoadError(null);
                 const [all, earned] = await Promise.all([
                     gamificationApi.getBadges(),
                     gamificationApi.getEarnedBadges(resolvedChildId)
@@ -39,6 +41,7 @@ export default function AchievementsPage() {
                 setEarnedBadges(earned);
             } catch (error) {
                 console.error('Failed to load badges:', error);
+                setLoadError('Không thể tải huy hiệu lúc này.');
                 setAllBadges([]);
                 setEarnedBadges([]);
             } finally {
@@ -98,6 +101,11 @@ export default function AchievementsPage() {
                     <div className="text-center py-12">
                         <Body className="text-caption">Đang tải huy hiệu...</Body>
                     </div>
+                ) : loadError ? (
+                    <div className="text-center py-12 bg-card rounded-[2rem] border-2 border-border">
+                        <Heading level={4} className="text-heading text-lg mb-2">Chưa tải được huy hiệu</Heading>
+                        <Body className="text-caption">{loadError}</Body>
+                    </div>
                 ) : (
                     <>
                         {/* Progress banner */}
@@ -142,7 +150,7 @@ export default function AchievementsPage() {
                                         <motion.button
                                             key={badge.id}
                                             layout
-                                            initial={{ opacity: 0, scale: 0.8 }}
+                                            initial={{ opacity: 1, scale: 0.8 }}
                                             animate={{ opacity: isEarned ? 1 : 0.55, scale: 1 }}
                                             exit={{ opacity: 0, scale: 0.8 }}
                                             transition={{ delay: i * 0.04 }}

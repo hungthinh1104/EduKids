@@ -1,6 +1,7 @@
 import { Module } from "@nestjs/common";
 import { ThrottlerModule } from "@nestjs/throttler";
 import { APP_GUARD } from "@nestjs/core";
+import { SentryModule } from "@sentry/nestjs/setup";
 import { AnalyticsModule } from "./modules/analytics/analytics.module";
 import { AuthModule } from "./modules/auth/auth.module";
 import { ContentModule } from "./modules/content/content.module";
@@ -21,8 +22,10 @@ import { CmsModule } from "./modules/cms/cms.module";
 import { AdminAnalyticsModule } from "./modules/admin-analytics/admin-analytics.module";
 import { MediaValidationModule } from "./modules/media-validation/media-validation.module";
 import { UsersModule } from "./modules/users/users.module";
+import { RootController } from "./root.controller";
 
 @Module({
+  controllers: [RootController],
   imports: [
     // Rate limiting configuration
     ThrottlerModule.forRoot([
@@ -31,6 +34,7 @@ import { UsersModule } from "./modules/users/users.module";
         limit: 100, // 100 requests per 60 seconds (default)
       },
     ]),
+    SentryModule.forRoot(),
     PrismaModule,
     AuthModule,
     ContentModule,

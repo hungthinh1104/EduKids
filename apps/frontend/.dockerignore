@@ -1,18 +1,52 @@
+# Dependencies
 node_modules
+
+# Build output
 .next
 dist
 out
-coverage
+.swc
+
+# Git
 .git
 .gitignore
+
+# Docker
 Dockerfile*
+.dockerignore
+
+# Docs
 *.md
+README*
+DESIGN-SYSTEM.md
+
+# Env files
 .env
 .env.*
 !.env.example
+
+# Tests & coverage
+coverage
+jest.config*
+vitest.config*
+**/*.spec.ts
+**/*.test.ts
+jest.setup*
+
+# Logs
 *.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# Editor / OS
 .vscode
 .idea
+.DS_Store
+Thumbs.db
+*.swp
+
+# Type check output
+*.tsbuildinfo
+type_output.txt
+lint_output.txt

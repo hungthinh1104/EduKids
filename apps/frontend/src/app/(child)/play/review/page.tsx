@@ -146,7 +146,10 @@ export default function ReviewPage() {
     const [done, setDone] = useState(false);
     const [leaving, setLeaving] = useState(false);
     const [reviewDeck, setReviewDeck] = useState<ReviewItem[]>([]);
+    const [suggestedItems, setSuggestedItems] = useState<ReviewItem[]>([]);
+    const [suggestionMessage, setSuggestionMessage] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
+    const [loadError, setLoadError] = useState<string | null>(null);
     const transitionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     useEffect(() => {
@@ -163,10 +166,17 @@ export default function ReviewPage() {
         async function fetchReviewSession(resolvedChildId: number) {
             try {
                 setLoading(true);
+                setLoadError(null);
                 const session = await reviewApi.getSession(resolvedChildId, 10);
                 setReviewDeck(session.items);
+                setSuggestedItems(session.suggestedItems ?? []);
+                setSuggestionMessage(session.suggestionMessage ?? null);
             } catch (err) {
                 console.error('Failed to fetch review session:', err);
+                setLoadError('Không thể tải bài ôn tập lúc này.');
+                setReviewDeck([]);
+                setSuggestedItems([]);
+                setSuggestionMessage(null);
             } finally {
                 setLoading(false);
             }
@@ -178,16 +188,53 @@ export default function ReviewPage() {
         return <LoadingScreen text="Đang tải bài ôn tập..." />;
     }
 
-    if (reviewDeck.length === 0) {
+    if (loadError) {
         return (
             <div className="min-h-screen flex items-center justify-center">
                 <div className="text-center max-w-md px-6">
-                    <div className="text-6xl mb-4">🎉</div>
-                    <Heading level={2} className="mb-2">Không có từ nào cần ôn!</Heading>
-                    <Body className="text-caption mb-6">Bé đã ôn tất cả từ vựng rồi. Hãy quay lại sau nhé!</Body>
+                    <div className="text-6xl mb-4">😵</div>
+                    <Heading level={2} className="mb-2">Chưa mở được bài ôn tập</Heading>
+                    <Body className="text-caption mb-6">{loadError}</Body>
                     <Link href="/play">
                         <KidButton variant="default">Quay về màn hình chính</KidButton>
                     </Link>
+                </div>
+            </div>
+        );
+    }
+
+    if (reviewDeck.length === 0) {
+        return (
+            <div className="min-h-screen flex items-center justify-center">
+                <div className="text-center max-w-lg px-6">
+                    <div className="text-6xl mb-4">🎉</div>
+                    <Heading level={2} className="mb-2">Hiện chưa có từ đến lượt ôn</Heading>
+                    <Body className="text-caption mb-4">
+                        {suggestionMessage || 'Bé chưa có thẻ ôn tập đến hạn. Mình gợi ý vài từ mới để tiếp tục học nhé!'}
+                    </Body>
+
+                    {suggestedItems.length > 0 ? (
+                        <div className="mb-6 rounded-[2rem] border border-border bg-card p-5 text-left">
+                            <Heading level={4} className="text-heading text-lg mb-3">Gợi ý học tiếp</Heading>
+                            <div className="space-y-3">
+                                {suggestedItems.slice(0, 3).map((item) => (
+                                    <div key={item.reviewId} className="rounded-2xl bg-background px-4 py-3 border border-border">
+                                        <div className="font-heading font-black text-heading">{item.word}</div>
+                                        <Caption className="text-caption">{item.translation}</Caption>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    ) : null}
+
+                    <div className="flex flex-col gap-3">
+                        <Link href="/play">
+                            <KidButton variant="default">Quay về màn hình chính</KidButton>
+                        </Link>
+                        <Link href="/play">
+                            <KidButton variant="outline">Chọn chủ đề mới để học</KidButton>
+                        </Link>
+                    </div>
                 </div>
             </div>
         );
@@ -236,10 +283,14 @@ export default function ReviewPage() {
         setDone(false);
 
         try {
+            setLoadError(null);
             const session = await reviewApi.getSession(child.id, 10);
             setReviewDeck(session.items);
+            setSuggestedItems(session.suggestedItems ?? []);
+            setSuggestionMessage(session.suggestionMessage ?? null);
         } catch (err) {
             console.error('Failed to fetch new session:', err);
+            setLoadError('Không thể tải lại bài ôn tập.');
         }
     }
 
@@ -270,7 +321,7 @@ export default function ReviewPage() {
                     <div className="flex-1 h-3.5 bg-background rounded-full border border-border overflow-hidden">
                         <motion.div animate={{ width: `${progress}%` }} transition={{ duration: 0.4 }} className="h-full bg-gradient-to-r from-secondary to-primary rounded-full" />
                     </div>
-                    <Caption className="text-caption text-sm font-black whitespace-nowrap">{index}/{reviewDeck.length}</Caption>
+                    <Caption className="text-caption text-sm font-black whitespace-nowrap">{Math.min(index + 1, reviewDeck.length)}/{reviewDeck.length}</Caption>
                 </div>
             </div>
 

@@ -4,11 +4,14 @@ import {
   ExceptionFilter,
   HttpException,
   HttpStatus,
+  Logger,
 } from "@nestjs/common";
+import * as Sentry from "@sentry/nestjs";
 import { Request, Response } from "express";
 
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
+  private readonly logger = new Logger(HttpExceptionFilter.name);
   catch(exception: unknown, host: ArgumentsHost): void {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
@@ -22,9 +25,17 @@ export class HttpExceptionFilter implements ExceptionFilter {
       ? exception.message
       : "Internal server error";
 
+    // Only report 5xx errors to Sentry — 4xx (401/403/404/422) are expected
+    // client errors and create noise in the Sentry dashboard.
+    if (status >= 500) {
+      Sentry.captureException(exception);
+    }
+
     if (!isHttpException) {
-      // Temporary runtime diagnostics for unexpected errors
-      console.error("[UnhandledException]", exception);
+      this.logger.error(
+        `Unhandled exception: ${String(exception)}`,
+        exception instanceof Error ? exception.stack : undefined,
+      );
     }
 
     response.status(status).json({

@@ -223,9 +223,11 @@ export class VocabularyReviewService {
       count: suggestions.length,
       items: suggestions.map((item) => ({
         vocabularyId: item.id,
+        topicId: item.topicId,
         word: item.word,
         definition: item.translation,
         example: item.exampleSentence,
+        pronunciation: item.phonetic,
       })),
       message:
         suggestions.length > 0

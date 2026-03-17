@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
+import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
@@ -182,6 +183,7 @@ export default function FlashcardPage() {
     const [logs, setLogs] = useState<SRSLog[]>([]);
     const [done, setDone] = useState(false);
     const [leaving, setLeaving] = useState(false);
+    const [activityWarning, setActivityWarning] = useState<string | null>(null);
     
     // Ref to track timeout and prevent memory leak on unmount
     const transitionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -247,13 +249,22 @@ export default function FlashcardPage() {
             const optionIds = flashcard.options.map((opt) => opt.id);
             const correctOptionId = optionIds.find((id) => id === card.id) ?? optionIds[0];
             const wrongOptionId = optionIds.find((id) => id !== correctOptionId) ?? correctOptionId;
+            const shouldSubmitIncorrect = rating === 'again' || rating === 'hard';
 
             if (typeof correctOptionId === 'number') {
-                const selectedOptionId = rating === 'again' || rating === 'hard' ? wrongOptionId : correctOptionId;
+                if (shouldSubmitIncorrect && wrongOptionId === correctOptionId) {
+                    throw new Error('Not enough flashcard options to record an incorrect attempt safely.');
+                }
+
+                const selectedOptionId = shouldSubmitIncorrect ? wrongOptionId : correctOptionId;
                 await flashcardApi.submitDragDrop(card.id, selectedOptionId, 2000);
             }
         } catch (err) {
-            console.error('Failed to submit flashcard activity:', err);
+            if (axios.isAxiosError(err) && err.response?.status === 400) {
+                setActivityWarning('Chủ đề này chưa đủ đáp án để ghi nhận điểm flashcard tự động. Bé vẫn có thể học tiếp nhé.');
+            } else {
+                console.error('Failed to submit flashcard activity:', err);
+            }
         }
 
         playSound('pop');
@@ -294,6 +305,12 @@ export default function FlashcardPage() {
                         description="Chủ đề này chưa có thẻ flashcard để luyện."
                         emoji="📭"
                     />
+                ) : deck.length < 2 ? (
+                    <ModeStatePanel
+                        title="Chưa đủ thẻ để chơi flashcard"
+                        description="Chủ đề này cần ít nhất 2 từ vựng đã xuất bản để tạo lựa chọn drag-drop."
+                        emoji="🧩"
+                    />
                 ) : done ? (
                     <SessionComplete logs={logs} topicId={topicId} onRestart={() => { setIndex(0); setFlipped(false); setLogs([]); setDone(false); }} />
                 ) : (
@@ -320,6 +337,14 @@ export default function FlashcardPage() {
                                     <Volume2 size={18} /> Nghe phát âm
                                 </motion.button>
                             </div>
+
+                            {activityWarning && (
+                                <div className="max-w-md mx-auto">
+                                    <Caption className="block text-center text-warning">
+                                        {activityWarning}
+                                    </Caption>
+                                </div>
+                            )}
 
                             {/* SRS Buttons — only show after flip */}
                             <AnimatePresence>

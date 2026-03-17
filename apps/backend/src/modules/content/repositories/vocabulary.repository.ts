@@ -1,5 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { PrismaService } from "../../../prisma/prisma.service";
+import { CmsContentStatus } from "@prisma/client";
 
 @Injectable()
 export class VocabularyRepository {
@@ -7,7 +8,15 @@ export class VocabularyRepository {
 
   async findByTopicId(topicId: number) {
     return await this.prisma.vocabulary.findMany({
-      where: { topicId },
+      where: {
+        topicId,
+        status: CmsContentStatus.PUBLISHED,
+        deletedAt: null,
+        topic: {
+          status: CmsContentStatus.PUBLISHED,
+          deletedAt: null,
+        },
+      },
       include: {
         media: true,
       },
@@ -16,8 +25,16 @@ export class VocabularyRepository {
   }
 
   async findById(id: number) {
-    return await this.prisma.vocabulary.findUnique({
-      where: { id },
+    return await this.prisma.vocabulary.findFirst({
+      where: {
+        id,
+        status: CmsContentStatus.PUBLISHED,
+        deletedAt: null,
+        topic: {
+          status: CmsContentStatus.PUBLISHED,
+          deletedAt: null,
+        },
+      },
       include: {
         media: true,
       },

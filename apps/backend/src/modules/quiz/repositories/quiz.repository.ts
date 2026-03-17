@@ -1,7 +1,12 @@
 import { Injectable } from "@nestjs/common";
 import { PrismaService } from "../../../prisma/prisma.service";
 import { QuizDifficulty } from "../dto/quiz.dto";
-import { Vocabulary } from "@prisma/client";
+import {
+  CmsContentStatus,
+  TopicQuiz,
+  TopicQuizOption,
+  Vocabulary,
+} from "@prisma/client";
 
 interface LearnerPerformance {
   averageScore: number;
@@ -23,7 +28,15 @@ export class QuizRepository {
   ): Promise<LearnerPerformance> {
     // First get vocabularies for this topic
     const topicVocabularies = await this.prisma.vocabulary.findMany({
-      where: { topicId },
+      where: {
+        topicId,
+        status: CmsContentStatus.PUBLISHED,
+        deletedAt: null,
+        topic: {
+          status: CmsContentStatus.PUBLISHED,
+          deletedAt: null,
+        },
+      },
       select: { id: true },
     });
     const vocabIds = topicVocabularies.map((v) => v.id);
@@ -71,7 +84,18 @@ export class QuizRepository {
 
     const vocabularyMastery = new Map<number, number>();
     const progressRecords = await this.prisma.learningProgress.findMany({
-      where: { childId, vocabulary: { topicId } },
+      where: {
+        childId,
+        vocabulary: {
+          topicId,
+          status: CmsContentStatus.PUBLISHED,
+          deletedAt: null,
+          topic: {
+            status: CmsContentStatus.PUBLISHED,
+            deletedAt: null,
+          },
+        },
+      },
     });
 
     progressRecords.forEach((p) => {
@@ -138,7 +162,15 @@ export class QuizRepository {
     vocabularyMastery: Map<number, number>,
   ): Promise<Vocabulary[]> {
     const allVocabulary = await this.prisma.vocabulary.findMany({
-      where: { topicId },
+      where: {
+        topicId,
+        status: CmsContentStatus.PUBLISHED,
+        deletedAt: null,
+        topic: {
+          status: CmsContentStatus.PUBLISHED,
+          deletedAt: null,
+        },
+      },
       include: {
         media: {
           where: { type: "IMAGE" },
@@ -172,7 +204,16 @@ export class QuizRepository {
     count: number = 3,
   ): Promise<Vocabulary[]> {
     return this.prisma.vocabulary.findMany({
-      where: { topicId, id: { not: correctVocabularyId } },
+      where: {
+        topicId,
+        id: { not: correctVocabularyId },
+        status: CmsContentStatus.PUBLISHED,
+        deletedAt: null,
+        topic: {
+          status: CmsContentStatus.PUBLISHED,
+          deletedAt: null,
+        },
+      },
       take: count,
       orderBy: { id: "asc" },
       skip: Math.floor(Math.random() * 10),
@@ -180,9 +221,36 @@ export class QuizRepository {
   }
 
   async getTopicById(topicId: number) {
-    return this.prisma.topic.findUnique({
-      where: { id: topicId },
+    return this.prisma.topic.findFirst({
+      where: {
+        id: topicId,
+        status: CmsContentStatus.PUBLISHED,
+        deletedAt: null,
+      },
       select: { id: true, name: true, description: true },
+    });
+  }
+
+  async getPublishedTopicQuizzes(
+    topicId: number,
+    limit: number,
+  ): Promise<Array<TopicQuiz & { options: TopicQuizOption[] }>> {
+    return this.prisma.topicQuiz.findMany({
+      where: {
+        topicId,
+        status: CmsContentStatus.PUBLISHED,
+        topic: {
+          status: CmsContentStatus.PUBLISHED,
+          deletedAt: null,
+        },
+      },
+      include: {
+        options: {
+          orderBy: { id: "asc" },
+        },
+      },
+      orderBy: { createdAt: "asc" },
+      take: limit,
     });
   }
 

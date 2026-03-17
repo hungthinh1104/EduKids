@@ -195,6 +195,16 @@ export const semanticColors = {
   textTertiary: colors.gray[500],
   textInverse: colors.white,
 
+  // Text (semantic / dark mode aware)
+  heading: colors.gray[900],
+  body: colors.gray[700],
+  muted: colors.gray[500],
+
+  // Rewards / badges
+  star: colors.yellow[500],
+  badge: colors.orange[500],
+  medal: colors.yellow[700],
+
   // Borders & Dividers
   borderPrimary: colors.gray[200],
   borderSecondary: colors.gray[300],

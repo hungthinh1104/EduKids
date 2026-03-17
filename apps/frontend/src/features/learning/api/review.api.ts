@@ -17,6 +17,17 @@ interface ReviewSessionDto {
   items: VocabularyItemForReviewDto[];
   itemCount: number;
   sessionStartedAt: string;
+  suggestion?: {
+    message?: string;
+    suggestedItems?: Array<{
+      vocabularyId: number;
+      topicId?: number;
+      word: string;
+      definition: string;
+      example?: string;
+      pronunciation?: string;
+    }>;
+  };
 }
 
 interface ReviewResultDto {
@@ -55,11 +66,14 @@ export interface ReviewSession {
   childId: number;
   items: ReviewItem[];
   totalItems: number;
+  suggestionMessage?: string;
+  suggestedItems?: ReviewItem[];
 }
 
 export interface ReviewItem {
   reviewId: string;
   vocabularyId: number;
+  topicId?: number;
   word: string;
   translation: string;
   phonetic: string;
@@ -143,6 +157,25 @@ const mapSessionItem = (item: VocabularyItemForReviewDto): ReviewItem => ({
   interval: item.currentInterval,
 });
 
+const mapSuggestedItem = (item: {
+  vocabularyId: number;
+  topicId?: number;
+  word: string;
+  definition: string;
+  example?: string;
+  pronunciation?: string;
+}): ReviewItem => ({
+  reviewId: `suggested-${item.vocabularyId}`,
+  vocabularyId: item.vocabularyId,
+  topicId: item.topicId,
+  word: item.word,
+  translation: item.definition,
+  phonetic: item.pronunciation || '',
+  nextReviewDate: '',
+  easeFactor: 2.5,
+  interval: 0,
+});
+
 const mapReviewResult = (result: ReviewResultDto): ReviewResult => ({
   vocabularyId: result.vocabularyId,
   nextReviewDate: toIsoString(result.nextReview),
@@ -165,6 +198,10 @@ export const reviewApi = {
       childId: payload.childId,
       items: payload.items.map(mapSessionItem),
       totalItems: payload.itemCount,
+      suggestionMessage: payload.suggestion?.message,
+      suggestedItems: Array.isArray(payload.suggestion?.suggestedItems)
+        ? payload.suggestion.suggestedItems.map(mapSuggestedItem)
+        : [],
     };
   },
 

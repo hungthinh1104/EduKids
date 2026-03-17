@@ -64,9 +64,13 @@ export interface LeaderboardEntry {
   rank: number;
   childId: number;
   nickname: string;
+  childName?: string;
   avatar: string;
   totalPoints: number;
   level: number;
+  currentLevel?: number;
+  badgesEarned?: number;
+  isCurrentUser?: boolean;
 }
 
 export interface ApiEnvelope<T> {
@@ -243,6 +247,20 @@ export const gamificationApi = {
     const response = await axiosInstance.get<ApiEnvelope<LeaderboardEntry[]>>(
       `gamification/leaderboard?limit=${limit}`
     );
-    return response.data.data;
+    return (response.data.data ?? []).map((entry) => ({
+      ...entry,
+      nickname:
+        typeof entry.nickname === 'string'
+          ? entry.nickname
+          : typeof entry.childName === 'string'
+            ? entry.childName
+            : 'User',
+      level:
+        typeof entry.level === 'number'
+          ? entry.level
+          : typeof entry.currentLevel === 'number'
+            ? entry.currentLevel
+            : 1,
+    }));
   },
 };

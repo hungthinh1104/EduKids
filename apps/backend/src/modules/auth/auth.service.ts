@@ -4,11 +4,15 @@ import {
   ConflictException,
   ForbiddenException,
   BadRequestException,
+  InternalServerErrorException,
+  Logger,
 } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import * as bcrypt from "bcryptjs";
 import { createClient, RedisClientType } from "redis";
 import { PrismaService } from "../../prisma/prisma.service";
+import { MailService } from "../mail/mail.service";
+import { MailTemplateService } from "../mail/mail-template.service";
 import { RegisterDto } from "./dto/register.dto";
 import { LoginDto } from "./dto/login.dto";
 import { ForgotPasswordDto } from "./dto/forgot-password.dto";
@@ -22,6 +26,7 @@ import {
 
 // [C-4] Redis client for rate limiting — persistent across server restarts,
 // works correctly with multiple instances (load balancer).
+const redisLogger = new Logger("AuthRedisClient");
 let redisClient: RedisClientType | null = null;
 const localLoginAttemptStore = new Map<string, { count: number; expiresAt: number }>();
 
@@ -32,7 +37,7 @@ async function getRedisClient(): Promise<RedisClientType | null> {
       url: process.env.REDIS_URL,
     }) as RedisClientType;
     redisClient.on("error", (err) =>
-      console.error("[Redis] Rate limit client error:", err),
+      redisLogger.error("Rate limit client error", err instanceof Error ? err.stack : String(err)),
     );
     await redisClient.connect();
   }
@@ -88,6 +93,8 @@ export class AuthService {
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
+    private mailService: MailService,
+    private mailTemplateService: MailTemplateService,
   ) {}
 
   /**
@@ -105,7 +112,7 @@ export class AuthService {
     }
 
     // Hash password with bcrypt (salt rounds: 10)
-    const passwordHash = await bcrypt.hash(dto.password, 10);
+    const passwordHash = await bcrypt.hash(dto.password, 12);
 
     // Create user with PARENT role (raw SQL workaround)
     let createdUsers: Array<{
@@ -414,14 +421,14 @@ export class AuthService {
 
   /**
    * UC-00: Forgot password — generate reset token, store in Redis 15 min
-   * Demo mode: returns token directly (production would email it)
+   * Sends reset email when SMTP is configured
    */
   async forgotPassword(
     dto: ForgotPasswordDto,
   ): Promise<{ message: string; resetToken?: string }> {
     const users = await this.prisma.$queryRaw<
-      Array<{ id: number }>
-    >`SELECT "id" FROM "User" WHERE "email" = ${dto.email} AND "isActive" = true LIMIT 1`;
+      Array<{ id: number; email: string; firstName: string | null }>
+    >`SELECT "id", "email", "firstName" FROM "User" WHERE "email" = ${dto.email} AND "isActive" = true LIMIT 1`;
 
     // Anti-enumeration: always return same message regardless of result
     if (users.length === 0) {
@@ -429,6 +436,8 @@ export class AuthService {
     }
 
     const userId = users[0].id;
+    const userEmail = users[0].email;
+    const userFirstName = users[0].firstName;
     const { randomBytes } = await import("crypto");
     const resetToken = randomBytes(32).toString("hex");
 
@@ -445,6 +454,30 @@ export class AuthService {
         action: "PASSWORD_RESET_REQUESTED",
         details: `Password reset requested`,
       },
+    });
+
+    const frontendUrl =
+      process.env.FRONTEND_URL?.trim() ||
+      (process.env.NODE_ENV === "production" ? "" : "http://localhost:3000");
+
+    if (!frontendUrl) {
+      throw new InternalServerErrorException(
+        "FRONTEND_URL is required in production to build password reset links.",
+      );
+    }
+
+    const resetUrl = `${frontendUrl.replace(/\/$/, "")}/reset-password?token=${resetToken}`;
+    const emailTemplate = this.mailTemplateService.renderResetPasswordEmail({
+      firstName: userFirstName,
+      email: userEmail,
+      resetUrl,
+      expiresInMinutes: 15,
+    });
+    await this.mailService.sendMail({
+      to: userEmail,
+      subject: emailTemplate.subject,
+      html: emailTemplate.html,
+      text: emailTemplate.text,
     });
 
     const response: { message: string; resetToken?: string } = {
@@ -480,7 +513,7 @@ export class AuthService {
     }
 
     const userId = parseInt(userIdStr, 10);
-    const passwordHash = await bcrypt.hash(dto.newPassword, 10);
+    const passwordHash = await bcrypt.hash(dto.newPassword, 12);
 
     await this.prisma.$executeRaw`
       UPDATE "User" SET "passwordHash" = ${passwordHash}, "updatedAt" = NOW()
@@ -522,7 +555,7 @@ export class AuthService {
       throw new BadRequestException("Current password is incorrect");
     }
 
-    const newHash = await bcrypt.hash(dto.newPassword, 10);
+    const newHash = await bcrypt.hash(dto.newPassword, 12);
 
     await this.prisma.$executeRaw`
       UPDATE "User" SET "passwordHash" = ${newHash}, "updatedAt" = NOW()

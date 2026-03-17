@@ -9,6 +9,40 @@ type TextAlign = 'left' | 'center' | 'right' | 'justify';
 type TextColor = keyof typeof semanticColors;
 type TextSize = 'sm' | 'base' | 'lg';
 
+// ==========================================
+// They use CSS custom properties so dark mode works automatically.
+// Fallback to semanticColors (static) for places where CSS vars aren't available.
+const cssVarColorMap: Partial<Record<TextColor, string>> = {
+  primary: 'var(--color-primary)',
+  primaryLight: 'var(--color-primary-light)',
+  primaryDark: 'var(--color-primary-dark)',
+  secondary: 'var(--color-secondary)',
+  secondaryLight: 'var(--color-secondary-light)',
+  secondaryDark: 'var(--color-secondary-dark)',
+  accent: 'var(--color-accent)',
+  accentLight: 'var(--color-accent-light)',
+  accentDark: 'var(--color-accent-dark)',
+  success: 'var(--color-success)',
+  successLight: 'var(--color-success-light)',
+  warning: 'var(--color-warning)',
+  warningLight: 'var(--color-warning-light)',
+  error: 'var(--color-error)',
+  info: 'var(--color-info)',
+  star: 'var(--color-star)',
+  badge: 'var(--color-badge)',
+  medal: 'var(--color-medal)',
+  heading: 'var(--color-text-heading)',
+  body: 'var(--color-text-body)',
+  muted: 'var(--color-text-muted)',
+  textInverse: 'var(--color-text-white)',
+  bgPrimary: 'var(--color-bg-main)',
+  bgSecondary: 'var(--color-bg-card)',
+  borderPrimary: 'var(--color-border)',
+  borderSecondary: 'var(--color-border-secondary)',
+};
+
+const resolveColor = (color: TextColor) => cssVarColorMap[color] ?? semanticColors[color];
+
 interface BaseTypographyProps {
   children: React.ReactNode;
   className?: string;
@@ -32,12 +66,14 @@ export function Display({
   weight = 'bold',
   asChild: Component = 'h1',
 }: BaseTypographyProps & { asChild?: React.ElementType }) {
+  const resolvedColor = resolveColor(color);
+
   return (
     <Component
       className={`
         text-display
         text-${align}
-        text-[${semanticColors[color]}]
+        text-[${resolvedColor}]
         font-${weight}
         leading-tight
         tracking-wider
@@ -45,7 +81,7 @@ export function Display({
       `}
       style={{
         ...style,
-        color: semanticColors[color] as string,
+        color: resolvedColor as string,
         textAlign: align,
       }}
     >
@@ -66,6 +102,8 @@ export function Title({
   color = 'textPrimary',
   weight = 'bold',
 }: BaseTypographyProps) {
+  const resolvedColor = resolveColor(color);
+
   return (
     <h1
       className={`
@@ -79,7 +117,7 @@ export function Title({
       `}
       style={{
         ...style,
-        color: semanticColors[color] as string,
+        color: resolvedColor as string,
         textAlign: align,
       }}
     >
@@ -113,6 +151,8 @@ export function Heading({
 
   const HeadingTag = `h${level}` as keyof React.JSX.IntrinsicElements;
 
+  const resolvedColor = resolveColor(color);
+
   return React.createElement(
     HeadingTag,
     {
@@ -126,7 +166,7 @@ export function Heading({
       `,
       style: {
         ...style,
-        color: semanticColors[color] as string,
+        color: resolvedColor as string,
         textAlign: align,
       },
     },
@@ -157,6 +197,8 @@ export function Body({
     lg: 'text-lg',
   };
 
+  const resolvedColor = resolveColor(color);
+
   return (
     <p
       className={`
@@ -168,7 +210,7 @@ export function Body({
       `}
       style={{
         ...style,
-        color: semanticColors[color] as string,
+        color: resolvedColor as string,
         textAlign: align,
       }}
     >
@@ -194,6 +236,8 @@ export function Caption({
   weight = 'normal',
   muted = false,
 }: CaptionProps) {
+  const resolvedColor = resolveColor(color);
+
   return (
     <span
       className={`
@@ -206,7 +250,7 @@ export function Caption({
       `}
       style={{
         ...style,
-        color: semanticColors[color] as string,
+        color: resolvedColor as string,
         textAlign: align,
       }}
     >
@@ -235,6 +279,8 @@ export function Label({
   weight = 'medium',
   required = false,
 }: LabelProps) {
+  const resolvedColor = resolveColor(color);
+
   return (
     <label
       htmlFor={htmlFor}
@@ -249,7 +295,7 @@ export function Label({
       `}
       style={{
         ...style,
-        color: semanticColors[color] as string,
+        color: resolvedColor as string,
         textAlign: align,
       }}
     >
@@ -270,6 +316,8 @@ export function ButtonText({
   color = 'textInverse',
   weight = 'semibold',
 }: Omit<BaseTypographyProps, 'align'>) {
+  const resolvedColor = resolveColor(color);
+
   return (
     <span
       className={`
@@ -283,7 +331,7 @@ export function ButtonText({
       `}
       style={{
         ...style,
-        color: semanticColors[color] as string,
+        color: resolvedColor as string,
       }}
     >
       {children}
@@ -313,6 +361,8 @@ export function HelperText({
     info: 'info',
   };
 
+  const resolvedColor = resolveColor(colorMap[variant]);
+
   return (
     <span
       className={`
@@ -326,7 +376,7 @@ export function HelperText({
       `}
       style={{
         ...style,
-        color: semanticColors[colorMap[variant]] as string,
+        color: resolvedColor as string,
       }}
     >
       {children}
@@ -357,6 +407,7 @@ export function Emphasis({
   };
 
   const Tag = tagMap[variant] as keyof React.JSX.IntrinsicElements;
+  const resolvedColor = resolveColor(color);
 
   return React.createElement(
     Tag,
@@ -364,7 +415,7 @@ export function Emphasis({
       className: `${className}`,
       style: {
         ...style,
-        color: semanticColors[color] as string,
+        color: resolvedColor as string,
       },
     },
     children
@@ -386,6 +437,8 @@ export function ListItem({
   color = 'textPrimary',
   bullet = true,
 }: ListItemProps) {
+  const resolvedColor = resolveColor(color);
+
   return (
     <li
       className={`
@@ -397,7 +450,7 @@ export function ListItem({
       `}
       style={{
         ...style,
-        color: semanticColors[color] as string,
+        color: resolvedColor as string,
       }}
     >
       {children}
@@ -426,6 +479,8 @@ export function Truncate({
     3: 'line-clamp-3',
   };
 
+  const resolvedColor = resolveColor(color);
+
   return (
     <span
       className={`
@@ -438,7 +493,7 @@ export function Truncate({
       `}
       style={{
         ...style,
-        color: semanticColors[color] as string,
+        color: resolvedColor as string,
       }}
     >
       {children}

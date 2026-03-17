@@ -26,22 +26,24 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
             <div className="fixed bottom-[-10%] left-[20%] w-[40%] h-[40%] bg-accent/20 dark:bg-accent/10 rounded-full blur-[120px] mix-blend-multiply dark:mix-blend-overlay opacity-60 animate-blob animation-delay-4000 pointer-events-none z-0" />
 
             {/* Top Navigation Bar */}
-            <FloatingNavbar
-                links={NAV.map(nav => ({ href: nav.href, label: nav.label, icon: nav.icon }))}
-                showThemeToggle={true}
-                rightActions={
-                    <div className="flex items-center gap-3">
-                        <Link href="/admin/settings">
-                            <div className="w-10 h-10 bg-gradient-to-br from-primary to-accent rounded-full flex items-center justify-center text-white font-heading font-bold text-sm shadow-md cursor-pointer hover:shadow-lg transition-all hover:scale-105">
-                                A
-                            </div>
-                        </Link>
-                    </div>
-                }
-            />
+            <div data-admin-navbar="true" className="transition-all duration-200 ease-out">
+                <FloatingNavbar
+                    links={NAV.map(nav => ({ href: nav.href, label: nav.label, icon: nav.icon }))}
+                    showThemeToggle={true}
+                    rightActions={
+                        <div className="flex items-center gap-3">
+                            <Link href="/admin/settings">
+                                <div className="w-10 h-10 bg-gradient-to-br from-primary to-accent rounded-full flex items-center justify-center text-white font-heading font-bold text-sm shadow-md cursor-pointer hover:shadow-lg transition-all hover:scale-105">
+                                    A
+                                </div>
+                            </Link>
+                        </div>
+                    }
+                />
+            </div>
 
             {/* Mobile bottom tab bar */}
-            <div className="md:hidden fixed bottom-0 left-0 right-0 z-[100] flex border-t border-white/50 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-2xl pb-1 shadow-[0_-8px_30px_rgb(0,0,0,0.05)] overflow-x-auto no-scrollbar">
+            <div data-admin-bottom-nav="true" className="md:hidden fixed bottom-0 left-0 right-0 z-[100] flex border-t border-white/50 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-2xl pb-1 shadow-[0_-8px_30px_rgb(0,0,0,0.05)] overflow-x-auto no-scrollbar transition-all duration-200 ease-out">
                 {NAV.map((item) => (
                     <Link key={item.href} href={item.href} className="flex-1 min-w-[64px] flex flex-col items-center justify-center gap-0.5 py-3 text-slate-600 dark:text-slate-400 hover:text-primary dark:hover:text-primary-light transition-colors relative">
                         {item.icon}

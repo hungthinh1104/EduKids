@@ -1,14 +1,64 @@
-# Azure backend-only demo deploy
+# Azure Backend Deploy
 
-Rẻ nhất cho demo 1-2 ngày là chạy duy nhất backend container trên 1 Azure VM nhỏ và dùng PostgreSQL, Redis có sẵn bên ngoài.
+## Tùy chọn deploy
 
-## 1. Azure resources tối thiểu
+| Option | Chi phí demo | Độ phức tạp |
+|---|---|---|
+| **Azure VM** (B1s/B2s) + Docker | ~$8–16/tháng | Thấp — SSH + docker run |
+| **Azure Container Apps** | ~$0–5/tháng (scale-to-zero) | Trung bình — ACA + ACR |
 
-- 1 Ubuntu VM nhỏ: `B1s` hoặc `B2s`
+Cả 2 cách đều có GitHub Actions pipeline sẵn tại `.github/workflows/deploy-backend-azure.yml`.
+
+---
+
+## CI/CD tự động (khuyên dùng)
+
+### Secrets cần set trong GitHub repo (`Settings → Secrets and variables`)
+
+| Secret | Ý nghĩa |
+|---|---|
+| `ACR_LOGIN_SERVER` | `myregistry.azurecr.io` |
+| `ACR_USERNAME` | ACR username (từ Azure portal) |
+| `ACR_PASSWORD` | ACR password |
+| `DATABASE_URL` | PostgreSQL connection string |
+| `REDIS_URL` | Redis connection string |
+| `REDIS_HOST` | Redis hostname |
+| `REDIS_PASSWORD` | Redis password |
+| `JWT_SECRET` | JWT signing key |
+| `SMTP_USER` | Email account |
+| `SMTP_PASSWORD` | Email app password |
+| `AZURE_SPEECH_KEY` | Azure Speech service key |
+| **[VM only]** `VM_HOST` | IP hoặc hostname VM |
+| **[VM only]** `VM_USERNAME` | SSH username |
+| **[VM only]** `VM_SSH_PRIVATE_KEY` | Private SSH key |
+| **[Container Apps only]** `AZURE_CREDENTIALS` | Service principal JSON |
+
+### Variables (không nhạy cảm) trong GitHub repo
+
+| Variable | Ví dụ |
+|---|---|
+| `DEPLOY_TARGET` | `vm` hoặc `container-app` |
+| `FRONTEND_URL` | `https://edukids.vercel.app` |
+| `CORS_ORIGIN` | `https://edukids.vercel.app` |
+| `PUBLIC_API_BASE_URL` | `https://api.yourdomain.com/api` |
+| `AZURE_SPEECH_REGION` | `eastus` |
+| **[Container Apps only]** `CONTAINER_APP_NAME` | `edukids-backend` |
+| **[Container Apps only]** `AZURE_RESOURCE_GROUP` | `edukids-rg` |
+
+Push lên `main` → workflow tự động chạy: build → push ACR → deploy.
+
+---
+
+## Deploy thủ công (VM)
+
+### 1. Azure resources tối thiểu
+
+- 1 Ubuntu VM: `B1s` hoặc `B2s`
+- 1 Azure Container Registry (Basic tier ~$5/tháng)
 - 1 Azure Speech resource
 - DB và Redis external đã có sẵn
 
-## 2. Biến môi trường cần có
+### 2. Biến môi trường cần có
 
 ```bash
 NODE_ENV=production

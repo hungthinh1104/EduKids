@@ -213,7 +213,7 @@ export class AuthController {
   @ApiOperation({
     summary: "Request password reset link",
     description:
-      "Send reset token to registered email. Demo mode returns token directly.",
+      "Send reset link to registered email. In non-production environments, the raw token is also returned for local testing.",
   })
   @ApiResponse({ status: 200, description: "Reset link sent (if email registered)" })
   @Throttle(3, 60) // 3 requests per minute per IP

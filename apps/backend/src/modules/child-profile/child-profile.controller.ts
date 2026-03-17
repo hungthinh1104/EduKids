@@ -273,6 +273,35 @@ export class ChildProfileController {
   }
 
   /**
+   * Set the active child for parent pages without switching auth role
+   * POST /api/profiles/active
+   */
+  @Post("active")
+  @Roles("PARENT")
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: "Set active child profile for parent session",
+    description:
+      "Updates User.activeChildId while keeping the authenticated user in PARENT role.",
+  })
+  @ApiResponse({
+    status: 200,
+    description: "Active profile updated successfully",
+    type: ProfileActionResultDto,
+  })
+  @ApiResponse({
+    status: 404,
+    description: "Profile not found or parent does not have permission",
+  })
+  async setActiveProfile(
+    @Body() dto: SwitchChildProfileDto,
+    @Request() req: RequestWithUser,
+  ): Promise<ProfileActionResultDto> {
+    const parentId = this.getUser(req).userId;
+    return this.childProfileService.setActiveProfile(parentId, dto.childId);
+  }
+
+  /**
    * Get currently active profile
     * GET /api/profiles/active/current
    */

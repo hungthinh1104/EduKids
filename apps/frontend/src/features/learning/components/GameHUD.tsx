@@ -15,7 +15,7 @@ interface GameHUDProps {
     maxHp?: number;
     backHref?: string;
     onBackClick?: () => void;
-    activeNav?: 'map' | 'achievements' | 'shop' | 'review';
+    activeNav?: 'map' | 'leaderboard' | 'achievements' | 'shop' | 'review';
 }
 
 /**

@@ -11,7 +11,7 @@ import { NextRequest, NextResponse } from 'next/server';
  * ADMIN   → /admin/* (requires ADMIN role only)
  */
 
-const PUBLIC_PATHS = ['/', '/login', '/register', '/privacy', '/terms', '/faq', '/contact'];
+const PUBLIC_PATHS = ['/', '/login', '/register', '/privacy', '/terms', '/faq', '/contact', '/session/restore-parent'];
 const PARENT_PATHS = [
     '/dashboard',
     '/add-child',

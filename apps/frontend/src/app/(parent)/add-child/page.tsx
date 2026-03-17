@@ -9,6 +9,7 @@ import { Check, ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
 import { Heading, Body, Caption } from '@/shared/components/Typography';
 import { KidButton } from '@/components/edukids/KidButton';
 import { apiClient as axiosInstance } from '@/shared/services/api.client';
+import { setActiveProfile } from '@/features/profile/api/profile.api';
 import type { ApiEnvelope } from '@/features/auth/types';
 import type { CreateChildProfileRequest, ProfileActionResultDto } from '@/features/profile/types/child-profile.types';
 import { getDefaultRouteByRole } from '@/shared/constants/navigation';
@@ -56,8 +57,8 @@ export default function AddChildPage() {
             const response = await axiosInstance.post<ApiEnvelope<ProfileActionResultDto>>('profiles', payload);
             const createdProfile = response.data.data.profile;
 
-            // Best-effort: switch active profile to newly created child
-            await axiosInstance.post('profiles/switch', { childId: createdProfile.id });
+            // Best-effort: select the new child in parent session without switching role
+            await setActiveProfile(createdProfile.id);
 
             router.push(getDefaultRouteByRole('PARENT'));
         } catch (error: unknown) {

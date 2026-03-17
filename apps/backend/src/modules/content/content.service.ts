@@ -32,6 +32,7 @@ export class ContentService {
   async getTopicsPaginated(
     page: number = 1,
     limit: number = 20,
+    childId?: number,
   ): Promise<PaginatedResponseDto<TopicDto>> {
     try {
       const paginatedTopics = await this.topicRepository.findAllPaginated(
@@ -43,9 +44,24 @@ export class ContentService {
         paginatedTopics.items.map(async (topic) => {
           const vocabularyCount =
             await this.topicRepository.countVocabulariesByTopicId(topic.id);
+          const completedCount = childId
+            ? await this.learningProgressRepository.countCompletedByChildAndTopic(
+                childId,
+                topic.id,
+              )
+            : 0;
+          const progressPercentage =
+            vocabularyCount > 0
+              ? Math.round((completedCount / vocabularyCount) * 100)
+              : 0;
+          const hasVideo = await this.topicRepository.hasVideoByTopicId(topic.id);
           return {
             ...topic,
             vocabularyCount,
+            completedCount,
+            progressPercentage,
+            starsEarned: this.progressToStars(progressPercentage),
+            hasVideo,
           } as TopicDto;
         }),
       );
@@ -154,6 +170,10 @@ export class ContentService {
           description: topicWithVocabularies.description,
           vocabularyCount: totalVocabularies,
           createdAt: topicWithVocabularies.createdAt,
+          completedCount,
+          progressPercentage,
+          starsEarned: this.progressToStars(progressPercentage),
+          hasVideo: Boolean(videoUrl),
         },
         vocabularies,
         videoUrl,
@@ -243,10 +263,18 @@ export class ContentService {
    */
   private findFirstVideoUrl(vocabularies: VocabularyDto[]): string | undefined {
     for (const vocab of vocabularies) {
-      if (vocab.media && vocab.media.length > 0) {
-        return vocab.media[0].url;
+      const video = vocab.media?.find((media) => media.type === "VIDEO");
+      if (video) {
+        return video.url;
       }
     }
     return undefined;
+  }
+
+  private progressToStars(progressPercentage: number): number {
+    if (progressPercentage >= 90) return 3;
+    if (progressPercentage >= 60) return 2;
+    if (progressPercentage > 0) return 1;
+    return 0;
   }
 }

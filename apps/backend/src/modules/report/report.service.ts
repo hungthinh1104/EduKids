@@ -1,5 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { MailService } from '../mail/mail.service';
+import { MailTemplateService } from '../mail/mail-template.service';
 import {
   DeliveryChannel,
   ProgressReportDto,
@@ -18,7 +20,11 @@ import {
  */
 @Injectable()
 export class ReportService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly mailService: MailService,
+    private readonly mailTemplateService: MailTemplateService,
+  ) {}
 
   private toDateRangeStart(range: ReportRange, now: Date): Date | null {
     const start = new Date(now);
@@ -454,7 +460,7 @@ export class ReportService {
   async sendReport(
     parentId: number,
     childId: number,
-    range: ReportRange = ReportRange.WEEK,
+  range: ReportRange = ReportRange.WEEK,
   ): Promise<ReportSendResultDto> {
     const pref = await this.getPreferences(parentId);
     const report = await this.generateReport(parentId, childId, range);
@@ -462,6 +468,35 @@ export class ReportService {
 
     report.sentAt = sentAt;
     report.deliveryChannel = pref.preferredChannel;
+
+    let deliveryMessage = `Report sent via ${pref.preferredChannel}`;
+
+    if (pref.preferredChannel === DeliveryChannel.EMAIL && pref.email) {
+      const parent = await this.prisma.user.findUnique({
+        where: { id: parentId },
+        select: { firstName: true },
+      });
+      const childSummary = report.children.find((child) => child.childId === childId);
+      const emailTemplate = this.mailTemplateService.renderWeeklyProgressReportEmail({
+        parentName: parent?.firstName,
+        childName: childSummary?.childName || "bé",
+        report,
+      });
+      const emailResult = await this.mailService.sendMail({
+        to: pref.email,
+        subject: emailTemplate.subject,
+        html: emailTemplate.html,
+        text: emailTemplate.text,
+      });
+
+      if (!emailResult.sent) {
+        deliveryMessage = "Report generated, but email delivery could not be completed.";
+        report.deliveryChannel = DeliveryChannel.IN_APP;
+      }
+    } else if (pref.preferredChannel === DeliveryChannel.EMAIL) {
+      deliveryMessage = "Report generated, but no delivery email is configured.";
+      report.deliveryChannel = DeliveryChannel.IN_APP;
+    }
 
     // Update preference with last sent time
     await this.prisma.reportPreference.update({
@@ -480,7 +515,7 @@ export class ReportService {
 
     return {
       success: true,
-      message: `Report sent via ${pref.preferredChannel}`,
+      message: deliveryMessage,
       reportId: report.reportId,
       report,
     };

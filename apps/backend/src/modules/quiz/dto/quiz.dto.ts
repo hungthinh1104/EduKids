@@ -289,4 +289,11 @@ export class QuizSessionDto {
     description: "First question",
   })
   firstQuestion: QuestionDto;
+
+  @ApiProperty({
+    type: [QuestionDto],
+    description: "Prepared quiz questions for the session",
+    required: false,
+  })
+  questions?: QuestionDto[];
 }

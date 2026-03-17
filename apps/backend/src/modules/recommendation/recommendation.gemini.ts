@@ -4,6 +4,9 @@ import {
   type AIScoreBreakdown,
   type LearningPathItemDto,
 } from './recommendation.dto';
+import { Logger } from '@nestjs/common';
+
+const geminiLogger = new Logger('RecommendationGemini');
 
 export interface GeminiRecommendationContext {
   childId: number;
@@ -319,11 +322,10 @@ function parseModelJson(raw: unknown): unknown {
     return JSON.parse(noFence);
   } catch (error) {
     const preview = noFence.slice(0, 500);
-    // eslint-disable-next-line no-console
-    console.warn('[Recommendation][Gemini] Failed to parse model JSON output', {
+    geminiLogger.warn('Failed to parse model JSON output', JSON.stringify({
       message: error instanceof Error ? error.message : 'Unknown parse error',
       preview,
-    });
+    }));
     return {};
   }
 }

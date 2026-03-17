@@ -19,6 +19,7 @@ export interface TopicWithProgress {
     // UI helper (not from BE — FE assigns per topic)
     icon: string;             // emoji placeholder until BE provides imageUrl
     colorKey: string;         // color token name — purely FE
+    hasVideo: boolean;
 }
 
 // ── Mock topics verified against Prisma schema:
@@ -62,30 +63,11 @@ export function useTopics(childId: number) {
 
                 // Fetch topics from backend
                 const backendTopics: Topic[] = await contentApi.getTopics();
-                const topicDetails = await Promise.all(
-                    backendTopics.map(async (topic) => {
-                        try {
-                            const detail = await contentApi.getTopicById(topic.id);
-                            return {
-                                topicId: topic.id,
-                                progress: detail.progress,
-                            };
-                        } catch {
-                            return {
-                                topicId: topic.id,
-                                progress: undefined,
-                            };
-                        }
-                    })
-                );
-                const progressByTopic = new Map(topicDetails.map((item) => [item.topicId, item.progress]));
-
                 // Transform backend topics to TopicWithProgress
                 const transformedTopics: TopicWithProgress[] = backendTopics.map((topic, index) => {
-                    const detailProgress = progressByTopic.get(topic.id);
                     const total = topic.vocabularyCount || 0;
-                    const completed = detailProgress?.completed ?? 0;
-                    const stars = detailProgress?.starsEarned ?? 0;
+                    const completed = topic.completedCount ?? topic.progress?.completed ?? 0;
+                    const stars = topic.starsEarned ?? topic.progress?.starsEarned ?? 0;
                     const icon = ICON_MAP[topic.name] || ICON_MAP[topic.description || ''] || '📚';
                     const colorKey = COLOR_KEYS[index % COLOR_KEYS.length];
 
@@ -101,6 +83,7 @@ export function useTopics(childId: number) {
                         isCurrent: false, // Will be computed below
                         icon,
                         colorKey,
+                        hasVideo: topic.hasVideo ?? Boolean(topic.videoUrl),
                     };
                 });
 

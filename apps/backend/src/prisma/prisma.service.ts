@@ -1,4 +1,4 @@
-import { Injectable, OnModuleInit, OnModuleDestroy } from "@nestjs/common";
+import { Injectable, Logger, OnModuleInit, OnModuleDestroy } from "@nestjs/common";
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { Pool } from "pg";
@@ -8,6 +8,7 @@ export class PrismaService
   extends PrismaClient
   implements OnModuleInit, OnModuleDestroy
 {
+  private readonly logger = new Logger(PrismaService.name);
   constructor() {
     const datasourceUrl = process.env.DATABASE_URL;
     const useSsl =
@@ -21,19 +22,22 @@ export class PrismaService
     });
 
     const adapter = new PrismaPg(pool);
+    // In production, only log warnings and errors — logging "query" emits every
+    // SQL statement to stdout which leaks schema details and adds I/O overhead.
+    const isProduction = process.env.NODE_ENV === "production";
     super({
       adapter,
-      log: ["query", "error"],
+      log: isProduction ? ["warn", "error"] : ["query", "warn", "error"],
     });
   }
 
   async onModuleInit() {
     await this.$connect();
-    console.log("✅ Database connected");
+    this.logger.log("Database connected");
   }
 
   async onModuleDestroy() {
     await this.$disconnect();
-    console.log("❌ Database disconnected");
+    this.logger.log("Database disconnected");
   }
 }

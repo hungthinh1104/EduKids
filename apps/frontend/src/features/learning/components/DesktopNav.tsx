@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion';
 import Link from 'next/link';
-import { Map, Trophy, ShoppingBag, RefreshCw } from 'lucide-react';
+import { Map, Trophy, ShoppingBag, RefreshCw, Medal } from 'lucide-react';
 import { CHILD_NAV_ITEMS, type ChildNavTab } from '@/shared/constants/navigation';
 
 interface DesktopNavProps {
@@ -11,6 +11,7 @@ interface DesktopNavProps {
 
 const NAV_ICONS: Record<ChildNavTab, React.ReactNode> = {
     map: <Map size={20} />,
+    leaderboard: <Medal size={20} />,
     achievements: <Trophy size={20} />,
     shop: <ShoppingBag size={20} />,
     review: <RefreshCw size={20} />,

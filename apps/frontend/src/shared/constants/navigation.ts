@@ -1,6 +1,6 @@
 export type AppRole = 'PARENT' | 'LEARNER' | 'ADMIN';
 
-export type ChildNavTab = 'map' | 'achievements' | 'shop' | 'review';
+export type ChildNavTab = 'map' | 'leaderboard' | 'achievements' | 'shop' | 'review';
 
 export interface ChildNavItem {
     id: ChildNavTab;
@@ -14,7 +14,7 @@ export interface ParentNavItem {
 }
 
 // Route protection definitions (sync with proxy.ts)
-export const PUBLIC_PATHS = ['/', '/login', '/register', '/privacy', '/terms', '/faq', '/contact'];
+export const PUBLIC_PATHS = ['/', '/login', '/register', '/privacy', '/terms', '/faq', '/contact', '/session/restore-parent'];
 export const PARENT_PATHS = [
     '/dashboard',
     '/add-child',
@@ -35,6 +35,7 @@ export const ROLE_HOME_ROUTE: Record<AppRole, string> = {
 
 export const CHILD_NAV_ITEMS: ChildNavItem[] = [
     { id: 'map', label: 'Bản đồ', href: '/play' },
+    { id: 'leaderboard', label: 'BXH', href: '/play/leaderboard' },
     { id: 'achievements', label: 'Huy hiệu', href: '/play/achievements' },
     { id: 'shop', label: 'Shop', href: '/play/shop' },
     { id: 'review', label: 'Ôn tập', href: '/play/review' },

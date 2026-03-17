@@ -41,7 +41,7 @@ import { PrismaModule } from "../../prisma/prisma.module";
         }
 
         return new Redis({
-          host: configService.get<string>("REDIS_HOST", "localhost"),
+          host: configService.get<string>("REDIS_HOST", "redis"),
           port: configService.get<number>("REDIS_PORT", 6379),
           username: configService.get<string>("REDIS_USERNAME"),
           password: configService.get<string>("REDIS_PASSWORD"),

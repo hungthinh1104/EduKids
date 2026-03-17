@@ -1,12 +1,12 @@
 FROM node:20-alpine AS deps-dev
 WORKDIR /app
 COPY package*.json ./
-RUN npm ci --legacy-peer-deps
+RUN npm ci --prefer-offline --no-audit --legacy-peer-deps
 
 FROM node:20-alpine AS deps-prod
 WORKDIR /app
 COPY package*.json ./
-RUN npm ci --omit=dev --legacy-peer-deps && npm cache clean --force
+RUN npm ci --omit=dev --prefer-offline --no-audit --legacy-peer-deps && npm cache clean --force
 
 FROM node:20-alpine AS builder
 WORKDIR /app
@@ -31,11 +31,9 @@ ENV HOSTNAME=0.0.0.0
 
 RUN addgroup -g 1001 -S nodejs && adduser -S nextjs -u 1001
 
-COPY --from=builder /app/.next/standalone ./
-COPY --from=builder /app/.next/static ./.next/static
-COPY --from=builder /app/public ./public
-
-RUN chown -R nextjs:nodejs /app
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 
 USER nextjs
 

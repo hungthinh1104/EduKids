@@ -14,11 +14,11 @@ type GameModeId = 'flashcard' | 'quiz' | 'pronunciation' | 'video';
 type TrackedModeId = 'flashcard' | 'quiz' | 'pronunciation';
 type GameMode = { id: GameModeId; icon: React.ReactNode; label: string; desc: string; color: string; locked: boolean };
 
-const GAME_MODES: GameMode[] = [
-    { id: 'flashcard', icon: <Brain size={28} />, label: 'Flashcard', desc: 'Lật thẻ học từ vựng', color: 'success', locked: false },
-    { id: 'quiz', icon: <HelpCircle size={28} />, label: 'Quiz Game', desc: 'Chọn đáp án đúng', color: 'primary', locked: false },
-    { id: 'pronunciation', icon: <Mic size={28} />, label: 'Phát âm AI', desc: 'Luyện phát âm chuẩn', color: 'accent', locked: false },
-    { id: 'video', icon: <Play size={28} />, label: 'Video Bài Giảng', desc: 'Xem hoạt hình', color: 'warning', locked: true },
+const BASE_GAME_MODES: Omit<GameMode, 'locked'>[] = [
+    { id: 'flashcard', icon: <Brain size={28} />, label: 'Flashcard', desc: 'Lật thẻ học từ vựng', color: 'success' },
+    { id: 'quiz', icon: <HelpCircle size={28} />, label: 'Quiz Game', desc: 'Chọn đáp án đúng', color: 'primary' },
+    { id: 'pronunciation', icon: <Mic size={28} />, label: 'Phát âm AI', desc: 'Luyện phát âm chuẩn', color: 'accent' },
+    { id: 'video', icon: <Play size={28} />, label: 'Video Bài Giảng', desc: 'Xem hoạt hình', color: 'warning' },
 ];
 
 const COLOR_MAP: Record<string, { bg: string; light: string; text: string; border: string }> = {
@@ -158,11 +158,19 @@ export default function TopicDetailPage() {
     const colorKey = COLOR_KEYS[(Number.isInteger(parsedTopicId) ? parsedTopicId : 0) % COLOR_KEYS.length];
     const colors = COLOR_MAP[colorKey] ?? COLOR_MAP.primary;
     const safeTopicId = topic.id || parsedTopicId;
-
     const completedCount = topic.progress?.completed ?? 0;
     const starsEarned = topic.progress?.starsEarned ?? 0;
     const vocabularyCount = topic.vocabularyCount || (topic.vocabularies?.length || 0);
     const progressPct = vocabularyCount > 0 ? (completedCount / vocabularyCount) * 100 : 0;
+    const gameModes: GameMode[] = BASE_GAME_MODES.map((mode) => ({
+        ...mode,
+        locked:
+            mode.id === 'video'
+                ? !topic.hasVideo
+                : mode.id === 'flashcard'
+                    ? vocabularyCount < 2
+                    : false,
+    }));
 
     // Show first 5 vocabularies as preview
     const vocabPreview = (topic.vocabularies || []).slice(0, 5);
@@ -227,7 +235,7 @@ export default function TopicDetailPage() {
             <div className="max-w-lg md:max-w-4xl lg:max-w-7xl mx-auto px-6 md:px-8 mb-8">
                 <Heading level={3} className="text-heading text-xl mb-4">Chọn cách học 🎮</Heading>
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                    {GAME_MODES.map((mode, i) => {
+                    {gameModes.map((mode, i) => {
                         const mc = COLOR_MAP[mode.color] ?? COLOR_MAP.primary;
                         const isModeTracked = TRACKED_MODE_IDS.includes(mode.id as TrackedModeId);
                         const completed = isModeTracked ? modeProgress[mode.id as TrackedModeId] : false;
@@ -248,8 +256,8 @@ export default function TopicDetailPage() {
                                             <div className="font-heading font-black text-heading text-sm">{mode.label}</div>
                                             <Caption className="text-caption text-xs">{mode.desc}</Caption>
                                         </div>
-                                        <div className="flex items-center gap-1 text-caption text-xs">
-                                            <Lock size={12} /> Sắp ra mắt
+                                            <div className="flex items-center gap-1 text-caption text-xs">
+                                            <Lock size={12} /> {mode.id === 'video' ? 'Chưa có video' : mode.id === 'flashcard' ? 'Cần ít nhất 2 từ' : 'Sắp ra mắt'}
                                         </div>
                                     </div>
                                 ) : (

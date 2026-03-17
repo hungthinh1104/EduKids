@@ -19,8 +19,8 @@ export function FeaturesSection() {
                     <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-secondary/10 text-secondary font-bold text-sm uppercase tracking-widest mb-4">
                         <Sparkles size={16} /> Thế giới phép thuật
                     </div>
-                    <h2 className="font-heading font-black text-4xl sm:text-5xl text-slate-900 dark:text-white mb-6">Trợ Thủ Đắc Lực Cho Bé</h2>
-                    <Body className="text-slate-600 dark:text-slate-400 max-w-2xl mx-auto text-xl">EduKids mang đến không gian học tập sống động, biến những từ vựng khô khan thành chuyến phiêu lưu kỳ thú.</Body>
+                    <h2 className="font-heading font-black text-4xl sm:text-5xl text-heading mb-6">Trợ Thủ Đắc Lực Cho Bé</h2>
+                    <Body className="text-body max-w-2xl mx-auto text-xl">EduKids mang đến không gian học tập sống động, biến những từ vựng khô khan thành chuyến phiêu lưu kỳ thú.</Body>
                 </motion.div>
 
                 <div className="grid md:grid-cols-3 gap-8 px-4 sm:px-0">
@@ -31,8 +31,8 @@ export function FeaturesSection() {
                             <div className="w-20 h-20 bg-white dark:bg-slate-800 rounded-2xl flex items-center justify-center mb-8 shadow-[0_10px_20px_-10px_rgba(16,185,129,0.3)] group-hover:bg-success group-hover:-translate-y-2 transition-all duration-300">
                                 <Brain size={40} className="text-success group-hover:text-white transition-colors" />
                             </div>
-                            <h3 className="font-heading font-bold text-2xl text-slate-900 dark:text-white mb-4 group-hover:text-success transition-colors">Vui Học Qua Trò Chơi</h3>
-                            <p className="text-slate-600 dark:text-slate-400 text-lg leading-relaxed flex-grow">Ghi nhớ từ vựng siêu tốc thông qua hệ thống flashcard thông minh, game lật hình và câu đố tương tác vui nhộn.</p>
+                            <h3 className="font-heading font-bold text-2xl text-heading mb-4 group-hover:text-success transition-colors">Vui Học Qua Trò Chơi</h3>
+                            <p className="text-body text-lg leading-relaxed flex-grow">Ghi nhớ từ vựng siêu tốc thông qua hệ thống flashcard thông minh, game lật hình và câu đố tương tác vui nhộn.</p>
                         </SpotlightCard>
                     </motion.div>
 
@@ -43,8 +43,8 @@ export function FeaturesSection() {
                             <div className="w-20 h-20 bg-white dark:bg-slate-800 rounded-2xl flex items-center justify-center mb-8 shadow-[0_10px_20px_-10px_rgba(99,102,241,0.3)] group-hover:bg-primary group-hover:-translate-y-2 transition-all duration-300">
                                 <Mic size={40} className="text-primary group-hover:text-white transition-colors" />
                             </div>
-                            <h3 className="font-heading font-bold text-2xl text-slate-900 dark:text-white mb-4 group-hover:text-primary transition-colors">Công Nghệ AI Chấm Điểm</h3>
-                            <p className="text-slate-600 dark:text-slate-400 text-lg leading-relaxed flex-grow">Không còn sợ nói sai! Trợ lý AI liên tục lắng nghe, phân tích và hướng dẫn phát âm chuẩn âm điệu người bản xứ.</p>
+                            <h3 className="font-heading font-bold text-2xl text-heading mb-4 group-hover:text-primary transition-colors">Công Nghệ AI Chấm Điểm</h3>
+                            <p className="text-body text-lg leading-relaxed flex-grow">Không còn sợ nói sai! Trợ lý AI liên tục lắng nghe, phân tích và hướng dẫn phát âm chuẩn âm điệu người bản xứ.</p>
                         </SpotlightCard>
                     </motion.div>
 
@@ -55,8 +55,8 @@ export function FeaturesSection() {
                             <div className="w-20 h-20 bg-white dark:bg-slate-800 rounded-2xl flex items-center justify-center mb-8 shadow-[0_10px_20px_-10px_rgba(244,63,94,0.3)] group-hover:bg-accent group-hover:-translate-y-2 transition-all duration-300">
                                 <Trophy size={40} className="text-accent group-hover:text-white transition-colors" />
                             </div>
-                            <h3 className="font-heading font-bold text-2xl text-slate-900 dark:text-white mb-4 group-hover:text-accent transition-colors">Phần Thưởng Hấp Dẫn</h3>
-                            <p className="text-slate-600 dark:text-slate-400 text-lg leading-relaxed flex-grow">Mỗi bài học hoàn thành là một rương báu mở ra! Sưu tầm sao vàng, mua đồ tân trang cho Avatar và đua Top ngay.</p>
+                            <h3 className="font-heading font-bold text-2xl text-heading mb-4 group-hover:text-accent transition-colors">Phần Thưởng Hấp Dẫn</h3>
+                            <p className="text-body text-lg leading-relaxed flex-grow">Mỗi bài học hoàn thành là một rương báu mở ra! Sưu tầm sao vàng, mua đồ tân trang cho Avatar và đua Top ngay.</p>
                         </SpotlightCard>
                     </motion.div>
                 </div>

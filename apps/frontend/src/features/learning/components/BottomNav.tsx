@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion';
 import Link from 'next/link';
-import { Map, Trophy, ShoppingBag, RefreshCw } from 'lucide-react';
+import { Map, Trophy, ShoppingBag, RefreshCw, Medal } from 'lucide-react';
 import { Caption } from '@/shared/components/Typography';
 import { CHILD_NAV_ITEMS, type ChildNavTab } from '@/shared/constants/navigation';
 
@@ -12,6 +12,7 @@ interface BottomNavProps {
 
 const NAV_ICONS: Record<ChildNavTab, React.ReactNode> = {
     map: <Map size={22} />,
+    leaderboard: <Medal size={22} />,
     achievements: <Trophy size={22} />,
     shop: <ShoppingBag size={22} />,
     review: <RefreshCw size={22} />,

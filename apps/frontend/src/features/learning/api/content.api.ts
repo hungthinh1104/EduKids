@@ -6,6 +6,11 @@ export interface Topic {
   description: string | null;
   vocabularyCount?: number;
   createdAt: string;
+  completedCount?: number;
+  progressPercentage?: number;
+  starsEarned?: number;
+  hasVideo?: boolean;
+  videoUrl?: string;
   vocabularies?: Vocabulary[];
   progress?: {
     completed: number;
@@ -50,10 +55,15 @@ interface TopicDetailPayload {
     description: string | null;
     vocabularyCount?: number;
     createdAt: string;
+    completedCount?: number;
+    progressPercentage?: number;
+    starsEarned?: number;
+    hasVideo?: boolean;
   };
   vocabularies?: unknown[];
   completedCount?: number;
   progressPercentage?: number;
+  videoUrl?: string;
 }
 
 export interface PaginatedResponse<T> {
@@ -163,6 +173,13 @@ export const contentApi = {
         description: baseTopic.description,
         vocabularyCount: total,
         createdAt: baseTopic.createdAt,
+        completedCount: completed,
+        progressPercentage,
+        starsEarned:
+          typeof baseTopic.starsEarned === 'number' ? baseTopic.starsEarned : starsEarned,
+        hasVideo:
+          typeof baseTopic.hasVideo === 'boolean' ? baseTopic.hasVideo : typeof detail.videoUrl === 'string',
+        videoUrl: typeof detail.videoUrl === 'string' ? detail.videoUrl : undefined,
         vocabularies: normalizedVocabs,
         progress: {
           completed,
@@ -181,6 +198,11 @@ export const contentApi = {
         description: typeof flatTopic.description === 'string' || flatTopic.description === null ? flatTopic.description : null,
         vocabularyCount: typeof flatTopic.vocabularyCount === 'number' ? flatTopic.vocabularyCount : 0,
         createdAt: typeof flatTopic.createdAt === 'string' ? flatTopic.createdAt : new Date().toISOString(),
+        completedCount: typeof flatTopic.completedCount === 'number' ? flatTopic.completedCount : 0,
+        progressPercentage: typeof flatTopic.progressPercentage === 'number' ? flatTopic.progressPercentage : 0,
+        starsEarned: typeof flatTopic.starsEarned === 'number' ? flatTopic.starsEarned : 0,
+        hasVideo: typeof flatTopic.hasVideo === 'boolean' ? flatTopic.hasVideo : false,
+        videoUrl: typeof flatTopic.videoUrl === 'string' ? flatTopic.videoUrl : undefined,
         vocabularies: Array.isArray(flatTopic.vocabularies)
           ? flatTopic.vocabularies.map(normalizeVocabulary)
           : [],

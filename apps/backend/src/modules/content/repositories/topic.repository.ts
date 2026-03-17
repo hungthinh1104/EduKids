@@ -1,6 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { PrismaService } from "../../../prisma/prisma.service";
 import { TopicEntity } from "../entities/topic.entity";
+import { CmsContentStatus } from "@prisma/client";
 
 @Injectable()
 export class TopicRepository {
@@ -8,6 +9,16 @@ export class TopicRepository {
 
   async findAll(): Promise<TopicEntity[]> {
     return await this.prisma.topic.findMany({
+      where: {
+        status: CmsContentStatus.PUBLISHED,
+        deletedAt: null,
+        vocabularies: {
+          some: {
+            status: CmsContentStatus.PUBLISHED,
+            deletedAt: null,
+          },
+        },
+      },
       orderBy: { createdAt: "asc" },
     });
   }
@@ -17,11 +28,32 @@ export class TopicRepository {
 
     const [topics, total] = await Promise.all([
       this.prisma.topic.findMany({
+        where: {
+          status: CmsContentStatus.PUBLISHED,
+          deletedAt: null,
+          vocabularies: {
+            some: {
+              status: CmsContentStatus.PUBLISHED,
+              deletedAt: null,
+            },
+          },
+        },
         skip,
         take: limit,
         orderBy: { createdAt: "asc" },
       }),
-      this.prisma.topic.count(),
+      this.prisma.topic.count({
+        where: {
+          status: CmsContentStatus.PUBLISHED,
+          deletedAt: null,
+          vocabularies: {
+            some: {
+              status: CmsContentStatus.PUBLISHED,
+              deletedAt: null,
+            },
+          },
+        },
+      }),
     ]);
 
     const totalPages = Math.ceil(total / limit);
@@ -36,16 +68,40 @@ export class TopicRepository {
   }
 
   async findById(id: number): Promise<TopicEntity | null> {
-    return await this.prisma.topic.findUnique({
-      where: { id },
+    return await this.prisma.topic.findFirst({
+      where: {
+        id,
+        status: CmsContentStatus.PUBLISHED,
+        deletedAt: null,
+        vocabularies: {
+          some: {
+            status: CmsContentStatus.PUBLISHED,
+            deletedAt: null,
+          },
+        },
+      },
     });
   }
 
   async findByIdWithVocabularies(id: number) {
-    return await this.prisma.topic.findUnique({
-      where: { id },
+    return await this.prisma.topic.findFirst({
+      where: {
+        id,
+        status: CmsContentStatus.PUBLISHED,
+        deletedAt: null,
+        vocabularies: {
+          some: {
+            status: CmsContentStatus.PUBLISHED,
+            deletedAt: null,
+          },
+        },
+      },
       include: {
         vocabularies: {
+          where: {
+            status: CmsContentStatus.PUBLISHED,
+            deletedAt: null,
+          },
           include: {
             media: true,
           },
@@ -57,7 +113,31 @@ export class TopicRepository {
 
   async countVocabulariesByTopicId(topicId: number): Promise<number> {
     return await this.prisma.vocabulary.count({
-      where: { topicId },
+      where: {
+        topicId,
+        status: CmsContentStatus.PUBLISHED,
+        deletedAt: null,
+      },
     });
+  }
+
+  async hasVideoByTopicId(topicId: number): Promise<boolean> {
+    const videoMedia = await this.prisma.vocabularyMedia.findFirst({
+      where: {
+        type: "VIDEO",
+        vocabulary: {
+          topicId,
+          status: CmsContentStatus.PUBLISHED,
+          deletedAt: null,
+          topic: {
+            status: CmsContentStatus.PUBLISHED,
+            deletedAt: null,
+          },
+        },
+      },
+      select: { id: true },
+    });
+
+    return Boolean(videoMedia);
   }
 }

@@ -64,6 +64,13 @@ export const quizApi = {
       topicId: number;
       totalQuestions: number;
       startedAt: string;
+      questions?: Array<{
+        questionId: number;
+        questionText?: string;
+        question?: string;
+        questionImage?: string;
+        options?: QuizOption[];
+      }>;
       firstQuestion?: {
         questionId: number;
         questionText?: string;
@@ -73,18 +80,32 @@ export const quizApi = {
       };
     };
 
-    const firstQuestion = payload.firstQuestion
-      ? {
-          questionId: payload.firstQuestion.questionId,
-          vocabularyId: 0,
-          question:
-            payload.firstQuestion.questionText ||
-            payload.firstQuestion.question ||
-            'What is this in English?',
-          questionImage: payload.firstQuestion.questionImage,
-          options: Array.isArray(payload.firstQuestion.options) ? payload.firstQuestion.options : [],
-        }
-      : undefined;
+    const normalizeQuestion = (question?: {
+      questionId: number;
+      questionText?: string;
+      question?: string;
+      questionImage?: string;
+      options?: QuizOption[];
+    }): QuizQuestion | undefined =>
+      question
+        ? {
+            questionId: question.questionId,
+            vocabularyId: 0,
+            question:
+              question.questionText ||
+              question.question ||
+              'What is this in English?',
+            questionImage: question.questionImage,
+            options: Array.isArray(question.options) ? question.options : [],
+          }
+        : undefined;
+
+    const questions = Array.isArray(payload.questions)
+      ? payload.questions
+          .map(normalizeQuestion)
+          .filter((question): question is QuizQuestion => Boolean(question))
+      : [];
+    const firstQuestion = normalizeQuestion(payload.firstQuestion);
 
     return {
       quizSessionId: payload.quizSessionId,
@@ -92,7 +113,7 @@ export const quizApi = {
       totalQuestions: payload.totalQuestions,
       startedAt: payload.startedAt,
       firstQuestion,
-      questions: firstQuestion ? [firstQuestion] : [],
+      questions: questions.length > 0 ? questions : firstQuestion ? [firstQuestion] : [],
     };
   },
 

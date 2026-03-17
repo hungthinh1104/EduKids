@@ -30,6 +30,14 @@ export class SystemController {
     return this.systemService.getFeatureFlags();
   }
 
+  @ApiOperation({ summary: "Debug Sentry capture" })
+  @ApiResponse({ status: 200, description: "Sentry test event created" })
+  @SkipThrottle()
+  @Get("debug-sentry")
+  debugSentry() {
+    return this.systemService.debugSentry();
+  }
+
   // @ApiOperation({ summary: 'Get system configuration' })
   // @ApiBearerAuth('JWT-auth')
   // @Get('config')

@@ -23,7 +23,7 @@ export default function PlayPage() {
     const router = useRouter();
     const setAuth = useAuthStore((state) => state.setAuth);
     const { child, loading: childLoading, error: childError } = useCurrentChild();
-    const { topics } = useTopics(child?.id ?? 0);
+    const { topics, loading: topicsLoading } = useTopics(child?.id ?? 0);
     const [dueReviews, setDueReviews] = useState(0);
     const [isExitingChild, setIsExitingChild] = useState(false);
 
@@ -34,7 +34,7 @@ export default function PlayPage() {
             .catch(() => setDueReviews(0));
     }, [child?.id]);
 
-    if (childLoading) {
+    if (childLoading || topicsLoading) {
         return <LoadingScreen />
     }
 

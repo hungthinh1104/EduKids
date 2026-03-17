@@ -1,45 +1,84 @@
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { CMSQuiz } from '@/features/cms/api/cms.api';
+import { CMSQuiz, CMSVocabulary } from '@/features/cms/api/cms.api';
 import { useEffect } from 'react';
+import { toast } from 'sonner';
 
-const quizSchema = z.object({
-  title: z.string().min(3, 'Tiêu đề phải có ít nhất 3 ký tự').max(100, 'Tiêu đề tối đa 100 ký tự'),
-  description: z.string().min(5, 'Mô tả phải có ít nhất 5 ký tự').max(500, 'Mô tả tối đa 500 ký tự'),
-  questionText: z.string().min(5, 'Câu hỏi phải có ít nhất 5 ký tự').max(500, 'Câu hỏi tối đa 500 ký tự'),
-  options: z.array(
-    z.object({
-      value: z.string().min(1, 'Lựa chọn không được để trống')
-    })
-  ).length(4, 'Phải có đúng 4 lựa chọn'),
-  correctAnswerIndex: z
-    .string()
-    .refine((value) => ['0', '1', '2', '3'].includes(value), 'Vui lòng chọn 1 đáp án đúng'),
-  difficultyLevel: z.number().min(1).max(5),
-});
+const trimmedText = (min: number, minMessage: string, max: number, maxMessage: string) =>
+  z.string().trim().min(min, minMessage).max(max, maxMessage);
+
+const quizSchema = z
+  .object({
+    title: trimmedText(3, 'Tiêu đề phải có ít nhất 3 ký tự', 100, 'Tiêu đề tối đa 100 ký tự'),
+    description: trimmedText(5, 'Mô tả phải có ít nhất 5 ký tự', 500, 'Mô tả tối đa 500 ký tự'),
+    questionText: trimmedText(5, 'Câu hỏi phải có ít nhất 5 ký tự', 500, 'Câu hỏi tối đa 500 ký tự'),
+    options: z.array(
+      z.object({
+        value: z.string().trim().min(1, 'Lựa chọn không được để trống')
+      })
+    ).length(4, 'Phải có đúng 4 lựa chọn'),
+    correctAnswerIndex: z
+      .string()
+      .refine((value) => ['0', '1', '2', '3'].includes(value), 'Vui lòng chọn 1 đáp án đúng'),
+    difficultyLevel: z.number().min(1).max(5),
+  })
+  .superRefine((data, ctx) => {
+    const normalizedOptions = data.options.map((option) => option.value.trim().toLowerCase());
+    const seen = new Map<string, number>();
+
+    normalizedOptions.forEach((option, index) => {
+      if (!option) return;
+      const firstIndex = seen.get(option);
+      if (firstIndex !== undefined) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['options', index, 'value'],
+          message: 'Các lựa chọn không được trùng nhau',
+        });
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['options', firstIndex, 'value'],
+          message: 'Các lựa chọn không được trùng nhau',
+        });
+        return;
+      }
+      seen.set(option, index);
+    });
+  });
 
 export type QuizFormData = z.infer<typeof quizSchema>;
 
 interface QuizFormProps {
   initialData?: CMSQuiz | null;
+  topicName?: string;
+  topicVocabularies?: CMSVocabulary[];
   onSubmit: (data: {
     title: string;
     description: string;
     questionText: string;
-    correctAnswer: string;
     options: string[];
+    correctAnswerIndex: 0 | 1 | 2 | 3;
     difficultyLevel: 1 | 2 | 3 | 4 | 5;
   }) => void;
   onCancel: () => void;
   isLoading?: boolean;
 }
 
-export function QuizForm({ initialData, onSubmit, onCancel, isLoading }: QuizFormProps) {
+export function QuizForm({
+  initialData,
+  topicName,
+  topicVocabularies = [],
+  onSubmit,
+  onCancel,
+  isLoading,
+}: QuizFormProps) {
   const {
     register,
     handleSubmit,
     control,
+    watch,
+    setValue,
     formState: { errors },
     reset
   } = useForm<QuizFormData>({
@@ -58,6 +97,8 @@ export function QuizForm({ initialData, onSubmit, onCancel, isLoading }: QuizFor
     control,
     name: "options",
   });
+  const correctAnswerIndex = watch('correctAnswerIndex');
+  const optionValues = watch('options');
 
   useEffect(() => {
     if (initialData) {
@@ -76,6 +117,11 @@ export function QuizForm({ initialData, onSubmit, onCancel, isLoading }: QuizFor
       // Find correct answer index
       const exactAnswer = initialData.correctAnswer || '';
       let correctIdx = finalOptions.findIndex((opt: string) => opt === exactAnswer);
+      if (correctIdx === -1 && Array.isArray(initialData.options)) {
+        correctIdx = initialData.options.findIndex(
+          (opt) => typeof opt === 'object' && opt !== null && Boolean(opt.isCorrect),
+        );
+      }
       if (correctIdx === -1) correctIdx = 0;
 
       const difficulty =
@@ -104,19 +150,64 @@ export function QuizForm({ initialData, onSubmit, onCancel, isLoading }: QuizFor
   }, [initialData, reset]);
 
   const handleFormSubmit = (data: QuizFormData) => {
-    const stringOptions = data.options.map(opt => opt.value);
+    const stringOptions = data.options.map((opt) => opt.value.trim());
     const correctIndex = Number.parseInt(data.correctAnswerIndex, 10);
     const safeCorrectIndex = Number.isInteger(correctIndex) && correctIndex >= 0 && correctIndex <= 3 ? correctIndex : 0;
-    const correctString = stringOptions[safeCorrectIndex];
     
     onSubmit({
-      title: data.title,
-      description: data.description,
-      questionText: data.questionText,
+      title: data.title.trim(),
+      description: data.description.trim(),
+      questionText: data.questionText.trim(),
       options: stringOptions,
-      correctAnswer: correctString,
+      correctAnswerIndex: safeCorrectIndex as 0 | 1 | 2 | 3,
       difficultyLevel: data.difficultyLevel as 1 | 2 | 3 | 4 | 5,
     });
+  };
+
+  const insertVocabularyIntoNextSlot = (word: string) => {
+    const nextEmptyIndex = optionValues.findIndex((option) => option.value.trim().length === 0);
+    if (nextEmptyIndex < 0) {
+      toast.warning('4 đáp án đã đầy. Hãy xóa hoặc chỉnh một đáp án trước khi thêm từ mới.');
+      return;
+    }
+    const targetIndex = nextEmptyIndex;
+    setValue(`options.${targetIndex}.value`, word, { shouldValidate: true, shouldDirty: true });
+  };
+
+  const applyVocabularyAsCorrectAnswer = (vocabulary: CMSVocabulary) => {
+    const currentCorrectIndex = Number.parseInt(correctAnswerIndex, 10);
+    const safeIndex = Number.isInteger(currentCorrectIndex) && currentCorrectIndex >= 0 && currentCorrectIndex < optionValues.length
+      ? currentCorrectIndex
+      : 0;
+
+    setValue(`options.${safeIndex}.value`, vocabulary.word, { shouldValidate: true, shouldDirty: true });
+    const titleValue = (watch('title') || '').trim();
+    const questionTextValue = (watch('questionText') || '').trim();
+    const descriptionValue = (watch('description') || '').trim();
+
+    if (!titleValue) {
+      setValue('title', `${topicName || 'Quiz'} - ${vocabulary.word}`, { shouldValidate: true, shouldDirty: true });
+    }
+
+    if (vocabulary.definition?.trim() && !questionTextValue) {
+      setValue(
+        'questionText',
+        `Từ tiếng Anh nào có nghĩa là "${vocabulary.definition.trim()}"?`,
+        { shouldValidate: true, shouldDirty: true },
+      );
+    }
+
+    if (!descriptionValue) {
+      setValue(
+        'description',
+        `Chọn đúng từ vựng thuộc chủ đề ${topicName || 'đã chọn'}.`,
+        { shouldValidate: true, shouldDirty: true },
+      );
+    }
+
+    if (titleValue || questionTextValue || descriptionValue) {
+      toast.success('Đã điền đáp án đúng. Nội dung bạn đã nhập sẵn được giữ nguyên.');
+    }
   };
 
   return (
@@ -208,6 +299,55 @@ export function QuizForm({ initialData, onSubmit, onCancel, isLoading }: QuizFor
             <p className="text-red-500 text-sm mt-3 font-medium text-center">Vui lòng chọn 1 đáp án đúng</p>
           )}
         </div>
+
+        {topicVocabularies.length > 0 && (
+          <div className="bg-primary-light/20 p-6 rounded-2xl border border-primary/15">
+            <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
+              <div>
+                <label className="block text-sm font-bold text-heading">Pick nhanh từ trong chủ đề</label>
+                <p className="text-sm text-caption">
+                  Bấm vào từ để thêm nhanh vào đáp án, hoặc dùng làm đáp án đúng hiện tại.
+                </p>
+              </div>
+              <span className="px-3 py-1 rounded-full bg-white text-primary text-xs font-bold border border-primary/10">
+                {topicVocabularies.length} từ
+              </span>
+            </div>
+
+            <div className="space-y-3 max-h-72 overflow-y-auto pr-1">
+              {topicVocabularies.map((vocabulary) => (
+                <div
+                  key={vocabulary.id}
+                  className="bg-white rounded-2xl border border-primary/10 p-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between"
+                >
+                  <div className="min-w-0">
+                    <div className="font-bold text-heading">{vocabulary.word}</div>
+                    <div className="text-sm text-caption">
+                      {vocabulary.definition || 'Chưa có nghĩa tiếng Việt'}
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => insertVocabularyIntoNextSlot(vocabulary.word)}
+                      className="px-3 py-2 rounded-xl border border-border bg-background text-body text-sm font-semibold hover:border-primary/40 hover:text-primary transition-colors"
+                    >
+                      Thêm vào đáp án
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => applyVocabularyAsCorrectAnswer(vocabulary)}
+                      className="px-3 py-2 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary-dark transition-colors"
+                    >
+                      Dùng làm đáp án đúng
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Actions */}

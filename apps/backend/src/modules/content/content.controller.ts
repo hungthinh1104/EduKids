@@ -66,8 +66,13 @@ export class ContentController {
   async getTopics(
     @Query("page", new DefaultValuePipe(1), ParseIntPipe) page: number,
     @Query("limit", new DefaultValuePipe(20), ParseIntPipe) limit: number,
+    @Request() req,
   ): Promise<PaginatedResponseDto<TopicDto>> {
-    return await this.contentService.getTopicsPaginated(page, limit);
+    const childId =
+      req.user?.role === "LEARNER" && req.user?.childId
+        ? Number(req.user.childId)
+        : undefined;
+    return await this.contentService.getTopicsPaginated(page, limit, childId);
   }
 
   /**

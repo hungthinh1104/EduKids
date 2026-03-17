@@ -23,4 +23,32 @@ export class TopicDto {
 
   @ApiProperty({ example: "2024-01-01T00:00:00.000Z" })
   createdAt: Date;
+
+  @ApiProperty({
+    example: 5,
+    description: "Completed vocabulary count for learner",
+    required: false,
+  })
+  completedCount?: number;
+
+  @ApiProperty({
+    example: 33,
+    description: "Progress percentage for learner",
+    required: false,
+  })
+  progressPercentage?: number;
+
+  @ApiProperty({
+    example: 1,
+    description: "Stars earned for this topic",
+    required: false,
+  })
+  starsEarned?: number;
+
+  @ApiProperty({
+    example: true,
+    description: "Whether the topic has a video lesson",
+    required: false,
+  })
+  hasVideo?: boolean;
 }

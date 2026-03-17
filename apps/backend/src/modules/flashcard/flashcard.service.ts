@@ -62,9 +62,9 @@ export class FlashcardService {
         vocabulary.topicId,
       );
 
-      if (!options || options.length === 0) {
+      if (!options || options.length < 2) {
         throw new BadRequestException(
-          'No drag-drop options available for this vocabulary',
+          'At least two drag-drop options are required for this vocabulary',
         );
       }
 
@@ -127,9 +127,9 @@ export class FlashcardService {
         vocabulary.topicId,
       );
 
-      if (!options || options.length === 0) {
+      if (!options || options.length < 2) {
         throw new BadRequestException(
-          'No drag-drop options available for this vocabulary',
+          'At least two drag-drop options are required for this vocabulary',
         );
       }
 

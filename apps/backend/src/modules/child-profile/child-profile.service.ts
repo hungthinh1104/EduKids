@@ -251,6 +251,30 @@ export class ChildProfileService {
   }
 
   /**
+   * Set active child profile for parent-facing pages without switching JWT role.
+   * Keeps the parent session intact while updating User.activeChildId.
+   */
+  async setActiveProfile(
+    parentId: number,
+    childId: number,
+  ): Promise<ProfileActionResultDto> {
+    const profile = await this.repository.getProfileById(childId, parentId);
+    if (!profile) {
+      throw new NotFoundException(
+        `Child profile with ID ${childId} not found or you don't have permission to access it.`,
+      );
+    }
+
+    await this.repository.switchActiveProfile(parentId, childId);
+
+    return {
+      success: true,
+      message: `Đã chọn hồ sơ ${profile.nickname}.`,
+      profile: this.mapToProfileDto(profile, true),
+    };
+  }
+
+  /**
    * Get currently active profile
    * @param parentId - Parent user ID
    * @returns Active profile or null if none selected

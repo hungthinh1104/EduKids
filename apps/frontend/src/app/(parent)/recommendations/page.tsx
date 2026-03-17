@@ -3,9 +3,18 @@
 import { useState, useEffect } from 'react';
 import { Lightbulb, ChevronRight, TrendingUp, Sparkles } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { toast } from 'sonner';
 import { Heading, Body, Caption } from '@/shared/components/Typography';
 import { useChildProfiles } from '@/features/dashboard/hooks/useChildProfiles';
-import { getRecommendations, regenerateRecommendations, type Recommendation } from '@/features/recommendations/api/recommendations.api';
+import {
+  applyRecommendation,
+  type AppliedLearningPath,
+  getRecommendations,
+  regenerateRecommendations,
+  type Recommendation,
+} from '@/features/recommendations/api/recommendations.api';
+import { switchProfile } from '@/features/profile/api/profile.api';
+import { backupParentSession } from '@/shared/utils/parent-session-handoff';
 
 
 export default function ParentRecommendationsPage() {
@@ -13,6 +22,7 @@ export default function ParentRecommendationsPage() {
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isRegenerating, setIsRegenerating] = useState(false);
+  const [activatingRecommendationId, setActivatingRecommendationId] = useState<number | null>(null);
   const [activeCategory, setActiveCategory] = useState<string>('all');
   const [emptyMessage, setEmptyMessage] = useState('Chưa có gợi ý nào');
 
@@ -118,6 +128,56 @@ export default function ParentRecommendationsPage() {
         return 'Bài Quiz';
       default:
         return 'Gợi Ý';
+    }
+  };
+
+  const resolveLearningRoute = (
+    recommendation: Recommendation,
+    appliedPath?: AppliedLearningPath,
+  ) => {
+    const primaryTopicId =
+      appliedPath?.topics.find((topic) => typeof topic.id === 'number' && topic.id > 0)?.id ??
+      recommendation.targetTopics.find((topic) => typeof topic.id === 'number' && topic.id > 0)?.id;
+
+    switch (recommendation.type) {
+      case 'QUIZ':
+      case 'PRONUNCIATION':
+      case 'TOPIC':
+        return primaryTopicId ? `/play/topic/${primaryTopicId}` : '/play';
+      case 'REVIEW':
+      default:
+        return '/play/review';
+    }
+  };
+
+  const handleStartRecommendation = async (recommendation: Recommendation) => {
+    if (!activeChild?.id || activatingRecommendationId !== null) return;
+
+    setActivatingRecommendationId(recommendation.id);
+
+    try {
+      let appliedPath: AppliedLearningPath | undefined;
+
+      try {
+        appliedPath = await applyRecommendation(activeChild.id, recommendation.id);
+      } catch (error) {
+        console.error('Failed to apply recommendation before start:', error);
+      }
+
+      const learningRoute = resolveLearningRoute(recommendation, appliedPath);
+      const restoreRoute = '/session/restore-parent?next=/recommendations';
+
+      backupParentSession();
+      window.history.replaceState(window.history.state, '', restoreRoute);
+
+      await switchProfile(activeChild.id);
+      toast.success(`Đang mở bài học được gợi ý cho ${activeChild.nickname}.`);
+      window.location.assign(learningRoute);
+    } catch (error) {
+      console.error('Failed to start recommendation:', error);
+      toast.error('Không thể mở bài học được gợi ý lúc này. Vui lòng thử lại.');
+    } finally {
+      setActivatingRecommendationId(null);
     }
   };
 
@@ -280,10 +340,14 @@ export default function ParentRecommendationsPage() {
                     {/* Action Button */}
                     <button
                       type="button"
-                      disabled
-                      title="Tính năng chi tiết sẽ mở ở bản tiếp theo"
-                      className="ml-4 p-3 rounded-lg bg-background border border-border text-caption cursor-not-allowed"
+                      disabled={activatingRecommendationId === rec.id}
+                      onClick={() => void handleStartRecommendation(rec)}
+                      title="Áp dụng gợi ý và mở bài học phù hợp cho bé"
+                      className="ml-4 inline-flex items-center gap-2 rounded-xl border border-primary bg-primary px-4 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-primary-dark disabled:cursor-wait disabled:opacity-70"
                     >
+                      <span>
+                        {activatingRecommendationId === rec.id ? 'Đang mở...' : 'Học ngay'}
+                      </span>
                       <ChevronRight className="w-5 h-5" />
                     </button>
                   </div>

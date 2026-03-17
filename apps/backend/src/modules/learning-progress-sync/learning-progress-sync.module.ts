@@ -45,7 +45,7 @@ import { Redis } from "ioredis";
         }
 
         return new Redis({
-          host: configService.get("REDIS_HOST", "localhost"),
+          host: configService.get("REDIS_HOST", "redis"),
           port: configService.get("REDIS_PORT", 6379),
           username: configService.get("REDIS_USERNAME"),
           password: configService.get("REDIS_PASSWORD"),

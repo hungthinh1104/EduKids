@@ -20,7 +20,8 @@ export function HeroSection() {
     const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
-        setMounted(true);
+        const id = window.setTimeout(() => setMounted(true), 0);
+        return () => window.clearTimeout(id);
     }, []);
 
     const isReady = mounted && !isLoading;
@@ -65,11 +66,11 @@ export function HeroSection() {
                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75"></span>
                             <span className="relative inline-flex rounded-full h-3 w-3 bg-success"></span>
                         </span>
-                        <span className="font-heading font-bold text-slate-700 dark:text-slate-200 text-sm tracking-wide">English for Future Leaders</span>
+                        <span className="font-heading font-bold text-body text-sm tracking-wide">English for Future Leaders</span>
                     </motion.div>
 
                     <motion.div variants={fadeInUp}>
-                        <h1 className="font-heading font-black text-5xl sm:text-6xl md:text-7xl lg:text-[5rem] leading-[1.05] tracking-tight text-slate-900 dark:text-white mb-6">
+                        <h1 className="font-heading font-black text-5xl sm:text-6xl md:text-7xl lg:text-[5rem] leading-[1.05] tracking-tight text-heading mb-6">
                             Giỏi Tiếng Anh <br />
                             <span className="relative inline-block mt-2">
                                 Toả Sáng <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-secondary to-accent animate-gradient bg-[length:200%_auto]">Tương Lai!</span> 🚀
@@ -82,7 +83,11 @@ export function HeroSection() {
                     </motion.div>
 
                     <motion.div variants={fadeInUp}>
-                        <Body size="lg" className="mb-10 text-slate-600 dark:text-slate-300 text-lg sm:text-xl leading-relaxed sm:max-w-2xl mx-auto lg:mx-0 font-medium">
+                        <Body
+                            size="lg"
+                            color="body"
+                            className="mb-10 text-lg sm:text-xl leading-relaxed sm:max-w-2xl mx-auto lg:mx-0 font-medium"
+                        >
                             Vừa chơi vừa học với công nghệ Trí Tuệ Nhân Tạo (AI) hiện đại. Luyện phát âm chuẩn bản xứ, chơi game flashcard nhận quà liền tay!
                         </Body>
                     </motion.div>
@@ -99,7 +104,7 @@ export function HeroSection() {
                                 </KidButton>
                             </MagneticButton>
                         </Link>
-                        <div className="flex items-center gap-4 text-slate-500 dark:text-slate-400 font-medium mt-4 sm:mt-0">
+                        <div className="flex items-center gap-4 text-muted font-medium mt-4 sm:mt-0">
                             <div className="flex -space-x-3">
                                 {[1, 2, 3, 4].map((i) => (
                                     <Image priority width={40} height={40} key={i} src={`https://api.dicebear.com/7.x/notionists/svg?seed=${i}&scale=120`} alt={`Avatar ${i}`} className="w-10 h-10 rounded-full border-2 border-white dark:border-slate-900 bg-emerald-100" />
@@ -168,7 +173,7 @@ export function HeroSection() {
                             <CheckCircle2 size={32} className="text-white" />
                         </div>
                         <div>
-                            <p className="font-heading font-bold text-slate-800 dark:text-white text-lg leading-tight">Tuyệt vời!</p>
+                            <p className="font-heading font-bold text-heading text-lg leading-tight">Tuyệt vời!</p>
                             <div className="flex items-center gap-1 text-sm font-bold text-success bg-success/10 px-2 py-1 rounded-lg w-fit mt-1">
                                 <Star size={14} className="fill-current" /> +50 điểm
                             </div>
@@ -193,7 +198,7 @@ export function HeroSection() {
                             <span className="absolute bottom-0 right-0 w-4 h-4 bg-success border-2 border-white rounded-full"></span>
                         </div>
                         <div className="text-center mt-1">
-                            <p className="font-heading font-bold text-slate-800 dark:text-white">Robot AI</p>
+                            <p className="font-heading font-bold text-heading">Robot AI</p>
                             <p className="text-xs font-semibold text-primary uppercase tracking-wider">Đang Lắng Nghe</p>
                         </div>
                     </motion.div>
