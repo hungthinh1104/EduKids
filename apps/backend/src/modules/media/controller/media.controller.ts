@@ -99,7 +99,7 @@ export class MediaController {
     @Req() req: any,
   ): Promise<MediaResponseDto> {
     // [H-3 Fix] JwtStrategy attaches userId as `sub`, not `userId`
-    const adminId = req.user.sub;
+    const adminId = String(req.user.sub);
     return this.mediaService.uploadMedia(file, uploadDto, adminId);
   }
 
