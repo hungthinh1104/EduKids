@@ -7,8 +7,8 @@ export function JourneySection() {
     return (
         <section id="how-it-works" className="py-32 px-4 bg-slate-900 text-white overflow-hidden relative">
             <div className="absolute inset-0 opacity-20">
-                <div className="absolute w-[800px] h-[800px] bg-primary rounded-full blur-[150px] -top-96 -left-96"></div>
-                <div className="absolute w-[800px] h-[800px] bg-accent rounded-full blur-[150px] top-60 -right-96"></div>
+                <div className="absolute w-64 h-64 md:w-[800px] md:h-[800px] bg-primary rounded-full blur-3xl md:blur-[150px] -top-32 -left-32 md:-top-96 md:-left-96"></div>
+                <div className="absolute w-64 h-64 md:w-[800px] md:h-[800px] bg-accent rounded-full blur-3xl md:blur-[150px] top-60 -right-32 md:-right-96"></div>
             </div>
 
             <div className="max-w-7xl mx-auto relative z-10">

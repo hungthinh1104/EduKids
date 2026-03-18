@@ -49,8 +49,8 @@ export function TestimonialsSection() {
                     {/* Right Reviews */}
                     <div className="relative">
                         {/* Decorative blobs */}
-                        <div className="absolute top-20 right-0 w-72 h-72 bg-rose-100 dark:bg-rose-900/20 rounded-full blur-3xl -z-10"></div>
-                        <div className="absolute bottom-0 left-10 w-64 h-64 bg-amber-100 dark:bg-amber-900/20 rounded-full blur-3xl -z-10"></div>
+                        <div className="absolute top-20 right-0 w-32 h-32 md:w-72 md:h-72 bg-rose-100 dark:bg-rose-900/20 rounded-full blur-2xl md:blur-3xl -z-10"></div>
+                        <div className="absolute bottom-0 left-10 w-32 h-32 md:w-64 md:h-64 bg-amber-100 dark:bg-amber-900/20 rounded-full blur-2xl md:blur-3xl -z-10"></div>
 
                         <div className="flex flex-col gap-8">
                             {/* Review Card 1 */}

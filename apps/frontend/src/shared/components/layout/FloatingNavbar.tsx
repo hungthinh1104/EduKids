@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { motion } from 'framer-motion';
-import { Sparkles, Sun, Moon } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Sparkles, Sun, Moon, Menu, X } from 'lucide-react';
 import { useTheme } from 'next-themes';
 
 export interface NavLink {
@@ -21,6 +21,7 @@ export interface FloatingNavbarProps {
 export function FloatingNavbar({ links, rightActions, showThemeToggle = false }: FloatingNavbarProps) {
     const { resolvedTheme, setTheme } = useTheme();
     const [isScrolled, setIsScrolled] = useState(false);
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     useEffect(() => {
         const handleScroll = () => {
@@ -77,7 +78,41 @@ export function FloatingNavbar({ links, rightActions, showThemeToggle = false }:
                     </button>
                 )}
                 {rightActions}
+                
+                {/* Mobile Menu Toggle Button */}
+                <button 
+                    onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                    className="md:hidden p-3 text-body hover:text-primary bg-white/50 dark:bg-slate-800/50 backdrop-blur-md border border-slate-200/50 dark:border-slate-700/50 rounded-full shadow-sm"
+                    aria-label="Toggle Mobile Menu"
+                >
+                    {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+                </button>
             </div>
+
+            {/* Mobile Menu Dropdown */}
+            <AnimatePresence>
+                {isMobileMenuOpen && (
+                    <motion.div
+                        initial={{ opacity: 0, y: -20, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: -20, scale: 0.95 }}
+                        transition={{ duration: 0.2 }}
+                        className="absolute top-full left-0 right-0 mt-4 mx-2 sm:mx-6 p-6 rounded-3xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-3xl border border-slate-200/80 dark:border-slate-800/80 shadow-2xl md:hidden flex flex-col gap-6"
+                    >
+                        {links.map((link) => (
+                            <Link
+                                key={link.href}
+                                href={link.href}
+                                onClick={() => setIsMobileMenuOpen(false)}
+                                className="flex items-center gap-3 text-lg font-heading font-bold text-body hover:text-primary transition-colors"
+                            >
+                                {link.icon && <span>{link.icon}</span>}
+                                {link.label}
+                            </Link>
+                        ))}
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </motion.nav>
     );
 }

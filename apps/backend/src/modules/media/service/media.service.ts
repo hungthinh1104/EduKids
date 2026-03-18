@@ -2,9 +2,12 @@ import {
   BadRequestException,
   Injectable,
   InternalServerErrorException,
+  Logger,
   NotFoundException,
   ServiceUnavailableException,
 } from "@nestjs/common";
+import { InjectQueue } from "@nestjs/bull";
+import { Queue } from "bull";
 import { v2 as cloudinary, type UploadApiResponse, type UploadApiErrorResponse } from "cloudinary";
 import { UploadMediaDto } from "../dto/upload-media.dto";
 import {
@@ -28,7 +31,12 @@ type CloudinaryUploadResult = UploadApiResponse & {
 
 @Injectable()
 export class MediaService {
-  constructor(private readonly mediaRepository: MediaRepository) {}
+  private readonly logger = new Logger(MediaService.name);
+
+  constructor(
+    private readonly mediaRepository: MediaRepository,
+    @InjectQueue('media-processing') private mediaQueue: Queue,
+  ) {}
 
   private isCloudinaryConfigured() {
     const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
@@ -136,8 +144,8 @@ export class MediaService {
     this.validateFile(file, uploadDto.mediaType);
 
     const uploaded = await this.uploadToCloudinary(file, uploadDto.mediaType);
-    const processedAt = new Date();
 
+    // Create media record with PENDING status
     const media = await this.mediaRepository.createMedia({
       mediaType: uploadDto.mediaType,
       context: uploadDto.context,
@@ -151,8 +159,7 @@ export class MediaService {
       description: uploadDto.description,
       altText: uploadDto.altText,
       uploadedBy: adminId,
-      status: ProcessingStatus.COMPLETED,
-      processedAt,
+      status: ProcessingStatus.PENDING,
       metadata: {
         width: uploaded.width ?? null,
         height: uploaded.height ?? null,
@@ -161,6 +168,34 @@ export class MediaService {
         resourceType: uploaded.resource_type ?? null,
       },
     });
+
+    // Queue media for async processing
+    try {
+      await this.mediaQueue.add(
+        'process-media',
+        {
+          mediaId: media.id,
+          tempFilePath: file.path || '',
+          mediaType: uploadDto.mediaType,
+          mimeType: file.mimetype,
+        },
+        {
+          attempts: 3,
+          backoff: {
+            type: 'exponential',
+            delay: 2000,
+          },
+          removeOnComplete: true,
+          removeOnFail: false,
+        },
+      );
+      this.logger.log(`Media processing queued for ${media.id}`);
+    } catch (error) {
+      this.logger.warn(`Failed to queue media ${media.id}: ${error.message}`);
+      // Don't fail the upload if queueing fails - file is already in Cloudinary
+      // Mark as completed since Cloudinary already has the optimized version from eager
+      await this.mediaRepository.updateMediaStatus(media.id, ProcessingStatus.COMPLETED);
+    }
 
     return this.toResponseDto(media);
   }

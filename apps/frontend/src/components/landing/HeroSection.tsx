@@ -31,23 +31,23 @@ export function HeroSection() {
         : '/register';
 
     return (
-        <section ref={heroRef} className="relative pt-44 pb-20 lg:pt-52 lg:pb-32 px-4 flex items-center justify-center min-h-[95vh]">
+        <section ref={heroRef} className="relative pt-44 pb-20 lg:pt-52 lg:pb-32 px-4 flex items-center justify-center min-h-[95vh] overflow-hidden">
             {/* Dynamic Background Orbs */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
                 <motion.div
                     animate={{ scale: [1, 1.2, 1], rotate: [0, 90, 0], opacity: [0.4, 0.6, 0.4] }}
                     transition={{ duration: 15, repeat: Infinity, ease: 'linear' }}
-                    className="absolute -top-[10%] -left-[10%] w-[50vw] h-[50vw] max-w-[800px] max-h-[800px] bg-primary-light/50 dark:bg-primary/20 rounded-full mix-blend-multiply dark:mix-blend-screen blur-[100px]"
+                    className="absolute -top-[10%] -left-[10%] w-[50vw] h-[50vw] max-w-[800px] max-h-[800px] bg-primary-light/50 dark:bg-primary/20 rounded-full mix-blend-multiply dark:mix-blend-screen blur-3xl md:blur-[100px]"
                 />
                 <motion.div
                     animate={{ scale: [1, 1.5, 1], x: [0, 100, 0], opacity: [0.3, 0.5, 0.3] }}
                     transition={{ duration: 20, repeat: Infinity, ease: 'easeInOut' }}
-                    className="absolute top-[20%] right-[0%] w-[40vw] h-[40vw] max-w-[600px] max-h-[600px] bg-secondary-light/40 dark:bg-secondary/20 rounded-full mix-blend-multiply dark:mix-blend-screen blur-[100px]"
+                    className="absolute top-[20%] right-[0%] w-[40vw] h-[40vw] max-w-[600px] max-h-[600px] bg-secondary-light/40 dark:bg-secondary/20 rounded-full mix-blend-multiply dark:mix-blend-screen blur-3xl md:blur-[100px]"
                 />
                 <motion.div
                     animate={{ y: [0, -100, 0], opacity: [0.3, 0.6, 0.3] }}
                     transition={{ duration: 12, repeat: Infinity, ease: 'easeInOut' }}
-                    className="absolute -bottom-[20%] left-[30%] w-[60vw] h-[60vw] max-w-[700px] max-h-[700px] bg-accent-light/40 dark:bg-accent/20 rounded-full mix-blend-multiply dark:mix-blend-screen blur-[120px]"
+                    className="absolute -bottom-[20%] left-[30%] w-[60vw] h-[60vw] max-w-[700px] max-h-[700px] bg-accent-light/40 dark:bg-accent/20 rounded-full mix-blend-multiply dark:mix-blend-screen blur-3xl md:blur-[120px]"
                 />
                 {/* Subtle Grid Pattern Overlay */}
                 <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center [mask-image:linear-gradient(180deg,white,rgba(255,255,255,0))] opacity-20 dark:opacity-10"></div>

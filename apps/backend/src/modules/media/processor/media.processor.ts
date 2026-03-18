@@ -4,7 +4,7 @@ import { Job } from 'bull';
 import { ConfigService } from '@nestjs/config';
 import { v2 as cloudinary } from 'cloudinary';
 import * as fs from 'fs/promises';
-import * as sharp from 'sharp';
+import sharp from 'sharp';
 import * as ffmpeg from 'fluent-ffmpeg';
 import { MediaRepository } from '../repository/media.repository';
 import { MediaType } from '../dto/upload-media.dto';
@@ -95,7 +95,6 @@ export class MediaProcessor {
    * Process image: compress, resize, upload to Cloudinary
    */
   private async processImage(job: Job, tempFilePath: string) {
-    await job.updateData({ ...job.data, currentStep: 'Optimizing image' });
     await job.progress(20);
 
     // Read and optimize image with sharp
@@ -118,7 +117,6 @@ export class MediaProcessor {
     const optimizedPath = tempFilePath.replace(/\.[^.]+$/, '-optimized.jpg');
     await fs.writeFile(optimizedPath, optimizedBuffer);
 
-    await job.updateData({ ...job.data, currentStep: 'Uploading to cloud' });
     await job.progress(60);
 
     // Upload to Cloudinary
@@ -151,7 +149,6 @@ export class MediaProcessor {
    * Process audio: convert to MP3, upload to Cloudinary
    */
   private async processAudio(job: Job, tempFilePath: string) {
-    await job.updateData({ ...job.data, currentStep: 'Converting audio format' });
     await job.progress(20);
 
     return new Promise((resolve, reject) => {
@@ -169,7 +166,6 @@ export class MediaProcessor {
         .on('end', async () => {
           try {
             await job.progress(60);
-            await job.updateData({ ...job.data, currentStep: 'Uploading to cloud' });
 
             // Upload to Cloudinary
             const uploadResult = await cloudinary.uploader.upload(outputPath, {
@@ -213,7 +209,6 @@ export class MediaProcessor {
    * Process video: transcode to MP4, generate thumbnail, upload to Cloudinary
    */
   private async processVideo(job: Job, tempFilePath: string) {
-    await job.updateData({ ...job.data, currentStep: 'Transcoding video' });
     await job.progress(20);
 
     return new Promise((resolve, reject) => {
@@ -240,7 +235,6 @@ export class MediaProcessor {
         .on('end', async () => {
           try {
             await job.progress(70);
-            await job.updateData({ ...job.data, currentStep: 'Uploading to cloud' });
 
             // Upload video to Cloudinary
             const videoUploadResult = await cloudinary.uploader.upload(outputPath, {
