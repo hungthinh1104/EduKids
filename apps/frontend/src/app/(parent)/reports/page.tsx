@@ -174,46 +174,48 @@ export default function ReportsPage() {
     return (
         <div className="space-y-8 pb-8">
             {/* Header */}
-            <motion.div initial={{ opacity: 1, y: -16 }} animate={{ opacity: 1, y: 0 }} className="flex items-start justify-between">
-                <div>
-                    <Heading level={2} className="text-heading text-3xl mb-1">Báo cáo học tập 📊</Heading>
-                    <Body className="text-body">Theo dõi hành trình tiến bộ của bé</Body>
+            <motion.div initial={{ opacity: 1, y: -16 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+                <div className="flex-1">
+                    <Heading level={2} className="text-heading text-2xl md:text-3xl mb-1">Báo cáo học tập 📊</Heading>
+                    <Body className="text-body text-sm md:text-base">Theo dõi hành trình tiến bộ của bé</Body>
                     <Caption className="text-caption text-xs mt-2 block">
                         Gửi tự động: {subscriptionPrefs?.isSubscribed ? `${subscriptionLabel} lúc ${String(subscriptionPrefs.reportHour ?? 9).padStart(2, '0')}:00` : 'Chưa bật'}
                     </Caption>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-wrap md:flex-nowrap">
                     <button 
                         onClick={() => setShowSubscriptionModal(true)} 
-                        className="flex items-center gap-2 px-4 py-2.5 bg-white border border-border rounded-xl text-sm font-heading font-bold text-body hover:bg-purple-50 hover:border-purple-400 transition-colors shadow-sm print:hidden"
+                        className="flex items-center justify-center gap-2 px-3 md:px-4 py-2.5 bg-white border border-border rounded-xl text-xs md:text-sm font-heading font-bold text-body hover:bg-purple-50 hover:border-purple-400 transition-colors shadow-sm print:hidden flex-1 md:flex-none whitespace-nowrap"
                     >
-                        <Bell size={16} /> {subscriptionPrefs?.isSubscribed ? 'Chỉnh lịch gửi tự động' : 'Thiết lập gửi tự động'}
+                        <Bell size={14} className="md:w-4 md:h-4" /> <span className="hidden md:inline">{subscriptionPrefs?.isSubscribed ? 'Chỉnh lịch gửi tự động' : 'Thiết lập gửi tự động'}</span>
+                        <span className="md:hidden">Lịch gửi</span>
                     </button>
-                    <button onClick={handleExportPDF} className="flex items-center gap-2 px-4 py-2.5 bg-white border border-border rounded-xl text-sm font-heading font-bold text-body hover:bg-primary hover:text-white hover:border-primary transition-colors shadow-sm print:hidden">
-                        <Download size={16} /> Xuất PDF
+                    <button onClick={handleExportPDF} className="flex items-center justify-center gap-2 px-3 md:px-4 py-2.5 bg-white border border-border rounded-xl text-xs md:text-sm font-heading font-bold text-body hover:bg-primary hover:text-white hover:border-primary transition-colors shadow-sm print:hidden flex-1 md:flex-none whitespace-nowrap">
+                        <Download size={14} className="md:w-4 md:h-4" /> <span className="hidden md:inline">Xuất PDF</span>
+                        <span className="md:hidden">PDF</span>
                     </button>
                 </div>
             </motion.div>
 
-            {/* Child Selector Tabs */}
-            <div className="flex gap-3 overflow-x-auto pb-1">
+                    <div className="flex gap-2 md:gap-3 overflow-x-auto pb-2 -mx-4 md:mx-0 px-4 md:px-0 scrollbar-hide">
                 {profiles.map((p) => (
                     <motion.button
                         key={p.id}
                         whileHover={{ scale: 1.03 }}
                         whileTap={{ scale: 0.97 }}
                         onClick={() => setSelectedChildId(p.id)}
-                        className={`flex items-center gap-2.5 px-4 py-2.5 rounded-2xl border-2 font-heading font-bold text-sm whitespace-nowrap transition-all ${activeChild?.id === p.id
+                        className={`flex items-center gap-2 px-3 md:px-4 py-2 rounded-2xl border-2 font-heading font-bold text-xs md:text-sm whitespace-nowrap transition-all flex-shrink-0 ${activeChild?.id === p.id
                             ? 'bg-primary-light border-primary text-primary shadow-md shadow-primary/15'
                             : 'bg-card border-border text-body hover:border-primary/40'
                             }`}
                     >
                         <Image
                             src={p.avatar}
-                            alt={p.nickname}
-                            width={24}
-                            height={24}
-                            className="rounded-full"
+                            alt={`Avatar của ${p.nickname}`}
+                            width={20}
+                            height={20}
+                            className="rounded-full w-5 h-5 md:w-6 md:h-6"
+                            loading="lazy"
                         />
                         {p.nickname}
                     </motion.button>
@@ -237,33 +239,35 @@ export default function ReportsPage() {
                         variants={stagger}
                         initial="hidden"
                         animate="visible"
-                        className="grid grid-cols-2 md:grid-cols-4 gap-4"
+                        className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-2 md:gap-4"
                     >
                         {summaryCards.map((s, i) => (
-                            <motion.div key={i} variants={fadeUp} className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-md border border-white/40 dark:border-white/10 shadow-sm rounded-[2rem] p-5 flex flex-col gap-3 hover:shadow-md transition-shadow">
-                                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${s.bg} ${s.color}`}>{s.icon}</div>
-                                <div>
-                                    <div className={`text-2xl font-heading font-black ${s.color}`}>{s.value}</div>
-                                    <Caption className="text-caption text-xs">{s.label}</Caption>
-                                    <Caption className="text-caption text-[10px] opacity-70">{s.sub}</Caption>
+                            <motion.div key={i} variants={fadeUp} className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-md border border-white/40 dark:border-white/10 shadow-sm rounded-[1.5rem] md:rounded-[2rem] p-3 md:p-5 flex flex-col gap-2 md:gap-3 hover:shadow-md transition-shadow">
+                                <div className={`w-8 h-8 md:w-10 md:h-10 rounded-lg md:rounded-xl flex items-center justify-center flex-shrink-0 ${s.bg} ${s.color}`}>
+                                    <span className="text-sm md:text-base">{s.icon}</span>
+                                </div>
+                                <div className="min-w-0">
+                                    <div className={`text-lg md:text-2xl font-heading font-black ${s.color} truncate`}>{s.value}</div>
+                                    <Caption className="text-caption text-[10px] md:text-xs line-clamp-1">{s.label}</Caption>
+                                    <Caption className="text-caption text-[8px] md:text-[10px] opacity-70 line-clamp-1">{s.sub}</Caption>
                                 </div>
                             </motion.div>
                         ))}
                     </motion.div>
 
                     {/* Activity chart with range selector */}
-                    <motion.div initial={{ opacity: 1, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-md border border-white/40 dark:border-white/10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-[2.5rem] p-8 mt-6 mb-8">
-                        <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
+                    <motion.div initial={{ opacity: 1, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-md border border-white/40 dark:border-white/10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-[2rem] md:rounded-[2.5rem] p-4 md:p-8 mt-6 mb-8">
+                        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-5 mb-5">
                             <div className="flex items-center gap-2">
-                                <TrendingUp size={20} className="text-primary" />
-                                <Heading level={4} className="text-heading text-lg">Thời gian học mỗi ngày</Heading>
+                                <TrendingUp size={18} className="md:w-5 md:h-5 text-primary flex-shrink-0" />
+                                <Heading level={4} className="text-heading text-base md:text-lg">Thời gian học mỗi ngày</Heading>
                             </div>
-                            <div className="flex gap-1.5">
+                            <div className="flex gap-1.5 overflow-x-auto">
                                 {RANGE_OPTIONS.map((opt) => (
                                     <button
                                         key={opt}
                                         onClick={() => setRange(opt)}
-                                        className={`px-3 py-1 rounded-xl text-xs font-heading font-bold border-2 transition-all ${range === opt ? 'border-primary bg-primary-light text-primary' : 'border-border text-body hover:border-primary/40'
+                                        className={`px-2 md:px-3 py-1 rounded-lg md:rounded-xl text-[10px] md:text-xs font-heading font-bold border-2 transition-all flex-shrink-0 ${range === opt ? 'border-primary bg-primary-light text-primary' : 'border-border text-body hover:border-primary/40'
                                             }`}
                                     >
                                         {opt}
@@ -272,20 +276,20 @@ export default function ReportsPage() {
                             </div>
                         </div>
 
-                        <div className="flex items-end justify-between gap-1.5 h-36">
+                        <div className="flex items-end justify-between gap-1 md:gap-1.5 h-32 md:h-36">
                             {chartData.map((pt, i) => {
                                 const heightPct = (pt.value / maxMinutes) * 100;
                                 return (
-                                    <div key={i} className="flex-1 flex flex-col items-center gap-1.5 group">
-                                        <span className="text-caption text-[10px] opacity-0 group-hover:opacity-100 transition-opacity font-bold">{pt.value}p</span>
+                                    <div key={i} className="flex-1 flex flex-col items-center gap-1 md:gap-1.5 group">
+                                        <span className="text-caption text-[8px] md:text-[10px] opacity-0 group-hover:opacity-100 transition-opacity font-bold">{pt.value}p</span>
                                         <motion.div
                                             initial={{ height: 0 }}
                                             whileInView={{ height: `${heightPct}%` }}
                                             viewport={{ once: true }}
                                             transition={{ duration: 0.7, delay: i * 0.06, ease: 'easeOut' }}
-                                            className="w-full min-h-1 bg-gradient-to-t from-primary to-accent rounded-t-lg group-hover:from-primary-dark transition-colors"
+                                            className="w-full min-h-0.5 md:min-h-1 bg-gradient-to-t from-primary to-accent rounded-t-lg group-hover:from-primary-dark transition-colors"
                                         />
-                                        <Caption className="text-[11px]">{pt.label}</Caption>
+                                        <Caption className="text-[9px] md:text-[11px]">{pt.label}</Caption>
                                     </div>
                                 );
                             })}
@@ -293,14 +297,14 @@ export default function ReportsPage() {
                     </motion.div>
 
                     {/* Two-column: Mastered words + Badges */}
-                    <div className="grid md:grid-cols-2 gap-6 mb-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mb-8">
                         {/* Mastered Vocabulary */}
-                        <motion.div initial={{ opacity: 1, x: -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-md border border-white/40 dark:border-white/10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-[2.5rem] p-8">
-                            <div className="flex items-center gap-2 mb-5">
-                                <Star size={20} className="text-star fill-star" />
-                                <Heading level={4} className="text-heading text-lg">Từ đã thuộc tốt nhất</Heading>
+                        <motion.div initial={{ opacity: 1, x: -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-md border border-white/40 dark:border-white/10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-[2rem] md:rounded-[2.5rem] p-4 md:p-8">
+                            <div className="flex items-center gap-2 mb-4 md:mb-5">
+                                <Star size={18} className="md:w-5 md:h-5 text-star fill-star flex-shrink-0" />
+                                <Heading level={4} className="text-heading text-base md:text-lg">Từ đã thuộc tốt nhất</Heading>
                             </div>
-                            <div className="space-y-3">
+                            <div className="space-y-2 md:space-y-3">
                                 {masteredWords.slice(0, 5).map((v, i) => {
                                     const score = Math.min(100, Math.round(v.easeFactor * 30));
                                     return (
@@ -310,31 +314,31 @@ export default function ReportsPage() {
                                             whileInView={{ opacity: 1, x: 0 }}
                                             viewport={{ once: true }}
                                             transition={{ delay: i * 0.06 }}
-                                            whileHover={{ x: 4, backgroundColor: 'rgba(var(--color-primary), 0.05)' }}
-                                            className="flex items-center justify-between py-3 px-3 rounded-2xl border border-transparent hover:border-primary/20 transition-all cursor-default"
+                                            whileHover={{ x: 2, backgroundColor: 'rgba(var(--color-primary), 0.05)' }}
+                                            className="flex items-center justify-between py-2 md:py-3 px-2 md:px-3 rounded-xl md:rounded-2xl border border-transparent hover:border-primary/20 transition-all cursor-default gap-2"
                                         >
-                                            <div>
-                                                <span className="font-heading font-black text-heading text-base mr-2">{v.word}</span>
-                                                <span className="text-caption text-xs">{v.phonetic}</span>
-                                                <div className="text-body text-sm mt-0.5">{v.translation}</div>
+                                            <div className="min-w-0 flex-1">
+                                                <span className="font-heading font-black text-heading text-sm md:text-base mr-1 md:mr-2 line-clamp-1">{v.word}</span>
+                                                <span className="text-caption text-xs md:text-xs">{v.phonetic}</span>
+                                                <div className="text-body text-xs md:text-sm mt-0.5 line-clamp-1">{v.translation}</div>
                                             </div>
-                                            <div className={`text-sm font-heading font-black px-2.5 py-1 rounded-xl ${score >= 95 ? 'bg-success-light text-success' : score >= 88 ? 'bg-primary-light text-primary' : 'bg-warning-light text-warning'
+                                            <div className={`text-xs md:text-sm font-heading font-black px-2 md:px-2.5 py-1 rounded-lg md:rounded-xl whitespace-nowrap flex-shrink-0 ${score >= 95 ? 'bg-success-light text-success' : score >= 88 ? 'bg-primary-light text-primary' : 'bg-warning-light text-warning'
                                                 }`}>
                                                 {score}%
                                             </div>
                                         </motion.div>
                                     );
                                 })}
-                                {masteredWords.length === 0 && <Caption className="text-sm block py-4 text-center">Bé chưa có từ nào đạt mức thuần thục</Caption>}
+                                {masteredWords.length === 0 && <Caption className="text-xs md:text-sm block py-3 md:py-4 text-center">Bé chưa có từ nào đạt mức thuần thục</Caption>}
                             </div>
                         </motion.div>
                         {/* Recent Badges */}
-                        <motion.div initial={{ opacity: 1, x: 20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-md border border-white/40 dark:border-white/10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-[2.5rem] p-8">
-                            <div className="flex items-center gap-2 mb-5">
-                                <Trophy size={20} className="text-accent" />
-                                <Heading level={4} className="text-heading text-lg">Huy hiệu gần đây</Heading>
+                        <motion.div initial={{ opacity: 1, x: 20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-md border border-white/40 dark:border-white/10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-[2rem] md:rounded-[2.5rem] p-4 md:p-8">
+                            <div className="flex items-center gap-2 mb-4 md:mb-5">
+                                <Trophy size={18} className="md:w-5 md:h-5 text-accent flex-shrink-0" />
+                                <Heading level={4} className="text-heading text-base md:text-lg">Huy hiệu gần đây</Heading>
                             </div>
-                            <div className="space-y-4">
+                            <div className="space-y-3 md:space-y-4">
                                 {recentBadges.slice(0, 5).map((b, i) => (
                                     <motion.div
                                         key={b.id}
@@ -342,66 +346,66 @@ export default function ReportsPage() {
                                         whileInView={{ opacity: 1, y: 0 }}
                                         viewport={{ once: true }}
                                         transition={{ delay: i * 0.1 }}
-                                        className="flex items-center gap-4"
+                                        className="flex items-center gap-3 md:gap-4"
                                     >
-                                        <div className="w-14 h-14 rounded-2xl bg-warning-light flex items-center justify-center text-3xl flex-shrink-0 shadow-sm">
+                                        <div className="w-12 h-12 md:w-14 md:h-14 rounded-xl md:rounded-2xl bg-warning-light flex items-center justify-center text-2xl md:text-3xl flex-shrink-0 shadow-sm">
                                             {b.icon || '🏆'}
                                         </div>
                                         <div className="flex-1 min-w-0">
-                                            <div className="font-heading font-black text-heading text-sm">{b.name}</div>
-                                            <Caption className="text-caption text-xs">{b.description}</Caption>
+                                            <div className="font-heading font-black text-heading text-xs md:text-sm line-clamp-1">{b.name}</div>
+                                            <Caption className="text-caption text-[10px] md:text-xs line-clamp-2">{b.description}</Caption>
                                         </div>
-                                        <div className="flex items-center gap-1 text-caption text-xs flex-shrink-0">
-                                            <Calendar size={11} />
+                                        <div className="flex items-center gap-1 text-caption text-[9px] md:text-xs flex-shrink-0 whitespace-nowrap">
+                                            <Calendar size={10} className="md:w-2.5 md:h-2.5" />
                                             {new Date(b.earnedAt).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })}
                                         </div>
                                     </motion.div>
                                 ))}
-                                {recentBadges.length === 0 && <Caption className="text-sm block py-4 text-center">Bé chưa nhận được huy hiệu nào</Caption>}
+                                {recentBadges.length === 0 && <Caption className="text-xs md:text-sm block py-3 md:py-4 text-center">Bé chưa nhận được huy hiệu nào</Caption>}
                             </div>
                         </motion.div>
                     </div>
 
                     {/* UC-09: Send Report ─────────────────────────────── */}
                     <motion.div initial={{ opacity: 1, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
-                        className="bg-card border-2 border-border rounded-2xl p-6"
+                        className="bg-card border-2 border-border rounded-2xl p-4 md:p-6"
                     >
-                        <div className="flex items-center gap-2 mb-4">
-                            <Mail size={20} className="text-primary" />
-                            <Heading level={4} className="text-heading text-lg">Gửi báo cáo ngay</Heading>
+                        <div className="flex items-center gap-2 mb-3 md:mb-4">
+                            <Mail size={18} className="md:w-5 md:h-5 text-primary flex-shrink-0" />
+                            <Heading level={4} className="text-heading text-base md:text-lg">Gửi báo cáo ngay</Heading>
                         </div>
-                        <Body className="text-body text-sm mb-4">
+                        <Body className="text-body text-xs md:text-sm mb-3 md:mb-4">
                             Gửi ngay báo cáo học tập của <strong>{activeChild?.nickname}</strong> qua {immediateChannelLabel} hiện tại của bạn.
                         </Body>
 
                         {/* Schedule picker */}
-                        <div className="flex gap-2 mb-5">
+                        <div className="flex gap-2 mb-4 md:mb-5">
                             <button
                                 disabled
-                                className="px-4 py-2 rounded-xl font-heading font-bold text-sm border-2 transition-all bg-primary-light border-primary text-primary cursor-default"
+                                className="px-3 md:px-4 py-2 rounded-lg md:rounded-xl font-heading font-bold text-xs md:text-sm border-2 transition-all bg-primary-light border-primary text-primary cursor-default"
                             >
                                 📅 Hàng tuần
                             </button>
                         </div>
 
                         <button onClick={handleSendReport} disabled={sendStatus !== 'idle'}
-                            className={`w-full flex items-center justify-center gap-2 py-3 rounded-2xl font-heading font-black text-sm transition-all ${sendStatus === 'sent' ? 'bg-success text-white' :
+                            className={`w-full flex items-center justify-center gap-2 py-2.5 md:py-3 rounded-lg md:rounded-2xl font-heading font-black text-xs md:text-sm transition-all ${sendStatus === 'sent' ? 'bg-success text-white' :
                                 sendStatus === 'error' ? 'bg-error text-white' :
                                     sendStatus === 'sending' ? 'bg-primary/60 text-white cursor-wait' :
                                         'bg-primary text-white hover:bg-primary-dark'
                                 }`}
                         >
-                            {sendStatus === 'sent' ? <><CheckCircle2 size={16} /> Đã gửi thành công!</> :
-                                sendStatus === 'error' ? <><Mail size={16} /> Gửi thất bại</> :
-                                    sendStatus === 'sending' ? <><Send size={16} className="animate-spin" /> Đang gửi...</> :
-                                        <><Send size={16} /> Gửi báo cáo ngay</>}
+                            {sendStatus === 'sent' ? <><CheckCircle2 size={14} className="md:w-4 md:h-4" /> Đã gửi thành công!</> :
+                                sendStatus === 'error' ? <><Mail size={14} className="md:w-4 md:h-4" /> Gửi thất bại</> :
+                                    sendStatus === 'sending' ? <><Send size={14} className="md:w-4 md:h-4 animate-spin" /> Đang gửi...</> :
+                                        <><Send size={14} className="md:w-4 md:h-4" /> Gửi báo cáo ngay</>}
                         </button>
                         {sendError && (
-                            <Caption className="text-error text-xs mt-2 text-center">
+                            <Caption className="text-error text-[10px] md:text-xs mt-2 text-center">
                                 {sendError}
                             </Caption>
                         )}
-                        <Caption className="text-caption text-xs mt-2 text-center">
+                        <Caption className="text-caption text-[9px] md:text-xs mt-2 text-center">
                             Gửi ngay dùng child đang chọn. Lịch gửi tự động ở trên áp dụng cho tài khoản phụ huynh, không tách riêng theo từng bé.
                         </Caption>
                     </motion.div>
@@ -414,13 +418,13 @@ export default function ReportsPage() {
                     <motion.div
                         initial={{ opacity: 1, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        className="bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full"
+                        className="bg-white dark:bg-slate-800 rounded-2xl md:rounded-3xl shadow-2xl p-4 md:p-8 max-w-md w-full max-h-[90vh] overflow-y-auto"
                     >
-                        <div className="flex items-center justify-between mb-6">
-                            <h3 className="text-2xl font-bold text-gray-800">Cài đặt gửi báo cáo</h3>
+                        <div className="flex items-center justify-between mb-4 md:mb-6">
+                            <h3 className="text-lg md:text-2xl font-bold text-gray-800 dark:text-white">Cài đặt gửi báo cáo</h3>
                             <button
                                 onClick={() => setShowSubscriptionModal(false)}
-                                className="text-gray-400 hover:text-gray-600 transition"
+                                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition text-lg"
                             >
                                 ✕
                             </button>
@@ -429,22 +433,22 @@ export default function ReportsPage() {
                         {isLoadingPrefs ? (
                             <div className="text-center py-8">
                                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto"></div>
-                                <p className="mt-4 text-gray-600">Đang tải...</p>
+                                <p className="mt-4 text-gray-600 dark:text-gray-400 text-sm">Đang tải...</p>
                             </div>
                         ) : (
-                            <div className="space-y-6">
-                                <div className="rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-600">
+                            <div className="space-y-4 md:space-y-6">
+                                <div className="rounded-lg md:rounded-2xl bg-slate-50 dark:bg-slate-700 px-3 md:px-4 py-2 md:py-3 text-xs md:text-sm text-slate-600 dark:text-slate-300">
                                     {subscriptionPrefs?.isSubscribed
                                         ? `Hiện đang bật gửi tự động qua ${subscriptionLabel} vào ${String(subscriptionPrefs.reportHour ?? 9).padStart(2, '0')}:00 mỗi tuần.`
                                         : 'Hiện tại bạn chưa bật gửi báo cáo tự động.'}
                                 </div>
 
                                 {/* Email Subscription */}
-                                <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-4">
-                                    <div className="flex items-center justify-between mb-3">
-                                        <div className="flex items-center gap-3">
-                                            <Mail className="w-6 h-6 text-blue-600" />
-                                            <span className="font-bold text-gray-800">Email</span>
+                                <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/30 rounded-lg md:rounded-2xl p-3 md:p-4">
+                                    <div className="flex items-center justify-between mb-2 md:mb-3">
+                                        <div className="flex items-center gap-2 md:gap-3">
+                                            <Mail className="w-5 h-5 md:w-6 md:h-6 text-blue-600 dark:text-blue-400 flex-shrink-0" />
+                                            <span className="font-bold text-xs md:text-sm text-gray-800 dark:text-white">Email</span>
                                         </div>
                                         <label className="relative inline-flex items-center cursor-pointer">
                                             <input
@@ -462,18 +466,18 @@ export default function ReportsPage() {
                                                 disabled={isSavingPrefs}
                                                 className="sr-only peer"
                                             />
-                                            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                                            <div className="w-10 h-6 md:w-11 md:h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                                         </label>
                                     </div>
-                                    <p className="text-sm text-gray-600">Nhận báo cáo qua email mỗi tuần</p>
+                                    <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400">Nhận báo cáo qua email mỗi tuần</p>
                                 </div>
 
                                 {/* Zalo Subscription */}
-                                <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-2xl p-4">
-                                    <div className="flex items-center justify-between mb-3">
-                                        <div className="flex items-center gap-3">
-                                            <Bell className="w-6 h-6 text-green-600" />
-                                            <span className="font-bold text-gray-800">Zalo</span>
+                                <div className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/30 dark:to-green-800/30 rounded-lg md:rounded-2xl p-3 md:p-4">
+                                    <div className="flex items-center justify-between mb-2 md:mb-3">
+                                        <div className="flex items-center gap-2 md:gap-3">
+                                            <Bell className="w-5 h-5 md:w-6 md:h-6 text-green-600 dark:text-green-400 flex-shrink-0" />
+                                            <span className="font-bold text-xs md:text-sm text-gray-800 dark:text-white">Zalo</span>
                                         </div>
                                         <label className="relative inline-flex items-center cursor-pointer">
                                             <input
@@ -491,26 +495,26 @@ export default function ReportsPage() {
                                                 disabled={isSavingPrefs}
                                                 className="sr-only peer"
                                             />
-                                            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+                                            <div className="w-10 h-6 md:w-11 md:h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
                                         </label>
                                     </div>
-                                    <p className="text-sm text-gray-600">Nhận báo cáo qua Zalo mỗi tuần</p>
+                                    <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400">Nhận báo cáo qua Zalo mỗi tuần</p>
                                 </div>
 
                                 {/* Frequency Selector */}
                                 <div>
-                                    <label className="block text-sm font-bold text-gray-700 mb-2">Tần suất gửi</label>
+                                    <label className="block text-xs md:text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Tần suất gửi</label>
                                     <div className="grid grid-cols-1 gap-3">
                                         <button
                                             disabled
-                                            className="px-4 py-3 rounded-xl font-bold text-sm transition bg-purple-600/90 text-white shadow-lg cursor-not-allowed"
+                                            className="px-3 md:px-4 py-2 md:py-3 rounded-lg md:rounded-xl font-bold text-xs md:text-sm transition bg-purple-600/90 text-white shadow-lg cursor-not-allowed"
                                         >
                                             Hàng tuần
                                         </button>
                                     </div>
-                                    <p className="mt-2 text-xs text-gray-500">Hiện tại hệ thống hỗ trợ gửi báo cáo tự động theo tuần.</p>
+                                    <p className="mt-2 text-[10px] md:text-xs text-gray-500 dark:text-gray-400">Hiện tại hệ thống hỗ trợ gửi báo cáo tự động theo tuần.</p>
                                     {subscriptionPrefs?.isSubscribed && (
-                                        <p className="mt-2 text-xs text-gray-600">
+                                        <p className="mt-2 text-[10px] md:text-xs text-gray-600 dark:text-gray-400">
                                             Kênh hiện tại: {subscriptionPrefs.preferredChannel === 'ZALO' ? 'Zalo' : 'Email'}
                                             {' • '}
                                             Thời gian: {String(subscriptionPrefs.reportHour ?? 9).padStart(2, '0')}:00
@@ -525,21 +529,21 @@ export default function ReportsPage() {
                                 </div>
 
                                 {subscriptionMessage && (
-                                    <div className={`rounded-2xl px-4 py-3 text-sm ${subscriptionMessage.includes('Không thể') ? 'bg-red-50 text-red-600' : 'bg-emerald-50 text-emerald-700'}`}>
+                                    <div className={`rounded-lg md:rounded-2xl px-3 md:px-4 py-2 md:py-3 text-xs md:text-sm ${subscriptionMessage.includes('Không thể') ? 'bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400' : 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400'}`}>
                                         {subscriptionMessage}
                                     </div>
                                 )}
 
                                 {isSavingPrefs && (
-                                    <div className="flex items-center justify-center gap-2 text-sm text-gray-500">
-                                        <Loader2 size={16} className="animate-spin" />
+                                    <div className="flex items-center justify-center gap-2 text-xs md:text-sm text-gray-500 dark:text-gray-400">
+                                        <Loader2 size={14} className="md:w-4 md:h-4 animate-spin" />
                                         Đang lưu cài đặt...
                                     </div>
                                 )}
 
                                 <button
                                     onClick={() => setShowSubscriptionModal(false)}
-                                    className="w-full px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition transform hover:scale-105"
+                                    className="w-full px-4 md:px-6 py-2.5 md:py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold text-xs md:text-sm rounded-lg md:rounded-xl shadow-lg hover:shadow-xl transition transform hover:scale-105"
                                 >
                                     Xong
                                 </button>

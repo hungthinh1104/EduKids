@@ -1,17 +1,33 @@
+import { Metadata } from 'next';
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
 import { FloatingNavbar } from '@/shared/components/layout/FloatingNavbar';
 import { KidButton } from '@/components/edukids/KidButton';
 import { HeroSection } from '@/components/landing/HeroSection';
-import { FeaturesSection } from '@/components/landing/FeaturesSection';
-import { JourneySection } from '@/components/landing/JourneySection';
-import { TestimonialsSection } from '@/components/landing/TestimonialsSection';
-import { CtaSection } from '@/components/landing/CtaSection';
-import { Footer } from '@/components/landing/Footer';
+
+// Lazy load below-the-fold components for better initial performance
+const FeaturesSection = dynamic(() => import('@/components/landing/FeaturesSection').then(mod => mod.FeaturesSection), { ssr: true });
+const JourneySection = dynamic(() => import('@/components/landing/JourneySection').then(mod => mod.JourneySection), { ssr: true });
+const TestimonialsSection = dynamic(() => import('@/components/landing/TestimonialsSection').then(mod => mod.TestimonialsSection), { ssr: true });
+const CtaSection = dynamic(() => import('@/components/landing/CtaSection').then(mod => mod.CtaSection), { ssr: true });
+const Footer = dynamic(() => import('@/components/landing/Footer').then(mod => mod.Footer), { ssr: true });
+
+// Page-specific SEO Metadata
+export const metadata: Metadata = {
+  title: 'EduKids - Nền tảng học tiếng Anh vui nhộn cho trẻ em',
+  description: 'Giúp bé học tiếng Anh với các trò chơi tương tác, phát âm chuẩn AI và giao diện đầy màu sắc. Học mà chơi, chơi mà học!',
+  openGraph: {
+    title: 'EduKids - Học tiếng Anh hiệu quả và vui nhộn',
+    description: 'Giúp bé học tiếng Anh với các trò chơi tương tác, phát âm chuẩn AI và giao diện đầy màu sắc. Học mà chơi, chơi mà học!',
+    url: 'https://edukids.app',
+    images: [{ url: '/og-image.png', width: 1200, height: 630, alt: 'EduKids Landing Page' }],
+  },
+};
 
 export default function HomePage() {
   return (
-    <main id="main" className="min-h-screen bg-slate-50 dark:bg-slate-950 overflow-hidden font-sans">
+    <main id="main" className="min-h-screen bg-background text-body overflow-hidden font-sans">
       <FloatingNavbar
         links={[
           { href: '#features', label: 'Khám Phá' },

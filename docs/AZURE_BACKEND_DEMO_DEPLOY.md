@@ -49,6 +49,108 @@ Push lên `main` → workflow tự động chạy: build → push ACR → deploy
 
 ---
 
+## Deploy thủ công (Azure Container Apps) — đã test chạy ổn
+
+### 1. Resources đang dùng (demo hiện tại)
+
+- Container App: `edukids-backend`
+- Container Apps Environment: `edukids-env`
+- Resource Group: `edukids-rg`
+- ACR: `edukidsacr03180908`
+- Log Analytics: `workspace-edukidsrg0O17`
+- Region: `southeastasia`
+
+### 2. Build + push image lên ACR (cách ổn định)
+
+> Dùng ACR remote build để tránh lỗi mạng khi push local.
+
+```bash
+cd /path/to/EduKids
+cp docker/Dockerfile.backend apps/backend/Dockerfile.backend.acr
+
+TAG="manual-$(date +%Y%m%d%H%M%S)"
+az acr build \
+  --registry edukidsacr03180908 \
+  --image "edukids-backend:$TAG" \
+  --image "edukids-backend:latest" \
+  --file apps/backend/Dockerfile.backend.acr \
+  ./apps/backend
+
+rm -f apps/backend/Dockerfile.backend.acr
+```
+
+### 3. Tạo app (lần đầu) hoặc update image (các lần sau)
+
+```bash
+ACR_NAME="edukidsacr03180908"
+RG="edukids-rg"
+APP="edukids-backend"
+ENV_NAME="edukids-env"
+
+ACR_SERVER=$(az acr show -n "$ACR_NAME" --query loginServer -o tsv)
+ACR_USER=$(az acr credential show -n "$ACR_NAME" --query username -o tsv)
+ACR_PASS=$(az acr credential show -n "$ACR_NAME" --query passwords[0].value -o tsv)
+
+az containerapp create \
+  --name "$APP" \
+  --resource-group "$RG" \
+  --environment "$ENV_NAME" \
+  --image "$ACR_SERVER/edukids-backend:$TAG" \
+  --target-port 3001 \
+  --ingress external \
+  --registry-server "$ACR_SERVER" \
+  --registry-username "$ACR_USER" \
+  --registry-password "$ACR_PASS" \
+  --cpu 0.5 \
+  --memory 1.0Gi \
+  --min-replicas 0 \
+  --max-replicas 1
+```
+
+Nếu app đã tồn tại, chỉ cần update image:
+
+```bash
+az containerapp update \
+  --name "$APP" \
+  --resource-group "$RG" \
+  --image "$ACR_SERVER/edukids-backend:$TAG"
+```
+
+### 4. Nạp env production thật vào Container App
+
+```bash
+mapfile -t ENV_ARGS < <(grep -Ev '^[[:space:]]*#|^[[:space:]]*$' apps/backend/.env.production)
+
+az containerapp update \
+  --name edukids-backend \
+  --resource-group edukids-rg \
+  --set-env-vars "${ENV_ARGS[@]}"
+```
+
+### 5. Kiểm tra trạng thái + health
+
+```bash
+az containerapp revision list -n edukids-backend -g edukids-rg -o table
+
+FQDN=$(az containerapp show -n edukids-backend -g edukids-rg --query properties.configuration.ingress.fqdn -o tsv)
+echo "https://$FQDN/api/system/health"
+curl -i -H 'Origin: https://edu-kids-domain.vercel.app' "https://$FQDN/api/system/health"
+```
+
+> Lưu ý: backend production chặn request không có `Origin`, nên gọi health bằng `curl` cần thêm header `Origin` hợp lệ nếu muốn kết quả giống trình duyệt.
+
+### 6. Backend URL hiện tại
+
+- Base URL: `https://edukids-backend.purpleocean-cb1d49c8.southeastasia.azurecontainerapps.io`
+- API URL: `https://edukids-backend.purpleocean-cb1d49c8.southeastasia.azurecontainerapps.io/api`
+
+### 7. Lưu ý chi phí (gói student/free)
+
+- Container Apps Consumption + `minReplicas=0` là lựa chọn tiết kiệm.
+- ACR Basic **không free** (có phí riêng).
+
+---
+
 ## Deploy thủ công (VM)
 
 ### 1. Azure resources tối thiểu

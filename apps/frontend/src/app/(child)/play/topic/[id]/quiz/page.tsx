@@ -387,7 +387,7 @@ export default function QuizPage() {
                     {/* Question */}
                     {q && (
                         <>
-                            <div className="bg-card border-2 border-border rounded-[2rem] p-8 text-center shadow-lg">
+                            <div className="bg-card border-2 border-border rounded-[2rem] p-8 text-center shadow-lg min-h-[220px] flex flex-col items-center justify-center">
                                 <motion.div
                                     animate={{ scale: [1, 1.06, 1] }}
                                     transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
@@ -432,7 +432,7 @@ export default function QuizPage() {
                                             whileTap={!selected ? { scale: 0.97 } : undefined}
                                             onClick={() => handleAnswer(opt)}
                                             disabled={!!selected}
-                                            className={`relative flex items-center justify-center gap-2 p-4 rounded-2xl font-heading font-black text-base border-2 min-h-[64px] transition-all duration-200 ${optCls}`}
+                                            className={`relative flex items-center justify-center gap-2 p-4 rounded-2xl font-heading font-black text-base border-2 min-h-[80px] transition-all duration-200 ${optCls}`}
                                         >
                                             {showFeedback && isCorrect && <CheckCircle2 size={18} className="flex-shrink-0" />}
                                             {showFeedback && isSelected && !isCorrect && <XCircle size={18} className="flex-shrink-0" />}

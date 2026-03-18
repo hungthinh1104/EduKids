@@ -21,14 +21,14 @@ import { useTheme } from 'next-themes';
 
 function SettingRow({ icon, label, desc, children }: { icon: React.ReactNode; label: string; desc?: string; children?: React.ReactNode }) {
     return (
-        <div className="flex items-center justify-between py-4 border-b border-border last:border-0 gap-4">
-            <div className="flex items-center gap-3 min-w-0">
-                <div className="w-9 h-9 rounded-xl bg-primary-light text-primary flex items-center justify-center flex-shrink-0">
+        <div className="flex items-center justify-between py-3 md:py-4 border-b border-border last:border-0 gap-2 md:gap-4">
+            <div className="flex items-center gap-2 md:gap-3 min-w-0 flex-1">
+                <div className="w-8 h-8 md:w-9 md:h-9 rounded-lg md:rounded-xl bg-primary-light text-primary flex items-center justify-center flex-shrink-0 text-sm md:text-base">
                     {icon}
                 </div>
-                <div className="min-w-0">
-                    <div className="font-heading font-bold text-heading text-sm">{label}</div>
-                    {desc && <Caption className="text-caption text-xs">{desc}</Caption>}
+                <div className="min-w-0 flex-1">
+                    <div className="font-heading font-bold text-heading text-xs md:text-sm line-clamp-1">{label}</div>
+                    {desc && <Caption className="text-caption text-[10px] md:text-xs line-clamp-1">{desc}</Caption>}
                 </div>
             </div>
             <div className="flex-shrink-0">{children}</div>
@@ -40,10 +40,10 @@ function Toggle({ value, onChange }: { value: boolean; onChange: (v: boolean) =>
     return (
         <motion.button
             onClick={() => onChange(!value)}
-            className={`relative w-12 h-6 rounded-full border-2 transition-all duration-300 flex items-center ${value ? 'bg-primary border-primary-dark' : 'bg-background border-border'}`}
+            className={`relative w-10 h-6 md:w-12 md:h-6 rounded-full border-2 transition-all duration-300 flex items-center flex-shrink-0 ${value ? 'bg-primary border-primary-dark' : 'bg-background border-border'}`}
         >
             <motion.div
-                animate={{ x: value ? 22 : 2 }}
+                animate={{ x: value ? (16 + 8) : 2 }}
                 transition={{ type: 'spring', stiffness: 400, damping: 25 }}
                 className="w-4 h-4 bg-white rounded-full shadow-md"
             />
@@ -250,11 +250,11 @@ export default function SettingsPage() {
     };
 
     return (
-        <div className="min-h-screen pb-8">
+        <div className="min-h-screen pb-8 px-4 md:px-0">
             {/* Header */}
-            <motion.div initial={{ opacity: 1, y: -16 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
-                <Heading level={2} className="text-heading text-3xl mb-1">Cài đặt ⚙️</Heading>
-                <Body className="text-body">Quản lý tài khoản và tùy chỉnh trải nghiệm</Body>
+            <motion.div initial={{ opacity: 1, y: -16 }} animate={{ opacity: 1, y: 0 }} className="mb-6 md:mb-8">
+                <Heading level={2} className="text-heading text-2xl md:text-3xl mb-1">Cài đặt ⚙️</Heading>
+                <Body className="text-body text-sm md:text-base">Quản lý tài khoản và tùy chỉnh trải nghiệm</Body>
             </motion.div>
 
             {/* Profile card */}
@@ -262,36 +262,42 @@ export default function SettingsPage() {
                 initial={{ opacity: 1, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 }}
-                className="bg-gradient-candy rounded-[2rem] p-6 flex items-center gap-5 mb-8"
+                className="bg-gradient-candy rounded-xl md:rounded-[2rem] p-4 md:p-6 flex flex-col sm:flex-row items-start sm:items-center gap-3 md:gap-5 mb-6 md:mb-8"
             >
-                <div className="w-16 h-16 rounded-full bg-white/20 border-4 border-white/50 flex items-center justify-center overflow-hidden">
-                    <Image src="https://api.dicebear.com/7.x/bottts/svg?seed=parent" alt="Parent" width={56} height={56} priority />
+                <div className="w-14 h-14 md:w-16 md:h-16 rounded-full bg-white/20 border-4 border-white/50 flex items-center justify-center overflow-hidden flex-shrink-0">
+                    <Image 
+                        src="https://api.dicebear.com/7.x/bottts/svg?seed=parent" 
+                        alt="Ảnh đại diện phụ huynh" 
+                        width={56} 
+                        height={56}
+                        loading="lazy"
+                    />
                 </div>
-                <div className="flex-1 text-white">
-                    <Heading level={3} className="text-white text-xl mb-0.5">
+                <div className="flex-1 text-white min-w-0">
+                    <Heading level={3} className="text-white text-lg md:text-xl mb-0.5 line-clamp-1">
                         {user?.firstName
                             ? `${user.firstName} ${user.lastName ?? ''}`.trim()
                             : user?.email?.split('@')[0] || 'Phụ huynh'}
                     </Heading>
-                    <Caption className="text-white/80">{user?.email || 'parent@example.com'}</Caption>
-                    <div className="mt-2 inline-flex items-center gap-1.5 bg-white/20 px-3 py-1 rounded-full text-xs font-heading font-black backdrop-blur-sm">
+                    <Caption className="text-white/80 text-xs md:text-sm truncate">{user?.email || 'parent@example.com'}</Caption>
+                    <div className="mt-2 inline-flex items-center gap-1.5 bg-white/20 px-2.5 md:px-3 py-1 rounded-full text-[10px] md:text-xs font-heading font-black backdrop-blur-sm">
                         ⭐ Premium đến 31/12/2026
                     </div>
                 </div>
-                <ChevronRight size={20} className="text-white/70" />
+                <ChevronRight size={18} className="md:w-5 md:h-5 text-white/70 flex-shrink-0 hidden sm:block" />
             </motion.div>
 
             {/* Tabs */}
-            <div className="flex gap-2 mb-6 overflow-x-auto pb-1">
+            <div className="flex gap-1.5 md:gap-2 mb-6 overflow-x-auto pb-2 -mx-4 md:mx-0 px-4 md:px-0">
                 {tabs.map((tab) => (
                     <motion.button
                         key={tab.id}
                         whileTap={{ scale: 0.95 }}
                         onClick={() => setActiveTab(tab.id)}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-2xl font-heading font-bold text-sm border-2 whitespace-nowrap transition-all ${activeTab === tab.id ? 'bg-primary-light border-primary text-primary shadow-sm' : 'bg-card border-border text-body hover:border-primary/40'
+                        className={`flex items-center gap-1.5 md:gap-2 px-3 md:px-4 py-2 rounded-lg md:rounded-2xl font-heading font-bold text-xs md:text-sm border-2 whitespace-nowrap transition-all flex-shrink-0 ${activeTab === tab.id ? 'bg-primary-light border-primary text-primary shadow-sm' : 'bg-card border-border text-body hover:border-primary/40'
                             }`}
                     >
-                        {tab.icon} {tab.label}
+                        {tab.icon} <span className="hidden sm:inline">{tab.label}</span>
                     </motion.button>
                 ))}
             </div>
@@ -307,14 +313,14 @@ export default function SettingsPage() {
                 >
                     {/* ── Account ── */}
                     {activeTab === 'account' && (
-                        <div className="bg-card border-2 border-border rounded-2xl px-5 divide-y-0">
-                            <SettingRow icon={<Bell size={16} />} label="Thông báo" desc="Nhắc nhở giờ học">
+                        <div className="bg-card border-2 border-border rounded-lg md:rounded-2xl px-3 md:px-5 divide-y-0">
+                            <SettingRow icon={<Bell size={14} className="md:w-4 md:h-4" />} label="Thông báo" desc="Nhắc nhở giờ học">
                                 <Toggle value={notifications} onChange={setNotifications} />
                             </SettingRow>
-                            <SettingRow icon={<Clock size={16} />} label="Nhắc học hàng ngày" desc="8:00 sáng mỗi ngày">
+                            <SettingRow icon={<Clock size={14} className="md:w-4 md:h-4" />} label="Nhắc học hàng ngày" desc="8:00 sáng mỗi ngày">
                                 <Toggle value={dailyReminder} onChange={setDailyReminder} />
                             </SettingRow>
-                            <SettingRow icon={darkMode ? <Moon size={16} /> : <Sun size={16} />} label="Giao diện tối" desc="Dark mode">
+                            <SettingRow icon={darkMode ? <Moon size={14} className="md:w-4 md:h-4" /> : <Sun size={14} className="md:w-4 md:h-4" />} label="Giao diện tối" desc="Dark mode">
                                 <Toggle
                                     value={darkMode}
                                     onChange={(next) => {
@@ -322,7 +328,7 @@ export default function SettingsPage() {
                                     }}
                                 />
                             </SettingRow>
-                            <SettingRow icon={<User size={16} />} label="Chỉnh sửa thông tin" desc="Tên, email, ảnh đại diện">
+                            <SettingRow icon={<User size={14} className="md:w-4 md:h-4" />} label="Chỉnh sửa thông tin" desc="Tên, email">
                                 <button
                                     onClick={() => {
                                         setEpFirstName(user?.firstName ?? '');
@@ -331,9 +337,9 @@ export default function SettingsPage() {
                                         setEpSuccess(false);
                                         setShowEditProfile(true);
                                     }}
-                                    className="text-primary font-heading font-bold text-sm hover:underline flex items-center gap-1"
+                                    className="text-primary font-heading font-bold text-xs md:text-sm hover:underline flex items-center gap-1 flex-shrink-0"
                                 >
-                                    Sửa <ChevronRight size={14} />
+                                    Sửa <ChevronRight size={12} className="md:w-3.5 md:h-3.5" />
                                 </button>
                             </SettingRow>
                         </div>
@@ -341,19 +347,19 @@ export default function SettingsPage() {
 
                     {/* ── Children Settings ── */}
                     {activeTab === 'children' && (
-                        <div className="space-y-4">
+                        <div className="space-y-3 md:space-y-4">
                             {/* Child selector */}
                             {profilesData.loading ? (
-                                <div className="text-center py-4 text-caption">Đang tải...</div>
+                                <div className="text-center py-4 text-caption text-xs md:text-sm">Đang tải...</div>
                             ) : profilesData.profiles.length > 0 ? (
                                 <>
-                                    <div className="flex gap-2 overflow-x-auto pb-1">
+                                    <div className="flex gap-1.5 md:gap-2 overflow-x-auto pb-1 -mx-4 md:mx-0 px-4 md:px-0">
                                         {profilesData.profiles.map((profile) => (
                                             <motion.button 
                                                 whileTap={{ scale: 0.95 }}
                                                 key={profile.id} 
                                                 onClick={() => setSelectedChildId(profile.id)}
-                                                className={`flex-1 min-w-[120px] py-2.5 rounded-2xl border-2 font-heading font-bold text-sm transition-all ${
+                                                className={`flex-shrink-0 px-3 md:px-4 py-2 md:py-2.5 rounded-lg md:rounded-2xl border-2 font-heading font-bold text-xs md:text-sm transition-all whitespace-nowrap ${
                                                     selectedChildId === profile.id 
                                                         ? 'border-primary bg-primary-light text-primary' 
                                                         : 'border-border bg-card text-body hover:border-primary/40'
@@ -364,37 +370,37 @@ export default function SettingsPage() {
                                         ))}
                                     </div>
 
-                                    <div className="bg-card border-2 border-border rounded-2xl px-5">
-                                        <SettingRow icon={<Clock size={16} />} label="Giới hạn học/ngày" desc={`${studyLimit} phút mỗi ngày`}>
-                                            <span className="font-heading font-black text-primary">{studyLimit}p</span>
+                                    <div className="bg-card border-2 border-border rounded-lg md:rounded-2xl px-3 md:px-5">
+                                        <SettingRow icon={<Clock size={14} className="md:w-4 md:h-4" />} label="Giới hạn học/ngày" desc={`${studyLimit} phút mỗi ngày`}>
+                                            <span className="font-heading font-black text-primary text-xs md:text-sm flex-shrink-0">{studyLimit}p</span>
                                         </SettingRow>
                                         {/* Minute slider */}
-                                        <div className="pb-4">
+                                        <div className="pb-3 md:pb-4">
                                             <input type="range" min={10} max={120} step={5} value={studyLimit}
                                                 onChange={(e) => setStudyLimit(Number(e.target.value))}
                                                 className="w-full accent-primary"
                                             />
-                                            <div className="flex justify-between">
-                                                <Caption className="text-caption text-xs">10 phút</Caption>
-                                                <Caption className="text-caption text-xs">2 giờ</Caption>
+                                            <div className="flex justify-between gap-2">
+                                                <Caption className="text-caption text-[9px] md:text-xs">10 phút</Caption>
+                                                <Caption className="text-caption text-[9px] md:text-xs">2 giờ</Caption>
                                             </div>
                                         </div>
 
-                                        <SettingRow icon={<Sliders size={16} />} label="Độ khó học tập" desc="Điều chỉnh SRS và nội dung">
-                                            <ChevronRight size={16} className="text-caption" />
+                                        <SettingRow icon={<Sliders size={14} className="md:w-4 md:h-4" />} label="Độ khó học tập" desc="Điều chỉnh SRS">
+                                            <ChevronRight size={14} className="md:w-4 md:h-4 text-caption flex-shrink-0" />
                                         </SettingRow>
                                         {selectedChild && (
                                             <SettingRow 
-                                                icon={<Trash2 size={16} />} 
-                                                label={`Xóa hồ sơ "${selectedChild.nickname}"`} 
-                                                desc="Không thể hoàn tác"
+                                                icon={<Trash2 size={14} className="md:w-4 md:h-4" />} 
+                                                label={`Xóa hồ sơ`} 
+                                                desc={selectedChild.nickname}
                                             >
                                                 <button
                                                     onClick={() => {
                                                         setDeleteError(null);
                                                         setShowDeleteConfirm(true);
                                                     }}
-                                                    className="text-error font-heading font-bold text-sm hover:underline"
+                                                    className="text-error font-heading font-bold text-xs md:text-sm hover:underline flex-shrink-0"
                                                 >
                                                     Xóa
                                                 </button>
@@ -403,42 +409,42 @@ export default function SettingsPage() {
                                     </div>
                                 </>
                             ) : (
-                                <div className="text-center py-4 text-caption">Chưa có hồ sơ bé nào</div>
+                                <div className="text-center py-4 text-caption text-xs md:text-sm">Chưa có hồ sơ bé nào</div>
                             )}
                         </div>
                     )}
 
                     {/* ── Plan ── */}
                     {activeTab === 'plan' && (
-                        <div className="space-y-4">
+                        <div className="space-y-3 md:space-y-4">
                             {PLAN_OPTIONS.map((plan) => (
                                 <motion.div
                                     key={plan.id}
                                     whileHover={{ scale: 1.02 }}
-                                    className={`relative bg-card border-2 rounded-2xl p-5 ${plan.current ? 'border-primary shadow-lg shadow-primary/15' : 'border-border'}`}
+                                    className={`relative bg-card border-2 rounded-lg md:rounded-2xl p-3 md:p-5 ${plan.current ? 'border-primary shadow-lg shadow-primary/15' : 'border-border'}`}
                                 >
                                     {plan.current && (
-                                        <div className="absolute top-4 right-4 bg-primary text-white text-xs font-heading font-black px-2.5 py-0.5 rounded-full">Hiện tại</div>
+                                        <div className="absolute top-2 md:top-4 right-2 md:right-4 bg-primary text-white text-[9px] md:text-xs font-heading font-black px-2 md:px-2.5 py-0.5 rounded-full">Hiện tại</div>
                                     )}
-                                    <Heading level={4} className="text-heading text-lg mb-1">{plan.label}</Heading>
-                                    <div className="text-primary font-heading font-black text-2xl mb-3">{plan.price}</div>
-                                    <ul className="space-y-1.5">
+                                    <Heading level={4} className="text-heading text-base md:text-lg mb-1">{plan.label}</Heading>
+                                    <div className="text-primary font-heading font-black text-lg md:text-2xl mb-2 md:mb-3">{plan.price}</div>
+                                    <ul className="space-y-1 md:space-y-1.5">
                                         {plan.features.map((f) => (
-                                            <li key={f} className="flex items-center gap-2">
-                                                <Check size={14} className="text-success flex-shrink-0" />
-                                                <Caption className="text-body text-sm">{f}</Caption>
+                                            <li key={f} className="flex items-start gap-1.5 md:gap-2">
+                                                <Check size={12} className="md:w-3.5 md:h-3.5 text-success flex-shrink-0 mt-0.5" />
+                                                <Caption className="text-body text-xs md:text-sm">{f}</Caption>
                                             </li>
                                         ))}
                                     </ul>
                                     {!plan.current && (
-                                        <KidButton variant="default" className="w-full mt-4">Nâng cấp ngay</KidButton>
+                                        <KidButton variant="default" className="w-full mt-3 md:mt-4 text-xs md:text-sm py-1.5 md:py-2">Nâng cấp</KidButton>
                                     )}
                                 </motion.div>
                             ))}
 
-                            <div className="bg-card border-2 border-border rounded-2xl px-5">
-                                <SettingRow icon={<CreditCard size={16} />} label="Lịch sử thanh toán" desc="Xem hóa đơn và biên nhận">
-                                    <ChevronRight size={16} className="text-caption" />
+                            <div className="bg-card border-2 border-border rounded-lg md:rounded-2xl px-3 md:px-5">
+                                <SettingRow icon={<CreditCard size={14} className="md:w-4 md:h-4" />} label="Lịch sử thanh toán" desc="Xem hóa đơn">
+                                    <ChevronRight size={14} className="md:w-4 md:h-4 text-caption flex-shrink-0" />
                                 </SettingRow>
                             </div>
                         </div>
@@ -446,18 +452,18 @@ export default function SettingsPage() {
 
                     {/* ── Security ── */}
                     {activeTab === 'security' && (
-                        <div className="space-y-4">
-                            <div className="bg-card border-2 border-border rounded-2xl px-5">
-                                <SettingRow icon={<Lock size={16} />} label="Đổi mật khẩu" desc="Thay đổi mật khẩu đăng nhập">
+                        <div className="space-y-3 md:space-y-4">
+                            <div className="bg-card border-2 border-border rounded-lg md:rounded-2xl px-3 md:px-5">
+                                <SettingRow icon={<Lock size={14} className="md:w-4 md:h-4" />} label="Đổi mật khẩu" desc="Thay đổi đăng nhập">
                                     <button
                                         onClick={() => { setCpError(null); setCpSuccess(false); setShowChangePwd(true); }}
-                                        className="text-primary font-heading font-bold text-sm hover:underline flex items-center gap-1"
+                                        className="text-primary font-heading font-bold text-xs md:text-sm hover:underline flex items-center gap-1 flex-shrink-0"
                                     >
-                                        Đổi <ChevronRight size={14} />
+                                        Đổi <ChevronRight size={12} className="md:w-3.5 md:h-3.5" />
                                     </button>
                                 </SettingRow>
-                                <SettingRow icon={<Shield size={16} />} label="Xác thực 2 lớp" desc="Bảo vệ tài khoản tốt hơn">
-                                    <span className="text-xs font-heading font-bold px-2 py-1 rounded-lg bg-warning-light text-warning">
+                                <SettingRow icon={<Shield size={14} className="md:w-4 md:h-4" />} label="Xác thực 2 lớp" desc="Bảo vệ tài khoản">
+                                    <span className="text-[9px] md:text-xs font-heading font-bold px-1.5 md:px-2 py-0.5 md:py-1 rounded-lg bg-warning-light text-warning flex-shrink-0 whitespace-nowrap">
                                         Sắp hỗ trợ
                                     </span>
                                 </SettingRow>
@@ -465,10 +471,10 @@ export default function SettingsPage() {
 
                             <KidButton 
                                 variant="outline" 
-                                className="w-full text-error border-error/20 hover:bg-error hover:text-white"
+                                className="w-full text-error border-error/20 hover:bg-error hover:text-white text-xs md:text-sm py-2 md:py-2.5"
                                 onClick={handleLogout}
                             >
-                                <LogOut size={16} /> Đăng xuất
+                                <LogOut size={14} className="md:w-4 md:h-4" /> Đăng xuất
                             </KidButton>
                         </div>
                     )}
@@ -483,80 +489,80 @@ export default function SettingsPage() {
                         <motion.div
                             initial={{ opacity: 0, scale: 0.85 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.85 }}
                             transition={{ type: 'spring', bounce: 0.3 }}
-                            className="fixed inset-0 z-50 flex items-center justify-center px-6"
+                            className="fixed inset-0 z-50 flex items-center justify-center px-4"
                         >
-                            <div className="bg-card border-2 border-primary/30 rounded-[2rem] p-7 w-full max-w-sm shadow-2xl">
-                                <Heading level={3} className="text-heading text-xl mb-5 text-center">🔒 Đổi mật khẩu</Heading>
+                            <div className="bg-card border-2 border-primary/30 rounded-lg md:rounded-[2rem] p-4 md:p-7 w-full max-w-sm shadow-2xl max-h-[90vh] overflow-y-auto">
+                                <Heading level={3} className="text-heading text-lg md:text-xl mb-4 md:mb-5 text-center">🔒 Đổi mật khẩu</Heading>
 
                                 {cpSuccess ? (
                                     <div className="text-center py-6 space-y-3">
-                                        <div className="text-5xl">✅</div>
-                                        <Body className="text-success font-bold">Mật khẩu đã được cập nhật!</Body>
+                                        <div className="text-4xl md:text-5xl">✅</div>
+                                        <Body className="text-success font-bold text-sm md:text-base">Mật khẩu đã được cập nhật!</Body>
                                     </div>
                                 ) : (
-                                    <div className="space-y-4">
+                                    <div className="space-y-3 md:space-y-4">
                                         {cpError && (
-                                            <div className="p-3 rounded-xl bg-secondary-light border border-secondary/20 text-secondary text-sm font-medium">
+                                            <div className="p-2.5 md:p-3 rounded-lg md:rounded-xl bg-secondary-light border border-secondary/20 text-secondary text-xs md:text-sm font-medium">
                                                 {cpError}
                                             </div>
                                         )}
 
                                         {/* Current password */}
-                                        <div className="space-y-1.5">
-                                            <label className="text-sm font-bold text-heading ml-1">Mật khẩu hiện tại</label>
+                                        <div className="space-y-1 md:space-y-1.5">
+                                            <label className="text-xs md:text-sm font-bold text-heading ml-1">Mật khẩu hiện tại</label>
                                             <div className="relative">
                                                 <input
                                                     type={cpShowCurrent ? 'text' : 'password'}
                                                     value={cpCurrentPwd}
                                                     onChange={(e) => setCpCurrentPwd(e.target.value)}
                                                     placeholder="Mật khẩu hiện tại"
-                                                    className="input-base pr-10"
+                                                    className="input-base pr-10 text-xs md:text-sm"
                                                     disabled={cpLoading}
                                                 />
                                                 <button type="button" onClick={() => setCpShowCurrent((v) => !v)}
                                                     className="absolute inset-y-0 right-0 pr-3 flex items-center text-caption">
-                                                    {cpShowCurrent ? <EyeOff size={16} /> : <Eye size={16} />}
+                                                    {cpShowCurrent ? <EyeOff size={14} className="md:w-4 md:h-4" /> : <Eye size={14} className="md:w-4 md:h-4" />}
                                                 </button>
                                             </div>
                                         </div>
 
                                         {/* New password */}
-                                        <div className="space-y-1.5">
-                                            <label className="text-sm font-bold text-heading ml-1">Mật khẩu mới</label>
+                                        <div className="space-y-1 md:space-y-1.5">
+                                            <label className="text-xs md:text-sm font-bold text-heading ml-1">Mật khẩu mới</label>
                                             <div className="relative">
                                                 <input
                                                     type={cpShowNew ? 'text' : 'password'}
                                                     value={cpNewPwd}
                                                     onChange={(e) => setCpNewPwd(e.target.value)}
-                                                    placeholder="Ít nhất 8 ký tự, chữ hoa + số"
-                                                    className="input-base pr-10"
+                                                    placeholder="Ít nhất 8 ký tự"
+                                                    className="input-base pr-10 text-xs md:text-sm"
                                                     disabled={cpLoading}
                                                 />
                                                 <button type="button" onClick={() => setCpShowNew((v) => !v)}
                                                     className="absolute inset-y-0 right-0 pr-3 flex items-center text-caption">
-                                                    {cpShowNew ? <EyeOff size={16} /> : <Eye size={16} />}
+                                                    {cpShowNew ? <EyeOff size={14} className="md:w-4 md:h-4" /> : <Eye size={14} className="md:w-4 md:h-4" />}
                                                 </button>
                                             </div>
                                         </div>
 
                                         {/* Confirm new password */}
-                                        <div className="space-y-1.5">
-                                            <label className="text-sm font-bold text-heading ml-1">Xác nhận mật khẩu mới</label>
+                                        <div className="space-y-1 md:space-y-1.5">
+                                            <label className="text-xs md:text-sm font-bold text-heading ml-1">Xác nhận mật khẩu mới</label>
                                             <input
                                                 type="password"
                                                 value={cpConfirmPwd}
                                                 onChange={(e) => setCpConfirmPwd(e.target.value)}
-                                                placeholder="Nhập lại mật khẩu mới"
-                                                className="input-base"
+                                                placeholder="Nhập lại mật khẩu"
+                                                className="input-base text-xs md:text-sm"
                                                 disabled={cpLoading}
                                             />
                                         </div>
 
-                                        <div className="flex gap-3 pt-2">
-                                            <KidButton variant="outline" className="flex-1" onClick={() => setShowChangePwd(false)} disabled={cpLoading}>
+                                        <div className="flex gap-2 md:gap-3 pt-2">
+                                            <KidButton variant="outline" className="flex-1 text-xs md:text-sm py-1.5 md:py-2" onClick={() => setShowChangePwd(false)} disabled={cpLoading}>
                                                 Hủy
                                             </KidButton>
-                                            <KidButton variant="default" className="flex-1" onClick={() => void handleChangePwd()} disabled={cpLoading}>
+                                            <KidButton variant="default" className="flex-1 text-xs md:text-sm py-1.5 md:py-2" onClick={() => void handleChangePwd()} disabled={cpLoading}>
                                                 {cpLoading ? 'Đang lưu...' : 'Lưu'}
                                             </KidButton>
                                         </div>
@@ -576,49 +582,49 @@ export default function SettingsPage() {
                         <motion.div
                             initial={{ opacity: 0, scale: 0.85 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.85 }}
                             transition={{ type: 'spring', bounce: 0.3 }}
-                            className="fixed inset-0 z-50 flex items-center justify-center px-6"
+                            className="fixed inset-0 z-50 flex items-center justify-center px-4"
                         >
-                            <div className="bg-card border-2 border-primary/30 rounded-[2rem] p-7 w-full max-w-sm shadow-2xl">
-                                <Heading level={3} className="text-heading text-xl mb-5 text-center">✏️ Chỉnh sửa thông tin</Heading>
+                            <div className="bg-card border-2 border-primary/30 rounded-lg md:rounded-[2rem] p-4 md:p-7 w-full max-w-sm shadow-2xl max-h-[90vh] overflow-y-auto">
+                                <Heading level={3} className="text-heading text-lg md:text-xl mb-4 md:mb-5 text-center">✏️ Chỉnh sửa thông tin</Heading>
                                 {epSuccess ? (
                                     <div className="text-center py-6 space-y-3">
-                                        <div className="text-5xl">✅</div>
-                                        <Body className="text-success font-bold">Thông tin đã được cập nhật!</Body>
+                                        <div className="text-4xl md:text-5xl">✅</div>
+                                        <Body className="text-success font-bold text-sm md:text-base">Thông tin đã được cập nhật!</Body>
                                     </div>
                                 ) : (
-                                    <div className="space-y-4">
+                                    <div className="space-y-3 md:space-y-4">
                                         {epError && (
-                                            <div className="p-3 rounded-xl bg-secondary-light border border-secondary/20 text-secondary text-sm font-medium">
+                                            <div className="p-2.5 md:p-3 rounded-lg md:rounded-xl bg-secondary-light border border-secondary/20 text-secondary text-xs md:text-sm font-medium">
                                                 {epError}
                                             </div>
                                         )}
-                                        <div className="space-y-1.5">
-                                            <label className="text-sm font-bold text-heading ml-1">Tên</label>
+                                        <div className="space-y-1 md:space-y-1.5">
+                                            <label className="text-xs md:text-sm font-bold text-heading ml-1">Tên</label>
                                             <input
                                                 type="text"
                                                 value={epFirstName}
                                                 onChange={(e) => setEpFirstName(e.target.value)}
                                                 placeholder="Nhập tên của bạn"
-                                                className="input-base"
+                                                className="input-base text-xs md:text-sm"
                                                 disabled={epLoading}
                                             />
                                         </div>
-                                        <div className="space-y-1.5">
-                                            <label className="text-sm font-bold text-heading ml-1">Họ</label>
+                                        <div className="space-y-1 md:space-y-1.5">
+                                            <label className="text-xs md:text-sm font-bold text-heading ml-1">Họ</label>
                                             <input
                                                 type="text"
                                                 value={epLastName}
                                                 onChange={(e) => setEpLastName(e.target.value)}
                                                 placeholder="Nhập họ của bạn"
-                                                className="input-base"
+                                                className="input-base text-xs md:text-sm"
                                                 disabled={epLoading}
                                             />
                                         </div>
-                                        <div className="flex gap-3 pt-2">
-                                            <KidButton variant="outline" className="flex-1" onClick={() => setShowEditProfile(false)} disabled={epLoading}>
+                                        <div className="flex gap-2 md:gap-3 pt-2">
+                                            <KidButton variant="outline" className="flex-1 text-xs md:text-sm py-1.5 md:py-2" onClick={() => setShowEditProfile(false)} disabled={epLoading}>
                                                 Hủy
                                             </KidButton>
-                                            <KidButton variant="default" className="flex-1" onClick={() => void handleEditProfile()} disabled={epLoading}>
+                                            <KidButton variant="default" className="flex-1 text-xs md:text-sm py-1.5 md:py-2" onClick={() => void handleEditProfile()} disabled={epLoading}>
                                                 {epLoading ? 'Đang lưu...' : 'Lưu'}
                                             </KidButton>
                                         </div>
@@ -638,21 +644,21 @@ export default function SettingsPage() {
                         <motion.div
                             initial={{ opacity: 0, scale: 0.85 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.85 }}
                             transition={{ type: 'spring', bounce: 0.3 }}
-                            className="fixed inset-0 z-50 flex items-center justify-center px-6"
+                            className="fixed inset-0 z-50 flex items-center justify-center px-4"
                         >
-                            <div className="bg-card border-2 border-error rounded-[2rem] p-7 w-full max-w-sm text-center shadow-2xl">
-                                <div className="text-5xl mb-4">⚠️</div>
-                                <Heading level={3} className="text-heading text-xl mb-2">
+                            <div className="bg-card border-2 border-error rounded-lg md:rounded-[2rem] p-4 md:p-7 w-full max-w-sm text-center shadow-2xl">
+                                <div className="text-4xl md:text-5xl mb-3 md:mb-4">⚠️</div>
+                                <Heading level={3} className="text-heading text-base md:text-xl mb-2">
                                     Xóa hồ sơ &quot;{selectedChild.nickname}&quot;?
                                 </Heading>
-                                <Body className="text-body text-sm mb-6">Toàn bộ dữ liệu học tập, huy hiệu và item sẽ bị xóa vĩnh viễn.</Body>
+                                <Body className="text-body text-xs md:text-sm mb-4 md:mb-6">Toàn bộ dữ liệu học tập, huy hiệu và item sẽ bị xóa vĩnh viễn.</Body>
                                 {deleteError && (
-                                    <Body className="text-error text-sm mb-4">{deleteError}</Body>
+                                    <Body className="text-error text-xs md:text-sm mb-3 md:mb-4">{deleteError}</Body>
                                 )}
-                                <div className="flex gap-3">
+                                <div className="flex gap-2 md:gap-3">
                                     <KidButton
                                         variant="outline"
-                                        className="flex-1"
+                                        className="flex-1 text-xs md:text-sm py-1.5 md:py-2"
                                         onClick={() => setShowDeleteConfirm(false)}
                                         disabled={isDeletingChild}
                                     >
@@ -660,7 +666,7 @@ export default function SettingsPage() {
                                     </KidButton>
                                     <KidButton
                                         variant="destructive"
-                                        className="flex-1"
+                                        className="flex-1 text-xs md:text-sm py-1.5 md:py-2"
                                         onClick={() => void handleDeleteChild()}
                                         disabled={isDeletingChild}
                                     >

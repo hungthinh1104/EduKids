@@ -22,12 +22,14 @@ export class PrismaService
     });
 
     const adapter = new PrismaPg(pool);
-    // In production, only log warnings and errors — logging "query" emits every
-    // SQL statement to stdout which leaks schema details and adds I/O overhead.
-    const isProduction = process.env.NODE_ENV === "production";
+    // Query logs are noisy and can leak SQL details. Keep them off by default
+    // for all environments, and only enable when troubleshooting.
+    const prismaQueryLogEnabled = process.env.PRISMA_LOG_QUERY === "true";
     super({
       adapter,
-      log: isProduction ? ["warn", "error"] : ["query", "warn", "error"],
+      log: prismaQueryLogEnabled
+        ? ["query", "warn", "error"]
+        : ["warn", "error"],
     });
   }
 

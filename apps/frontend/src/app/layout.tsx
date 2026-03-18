@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { Baloo_2, Lexend } from 'next/font/google';
 import { SpeedInsights } from '@vercel/speed-insights/next';
+import { generateOrganizationSchema, generateEducationalApplicationSchema } from '@/shared/utils/structured-data';
 import './globals.css';
 
 const IS_VERCEL = process.env.VERCEL === '1' || process.env.VERCEL_ENV !== undefined;
@@ -44,6 +45,7 @@ const lexend = Lexend({
 // METADATA (SEO & Accessibility)
 // ==========================================
 export const metadata: Metadata = {
+  metadataBase: new URL('https://edukids.app'),
   title: {
     template: '%s | EduKids',
     default: 'EduKids - Học Tiếng Anh Vui Nhộn',
@@ -61,6 +63,14 @@ export const metadata: Metadata = {
   authors: [{ name: 'EduKids Team' }],
   creator: 'EduKids',
   publisher: 'EduKids',
+  applicationName: 'EduKids',
+  category: 'education',
+  alternates: {
+    canonical: '/',
+    languages: {
+      'vi-VN': '/',
+    },
+  },
 
   // Open Graph (Social sharing)
   openGraph: {
@@ -133,11 +143,25 @@ import { Toaster } from 'sonner';
 export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <html
-      lang="en"
+      lang="vi"
       suppressHydrationWarning
       className={`${baloo2.variable} ${lexend.variable}`}
     >
       <head>
+        {/* JSON-LD Structured Data */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(generateOrganizationSchema()),
+          }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(generateEducationalApplicationSchema()),
+          }}
+        />
+
         {/* Preconnect to external services for faster loading */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link
@@ -158,7 +182,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
 
       <body
         // Font family using CSS variables set by next/font
-        className="font-body bg-white dark:bg-slate-950 text-gray-900 dark:text-gray-100"
+        className="font-body bg-background text-body"
         suppressHydrationWarning
       >
         <ThemeProvider

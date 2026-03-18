@@ -38,7 +38,7 @@ function FlipCard({ card, flipped, onFlip }: { card: Vocabulary; flipped: boolea
             >
                 {/* FRONT */}
                 <div
-                    className="w-full bg-card border-4 border-primary rounded-[2.5rem] p-6 md:p-8 flex flex-col items-center justify-center gap-5 md:gap-6 shadow-2xl shadow-primary/15 min-h-[340px]"
+                    className="w-full bg-card border-4 border-primary rounded-[2.5rem] p-6 md:p-8 flex flex-col items-center justify-center gap-5 md:gap-6 shadow-2xl shadow-primary/15 h-[380px]"
                     style={{ backfaceVisibility: 'hidden' }}
                 >
                     <motion.div
@@ -48,7 +48,7 @@ function FlipCard({ card, flipped, onFlip }: { card: Vocabulary; flipped: boolea
                     >
                         {card.emoji}
                     </motion.div>
-                    <Heading level={2} className="text-heading text-4xl md:text-5xl font-black tracking-wide text-center break-words">{card.word}</Heading>
+                    <Heading level={2} className="text-heading text-4xl md:text-5xl font-black tracking-wide text-center break-words line-clamp-2">{card.word}</Heading>
                     <Caption className="text-caption text-base font-medium">{card.phonetic}</Caption>
                     <div className="flex items-center gap-2 text-primary text-sm font-heading font-bold mt-2 opacity-70">
                         <RotateCcw size={14} /> Nhấn để lật thẻ
@@ -57,7 +57,7 @@ function FlipCard({ card, flipped, onFlip }: { card: Vocabulary; flipped: boolea
 
                 {/* BACK */}
                 <div
-                    className="absolute inset-0 w-full bg-gradient-candy rounded-[2.5rem] p-6 md:p-8 flex flex-col items-center justify-center gap-4 md:gap-5 shadow-2xl min-h-[340px]"
+                    className="absolute inset-0 w-full bg-gradient-candy rounded-[2.5rem] p-6 md:p-8 flex flex-col items-center justify-center gap-4 md:gap-5 shadow-2xl h-[380px]"
                     style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
                 >
                     <div className="text-7xl">{card.emoji}</div>

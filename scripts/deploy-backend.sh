@@ -73,7 +73,27 @@ if (( attempt > max_attempts )); then
 fi
 
 echo "[INFO] Running Prisma migrations (deploy)..."
-docker compose --env-file "$ENV_FILE" exec -T backend npm run prisma:migrate:deploy
+if docker compose --env-file "$ENV_FILE" exec -T backend sh -lc 'command -v prisma >/dev/null 2>&1'; then
+  docker compose --env-file "$ENV_FILE" exec -T backend npm run prisma:migrate:deploy
+else
+  echo "[WARN] Prisma CLI is not available in backend runtime container. Falling back to host migration."
+  container_db_url="$(docker compose --env-file "$ENV_FILE" exec -T backend printenv DATABASE_URL 2>/dev/null | tr -d '\r')"
+  if [[ -z "$container_db_url" ]]; then
+    echo "[ERROR] Cannot read DATABASE_URL from backend container for migration fallback."
+    exit 1
+  fi
+
+  migration_db_url="$container_db_url"
+  migration_db_url="${migration_db_url/@postgres:5432/@localhost:5432}"
+
+  (
+    cd "$ROOT_DIR/apps/backend"
+    DATABASE_URL="$migration_db_url" \
+    POOLED_DATABASE_URL="$migration_db_url" \
+    DIRECT_DATABASE_URL="$migration_db_url" \
+    npm run prisma:migrate:deploy
+  )
+fi
 
 echo "[INFO] Backend deploy test completed."
 docker compose --env-file "$ENV_FILE" ps backend

@@ -1,6 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Image optimization
+  compress: true,
+  productionBrowserSourceMaps: false,
+  // ==========================================
+  // Image Optimization
+  // ==========================================
   images: {
     dangerouslyAllowSVG: true,
     contentDispositionType: 'attachment',
@@ -20,50 +24,109 @@ const nextConfig = {
         pathname: '/**',
       }
     ],
+    // Optimize images with external service
+    minimumCacheTTL: 60 * 60 * 24 * 365, // 1 year
   },
 
+  // ==========================================
   // Environment variables
+  // ==========================================
   env: {
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api',
   },
 
-  // Headers for security
+  // ==========================================
+  // Security Headers
+  // ==========================================
   async headers() {
+    const csp = [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-inline' https://vercel.live",
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+      "img-src 'self' data: blob: https:",
+      "font-src 'self' data: https://fonts.gstatic.com",
+      "connect-src 'self' https:",
+      "frame-ancestors 'self'",
+      "base-uri 'self'",
+      "form-action 'self'",
+    ].join('; ');
+
     return [
       {
         source: '/:path*',
         headers: [
+          // Prevent MIME type sniffing
           {
             key: 'X-Content-Type-Options',
             value: 'nosniff',
           },
+          // Prevent clickjacking
           {
             key: 'X-Frame-Options',
-            value: 'DENY',
+            value: 'SAMEORIGIN',
           },
+          // Enable XSS protection
           {
             key: 'X-XSS-Protection',
             value: '1; mode=block',
           },
+          // Referrer Policy
           {
             key: 'Referrer-Policy',
             value: 'strict-origin-when-cross-origin',
           },
+          // Permissions Policy
           {
             key: 'Permissions-Policy',
             value: 'camera=(), microphone=(), geolocation=()',
+          },
+          {
+            key: 'Content-Security-Policy',
+            value: csp,
+          },
+        ],
+      },
+      {
+        source: '/_next/static/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
+          },
+        ],
+      },
+      {
+        source: '/((?!api|_next/static|_next/image|favicon.ico).*)',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=60, stale-while-revalidate=86400',
+          },
+        ],
+      },
+      // Cache API responses
+      {
+        source: '/api/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=30, stale-while-revalidate=120',
           },
         ],
       },
     ];
   },
 
-  // Redirects (example)
+  // ==========================================
+  // Redirects (SEO)
+  // ==========================================
   async redirects() {
     return [];
   },
 
-  // Rewrites (example)
+  // ==========================================
+  // Rewrites
+  // ==========================================
   async rewrites() {
     return {
       beforeFiles: [],
@@ -72,25 +135,80 @@ const nextConfig = {
     };
   },
 
-
-  // Experimental features
+  // ==========================================
+  // Experimental Optimizations
+  // ==========================================
   experimental: {
-    optimizePackageImports: ['lucide-react', 'clsx'],
+    optimizePackageImports: ['lucide-react', 'clsx', 'framer-motion'],
   },
 
-  // TypeScript strict mode
+  // ==========================================
+  // Turbopack Configuration (Next.js 16+)
+  // ==========================================
+  turbopack: {},
+
+  // ==========================================
+  // TypeScript Configuration
+  // ==========================================
   typescript: {
     tsconfigPath: './tsconfig.json',
   },
 
-  // React strict mode
+  // ==========================================
+  // React Configuration
+  // ==========================================
   reactStrictMode: true,
 
-  // Powering the performance
+  // ==========================================
+  // Performance & Other
+  // ==========================================
   poweredByHeader: false,
-
-  // Output
   output: 'standalone',
+
+  // ==========================================
+  // Webpack Optimization
+  // ==========================================
+  webpack: (config, { isServer }) => {
+    config.optimization = {
+      ...config.optimization,
+      splitChunks: {
+        chunks: 'all',
+        cacheGroups: {
+          // Framework
+          framework: {
+            test: /(?<!node_modules.*)[\\/]node_modules[\\/](react|react-dom|next)[\\/]/,
+            name: 'framework',
+            priority: 40,
+            reuseExistingChunk: true,
+          },
+          // Lucide icons
+          lucide: {
+            test: /[\\/]node_modules[\\/]lucide-react/,
+            name: 'lucide',
+            priority: 30,
+            reuseExistingChunk: true,
+          },
+          // Framer Motion
+          framer: {
+            test: /[\\/]node_modules[\\/]framer-motion/,
+            name: 'framer-motion',
+            priority: 25,
+            reuseExistingChunk: true,
+          },
+          // Other libraries
+          libs: {
+            test: /[\\/]node_modules[\\/]/,
+            name: 'libs',
+            priority: 10,
+            reuseExistingChunk: true,
+            enforce: true,
+          },
+        },
+      },
+    };
+
+    return config;
+  },
 };
 
 export default nextConfig;
