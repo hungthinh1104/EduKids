@@ -174,7 +174,7 @@ export class MediaController {
   })
   async deleteMedia(@Param('id') id: string, @Req() req: any): Promise<void> {
     // [H-3 Fix] JwtStrategy attaches userId as `sub`, not `userId`
-    const adminId = req.user.sub;
+    const adminId = String(req.user.sub);
     await this.mediaService.deleteMedia(id, adminId);
   }
 

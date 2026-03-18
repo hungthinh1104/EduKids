@@ -156,8 +156,8 @@ export class MediaService {
       optimizedUrl: uploaded.secure_url ?? null,
       thumbnailUrl: uploaded.eager?.[0]?.secure_url ?? null,
       cloudinaryPublicId: uploaded.public_id ?? null,
-      description: uploadDto.description,
-      altText: uploadDto.altText,
+      description: uploadDto.description ?? null,
+      altText: uploadDto.altText ?? null,
       uploadedBy: adminId,
       status: ProcessingStatus.PENDING,
       metadata: {
