@@ -14,12 +14,54 @@ import {
   collectDefaultMetrics,
 } from "prom-client";
 
+function isPlaceholder(value: string) {
+  const normalized = value.trim();
+  if (!normalized) return true;
+
+  return (
+    normalized.includes("<") ||
+    normalized.includes(">") ||
+    /^(change_me|replace_me|your_|example|test|dummy)/i.test(normalized)
+  );
+}
+
+function validateCriticalEnv(logger: Logger) {
+  const requiredInProduction = [
+    "JWT_SECRET",
+    "DATABASE_URL",
+    "REDIS_URL",
+    "CLOUDINARY_CLOUD_NAME",
+    "CLOUDINARY_API_KEY",
+    "CLOUDINARY_API_SECRET",
+  ];
+
+  const missingOrInvalid = requiredInProduction.filter((key) => {
+    const value = process.env[key] || "";
+    return isPlaceholder(value);
+  });
+
+  if (missingOrInvalid.length > 0) {
+    throw new Error(
+      `Invalid production environment variables: ${missingOrInvalid.join(", ")}. ` +
+        "Use real secrets from secure secret manager (not placeholders).",
+    );
+  }
+
+  logger.log("Production environment validation passed");
+}
+
 async function bootstrap() {
+  const logger = new Logger("Bootstrap");
+
   const app = await NestFactory.create(AppModule);
   const httpAdapter = app.getHttpAdapter().getInstance();
   const isProduction = process.env.NODE_ENV === "production";
   const metricsEnabled = process.env.METRICS_ENABLED === "true" || !isProduction;
   const metricsToken = process.env.METRICS_TOKEN?.trim() || "";
+
+  if (isProduction) {
+    validateCriticalEnv(logger);
+  }
 
   // ── Security: Helmet (HSTS, CSP, X-Frame-Options, etc.) ──────────────────
   app.use(
@@ -208,8 +250,6 @@ async function bootstrap() {
   const metricsPublicUrl = publicApiBase
     ? `${publicApiBase}${publicApiBase.endsWith("/api") ? "" : "/api"}/metrics`
     : `http://${bindHost}:${port}/api/metrics`;
-
-  const logger = new Logger('Bootstrap');
 
   if (publicApiBase) {
     logger.log(`Application is running on: ${publicApiBase}`);
