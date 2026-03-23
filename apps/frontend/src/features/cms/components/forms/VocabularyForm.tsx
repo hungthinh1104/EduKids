@@ -18,9 +18,9 @@ const isSupportedAssetUrl = (value: string) => {
 
 const vocabularySchema = z.object({
   word: z.string().min(1, 'Từ vựng không được để trống').max(100),
-  definition: z.string().min(1, 'Định nghĩa không được để trống'),
+  translation: z.string().min(1, 'Định nghĩa không được để trống'),
   phonetic: z.string().optional(),
-  example: z.string().optional(),
+  exampleSentence: z.string().optional(),
   imageUrl: z.string().refine(isSupportedAssetUrl, 'URL hình ảnh không hợp lệ').optional().or(z.literal('')),
   audioUrl: z.string().refine(isSupportedAssetUrl, 'URL âm thanh không hợp lệ').optional().or(z.literal('')),
 });
@@ -46,9 +46,9 @@ export function VocabularyForm({ initialData, onSubmit, onCancel, isLoading }: V
     resolver: zodResolver(vocabularySchema),
     defaultValues: {
       word: '',
-      definition: '',
+      translation: '',
       phonetic: '',
-      example: '',
+      exampleSentence: '',
       imageUrl: '',
       audioUrl: '',
     }
@@ -61,18 +61,18 @@ export function VocabularyForm({ initialData, onSubmit, onCancel, isLoading }: V
     if (initialData) {
       reset({
         word: initialData.word,
-        definition: initialData.definition,
+        translation: initialData.translation,
         phonetic: initialData.phonetic || '',
-        example: initialData.example || '',
+        exampleSentence: initialData.exampleSentence || '',
         imageUrl: initialData.imageUrl || '',
         audioUrl: initialData.audioUrl || '',
       });
     } else {
       reset({
         word: '',
-        definition: '',
+        translation: '',
         phonetic: '',
-        example: '',
+        exampleSentence: '',
         imageUrl: '',
         audioUrl: '',
       });
@@ -84,11 +84,11 @@ export function VocabularyForm({ initialData, onSubmit, onCancel, isLoading }: V
       <div className="space-y-4">
         {/* Word */}
         <div>
-          <label className="block text-sm font-bold text-gray-700 mb-2">Từ vựng *</label>
+          <label className="block text-sm font-bold text-heading mb-2">Từ vựng *</label>
           <input
             {...register('word')}
             className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all ${
-              errors.word ? 'border-red-500 bg-red-50' : 'border-gray-300'
+              errors.word ? 'border-red-500 bg-red-50' : 'border-border'
             }`}
             placeholder="dog"
           />
@@ -97,35 +97,35 @@ export function VocabularyForm({ initialData, onSubmit, onCancel, isLoading }: V
 
         {/* Definition */}
         <div>
-          <label className="block text-sm font-bold text-gray-700 mb-2">Nghĩa / Định nghĩa *</label>
+          <label className="block text-sm font-bold text-heading mb-2">Nghĩa / Định nghĩa *</label>
           <textarea
-            {...register('definition')}
+            {...register('translation')}
             rows={3}
             className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all ${
-              errors.definition ? 'border-red-500 bg-red-50' : 'border-gray-300'
+              errors.translation ? 'border-red-500 bg-red-50' : 'border-border'
             }`}
             placeholder="A domestic animal..."
           />
-          {errors.definition && <p className="text-red-500 text-sm mt-1">{errors.definition.message}</p>}
+          {errors.translation && <p className="text-red-500 text-sm mt-1">{errors.translation.message}</p>}
         </div>
 
         {/* Phonetic */}
         <div>
-          <label className="block text-sm font-bold text-gray-700 mb-2">Phiên âm</label>
+          <label className="block text-sm font-bold text-heading mb-2">Phiên âm</label>
           <input
             {...register('phonetic')}
-            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+            className="w-full px-4 py-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
             placeholder="/dɔːg/"
           />
         </div>
 
         {/* Example */}
         <div>
-          <label className="block text-sm font-bold text-gray-700 mb-2">Ví dụ câu</label>
+          <label className="block text-sm font-bold text-heading mb-2">Ví dụ câu</label>
           <textarea
-            {...register('example')}
+            {...register('exampleSentence')}
             rows={2}
-            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+            className="w-full px-4 py-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
             placeholder="The dog is playing in the yard."
           />
         </div>
@@ -133,11 +133,11 @@ export function VocabularyForm({ initialData, onSubmit, onCancel, isLoading }: V
         {/* Image URL & Audio URL in 2 cols */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-bold text-gray-700 mb-2">URL Ảnh</label>
+            <label className="block text-sm font-bold text-heading mb-2">URL Ảnh</label>
             <input
               {...register('imageUrl')}
               className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all ${
-                errors.imageUrl ? 'border-red-500 bg-red-50' : 'border-gray-300'
+                errors.imageUrl ? 'border-red-500 bg-red-50' : 'border-border'
               }`}
               placeholder="https://..."
             />
@@ -153,11 +153,11 @@ export function VocabularyForm({ initialData, onSubmit, onCancel, isLoading }: V
             />
           </div>
           <div>
-            <label className="block text-sm font-bold text-gray-700 mb-2">URL Âm thanh (Audio)</label>
+            <label className="block text-sm font-bold text-heading mb-2">URL Âm thanh (Audio)</label>
             <input
               {...register('audioUrl')}
               className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all ${
-                errors.audioUrl ? 'border-red-500 bg-red-50' : 'border-gray-300'
+                errors.audioUrl ? 'border-red-500 bg-red-50' : 'border-border'
               }`}
               placeholder="https://..."
             />
@@ -176,12 +176,12 @@ export function VocabularyForm({ initialData, onSubmit, onCancel, isLoading }: V
       </div>
 
       {/* Actions */}
-      <div className="flex gap-4 pt-6 mt-6 border-t border-gray-100">
+      <div className="flex gap-4 pt-6 mt-6 border-t border-border">
         <button
           type="button"
           onClick={onCancel}
           disabled={isLoading}
-          className="flex-1 px-6 py-3.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-bold transition-all disabled:opacity-50"
+          className="flex-1 px-6 py-3.5 bg-muted/10 hover:bg-gray-200 text-heading rounded-xl font-bold transition-all disabled:opacity-50"
         >
           Hủy bỏ
         </button>

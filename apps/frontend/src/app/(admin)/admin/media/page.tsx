@@ -199,10 +199,11 @@ export default function AdminMediaPage() {
           className="flex-1 min-w-64 px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
         />
         <div className="flex gap-2">
-          {(['all', 'image', 'audio', 'video'] as const).map(type => (
-            <button
-              key={type}
-              onClick={() => setFilterType(type)}
+                {(['all', 'image', 'audio', 'video'] as const).map(type => (
+                  <button
+                    type="button"
+                    key={type}
+                    onClick={() => setFilterType(type)}
               className={`px-4 py-2 rounded-lg font-bold transition ${
                 filterType === type
                   ? 'bg-primary text-white shadow-sm'
@@ -289,6 +290,7 @@ export default function AdminMediaPage() {
                   {/* Actions */}
                   <div className="flex flex-col gap-2">
                     <button
+                      type="button"
                       onClick={() => copyToClipboard(fileUrl, file.id)}
                       disabled={!fileUrl}
                       className={`flex items-center gap-1 px-3 py-2 rounded-lg transition ${
@@ -321,6 +323,7 @@ export default function AdminMediaPage() {
                       </button>
                     )}
                     <button
+                      type="button"
                       onClick={() => handleDelete(file.id)}
                       className="flex items-center justify-center px-3 py-2 bg-error-light hover:bg-error-light/70 text-error rounded-lg transition"
                     >

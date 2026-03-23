@@ -32,6 +32,13 @@ export class FlashcardDto {
   phonetic?: string;
 
   @ApiProperty({
+    example: "The dog is running in the yard.",
+    description: "Example sentence for the vocabulary",
+    required: false,
+  })
+  exampleSentence?: string;
+
+  @ApiProperty({
     example: "chó",
     description: "Vietnamese translation",
     required: false,

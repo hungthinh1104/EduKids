@@ -21,9 +21,9 @@ interface ReviewLog {
 
 // Difficulty → next review label (display only, actual schedule is BE-computed)
 const DIFF_BUTTONS: { label: string; sublabel: string; difficulty: Difficulty; cls: string }[] = [
-    { label: '😫 Quên rồi', sublabel: '< 1 phút', difficulty: 'HARD', cls: 'bg-error hover:bg-error/90 text-white border-red-700' },
-    { label: '🤔 Nghĩ ra rồi', sublabel: '~6 phút', difficulty: 'MEDIUM', cls: 'bg-warning hover:bg-warning/90 text-white border-yellow-600' },
-    { label: '😊 Nhớ rồi!', sublabel: '~4 ngày', difficulty: 'EASY', cls: 'bg-success hover:bg-success/90 text-white border-green-700' },
+    { label: '😫 Quên rồi', sublabel: '< 1 phút', difficulty: 'HARD', cls: 'bg-error hover:bg-error/90 text-white border-error-dark/50' },
+    { label: '🤔 Nghĩ ra rồi', sublabel: '~6 phút', difficulty: 'MEDIUM', cls: 'bg-warning hover:bg-warning/90 text-white border-warning-dark/50' },
+    { label: '😊 Nhớ rồi!', sublabel: '~4 ngày', difficulty: 'EASY', cls: 'bg-success hover:bg-success/90 text-white border-success-dark/50' },
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -72,7 +72,7 @@ function ReviewCard({
                 >
                     <div className="text-6xl">{emoji}</div>
                     <Heading level={2} className="text-white text-4xl font-black drop-shadow">{card.translation}</Heading>
-                    <div className="bg-white/20 backdrop-blur-sm rounded-2xl px-4 py-2 border border-white/30">
+                    <div className="bg-card/20 backdrop-blur-sm rounded-2xl px-4 py-2 border border-white/30">
                         <Caption className="text-white/90 text-sm">{card.word} — {card.phonetic || '/word/'}</Caption>
                     </div>
                     <Caption className="text-white/60 text-sm">Bé nhớ mức nào? ↓</Caption>

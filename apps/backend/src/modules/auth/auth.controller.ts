@@ -26,15 +26,15 @@ import { AuthService } from "./auth.service";
 import { RegisterDto } from "./dto/register.dto";
 import { LoginDto } from "./dto/login.dto";
 import { RefreshTokenDto } from "./dto/refresh-token.dto";
-import { SwitchProfileDto } from "./dto/switch-profile.dto";
 import { ForgotPasswordDto } from "./dto/forgot-password.dto";
 import { ResetPasswordDto } from "./dto/reset-password.dto";
 import { ChangePasswordDto } from "./dto/change-password.dto";
 import { UpdateProfileDto } from "./dto/update-profile.dto";
+import { AuthResponseDto } from "./dto/auth-response.dto";
 import {
-  AuthResponseDto,
-  SwitchProfileResponseDto,
-} from "./dto/auth-response.dto";
+  ProfileActionResultDto,
+  SwitchChildProfileDto,
+} from "../child-profile/child-profile.dto";
 
 @ApiTags("Auth")
 @Controller("auth")
@@ -121,28 +121,28 @@ export class AuthController {
   }
 
   /**
-   * UC-00: Switch to child profile (get learner token)
+   * UC-00: Switch to child profile
    * Step 3: Role-based redirect to Learning Dashboard
    */
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth("JWT-auth")
   @ApiOperation({
-    summary: "Switch to child profile (get learner token)",
+    summary: "Switch to child profile",
     description:
-      "Parent switches to child profile. Returns learner JWT with childId claim for learning activities.",
+      "Parent switches to child profile. Returns the same token/profile contract as POST /api/profiles/switch.",
   })
   @ApiResponse({
     status: 200,
     description: "Switched to child profile",
-    type: SwitchProfileResponseDto,
+    type: ProfileActionResultDto,
   })
   @ApiResponse({ status: 403, description: "Not owner of this child" })
   @ApiResponse({ status: 404, description: "Child not found" })
   @Post("switch-profile")
   async switchProfile(
     @Req() req,
-    @Body() dto: SwitchProfileDto,
-  ): Promise<SwitchProfileResponseDto> {
+    @Body() dto: SwitchChildProfileDto,
+  ): Promise<ProfileActionResultDto> {
     const parentId = req.user.sub; // Extract from JWT
     return this.authService.switchProfile(parentId, dto.childId);
   }

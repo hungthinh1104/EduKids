@@ -163,8 +163,8 @@ export default function AdminAuditLogsPage() {
     }
     if (act.includes('view')) {
       return {
-        badge: 'bg-slate-100 text-slate-700 border border-slate-200',
-        iconBg: 'bg-slate-500/10 text-slate-600',
+        badge: 'bg-slate-100 text-body border border-border',
+        iconBg: 'bg-slate-500/10 text-body',
         icon: '👁️',
         label: 'Xem',
       };
@@ -269,7 +269,7 @@ export default function AdminAuditLogsPage() {
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(59,130,246,0.22),_transparent_30%),radial-gradient(circle_at_bottom_left,_rgba(168,85,247,0.18),_transparent_28%)]" />
         <div className="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
           <div className="max-w-2xl">
-            <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.24em] text-slate-200">
+            <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-white/15 bg-card/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.24em] text-slate-200">
               <ShieldCheck size={14} /> Audit trail
             </div>
             <h1 className="text-3xl font-black tracking-tight md:text-4xl">Nhật ký kiểm toán hệ thống</h1>
@@ -279,15 +279,15 @@ export default function AdminAuditLogsPage() {
           </div>
 
           <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
-            <div className="rounded-2xl border border-white/10 bg-white/10 p-4 backdrop-blur-sm">
+            <div className="rounded-2xl border border-white/10 bg-card/10 p-4 backdrop-blur-sm">
               <p className="text-xs font-semibold uppercase tracking-wide text-slate-300">Bản ghi</p>
               <p className="mt-2 text-2xl font-black">{auditLogs.length}</p>
             </div>
-            <div className="rounded-2xl border border-white/10 bg-white/10 p-4 backdrop-blur-sm">
+            <div className="rounded-2xl border border-white/10 bg-card/10 p-4 backdrop-blur-sm">
               <p className="text-xs font-semibold uppercase tracking-wide text-slate-300">Hôm nay</p>
               <p className="mt-2 text-2xl font-black">{todayCount}</p>
             </div>
-            <div className="col-span-2 rounded-2xl border border-white/10 bg-white/10 p-4 backdrop-blur-sm md:col-span-1">
+            <div className="col-span-2 rounded-2xl border border-white/10 bg-card/10 p-4 backdrop-blur-sm md:col-span-1">
               <p className="text-xs font-semibold uppercase tracking-wide text-slate-300">Bộ lọc đang bật</p>
               <p className="mt-2 text-2xl font-black">{activeFiltersCount}</p>
             </div>
@@ -335,8 +335,8 @@ export default function AdminAuditLogsPage() {
           >
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-sm font-medium text-slate-500">{card.label}</p>
-                <p className="mt-2 text-3xl font-black text-slate-900">{card.value}</p>
+                <p className="text-sm font-medium text-muted">{card.label}</p>
+                <p className="mt-2 text-3xl font-black text-heading">{card.value}</p>
               </div>
               <div className={`flex h-11 w-11 items-center justify-center rounded-2xl shadow-sm ${card.iconShell}`}>
                 {card.icon}
@@ -346,22 +346,22 @@ export default function AdminAuditLogsPage() {
         ))}
       </section>
 
-      <section className="rounded-[28px] border border-slate-200 bg-white/85 p-5 shadow-sm backdrop-blur-sm md:p-6">
+      <section className="rounded-[28px] border border-border bg-card/85 p-5 shadow-sm backdrop-blur-sm md:p-6">
         <div className="flex flex-col gap-5">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <h2 className="text-xl font-black text-slate-900">Bộ lọc nhật ký</h2>
-              <p className="mt-1 text-sm text-slate-500">Thu hẹp dữ liệu để tìm hành động quan trọng nhanh hơn.</p>
+              <h2 className="text-xl font-black text-heading">Bộ lọc nhật ký</h2>
+              <p className="mt-1 text-sm text-muted">Thu hẹp dữ liệu để tìm hành động quan trọng nhanh hơn.</p>
             </div>
 
             <div className="flex flex-wrap items-center gap-3">
-              <div className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-2 text-xs font-bold text-slate-600">
+              <div className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-2 text-xs font-bold text-body">
                 <Filter size={14} /> {filteredLogs.length} / {auditLogs.length} bản ghi
               </div>
               <button
                 type="button"
                 onClick={clearFilters}
-                className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-xs font-bold text-slate-600 transition hover:border-slate-300 hover:bg-slate-50"
+                className="inline-flex items-center gap-2 rounded-full border border-border px-4 py-2 text-xs font-bold text-body transition hover:border-border hover:bg-background"
               >
                 <RefreshCw size={14} /> Xóa bộ lọc
               </button>
@@ -369,19 +369,19 @@ export default function AdminAuditLogsPage() {
           </div>
 
           <div className="relative">
-            <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+            <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted" />
             <input
               type="text"
               placeholder="Tìm theo admin, hành động, đối tượng hoặc mô tả..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full rounded-2xl border border-slate-200 bg-slate-50 py-3 pl-12 pr-4 text-sm text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-100"
+              className="w-full rounded-2xl border border-border bg-background py-3 pl-12 pr-4 text-sm text-body outline-none transition placeholder:text-muted focus:border-blue-400 focus:bg-card focus:ring-4 focus:ring-blue-100"
             />
           </div>
 
           <div className="grid gap-4 xl:grid-cols-3">
             <div>
-              <p className="mb-2 text-xs font-black uppercase tracking-wide text-slate-500">Hành động</p>
+              <p className="mb-2 text-xs font-black uppercase tracking-wide text-muted">Hành động</p>
               <div className="flex flex-wrap gap-2">
                 {ACTION_OPTIONS.map((option) => (
                   <button
@@ -391,7 +391,7 @@ export default function AdminAuditLogsPage() {
                     className={`${pillBaseClass} ${
                       actionFilter === option.value
                         ? 'border-blue-500 bg-blue-600 text-white shadow-sm'
-                        : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50'
+                        : 'border-border bg-card text-body hover:border-border hover:bg-background'
                     }`}
                   >
                     {option.label}
@@ -401,7 +401,7 @@ export default function AdminAuditLogsPage() {
             </div>
 
             <div>
-              <p className="mb-2 text-xs font-black uppercase tracking-wide text-slate-500">Đối tượng</p>
+              <p className="mb-2 text-xs font-black uppercase tracking-wide text-muted">Đối tượng</p>
               <div className="flex flex-wrap gap-2">
                 {ENTITY_OPTIONS.map((option) => (
                   <button
@@ -411,7 +411,7 @@ export default function AdminAuditLogsPage() {
                     className={`${pillBaseClass} ${
                       entityFilter === option.value
                         ? 'border-violet-500 bg-violet-600 text-white shadow-sm'
-                        : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50'
+                        : 'border-border bg-card text-body hover:border-border hover:bg-background'
                     }`}
                   >
                     {option.label}
@@ -421,7 +421,7 @@ export default function AdminAuditLogsPage() {
             </div>
 
             <div>
-              <p className="mb-2 text-xs font-black uppercase tracking-wide text-slate-500">Thời gian</p>
+              <p className="mb-2 text-xs font-black uppercase tracking-wide text-muted">Thời gian</p>
               <div className="flex flex-wrap gap-2">
                 {DATE_OPTIONS.map((option) => (
                   <button
@@ -431,7 +431,7 @@ export default function AdminAuditLogsPage() {
                     className={`${pillBaseClass} ${
                       dateFilter === option.value
                         ? 'border-emerald-500 bg-emerald-600 text-white shadow-sm'
-                        : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50'
+                        : 'border-border bg-card text-body hover:border-border hover:bg-background'
                     }`}
                   >
                     {option.label}
@@ -448,7 +448,7 @@ export default function AdminAuditLogsPage() {
           {Array.from({ length: 4 }).map((_, index) => (
             <div
               key={index}
-              className="overflow-hidden rounded-[26px] border border-slate-200 bg-white p-5 shadow-sm"
+              className="overflow-hidden rounded-[26px] border border-border bg-card p-5 shadow-sm"
             >
               <div className="animate-pulse">
                 <div className="flex items-start gap-4">
@@ -467,12 +467,12 @@ export default function AdminAuditLogsPage() {
           ))}
         </section>
       ) : filteredLogs.length === 0 ? (
-        <section className="rounded-[28px] border border-dashed border-slate-300 bg-white/80 px-6 py-16 text-center shadow-sm backdrop-blur-sm">
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-slate-100 text-slate-500">
+        <section className="rounded-[28px] border border-dashed border-border bg-card/80 px-6 py-16 text-center shadow-sm backdrop-blur-sm">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-slate-100 text-muted">
             <Activity className="h-8 w-8" />
           </div>
-          <h3 className="mt-5 text-xl font-black text-slate-900">Không tìm thấy nhật ký phù hợp</h3>
-          <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-500">
+          <h3 className="mt-5 text-xl font-black text-heading">Không tìm thấy nhật ký phù hợp</h3>
+          <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-muted">
             Hãy thử nới lỏng bộ lọc hoặc tìm kiếm bằng từ khóa khác để xem thêm hoạt động quản trị.
           </p>
           <button
@@ -495,12 +495,12 @@ export default function AdminAuditLogsPage() {
                 initial={{ opacity: 1, y: 14 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.04 }}
-                className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg"
+                className="overflow-hidden rounded-[28px] border border-border bg-card shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg"
               >
                 <button
                   type="button"
                   onClick={() => setExpandedId(isExpanded ? null : log.id)}
-                  className="w-full p-5 text-left transition hover:bg-slate-50/80 md:p-6"
+                  className="w-full p-5 text-left transition hover:bg-background/80 md:p-6"
                 >
                   <div className="flex flex-col gap-4 lg:flex-row lg:items-center">
                     <div className="flex min-w-0 flex-1 items-start gap-4">
@@ -513,17 +513,17 @@ export default function AdminAuditLogsPage() {
                           <span className={`rounded-full px-3 py-1 text-xs font-black ${actionStyle.badge}`}>
                             {actionStyle.label}
                           </span>
-                          <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
+                          <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-body">
                             {log.entityType || 'system'}
                             {log.entityId ? ` #${log.entityId}` : ''}
                           </span>
                         </div>
 
-                        <p className="mt-3 text-base font-bold text-slate-900 md:text-lg">
+                        <p className="mt-3 text-base font-bold text-heading md:text-lg">
                           {log.description || `${actionStyle.label} ${log.entityName || 'một đối tượng trong hệ thống'}`}
                         </p>
 
-                        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-slate-500">
+                        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted">
                           <span className="inline-flex items-center gap-1.5">
                             <User className="h-4 w-4" />
                             {log.userName || 'Admin'}
@@ -533,7 +533,7 @@ export default function AdminAuditLogsPage() {
                             {formatDate(log.timestamp)}
                           </span>
                           {log.entityName && (
-                            <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600">
+                            <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-body">
                               {log.entityName}
                             </span>
                           )}
@@ -542,51 +542,51 @@ export default function AdminAuditLogsPage() {
                     </div>
 
                     <div className="flex items-center justify-between gap-4 lg:flex-col lg:items-end">
-                      <div className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-500">
+                      <div className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-muted">
                         Log #{log.id}
                       </div>
                       <ChevronDown
-                        className={`h-5 w-5 text-slate-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                        className={`h-5 w-5 text-muted transition-transform ${isExpanded ? 'rotate-180' : ''}`}
                       />
                     </div>
                   </div>
                 </button>
 
                 {isExpanded && (
-                  <div className="border-t border-slate-100 bg-slate-50/80 px-5 py-5 md:px-6">
+                  <div className="border-t border-border bg-background/80 px-5 py-5 md:px-6">
                     <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                      <div className="rounded-2xl border border-slate-200 bg-white p-4">
-                        <p className="text-xs font-black uppercase tracking-wide text-slate-500">Thực thể</p>
-                        <p className="mt-2 text-sm font-semibold text-slate-800">
+                      <div className="rounded-2xl border border-border bg-card p-4">
+                        <p className="text-xs font-black uppercase tracking-wide text-muted">Thực thể</p>
+                        <p className="mt-2 text-sm font-semibold text-body">
                           {log.entityType || 'system'}{log.entityName ? `: ${log.entityName}` : ''}
                         </p>
                       </div>
 
-                      <div className="rounded-2xl border border-slate-200 bg-white p-4">
-                        <p className="text-xs font-black uppercase tracking-wide text-slate-500">Thời điểm</p>
-                        <p className="mt-2 text-sm font-semibold text-slate-800">{new Date(log.timestamp).toLocaleString('vi-VN')}</p>
+                      <div className="rounded-2xl border border-border bg-card p-4">
+                        <p className="text-xs font-black uppercase tracking-wide text-muted">Thời điểm</p>
+                        <p className="mt-2 text-sm font-semibold text-body">{new Date(log.timestamp).toLocaleString('vi-VN')}</p>
                       </div>
 
-                      <div className="rounded-2xl border border-slate-200 bg-white p-4">
-                        <p className="text-xs font-black uppercase tracking-wide text-slate-500">Địa chỉ IP</p>
-                        <p className="mt-2 break-all font-mono text-sm text-slate-700">{log.ipAddress || 'Không có dữ liệu'}</p>
+                      <div className="rounded-2xl border border-border bg-card p-4">
+                        <p className="text-xs font-black uppercase tracking-wide text-muted">Địa chỉ IP</p>
+                        <p className="mt-2 break-all font-mono text-sm text-body">{log.ipAddress || 'Không có dữ liệu'}</p>
                       </div>
 
-                      <div className="rounded-2xl border border-slate-200 bg-white p-4">
-                        <p className="text-xs font-black uppercase tracking-wide text-slate-500">User Agent</p>
-                        <p className="mt-2 line-clamp-3 text-sm text-slate-700">{log.userAgent || 'Không có dữ liệu'}</p>
+                      <div className="rounded-2xl border border-border bg-card p-4">
+                        <p className="text-xs font-black uppercase tracking-wide text-muted">User Agent</p>
+                        <p className="mt-2 line-clamp-3 text-sm text-body">{log.userAgent || 'Không có dữ liệu'}</p>
                       </div>
                     </div>
 
                     <div className="mt-4 grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
-                      <div className="rounded-2xl border border-slate-200 bg-white p-4">
-                        <p className="text-xs font-black uppercase tracking-wide text-slate-500">Mô tả chi tiết</p>
-                        <p className="mt-2 text-sm leading-6 text-slate-700">{log.description || 'Không có mô tả chi tiết cho hành động này.'}</p>
+                      <div className="rounded-2xl border border-border bg-card p-4">
+                        <p className="text-xs font-black uppercase tracking-wide text-muted">Mô tả chi tiết</p>
+                        <p className="mt-2 text-sm leading-6 text-body">{log.description || 'Không có mô tả chi tiết cho hành động này.'}</p>
                       </div>
 
-                      <div className="rounded-2xl border border-slate-200 bg-white p-4">
-                        <p className="text-xs font-black uppercase tracking-wide text-slate-500">Tóm tắt thay đổi</p>
-                        <p className="mt-2 text-sm leading-6 text-slate-700">{log.changesSummary || 'Không có thay đổi chi tiết được ghi nhận.'}</p>
+                      <div className="rounded-2xl border border-border bg-card p-4">
+                        <p className="text-xs font-black uppercase tracking-wide text-muted">Tóm tắt thay đổi</p>
+                        <p className="mt-2 text-sm leading-6 text-body">{log.changesSummary || 'Không có thay đổi chi tiết được ghi nhận.'}</p>
                       </div>
                     </div>
                   </div>
@@ -597,12 +597,12 @@ export default function AdminAuditLogsPage() {
         </section>
       )}
 
-      <div className="flex flex-col gap-2 rounded-3xl border border-slate-200 bg-white/80 px-5 py-4 text-sm text-slate-500 shadow-sm backdrop-blur-sm md:flex-row md:items-center md:justify-between">
+      <div className="flex flex-col gap-2 rounded-3xl border border-border bg-card/80 px-5 py-4 text-sm text-muted shadow-sm backdrop-blur-sm md:flex-row md:items-center md:justify-between">
         <p>
-          Hiển thị <span className="font-black text-slate-800">{filteredLogs.length}</span> trong{' '}
-          <span className="font-black text-slate-800">{auditLogs.length}</span> nhật ký.
+          Hiển thị <span className="font-black text-body">{filteredLogs.length}</span> trong{' '}
+          <span className="font-black text-body">{auditLogs.length}</span> nhật ký.
         </p>
-        <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+        <p className="text-xs font-semibold uppercase tracking-wide text-muted">
           Dữ liệu được làm mới khi tải lại trang
         </p>
       </div>

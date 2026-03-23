@@ -23,6 +23,7 @@ export function AdminPageHeader({ title, description, actionButton }: AdminPageH
       </div>
       {actionButton && (
         <button
+          type="button"
           onClick={actionButton.onClick}
           className="inline-flex items-center justify-center gap-2 rounded-xl border border-primary bg-primary px-6 py-3 font-heading font-bold text-white shadow-sm transition-all hover:-translate-y-0.5 hover:bg-primary-dark"
         >

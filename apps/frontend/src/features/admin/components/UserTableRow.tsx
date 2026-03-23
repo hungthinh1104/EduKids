@@ -83,18 +83,18 @@ export function UserTableRow({ user, index, isSelected, onToggle, onView }: User
             <td className="px-5 py-3 text-caption text-xs">{new Date(user.lastLogin).toLocaleDateString('vi-VN')}</td>
             <td className="px-5 py-3">
                 <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button onClick={() => onView(user)} className="p-1.5 rounded-lg bg-background border border-border text-body hover:bg-primary-light hover:text-primary transition-colors" title="Xem chi tiết">
+                    <button type="button" onClick={() => onView(user)} className="p-1.5 rounded-lg bg-background border border-border text-body hover:bg-primary-light hover:text-primary transition-colors" title="Xem chi tiết">
                         👁
                     </button>
-                    <button className="p-1.5 rounded-lg bg-background border border-border text-body hover:bg-primary-light hover:text-primary transition-colors" title="Gửi email">
+                    <button type="button" className="p-1.5 rounded-lg bg-background border border-border text-body hover:bg-primary-light hover:text-primary transition-colors" title="Gửi email">
                         <Mail size={13} />
                     </button>
                     {user.status !== 'banned' ? (
-                        <button className="p-1.5 rounded-lg bg-background border border-border text-body hover:bg-error hover:text-white transition-colors" title="Khóa tài khoản">
+                        <button type="button" className="p-1.5 rounded-lg bg-background border border-border text-body hover:bg-error hover:text-white transition-colors" title="Khóa tài khoản">
                             <Ban size={13} />
                         </button>
                     ) : (
-                        <button className="p-1.5 rounded-lg bg-background border border-border text-body hover:bg-success hover:text-white transition-colors" title="Mở khóa">
+                        <button type="button" className="p-1.5 rounded-lg bg-background border border-border text-body hover:bg-success hover:text-white transition-colors" title="Mở khóa">
                             <Shield size={13} />
                         </button>
                     )}

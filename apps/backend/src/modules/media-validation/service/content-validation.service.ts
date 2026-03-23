@@ -1,5 +1,4 @@
 import { Injectable, Logger, BadRequestException } from "@nestjs/common";
-import { PrismaService } from "../../../prisma/prisma.service";
 import {
   ContentValidationRequestDto,
   ContentValidationResponseDto,
@@ -10,6 +9,7 @@ import {
 } from "../dto/validation.dto";
 import { SafetyValidationService } from "./safety-validation.service";
 import { randomUUID } from "crypto";
+import { ValidationRepository } from "../repository/validation.repository";
 
 /**
  * Content Validation Service
@@ -21,7 +21,7 @@ export class ContentValidationService {
   private readonly logger = new Logger(ContentValidationService.name);
 
   constructor(
-    private prisma: PrismaService,
+    private validationRepository: ValidationRepository,
     private safetyService: SafetyValidationService,
   ) {}
 
@@ -194,10 +194,9 @@ export class ContentValidationService {
   async getValidationResult(
     validationId: string,
   ): Promise<ContentValidationResponseDto | null> {
-    const result = await this.prisma.contentValidation.findUnique({
-      where: { id: validationId },
-      include: { safetyFlags: true },
-    });
+    const result = await this.validationRepository.findValidationById(
+      validationId,
+    );
 
     if (!result) return null;
 
@@ -230,43 +229,21 @@ export class ContentValidationService {
    * Get validation history for content
    */
   async getContentValidationHistory(contentId: string, limit = 10) {
-    return this.prisma.contentValidation.findMany({
-      where: { contentId },
-      orderBy: { validatedAt: "desc" },
-      take: limit,
-      include: { safetyFlags: true },
-    });
+    return this.validationRepository.findValidationHistory(contentId, limit);
   }
 
   /**
    * Get all auto-flagged content
    */
   async getAutoFlaggedContent(limit = 50) {
-    return this.prisma.contentValidation.findMany({
-      where: {
-        hasAutoFlags: true,
-        status: ValidationStatus.AUTO_FLAGGED,
-      },
-      orderBy: { validatedAt: "desc" },
-      take: limit,
-      include: { safetyFlags: true },
-    });
+    return this.validationRepository.findAutoFlaggedContent(limit);
   }
 
   /**
    * Get pending review content
    */
   async getPendingReview(limit = 50) {
-    return this.prisma.contentValidation.findMany({
-      where: {
-        status: {
-          in: [ValidationStatus.IN_REVIEW, ValidationStatus.AUTO_FLAGGED],
-        },
-      },
-      orderBy: { validatedAt: "desc" },
-      take: limit,
-      include: { safetyFlags: true },
-    });
+    return this.validationRepository.findPendingReview(limit);
   }
 
   /**
@@ -280,33 +257,15 @@ export class ContentValidationService {
     averageSafetyScore: number;
     flagTypeDistribution: { [key: string]: number };
   }> {
-    const validations = await this.prisma.contentValidation.findMany();
-    const flags = await this.prisma.safetyFlag.findMany();
-
-    const stats = {
-      totalValidations: validations.length,
-      approved: validations.filter(
-        (v) => v.status === ValidationStatus.APPROVED,
-      ).length,
-      rejected: validations.filter(
-        (v) => v.status === ValidationStatus.REJECTED,
-      ).length,
-      flagged: validations.filter((v) => v.hasAutoFlags).length,
-      averageSafetyScore:
-        validations.length > 0
-          ? validations.reduce((sum, v) => sum + v.safetyScore, 0) /
-            validations.length
-          : 100,
-      flagTypeDistribution: {} as { [key: string]: number },
+    const stats = await this.validationRepository.getValidationStats();
+    return {
+      totalValidations: stats.totalValidations,
+      approved: stats.approved,
+      rejected: stats.rejected,
+      flagged: stats.flagged,
+      averageSafetyScore: stats.averageSafetyScore,
+      flagTypeDistribution: stats.flagTypeDistribution,
     };
-
-    // Calculate flag type distribution
-    for (const flag of flags) {
-      stats.flagTypeDistribution[flag.type] =
-        (stats.flagTypeDistribution[flag.type] || 0) + 1;
-    }
-
-    return stats;
   }
 
   /**
@@ -428,35 +387,20 @@ export class ContentValidationService {
     request: ContentValidationRequestDto,
   ): Promise<void> {
     try {
-      await this.prisma.contentValidation.create({
-        data: {
-          id: validationId,
-          contentId: response.contentId,
-          status: response.status,
-          isApproved: response.isApproved,
-          hasAutoFlags: response.hasAutoFlags,
-          safetyScore: response.safetyScore,
-          recommendations: JSON.stringify(response.recommendations),
-          detailedReport: response.detailedReport,
-          validationTimeMs: response.validationTimeMs,
-          validatedAt: new Date(response.validatedAt),
-          contentType: request.contentType,
-          contentTitle: request.title,
-          safetyFlags: {
-            createMany: {
-              data: response.safetyFlags.map((flag) => ({
-                id: flag.flagId,
-                type: flag.type,
-                severity: flag.severity,
-                description: flag.description,
-                detectedText: flag.detectedText,
-                confidence: flag.confidence,
-                isAutoDetected: flag.isAutoDetected,
-                suggestedAction: flag.suggestedAction,
-              })),
-            },
-          },
-        },
+      await this.validationRepository.createValidation({
+        id: validationId,
+        contentId: response.contentId,
+        status: response.status,
+        isApproved: response.isApproved,
+        hasAutoFlags: response.hasAutoFlags,
+        safetyScore: response.safetyScore,
+        recommendations: JSON.stringify(response.recommendations),
+        detailedReport: response.detailedReport ?? "",
+        validationTimeMs: response.validationTimeMs ?? 0,
+        validatedAt: new Date(response.validatedAt),
+        contentType: request.contentType,
+        contentTitle: request.title,
+        flags: response.safetyFlags,
       });
     } catch (error: unknown) {
       this.logger.error(

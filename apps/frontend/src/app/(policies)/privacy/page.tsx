@@ -12,7 +12,7 @@ export default function PrivacyPolicyPage() {
                 Chính sách bảo mật
             </h1>
 
-            <Body className="text-lg text-slate-500 mb-10 italic text-center">
+            <Body className="text-lg text-muted mb-10 italic text-center">
                 Cập nhật lần cuối: Tháng 10, 2023
             </Body>
 

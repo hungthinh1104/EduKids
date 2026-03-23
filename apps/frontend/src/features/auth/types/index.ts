@@ -30,7 +30,7 @@ export interface AuthResponse {
 export interface SwitchProfileResponse {
     learnerToken: string;
     child: {
-        id: string;
+        id: number;
         nickname: string;
         age: number;
     };

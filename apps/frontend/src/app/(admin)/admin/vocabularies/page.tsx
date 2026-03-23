@@ -146,7 +146,7 @@ export default function AdminVocabulariesPage() {
 
   const filteredVocabs = vocabularies.filter(v =>
     v.word.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    v.definition?.toLowerCase().includes(searchQuery.toLowerCase())
+    v.translation?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
@@ -228,7 +228,7 @@ export default function AdminVocabulariesPage() {
                     <span className={`text-[10px] uppercase font-bold tracking-wider ${
                       vocab.status === 'PUBLISHED' ? 'text-green-600' :
                       vocab.status === 'DRAFT' ? 'text-amber-600' :
-                      'text-gray-600'
+                      'text-body'
                     }`}>
                       {vocab.status}
                     </span>
@@ -245,10 +245,10 @@ export default function AdminVocabulariesPage() {
                   )}
                 </div>
 
-                <p className="text-body text-sm mb-3 font-medium">{vocab.definition}</p>
+                <p className="text-body text-sm mb-3 font-medium">{vocab.translation}</p>
 
-                {vocab.example && (
-                  <p className="text-caption text-sm italic mb-4 bg-background p-2.5 rounded-lg border border-border/60">&quot;{vocab.example}&quot;</p>
+                {vocab.exampleSentence && (
+                  <p className="text-caption text-sm italic mb-4 bg-background p-2.5 rounded-lg border border-border/60">&quot;{vocab.exampleSentence}&quot;</p>
                 )}
 
                 <div className="mt-auto pt-4 border-t border-border/60">
@@ -263,6 +263,7 @@ export default function AdminVocabulariesPage() {
                   {/* Actions */}
                   <div className="flex gap-2">
                     <button
+                      type="button"
                       onClick={() => openEditModal(vocab)}
                       className="flex-[2] flex items-center justify-center gap-1.5 px-3 py-2 bg-background hover:bg-primary-light/40 text-body hover:text-primary rounded-xl transition-colors font-medium text-sm border border-border/60 hover:border-primary/30"
                     >
@@ -272,6 +273,7 @@ export default function AdminVocabulariesPage() {
 
                     {vocab.status === 'DRAFT' && (
                       <button
+                        type="button"
                         onClick={() => handlePublish(vocab.id)}
                         className="flex-1 flex items-center justify-center px-2 py-2 bg-success-light hover:bg-success-light/70 text-success rounded-xl transition-colors"
                         title="Xuất bản"
@@ -281,6 +283,7 @@ export default function AdminVocabulariesPage() {
                     )}
 
                     <button
+                      type="button"
                       onClick={() => handleDelete(vocab.id)}
                       className="flex-1 flex items-center justify-center px-2 py-2 bg-background hover:bg-error-light text-caption hover:text-error rounded-xl transition-colors border border-border/60"
                       title="Xóa từ vựng"

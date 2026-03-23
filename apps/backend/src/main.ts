@@ -6,6 +6,7 @@ import { HttpExceptionFilter } from "./common/filters/http-exception.filter";
 import { ResponseInterceptor } from "./common/interceptors/response.interceptor";
 import { SentryContextInterceptor } from "./common/interceptors/sentry-context.interceptor";
 import helmet from "helmet";
+import express from "express";
 import {
   Registry,
   Counter,
@@ -52,8 +53,11 @@ function validateCriticalEnv(logger: Logger) {
 
 async function bootstrap() {
   const logger = new Logger("Bootstrap");
+  const requestBodyLimit = process.env.REQUEST_BODY_LIMIT || "10mb";
 
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {
+    bodyParser: false,
+  });
   const httpAdapter = app.getHttpAdapter().getInstance();
   const isProduction = process.env.NODE_ENV === "production";
   const metricsEnabled = process.env.METRICS_ENABLED === "true" || !isProduction;
@@ -62,6 +66,10 @@ async function bootstrap() {
   if (isProduction) {
     validateCriticalEnv(logger);
   }
+
+  app.use(express.json({ limit: requestBodyLimit }));
+  app.use(express.urlencoded({ extended: true, limit: requestBodyLimit }));
+  logger.log(`Request body limit configured: ${requestBodyLimit}`);
 
   // ── Security: Helmet (HSTS, CSP, X-Frame-Options, etc.) ──────────────────
   app.use(
@@ -178,12 +186,36 @@ async function bootstrap() {
       ? ""
       : "http://localhost:3000,http://127.0.0.1:3000";
 
-  const configuredOrigins = (process.env.CORS_ORIGIN || defaultCorsOrigins)
-    .split(",")
+  const normalizeOrigin = (value: string) => value.trim().replace(/\/+$/, "").toLowerCase();
+
+  const configuredOriginEntries = [
+    process.env.CORS_ORIGIN,
+    process.env.FRONTEND_URL,
+    defaultCorsOrigins,
+  ]
+    .filter(Boolean)
+    .flatMap((entry) => (entry || "").split(","))
     .map((origin) => origin.trim())
     .filter(Boolean);
 
-  const allowedOrigins = new Set(configuredOrigins);
+  const exactAllowedOrigins = new Set(
+    configuredOriginEntries
+      .filter((origin) => !origin.includes("*"))
+      .map((origin) => normalizeOrigin(origin)),
+  );
+
+  const wildcardAllowedOrigins = configuredOriginEntries
+    .filter((origin) => origin.includes("*"))
+    .map((origin) => {
+      const normalized = normalizeOrigin(origin)
+        .replace(/[.+?^${}()|[\]\\]/g, "\\$&")
+        .replace(/\*/g, ".*");
+      return new RegExp(`^${normalized}$`);
+    });
+
+  logger.log(
+    `CORS whitelist (exact=${exactAllowedOrigins.size}, wildcard=${wildcardAllowedOrigins.length})`,
+  );
 
   // CORS configuration - MUST be set before global prefix
   app.enableCors({
@@ -192,22 +224,26 @@ async function bootstrap() {
       // In dev: allow no-origin (Postman, curl, etc.)
       if (!origin) {
         if (isProduction) {
-          callback(new Error("CORS: missing Origin header"), false);
+          callback(null, false);
           return;
         }
         callback(null, true);
         return;
       }
 
-      if (allowedOrigins.has(origin)) {
+      const normalizedRequestOrigin = normalizeOrigin(origin);
+      const exactMatch = exactAllowedOrigins.has(normalizedRequestOrigin);
+      const wildcardMatch = wildcardAllowedOrigins.some((pattern) =>
+        pattern.test(normalizedRequestOrigin),
+      );
+
+      if (exactMatch || wildcardMatch) {
         callback(null, true);
         return;
       }
 
-      console.warn(`CORS blocked for origin: ${origin}`);
-      // Note: console.warn is intentional here — main.ts bootstraps before
-      // NestJS Logger context is available inside the CORS callback closure.
-      callback(new Error(`CORS blocked for origin: ${origin}`), false);
+      logger.warn(`CORS blocked for origin: ${origin}`);
+      callback(null, false);
     },
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],

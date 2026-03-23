@@ -37,7 +37,7 @@ RESULTS="$(rg -n --hidden \
   -e 'xox[baprs]-[0-9A-Za-z-]{10,}' \
   -e 'ghp_[0-9A-Za-z]{36}' \
   -e '-----BEGIN (RSA|EC|OPENSSH|DSA|PRIVATE) KEY-----' \
-  . || true)"
+  . | rg -v '\$\{\{\s*secrets\.[A-Za-z0-9_]+\s*\}\}' || true)"
 
 if [[ -n "$RESULTS" ]]; then
   echo "[secret-scan] potential secrets detected:"

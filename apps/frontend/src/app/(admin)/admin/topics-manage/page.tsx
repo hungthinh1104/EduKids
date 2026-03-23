@@ -195,7 +195,7 @@ export default function AdminTopicsPage() {
                   <span className={`text-xs font-bold tracking-wide ${
                     topic.status === 'PUBLISHED' ? 'text-green-600' :
                     topic.status === 'DRAFT' ? 'text-amber-600' :
-                    'text-gray-600'
+                    'text-body'
                   }`}>
                     {topic.status}
                   </span>
@@ -220,6 +220,7 @@ export default function AdminTopicsPage() {
                 {/* Actions */}
                 <div className="flex gap-2">
                   <button
+                    type="button"
                     onClick={() => openEditModal(topic)}
                     className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 bg-background hover:bg-primary-light/40 text-body hover:text-primary rounded-xl transition-colors font-medium text-sm border border-border/60 hover:border-primary/30"
                   >
@@ -229,6 +230,7 @@ export default function AdminTopicsPage() {
                   
                   {topic.status === 'DRAFT' && (
                     <button
+                      type="button"
                       onClick={() => handlePublish(topic.id)}
                       className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 bg-success-light hover:bg-success-light/70 text-success rounded-xl transition-colors font-medium text-sm"
                     >
@@ -239,6 +241,7 @@ export default function AdminTopicsPage() {
 
                   {topic.status === 'PUBLISHED' && (
                     <button
+                      type="button"
                       onClick={() => handleArchive(topic.id)}
                       className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 bg-warning-light hover:bg-warning-light/70 text-warning rounded-xl transition-colors font-medium text-sm"
                     >
@@ -248,6 +251,7 @@ export default function AdminTopicsPage() {
                   )}
 
                   <button
+                    type="button"
                     onClick={() => handleDelete(topic.id)}
                     className="flex items-center justify-center px-4 py-2.5 bg-background hover:bg-error-light text-caption hover:text-error rounded-xl transition-colors border border-border/60"
                     title="Xóa chủ đề"

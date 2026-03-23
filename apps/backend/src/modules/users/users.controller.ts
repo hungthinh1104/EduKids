@@ -18,7 +18,7 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Get()
-  @Roles("admin")
+  @Roles("ADMIN")
   @ApiOperation({
     summary: "Get parent users for admin management",
   })

@@ -29,12 +29,16 @@ export class PronunciationService {
     data: Record<string, string | number | boolean | undefined>,
     level: 'info' | 'warning' = 'info',
   ): void {
-    Sentry.addBreadcrumb({
-      category: 'pronunciation',
-      message: action,
-      level,
-      data,
-    });
+    try {
+      Sentry.addBreadcrumb({
+        category: 'pronunciation',
+        message: action,
+        level,
+        data,
+      });
+    } catch {
+      // Ignore telemetry errors to avoid impacting pronunciation flow
+    }
   }
 
   @SentryTraced('pronunciation.submit')
@@ -143,7 +147,9 @@ export class PronunciationService {
       provider: assessment.provider,
     });
 
-    Sentry.logger.info('Pronunciation attempt assessed', {
+    const sentryLogger = (Sentry as unknown as { logger?: { info?: (...args: unknown[]) => void } })
+      .logger;
+    sentryLogger?.info?.('Pronunciation attempt assessed', {
       childId,
       vocabularyId,
       mode,

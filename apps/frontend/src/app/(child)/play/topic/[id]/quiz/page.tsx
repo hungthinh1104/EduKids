@@ -395,7 +395,7 @@ export default function QuizPage() {
                                 >
                                     {q.image}
                                 </motion.div>
-                                <Heading level={3} className="text-heading text-2xl">{q.question}</Heading>
+                                <Heading level={3} className="text-heading text-2xl">{q.questionText}</Heading>
                             </div>
 
                             {/* Options */}

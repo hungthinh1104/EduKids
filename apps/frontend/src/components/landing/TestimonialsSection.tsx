@@ -6,7 +6,7 @@ import { HeartPulse, CheckCircle2, Star } from 'lucide-react';
 
 export function TestimonialsSection() {
     return (
-        <section id="parents" className="py-32 px-4 bg-slate-50 dark:bg-slate-950 relative overflow-hidden">
+        <section id="parents" className="py-32 px-4 bg-background relative overflow-hidden">
             <div className="max-w-7xl mx-auto">
                 <div className="grid lg:grid-cols-2 gap-20 items-center">
 
@@ -33,7 +33,7 @@ export function TestimonialsSection() {
                                 { title: 'Môi trường 100% An toàn', desc: 'Không chứa quảng cáo và nội dung độc hại. Giao diện thân thiện với trẻ nhỏ.' },
                                 { title: 'Kiểm soát thời gian', desc: 'Tính năng nhắc nhở nghỉ ngơi bảo vệ thị lực cho bé.' }
                             ].map((item, i) => (
-                                <div key={i} className="flex items-start gap-4 p-4 rounded-2xl hover:bg-white dark:hover:bg-slate-900 shadow-sm border border-transparent hover:border-slate-200 dark:hover:border-slate-800 transition-all">
+                                <div key={i} className="flex items-start gap-4 p-4 rounded-2xl hover:bg-card shadow-sm border border-transparent hover:border-border transition-all">
                                     <div className="bg-success-light dark:bg-success/20 p-2 rounded-xl mt-1">
                                         <CheckCircle2 className="text-success" size={24} />
                                     </div>
@@ -59,7 +59,7 @@ export function TestimonialsSection() {
                                 whileInView={{ opacity: 1, y: 0 }}
                                 viewport={{ once: true }}
                                 transition={{ duration: 0.6 }}
-                                className="bg-white dark:bg-slate-900 p-8 sm:p-10 rounded-[2.5rem] shadow-[0_20px_50px_-20px_rgba(0,0,0,0.1)] border border-slate-100 dark:border-slate-800 relative translate-x-0 lg:-translate-x-10"
+                                className="bg-card p-8 sm:p-10 rounded-[2.5rem] shadow-[0_20px_50px_-20px_rgba(0,0,0,0.1)] border border-border relative translate-x-0 lg:-translate-x-10"
                             >
                                 <div className="flex items-center gap-1.5 text-warning mb-6">
                                     {[1, 2, 3, 4, 5].map(i => <Star key={i} className="fill-current" size={22} />)}
@@ -67,8 +67,8 @@ export function TestimonialsSection() {
                                 <p className="italic text-body mb-8 text-xl leading-relaxed">
                                     &quot;Bé Bi nhà mình từ hồi học EduKids tự giác hẳn. Tối nào ăn cơm xong cũng đòi vọc iPad đọc từ mới lấy phần thưởng. Phát âm của con dạo này tây lắm luôn!&quot;
                                 </p>
-                                <div className="flex items-center gap-5 border-t border-slate-100 dark:border-slate-800 pt-6">
-                                    <Image src="https://api.dicebear.com/7.x/notionists/svg?seed=Trinh" alt="Avatar" width={60} height={60} className="rounded-full bg-slate-100 border-2 border-white" />
+                                <div className="flex items-center gap-5 border-t border-border pt-6">
+                                    <Image src="https://api.dicebear.com/7.x/notionists/svg?seed=Trinh" alt="Avatar" width={60} height={60} className="rounded-full bg-background border-2 border-background" />
                                     <div>
                                         <h5 className="font-heading font-bold text-heading text-lg">Trần Thu Trà</h5>
                                         <span className="text-muted text-sm">Mẹ bé Bi (7 tuổi)</span>
@@ -82,7 +82,7 @@ export function TestimonialsSection() {
                                 whileInView={{ opacity: 1, y: 0 }}
                                 viewport={{ once: true }}
                                 transition={{ duration: 0.6, delay: 0.2 }}
-                                className="bg-white dark:bg-slate-900 p-8 sm:p-10 rounded-[2.5rem] shadow-[0_20px_50px_-20px_rgba(0,0,0,0.1)] border border-slate-100 dark:border-slate-800 relative translate-x-0 lg:translate-x-10"
+                                className="bg-card p-8 sm:p-10 rounded-[2.5rem] shadow-[0_20px_50px_-20px_rgba(0,0,0,0.1)] border border-border relative translate-x-0 lg:translate-x-10"
                             >
                                 <div className="flex items-center gap-1.5 text-warning mb-6">
                                     {[1, 2, 3, 4, 5].map(i => <Star key={i} className="fill-current" size={22} />)}
@@ -90,8 +90,8 @@ export function TestimonialsSection() {
                                 <p className="italic text-body mb-8 text-xl leading-relaxed">
                                     &quot;App màu sắc siêu đẹp, thiết kế nhân vật giống y chơi game nên hai đứa nhà mình khoái lắm. Hơn cả học tiếng Anh, nó giúp bé rèn luyện tư duy rất tốt.&quot;
                                 </p>
-                                <div className="flex items-center gap-5 border-t border-slate-100 dark:border-slate-800 pt-6">
-                                    <Image src="https://api.dicebear.com/7.x/notionists/svg?seed=HoangPhat" alt="Avatar" width={60} height={60} className="rounded-full bg-slate-100 border-2 border-white" />
+                                <div className="flex items-center gap-5 border-t border-border pt-6">
+                                    <Image src="https://api.dicebear.com/7.x/notionists/svg?seed=HoangPhat" alt="Avatar" width={60} height={60} className="rounded-full bg-background border-2 border-background" />
                                     <div>
                                         <h5 className="font-heading font-bold text-heading text-lg">Lê Hoàng Phát</h5>
                                         <span className="text-muted text-sm">Ba cặp song sinh Nhím & Thỏ</span>

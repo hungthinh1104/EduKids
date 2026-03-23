@@ -18,12 +18,20 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const request = ctx.getRequest<Request>();
 
     const isHttpException = exception instanceof HttpException;
+    const isPayloadTooLarge =
+      exception instanceof Error &&
+      (exception.name === "PayloadTooLargeError" ||
+        exception.message.toLowerCase().includes("request entity too large"));
     const status = isHttpException
       ? exception.getStatus()
-      : HttpStatus.INTERNAL_SERVER_ERROR;
+      : isPayloadTooLarge
+        ? HttpStatus.PAYLOAD_TOO_LARGE
+        : HttpStatus.INTERNAL_SERVER_ERROR;
     const message = isHttpException
       ? exception.message
-      : "Internal server error";
+      : isPayloadTooLarge
+        ? "Request body too large"
+        : "Internal server error";
 
     // Only report 5xx errors to Sentry — 4xx (401/403/404/422) are expected
     // client errors and create noise in the Sentry dashboard.

@@ -12,7 +12,7 @@ export default function TermsPage() {
                 Điều khoản dịch vụ
             </h1>
 
-            <Body className="text-lg text-slate-500 mb-10 italic text-center">
+            <Body className="text-lg text-muted mb-10 italic text-center">
                 Hiệu lực từ: Tháng 10, 2023
             </Body>
 
@@ -42,7 +42,7 @@ export default function TermsPage() {
                         <li>Reset lại toàn bộ điểm số của tuần đó.</li>
                         <li>Đình chỉ khả năng hiển thị trên Bảng xếp hạng Quốc gia trong 7 ngày.</li>
                     </ul>
-                    <Body className="mt-4 italic text-sm text-slate-500">
+                    <Body className="mt-4 italic text-sm text-muted">
                         * Mục đích của Bảng xếp hạng là khuyến khích các bé đua tài vui vẻ, chứ không phải áp lực thành tích.
                     </Body>
                 </section>

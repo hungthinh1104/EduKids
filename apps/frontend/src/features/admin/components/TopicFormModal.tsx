@@ -59,7 +59,7 @@ function TopicFormModalContent({ initialData, onClose, onSave }: Omit<TopicFormM
                 <div className="bg-card border-2 border-border rounded-3xl p-6 w-full max-w-md shadow-2xl pointer-events-auto">
                     <div className="flex items-center justify-between mb-6 border-b-2 border-border pb-4">
                         <Heading level={3} className="text-heading text-xl">{isEdit ? 'Sửa Chủ Đề' : 'Thêm Chủ Đề Mới'}</Heading>
-                        <button onClick={onClose} className="p-2 rounded-xl bg-background border border-border hover:bg-error hover:text-white transition-colors text-body">✕</button>
+                        <button type="button" onClick={onClose} className="p-2 rounded-xl bg-background border border-border hover:bg-error hover:text-white transition-colors text-body">✕</button>
                     </div>
 
                     <form onSubmit={handleSave} className="space-y-4">

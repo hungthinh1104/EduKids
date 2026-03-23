@@ -38,7 +38,7 @@ export class RolesGuard implements CanActivate {
       // If user has LEARNER role from switch-profile, they should have childId
       if (userRole === "LEARNER" && !user.childId) {
         throw new ForbiddenException(
-          "Learner JWT must include childId. Please use switch-profile endpoint first.",
+          "Learner JWT must include childId. Please use POST /api/profiles/switch first.",
         );
       }
     }

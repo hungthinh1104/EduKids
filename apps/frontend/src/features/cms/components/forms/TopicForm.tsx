@@ -80,11 +80,11 @@ export function TopicForm({ initialData, onSubmit, onCancel, isLoading }: TopicF
       <div className="space-y-4">
         {/* Name */}
         <div>
-          <label className="block text-sm font-bold text-gray-700 mb-2">Tên Topic *</label>
+          <label className="block text-sm font-bold text-heading mb-2">Tên Topic *</label>
           <input
             {...register('name')}
             className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all ${
-              errors.name ? 'border-red-500 bg-red-50' : 'border-gray-300'
+              errors.name ? 'border-red-500 bg-red-50' : 'border-border'
             }`}
             placeholder="Ví dụ: Animals, Colors..."
           />
@@ -93,12 +93,12 @@ export function TopicForm({ initialData, onSubmit, onCancel, isLoading }: TopicF
 
         {/* Description */}
         <div>
-          <label className="block text-sm font-bold text-gray-700 mb-2">Mô tả *</label>
+          <label className="block text-sm font-bold text-heading mb-2">Mô tả *</label>
           <textarea
             {...register('description')}
             rows={4}
             className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all ${
-              errors.description ? 'border-red-500 bg-red-50' : 'border-gray-300'
+              errors.description ? 'border-red-500 bg-red-50' : 'border-border'
             }`}
             placeholder="Mô tả chi tiết về topic..."
           />
@@ -107,13 +107,13 @@ export function TopicForm({ initialData, onSubmit, onCancel, isLoading }: TopicF
 
         {/* Learning Level */}
         <div>
-          <label className="block text-sm font-bold text-gray-700 mb-2">Cấp độ (1-5)</label>
+          <label className="block text-sm font-bold text-heading mb-2">Cấp độ (1-5)</label>
           <input
             type="number"
             {...register('learningLevel', { valueAsNumber: true })}
             min={1} max={5}
             className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all ${
-              errors.learningLevel ? 'border-red-500 bg-red-50' : 'border-gray-300'
+              errors.learningLevel ? 'border-red-500 bg-red-50' : 'border-border'
             }`}
           />
           {errors.learningLevel && <p className="text-red-500 text-sm mt-1">{errors.learningLevel.message}</p>}
@@ -121,12 +121,12 @@ export function TopicForm({ initialData, onSubmit, onCancel, isLoading }: TopicF
 
         {/* Image URL */}
         <div>
-          <label className="block text-sm font-bold text-gray-700 mb-2">URL hình ảnh</label>
+          <label className="block text-sm font-bold text-heading mb-2">URL hình ảnh</label>
           <input
             type="text"
             {...register('imageUrl')}
             className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all ${
-              errors.imageUrl ? 'border-red-500 bg-red-50' : 'border-gray-300'
+              errors.imageUrl ? 'border-red-500 bg-red-50' : 'border-border'
             }`}
             placeholder="https://..."
           />
@@ -144,23 +144,23 @@ export function TopicForm({ initialData, onSubmit, onCancel, isLoading }: TopicF
 
         {/* Tags */}
         <div>
-          <label className="block text-sm font-bold text-gray-700 mb-2">Tags (phân cách bằng dấu phẩy)</label>
+          <label className="block text-sm font-bold text-heading mb-2">Tags (phân cách bằng dấu phẩy)</label>
           <input
             type="text"
             {...register('tags')}
-            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+            className="w-full px-4 py-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
             placeholder="education, vocabulary, beginner"
           />
         </div>
       </div>
 
       {/* Actions */}
-      <div className="flex gap-4 pt-6 mt-6 border-t border-gray-100">
+      <div className="flex gap-4 pt-6 mt-6 border-t border-border">
         <button
           type="button"
           onClick={onCancel}
           disabled={isLoading}
-          className="flex-1 px-6 py-3.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-bold transition-all disabled:opacity-50"
+          className="flex-1 px-6 py-3.5 bg-muted/10 hover:bg-gray-200 text-heading rounded-xl font-bold transition-all disabled:opacity-50"
         >
           Hủy bỏ
         </button>

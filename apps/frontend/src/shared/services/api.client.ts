@@ -2,8 +2,34 @@ import axios, { AxiosError } from 'axios';
 import Cookies from 'js-cookie';
 import { useAuthStore } from '../store/auth.store';
 
-// Lấy API URL từ biến môi trường, mặc định là localhost:3001/api
-const RAW_API_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api').replace(/\/+$/, '');
+const resolveRawApiUrl = (): string => {
+    const envApiUrl = process.env.NEXT_PUBLIC_API_URL?.trim();
+    if (envApiUrl) {
+        if (typeof window !== 'undefined') {
+            const isHttpsPage = window.location.protocol === 'https:';
+            const isLocalhostTarget = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?(\/|$)/i.test(envApiUrl);
+            const isLocalhostPage = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+
+            if (isHttpsPage && isLocalhostTarget && !isLocalhostPage) {
+                return `${window.location.origin}/api`;
+            }
+        }
+
+        return envApiUrl.replace(/\/+$/, '');
+    }
+
+    if (typeof window !== 'undefined') {
+        const { protocol, origin } = window.location;
+        const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        if (protocol === 'https:' && !isLocalhost) {
+            return `${origin}/api`;
+        }
+    }
+
+    return 'http://localhost:3001/api';
+};
+
+const RAW_API_URL = resolveRawApiUrl();
 
 const API_URL = (() => {
     if (RAW_API_URL.endsWith('/api/v1')) return RAW_API_URL.replace(/\/api\/v1$/, '/api');

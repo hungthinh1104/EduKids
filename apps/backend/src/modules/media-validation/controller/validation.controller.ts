@@ -34,11 +34,12 @@ import {
 import { ContentValidationService } from "../service/content-validation.service";
 import { ApprovalService } from "../service/approval.service";
 import { PreviewService } from "../service/preview.service";
+import { ValidationRepository } from "../repository/validation.repository";
 
 /**
  * Media Validation Controller
  * REST API for content validation, preview, and approval workflows
- * All endpoints require admin/moderator roles
+ * All endpoints require ADMIN role
  */
 @ApiTags("Media Validation & Approval")
 @ApiBearerAuth("JWT")
@@ -51,6 +52,7 @@ export class ValidationController {
     private contentValidationService: ContentValidationService,
     private approvalService: ApprovalService,
     private previewService: PreviewService,
+    private validationRepository: ValidationRepository,
   ) {}
 
   private getActorId(user: JwtActor): string {
@@ -66,7 +68,7 @@ export class ValidationController {
    * POST /media/validation/validate
    */
   @Post("validate")
-  @Roles("admin", "moderator", "content_reviewer")
+  @Roles("ADMIN")
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: "Validate single content item",
@@ -99,7 +101,7 @@ export class ValidationController {
    * POST /media/validation/validate-batch
    */
   @Post("validate-batch")
-  @Roles("admin", "moderator")
+  @Roles("ADMIN")
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: "Batch validate content items",
@@ -138,7 +140,7 @@ export class ValidationController {
    * GET /media/validation/:validationId
    */
   @Get(":validationId")
-  @Roles("admin", "moderator", "content_reviewer")
+  @Roles("ADMIN")
   @ApiOperation({
     summary: "Get validation result by ID",
     description:
@@ -171,7 +173,7 @@ export class ValidationController {
    * GET /media/validation/content/:contentId/history
    */
   @Get("content/:contentId/history")
-  @Roles("admin", "moderator", "content_reviewer")
+  @Roles("ADMIN")
   @ApiOperation({
     summary: "Get validation history for content",
     description: "Retrieve all validation results for a specific content item",
@@ -203,7 +205,7 @@ export class ValidationController {
    * GET /media/validation/:contentId/preview
    */
   @Get(":contentId/preview")
-  @Roles("admin", "moderator", "content_reviewer")
+  @Roles("ADMIN")
   @ApiOperation({
     summary: "Get watermarked preview for content",
     description:
@@ -222,13 +224,20 @@ export class ValidationController {
       `Generating preview for content ${contentId} for user ${actorId}`,
     );
 
-    // In production: Fetch content from database
-    // For now, mock data
+    const latestValidation =
+      await this.validationRepository.findLatestValidation(contentId);
+
+    const previewTitle =
+      latestValidation?.contentTitle || `Content ${contentId}`;
+    const previewDescription = latestValidation
+      ? `Preview based on latest ${latestValidation.contentType ?? "content"} validation.`
+      : `Admin preview for content ${contentId}.`;
+
     return this.previewService.generatePreview(
       contentId,
-      "Sample Content Title",
-      "Sample description for preview",
-      "https://via.placeholder.com/400x300",
+      previewTitle,
+      previewDescription,
+      undefined,
     );
   }
 
@@ -237,7 +246,7 @@ export class ValidationController {
    * POST /media/validation/:contentId/approve
    */
   @Post(":contentId/approve")
-  @Roles("admin", "moderator")
+  @Roles("ADMIN")
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: "Approve content for publishing",
@@ -272,7 +281,7 @@ export class ValidationController {
    * POST /media/validation/:contentId/conditional-approve
    */
   @Post(":contentId/conditional-approve")
-  @Roles("admin", "moderator")
+  @Roles("ADMIN")
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: "Conditionally approve content",
@@ -305,7 +314,7 @@ export class ValidationController {
    * POST /media/validation/:contentId/reject
    */
   @Post(":contentId/reject")
-  @Roles("admin", "moderator")
+  @Roles("ADMIN")
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: "Reject content",
@@ -338,7 +347,7 @@ export class ValidationController {
    * GET /media/validation/flagged/list
    */
   @Get("flagged/list")
-  @Roles("admin", "moderator")
+  @Roles("ADMIN")
   @ApiOperation({
     summary: "Get auto-flagged content",
     description:
@@ -363,7 +372,7 @@ export class ValidationController {
    * GET /media/validation/pending/list
    */
   @Get("pending/list")
-  @Roles("admin", "moderator")
+  @Roles("ADMIN")
   @ApiOperation({
     summary: "Get pending approvals",
     description: "Retrieve content awaiting admin review",
@@ -387,7 +396,7 @@ export class ValidationController {
    * GET /media/validation/stats
    */
   @Get("stats")
-  @Roles("admin")
+  @Roles("ADMIN")
   @ApiOperation({
     summary: "Get validation statistics",
     description: "Retrieve overall validation and approval statistics",
@@ -411,7 +420,7 @@ export class ValidationController {
    * GET /media/validation/:contentId/approvals
    */
   @Get(":contentId/approvals")
-  @Roles("admin", "moderator", "content_reviewer")
+  @Roles("ADMIN")
   @ApiOperation({
     summary: "Get approval history for content",
     description: "Retrieve all approval/rejection history for a content item",
@@ -436,7 +445,7 @@ export class ValidationController {
    * POST /media/validation/bulk-approve
    */
   @Post("bulk-approve")
-  @Roles("admin")
+  @Roles("ADMIN")
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: "Bulk approve multiple content items",
@@ -463,7 +472,7 @@ export class ValidationController {
    * POST /media/validation/bulk-reject
    */
   @Post("bulk-reject")
-  @Roles("admin")
+  @Roles("ADMIN")
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: "Bulk reject multiple content items",

@@ -185,12 +185,12 @@ export default function ReportsPage() {
                 <div className="flex gap-2 flex-wrap md:flex-nowrap">
                     <button 
                         onClick={() => setShowSubscriptionModal(true)} 
-                        className="flex items-center justify-center gap-2 px-3 md:px-4 py-2.5 bg-white border border-border rounded-xl text-xs md:text-sm font-heading font-bold text-body hover:bg-purple-50 hover:border-purple-400 transition-colors shadow-sm print:hidden flex-1 md:flex-none whitespace-nowrap"
+                        className="flex items-center justify-center gap-2 px-3 md:px-4 py-2.5 bg-card border border-border rounded-xl text-xs md:text-sm font-heading font-bold text-body hover:bg-purple-50 hover:border-purple-400 transition-colors shadow-sm print:hidden flex-1 md:flex-none whitespace-nowrap"
                     >
                         <Bell size={14} className="md:w-4 md:h-4" /> <span className="hidden md:inline">{subscriptionPrefs?.isSubscribed ? 'Chỉnh lịch gửi tự động' : 'Thiết lập gửi tự động'}</span>
                         <span className="md:hidden">Lịch gửi</span>
                     </button>
-                    <button onClick={handleExportPDF} className="flex items-center justify-center gap-2 px-3 md:px-4 py-2.5 bg-white border border-border rounded-xl text-xs md:text-sm font-heading font-bold text-body hover:bg-primary hover:text-white hover:border-primary transition-colors shadow-sm print:hidden flex-1 md:flex-none whitespace-nowrap">
+                    <button onClick={handleExportPDF} className="flex items-center justify-center gap-2 px-3 md:px-4 py-2.5 bg-card border border-border rounded-xl text-xs md:text-sm font-heading font-bold text-body hover:bg-primary hover:text-white hover:border-primary transition-colors shadow-sm print:hidden flex-1 md:flex-none whitespace-nowrap">
                         <Download size={14} className="md:w-4 md:h-4" /> <span className="hidden md:inline">Xuất PDF</span>
                         <span className="md:hidden">PDF</span>
                     </button>
@@ -242,7 +242,7 @@ export default function ReportsPage() {
                         className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-2 md:gap-4"
                     >
                         {summaryCards.map((s, i) => (
-                            <motion.div key={i} variants={fadeUp} className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-md border border-white/40 dark:border-white/10 shadow-sm rounded-[1.5rem] md:rounded-[2rem] p-3 md:p-5 flex flex-col gap-2 md:gap-3 hover:shadow-md transition-shadow">
+                            <motion.div key={i} variants={fadeUp} className="bg-card/60 dark:bg-card/60 backdrop-blur-md border border-white/40 dark:border-white/10 shadow-sm rounded-[1.5rem] md:rounded-[2rem] p-3 md:p-5 flex flex-col gap-2 md:gap-3 hover:shadow-md transition-shadow">
                                 <div className={`w-8 h-8 md:w-10 md:h-10 rounded-lg md:rounded-xl flex items-center justify-center flex-shrink-0 ${s.bg} ${s.color}`}>
                                     <span className="text-sm md:text-base">{s.icon}</span>
                                 </div>
@@ -256,7 +256,7 @@ export default function ReportsPage() {
                     </motion.div>
 
                     {/* Activity chart with range selector */}
-                    <motion.div initial={{ opacity: 1, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-md border border-white/40 dark:border-white/10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-[2rem] md:rounded-[2.5rem] p-4 md:p-8 mt-6 mb-8">
+                    <motion.div initial={{ opacity: 1, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="bg-card/60 dark:bg-card/60 backdrop-blur-md border border-white/40 dark:border-white/10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-[2rem] md:rounded-[2.5rem] p-4 md:p-8 mt-6 mb-8">
                         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-5 mb-5">
                             <div className="flex items-center gap-2">
                                 <TrendingUp size={18} className="md:w-5 md:h-5 text-primary flex-shrink-0" />
@@ -299,7 +299,7 @@ export default function ReportsPage() {
                     {/* Two-column: Mastered words + Badges */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mb-8">
                         {/* Mastered Vocabulary */}
-                        <motion.div initial={{ opacity: 1, x: -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-md border border-white/40 dark:border-white/10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-[2rem] md:rounded-[2.5rem] p-4 md:p-8">
+                        <motion.div initial={{ opacity: 1, x: -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} className="bg-card/60 dark:bg-card/60 backdrop-blur-md border border-white/40 dark:border-white/10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-[2rem] md:rounded-[2.5rem] p-4 md:p-8">
                             <div className="flex items-center gap-2 mb-4 md:mb-5">
                                 <Star size={18} className="md:w-5 md:h-5 text-star fill-star flex-shrink-0" />
                                 <Heading level={4} className="text-heading text-base md:text-lg">Từ đã thuộc tốt nhất</Heading>
@@ -333,7 +333,7 @@ export default function ReportsPage() {
                             </div>
                         </motion.div>
                         {/* Recent Badges */}
-                        <motion.div initial={{ opacity: 1, x: 20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-md border border-white/40 dark:border-white/10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-[2rem] md:rounded-[2.5rem] p-4 md:p-8">
+                        <motion.div initial={{ opacity: 1, x: 20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} className="bg-card/60 dark:bg-card/60 backdrop-blur-md border border-white/40 dark:border-white/10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-[2rem] md:rounded-[2.5rem] p-4 md:p-8">
                             <div className="flex items-center gap-2 mb-4 md:mb-5">
                                 <Trophy size={18} className="md:w-5 md:h-5 text-accent flex-shrink-0" />
                                 <Heading level={4} className="text-heading text-base md:text-lg">Huy hiệu gần đây</Heading>
@@ -418,13 +418,13 @@ export default function ReportsPage() {
                     <motion.div
                         initial={{ opacity: 1, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        className="bg-white dark:bg-slate-800 rounded-2xl md:rounded-3xl shadow-2xl p-4 md:p-8 max-w-md w-full max-h-[90vh] overflow-y-auto"
+                        className="bg-card rounded-2xl md:rounded-3xl shadow-2xl p-4 md:p-8 max-w-md w-full max-h-[90vh] overflow-y-auto"
                     >
                         <div className="flex items-center justify-between mb-4 md:mb-6">
-                            <h3 className="text-lg md:text-2xl font-bold text-gray-800 dark:text-white">Cài đặt gửi báo cáo</h3>
+                            <h3 className="text-lg md:text-2xl font-bold text-heading">Cài đặt gửi báo cáo</h3>
                             <button
                                 onClick={() => setShowSubscriptionModal(false)}
-                                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition text-lg"
+                                className="text-muted hover:text-body dark:hover:text-gray-300 transition text-lg"
                             >
                                 ✕
                             </button>
@@ -433,11 +433,11 @@ export default function ReportsPage() {
                         {isLoadingPrefs ? (
                             <div className="text-center py-8">
                                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto"></div>
-                                <p className="mt-4 text-gray-600 dark:text-gray-400 text-sm">Đang tải...</p>
+                                <p className="mt-4 text-body dark:text-muted text-sm">Đang tải...</p>
                             </div>
                         ) : (
                             <div className="space-y-4 md:space-y-6">
-                                <div className="rounded-lg md:rounded-2xl bg-slate-50 dark:bg-slate-700 px-3 md:px-4 py-2 md:py-3 text-xs md:text-sm text-slate-600 dark:text-slate-300">
+                                <div className="rounded-lg md:rounded-2xl bg-background dark:bg-card px-3 md:px-4 py-2 md:py-3 text-xs md:text-sm text-body">
                                     {subscriptionPrefs?.isSubscribed
                                         ? `Hiện đang bật gửi tự động qua ${subscriptionLabel} vào ${String(subscriptionPrefs.reportHour ?? 9).padStart(2, '0')}:00 mỗi tuần.`
                                         : 'Hiện tại bạn chưa bật gửi báo cáo tự động.'}
@@ -448,7 +448,7 @@ export default function ReportsPage() {
                                     <div className="flex items-center justify-between mb-2 md:mb-3">
                                         <div className="flex items-center gap-2 md:gap-3">
                                             <Mail className="w-5 h-5 md:w-6 md:h-6 text-blue-600 dark:text-blue-400 flex-shrink-0" />
-                                            <span className="font-bold text-xs md:text-sm text-gray-800 dark:text-white">Email</span>
+                                            <span className="font-bold text-xs md:text-sm text-heading">Email</span>
                                         </div>
                                         <label className="relative inline-flex items-center cursor-pointer">
                                             <input
@@ -466,10 +466,10 @@ export default function ReportsPage() {
                                                 disabled={isSavingPrefs}
                                                 className="sr-only peer"
                                             />
-                                            <div className="w-10 h-6 md:w-11 md:h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                                            <div className="w-10 h-6 md:w-11 md:h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-card after:border-border after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                                         </label>
                                     </div>
-                                    <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400">Nhận báo cáo qua email mỗi tuần</p>
+                                    <p className="text-xs md:text-sm text-body dark:text-muted">Nhận báo cáo qua email mỗi tuần</p>
                                 </div>
 
                                 {/* Zalo Subscription */}
@@ -477,7 +477,7 @@ export default function ReportsPage() {
                                     <div className="flex items-center justify-between mb-2 md:mb-3">
                                         <div className="flex items-center gap-2 md:gap-3">
                                             <Bell className="w-5 h-5 md:w-6 md:h-6 text-green-600 dark:text-green-400 flex-shrink-0" />
-                                            <span className="font-bold text-xs md:text-sm text-gray-800 dark:text-white">Zalo</span>
+                                            <span className="font-bold text-xs md:text-sm text-heading">Zalo</span>
                                         </div>
                                         <label className="relative inline-flex items-center cursor-pointer">
                                             <input
@@ -495,15 +495,15 @@ export default function ReportsPage() {
                                                 disabled={isSavingPrefs}
                                                 className="sr-only peer"
                                             />
-                                            <div className="w-10 h-6 md:w-11 md:h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+                                            <div className="w-10 h-6 md:w-11 md:h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-card after:border-border after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
                                         </label>
                                     </div>
-                                    <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400">Nhận báo cáo qua Zalo mỗi tuần</p>
+                                    <p className="text-xs md:text-sm text-body dark:text-muted">Nhận báo cáo qua Zalo mỗi tuần</p>
                                 </div>
 
                                 {/* Frequency Selector */}
                                 <div>
-                                    <label className="block text-xs md:text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Tần suất gửi</label>
+                                    <label className="block text-xs md:text-sm font-bold text-heading dark:text-body mb-2">Tần suất gửi</label>
                                     <div className="grid grid-cols-1 gap-3">
                                         <button
                                             disabled
@@ -512,9 +512,9 @@ export default function ReportsPage() {
                                             Hàng tuần
                                         </button>
                                     </div>
-                                    <p className="mt-2 text-[10px] md:text-xs text-gray-500 dark:text-gray-400">Hiện tại hệ thống hỗ trợ gửi báo cáo tự động theo tuần.</p>
+                                    <p className="mt-2 text-[10px] md:text-xs text-muted">Hiện tại hệ thống hỗ trợ gửi báo cáo tự động theo tuần.</p>
                                     {subscriptionPrefs?.isSubscribed && (
-                                        <p className="mt-2 text-[10px] md:text-xs text-gray-600 dark:text-gray-400">
+                                        <p className="mt-2 text-[10px] md:text-xs text-body dark:text-muted">
                                             Kênh hiện tại: {subscriptionPrefs.preferredChannel === 'ZALO' ? 'Zalo' : 'Email'}
                                             {' • '}
                                             Thời gian: {String(subscriptionPrefs.reportHour ?? 9).padStart(2, '0')}:00
@@ -535,7 +535,7 @@ export default function ReportsPage() {
                                 )}
 
                                 {isSavingPrefs && (
-                                    <div className="flex items-center justify-center gap-2 text-xs md:text-sm text-gray-500 dark:text-gray-400">
+                                    <div className="flex items-center justify-center gap-2 text-xs md:text-sm text-muted">
                                         <Loader2 size={14} className="md:w-4 md:h-4 animate-spin" />
                                         Đang lưu cài đặt...
                                     </div>

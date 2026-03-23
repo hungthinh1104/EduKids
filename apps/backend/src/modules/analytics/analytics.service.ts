@@ -80,7 +80,8 @@ export class AnalyticsService {
       learningTime !== null ||
       vocabulary !== null ||
       pronunciation !== null ||
-      quizPerformance !== null;
+      quizPerformance !== null ||
+      gamification !== null;
 
     if (!hasData) {
       return {

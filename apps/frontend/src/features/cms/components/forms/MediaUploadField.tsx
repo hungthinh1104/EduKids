@@ -85,7 +85,7 @@ export function MediaUploadField({
   };
 
   return (
-    <div className="mt-3 rounded-xl border border-dashed border-gray-300 bg-gray-50 p-3">
+    <div className="mt-3 rounded-xl border border-dashed border-border bg-background p-3">
       <input
         ref={inputRef}
         type="file"
@@ -100,7 +100,7 @@ export function MediaUploadField({
           type="button"
           onClick={handleChooseFile}
           disabled={disabled || isUploading}
-          className="inline-flex items-center justify-center gap-2 rounded-lg bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-sm ring-1 ring-gray-200 transition-all hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60"
+          className="inline-flex items-center justify-center gap-2 rounded-lg bg-card px-4 py-2.5 text-sm font-semibold text-heading shadow-sm ring-1 ring-gray-200 transition-all hover:bg-muted/10 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {isUploading ? (
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -110,7 +110,7 @@ export function MediaUploadField({
           <span>{isUploading ? 'Đang tải...' : buttonLabel}</span>
         </button>
 
-        <p className="text-xs text-gray-500 sm:text-right">
+        <p className="text-xs text-muted sm:text-right">
           {currentValue
             ? 'Đã có file gắn vào field này.'
             : 'Có thể upload trực tiếp hoặc dán URL thủ công.'}

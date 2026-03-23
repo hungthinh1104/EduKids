@@ -14,12 +14,12 @@ export interface Badge {
   id: number;
   name: string;
   description: string;
-  imageUrl?: string;
-  rarity?: string;
   category?: string;
   icon?: string;
-  criteria?: string;
   earnedAt?: string;
+  isEarned?: boolean;
+  progress?: number;
+  requirement?: number;
 }
 
 export interface EarnedBadge extends Badge {
@@ -35,8 +35,6 @@ export interface ShopItem {
   category: string;
   rawCategory: 'AVATAR_HAIR' | 'AVATAR_OUTFIT' | 'AVATAR_ACCESSORY' | 'AVATAR_PET' | 'BACKGROUND';
   imageUrl?: string;
-  emoji?: string;
-  rarity: string;
   owned: boolean;
   isEquipped?: boolean;
 }
@@ -56,6 +54,7 @@ export interface EquipResult {
 
 export interface AvatarCustomization {
   childId: number;
+  avatar: string;
   equippedItems: ShopItem[];
   availableItems: ShopItem[];
 }
@@ -63,12 +62,10 @@ export interface AvatarCustomization {
 export interface LeaderboardEntry {
   rank: number;
   childId: number;
-  nickname: string;
-  childName?: string;
+  childName: string;
   avatar: string;
   totalPoints: number;
-  level: number;
-  currentLevel?: number;
+  currentLevel: number;
   badgesEarned?: number;
   isCurrentUser?: boolean;
 }
@@ -107,8 +104,6 @@ const normalizeShopItem = (item: Record<string, unknown>): ShopItem => {
     category: mapShopCategoryToLabel(rawCategory),
     rawCategory,
     imageUrl: typeof item.imageUrl === 'string' ? item.imageUrl : undefined,
-    emoji: typeof item.emoji === 'string' ? item.emoji : '🎁',
-    rarity: typeof item.rarity === 'string' ? item.rarity.toLowerCase() : 'common',
     owned: Boolean(item.isPurchased),
     isEquipped: Boolean(item.isEquipped),
   };
@@ -146,11 +141,11 @@ export const gamificationApi = {
       id: Number(badge.id ?? 0),
       name: String(badge.name ?? ''),
       description: typeof badge.description === 'string' ? badge.description : '',
-      imageUrl: typeof badge.imageUrl === 'string' ? badge.imageUrl : undefined,
-      rarity: typeof badge.rarity === 'string' ? badge.rarity.toLowerCase() : 'common',
       category: typeof badge.category === 'string' ? badge.category : 'Khác',
       icon: typeof badge.icon === 'string' ? badge.icon : '🏆',
-      criteria: typeof badge.criteria === 'string' ? badge.criteria : undefined,
+      isEarned: Boolean(badge.isEarned),
+      progress: typeof badge.progress === 'number' ? badge.progress : undefined,
+      requirement: typeof badge.requirement === 'number' ? badge.requirement : undefined,
       earnedAt: typeof badge.earnedAt === 'string' ? badge.earnedAt : undefined,
     }));
   },
@@ -165,11 +160,8 @@ export const gamificationApi = {
       id: Number(badge.id ?? 0),
       name: String(badge.name ?? ''),
       description: typeof badge.description === 'string' ? badge.description : '',
-      imageUrl: typeof badge.imageUrl === 'string' ? badge.imageUrl : undefined,
-      rarity: typeof badge.rarity === 'string' ? badge.rarity.toLowerCase() : 'common',
       category: typeof badge.category === 'string' ? badge.category : 'Khác',
       icon: typeof badge.icon === 'string' ? badge.icon : '🏆',
-      criteria: typeof badge.criteria === 'string' ? badge.criteria : undefined,
       earnedAt: String(badge.earnedAt ?? new Date().toISOString()),
     }));
   },
@@ -204,7 +196,6 @@ export const gamificationApi = {
         currency: 'stars',
         category: 'Khác',
         rawCategory: 'BACKGROUND',
-        rarity: 'common',
         owned: true,
         isEquipped: false,
       },
@@ -226,6 +217,7 @@ export const gamificationApi = {
     void childId;
     const response = await axiosInstance.get<ApiEnvelope<{
       childId?: number;
+      avatar?: string;
       ownedItems?: Array<Record<string, unknown>>;
     }>>(
       'gamification/avatar/customization'
@@ -237,6 +229,7 @@ export const gamificationApi = {
 
     return {
       childId: Number(payload.childId ?? 0),
+      avatar: typeof payload.avatar === 'string' ? payload.avatar : '',
       equippedItems: ownedItems.filter((item) => item.isEquipped),
       availableItems: ownedItems,
     };
@@ -244,23 +237,18 @@ export const gamificationApi = {
 
   // Get leaderboard
   getLeaderboard: async (limit: number = 10): Promise<LeaderboardEntry[]> => {
-    const response = await axiosInstance.get<ApiEnvelope<LeaderboardEntry[]>>(
+    const response = await axiosInstance.get<ApiEnvelope<Array<Record<string, unknown>>>>(
       `gamification/leaderboard?limit=${limit}`
     );
     return (response.data.data ?? []).map((entry) => ({
-      ...entry,
-      nickname:
-        typeof entry.nickname === 'string'
-          ? entry.nickname
-          : typeof entry.childName === 'string'
-            ? entry.childName
-            : 'User',
-      level:
-        typeof entry.level === 'number'
-          ? entry.level
-          : typeof entry.currentLevel === 'number'
-            ? entry.currentLevel
-            : 1,
+      rank: Number(entry.rank ?? 0),
+      childId: Number(entry.childId ?? 0),
+      childName: typeof entry.childName === 'string' ? entry.childName : 'User',
+      avatar: typeof entry.avatar === 'string' ? entry.avatar : '',
+      totalPoints: Number(entry.totalPoints ?? 0),
+      currentLevel: Number(entry.currentLevel ?? 1),
+      badgesEarned: typeof entry.badgesEarned === 'number' ? entry.badgesEarned : undefined,
+      isCurrentUser: Boolean(entry.isCurrentUser),
     }));
   },
 };

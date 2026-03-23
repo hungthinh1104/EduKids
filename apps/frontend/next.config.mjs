@@ -22,6 +22,11 @@ const nextConfig = {
         protocol: 'https',
         hostname: 'images.unsplash.com',
         pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'res.cloudinary.com',
+        pathname: '/**',
       }
     ],
     // Optimize images with external service
@@ -32,20 +37,46 @@ const nextConfig = {
   // Environment variables
   // ==========================================
   env: {
-    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api',
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
+    NEXT_PUBLIC_WS_URL: process.env.NEXT_PUBLIC_WS_URL,
   },
 
   // ==========================================
   // Security Headers
   // ==========================================
   async headers() {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+    const wsUrl = process.env.NEXT_PUBLIC_WS_URL || '';
+
+    const safeOriginFromUrl = (value) => {
+      if (!value) return null;
+      try {
+        return new URL(value).origin;
+      } catch {
+        return null;
+      }
+    };
+
+    const apiOrigin = safeOriginFromUrl(apiUrl);
+    const wsOrigin = safeOriginFromUrl(wsUrl);
+    const connectSrc = [
+      "'self'",
+      'https:',
+      apiOrigin,
+      wsOrigin,
+      'ws:',
+      'wss:',
+    ]
+      .filter(Boolean)
+      .join(' ');
+
     const csp = [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' https://vercel.live",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://vercel.live",
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "img-src 'self' data: blob: https:",
       "font-src 'self' data: https://fonts.gstatic.com",
-      "connect-src 'self' https:",
+      `connect-src ${connectSrc}`,
       "frame-ancestors 'self'",
       "base-uri 'self'",
       "form-action 'self'",

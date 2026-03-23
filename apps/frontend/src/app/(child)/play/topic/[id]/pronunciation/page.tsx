@@ -8,7 +8,7 @@ import { Mic, Volume2, Star, RotateCcw, ChevronRight } from 'lucide-react';
 import { Heading, Body, Caption } from '@/shared/components/Typography';
 import { KidButton } from '@/components/edukids/KidButton';
 import { contentApi, Vocabulary } from '@/features/learning/api/content.api';
-import { submitPronunciation } from '@/features/pronunciation/api/pronunciation.api';
+import { getPronunciationErrorMessage, submitPronunciation } from '@/features/pronunciation/api/pronunciation.api';
 import { markTopicModeCompleted } from '@/features/learning/utils/topic-mode-progress';
 import { LearningModeShell, ModeStatePanel } from '@/features/learning/components/LearningModeShell';
 
@@ -274,11 +274,17 @@ export default function PronunciationPage() {
                         <motion.div key={index} initial={{ opacity: 0, x: 60 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -60 }} transition={{ duration: 0.25 }} className="space-y-8 max-w-xl mx-auto">
 
                             {/* Word card */}
-                            <motion.div className="bg-card border-2 border-accent/60 rounded-[2.5rem] p-6 md:p-8 flex flex-col items-center gap-5 shadow-xl shadow-accent/10 text-center">
-                                <motion.div animate={{ scale: [1, 1.06, 1] }} transition={{ duration: 3, repeat: Infinity }} className="text-8xl">{vocab.emoji}</motion.div>
-                                <Heading level={2} className="text-heading text-4xl md:text-5xl font-black break-words">{vocab.word}</Heading>
-                                <Caption className="text-caption text-xl">{vocab.phonetic}</Caption>
-                                <Caption className="text-caption text-sm">{vocab.translation}</Caption>
+                                <motion.div className="bg-card border-2 border-accent/60 rounded-[2.5rem] p-6 md:p-8 flex flex-col items-center gap-5 shadow-xl shadow-accent/10 text-center">
+                                    <motion.div animate={{ scale: [1, 1.06, 1] }} transition={{ duration: 3, repeat: Infinity }} className="flex items-center justify-center w-36 h-36">
+                                        {vocab.imageUrl ? (
+                                            <img src={vocab.imageUrl} alt={vocab.word} className="w-full h-full object-contain" />
+                                        ) : (
+                                            <span className="text-8xl">🔊</span>
+                                        )}
+                                    </motion.div>
+                                    <Heading level={2} className="text-heading text-4xl md:text-5xl font-black break-words">{vocab.word}</Heading>
+                                    <Caption className="text-caption text-xl">{vocab.phonetic}</Caption>
+                                    <Caption className="text-caption text-sm">{vocab.translation}</Caption>
 
                                 {/* Listen button */}
                                 <motion.button whileHover={{ scale: 1.06 }} whileTap={{ scale: 0.94 }}
@@ -359,9 +365,10 @@ export default function PronunciationPage() {
                                                         });
                                                         setConfidence(response.confidenceScore);
                                                         setStage('result');
-                                                    } catch {
+                                                    } catch (error) {
+                                                        console.error('Pronunciation request failed:', error);
                                                         setConfidence(0);
-                                                        setPracticeError('Chưa thể chấm phát âm từ này. Hãy kiểm tra micro rồi thử lại.');
+                                                        setPracticeError(getPronunciationErrorMessage(error));
                                                         setStage('ready');
                                                     }
                                                 })();
@@ -385,9 +392,11 @@ export default function PronunciationPage() {
                                             animate={{ scale: [1, 1.08, 1], boxShadow: ['0 0 0 0px rgba(239,68,68,0.3)', '0 0 0 20px rgba(239,68,68,0)', '0 0 0 0px rgba(239,68,68,0)'] }}
                                             transition={{ duration: 1, repeat: Infinity }}
                                         >
-                                            <span className="text-white font-heading font-black text-3xl">{countdown}</span>
+                                            <span className="font-heading font-black text-3xl text-white">{countdown}</span>
                                         </motion.div>
-                                        <Caption className="text-caption">AI đang lắng nghe...</Caption>
+                                        <Caption color="textInverse" className="text-caption">
+                                            AI đang lắng nghe...
+                                        </Caption>
                                     </motion.div>
                                 )}
 
@@ -410,11 +419,13 @@ export default function PronunciationPage() {
                                                 </svg>
                                                 <div className="absolute inset-0 flex flex-col items-center justify-center">
                                                     <span className="font-heading font-black text-heading text-2xl">{confidence}%</span>
-                                                    <Caption className="text-caption text-[10px]">chính xác</Caption>
-                                                </div>
-                                            </div>
+                                            <Caption className="text-caption text-[10px]">chính xác</Caption>
+                                        </div>
+                                    </div>
                                             <StarRating stars={confidenceToStars(confidence)} />
-                                            <Caption className="text-success font-bold">+{starsToPoints(confidenceToStars(confidence))} ⭐ điểm</Caption>
+                                            <Caption className="text-success font-bold">
+                                                +{starsToPoints(confidenceToStars(confidence))} ⭐ điểm
+                                            </Caption>
                                         </div>
 
                                         {/* Feedback message */}

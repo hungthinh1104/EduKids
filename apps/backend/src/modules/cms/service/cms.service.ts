@@ -12,12 +12,56 @@ import { CreateVocabularyDto } from "../dto/create-vocabulary.dto";
 import { UpdateVocabularyDto } from "../dto/update-vocabulary.dto";
 import { CreateQuizStructureDto } from "../dto/create-quiz-structure.dto";
 import { UpdateQuizStructureDto } from "../dto/update-quiz-structure.dto";
+import { ContentValidationService } from "../../media-validation/service/content-validation.service";
+import {
+  ContentTypeValidation,
+  SafetyFlagDto,
+} from "../../media-validation/dto/validation.dto";
 
 @Injectable()
 export class CmsService {
   private readonly logger = new Logger(CmsService.name);
 
-  constructor(private readonly cmsRepository: CmsRepository) {}
+  constructor(
+    private readonly cmsRepository: CmsRepository,
+    private readonly contentValidationService: ContentValidationService,
+  ) {}
+
+  private toFlagSummary(safetyFlags: SafetyFlagDto[]): string {
+    return safetyFlags
+      .slice(0, 5)
+      .map((flag) => `${flag.type}: ${flag.description}`)
+      .join("; ");
+  }
+
+  private async enforceChildSafeContent(params: {
+    contentId: string;
+    contentType: ContentTypeValidation;
+    title: string;
+    description?: string;
+    text?: string;
+    imageUrl?: string;
+    audioUrl?: string;
+  }): Promise<void> {
+    const validation = await this.contentValidationService.validateContent({
+      contentId: params.contentId,
+      contentType: params.contentType,
+      title: params.title,
+      description: params.description,
+      text: params.text,
+      imageUrl: params.imageUrl,
+      audioUrl: params.audioUrl,
+    });
+
+    if (!validation.isApproved || validation.safetyFlags.length > 0) {
+      const summary = this.toFlagSummary(validation.safetyFlags);
+      throw new BadRequestException(
+        summary
+          ? `Nội dung không phù hợp với trẻ em. Vui lòng chỉnh sửa: ${summary}`
+          : "Nội dung không phù hợp với trẻ em. Vui lòng chỉnh sửa.",
+      );
+    }
+  }
 
   // ============ TOPIC SERVICE METHODS ============
 
@@ -38,6 +82,15 @@ export class CmsService {
     if (dto.learningLevel < 1 || dto.learningLevel > 5) {
       throw new BadRequestException("Learning level must be between 1 and 5");
     }
+
+    await this.enforceChildSafeContent({
+      contentId: `cms:topic:new:${Date.now()}`,
+      contentType: ContentTypeValidation.TOPIC,
+      title: dto.name,
+      description: dto.description,
+      text: `${dto.name}\n${dto.description}`,
+      imageUrl: dto.imageUrl,
+    });
 
     const topic = await this.cmsRepository.createTopic(dto, userId);
 
@@ -93,6 +146,21 @@ export class CmsService {
         "Cannot change status of published content without review process",
       );
     }
+
+    const nextTopicName = dto.name ?? topic.name;
+    const nextTopicDescription = dto.description ?? topic.description;
+    const nextTopicImageUrl =
+      dto.imageUrl !== undefined ? dto.imageUrl : topic.imageUrl;
+
+    await this.enforceChildSafeContent({
+      contentId: `cms:topic:${topicId}`,
+      contentType: ContentTypeValidation.TOPIC,
+      title: nextTopicName,
+      description: nextTopicDescription,
+      text: `${nextTopicName}\n${nextTopicDescription}`,
+      imageUrl:
+        typeof nextTopicImageUrl === "string" ? nextTopicImageUrl : undefined,
+    });
 
     const updatedTopic = await this.cmsRepository.updateTopic(topicId, dto);
 
@@ -272,6 +340,18 @@ export class CmsService {
       throw new BadRequestException("Definition must be at least 5 characters");
     }
 
+    await this.enforceChildSafeContent({
+      contentId: `cms:vocabulary:new:${Date.now()}`,
+      contentType: ContentTypeValidation.VOCABULARY,
+      title: dto.word,
+      description: dto.definition,
+      text: [dto.word, dto.definition, dto.example, dto.phonetic]
+        .filter((part): part is string => typeof part === "string" && part.length > 0)
+        .join("\n"),
+      imageUrl: dto.imageUrl,
+      audioUrl: dto.audioUrl,
+    });
+
     const vocabulary = await this.cmsRepository.createVocabulary(dto, userId);
 
     // Audit log
@@ -309,6 +389,30 @@ export class CmsService {
     if (dto.definition && dto.definition.length < 5) {
       throw new BadRequestException("Definition must be at least 5 characters");
     }
+
+    const nextWord = dto.word ?? vocabulary.word;
+    const nextDefinition = dto.definition ?? vocabulary.translation;
+    const nextExample =
+      dto.example !== undefined ? dto.example : vocabulary.exampleSentence;
+    const nextPhonetic =
+      dto.phonetic !== undefined ? dto.phonetic : vocabulary.phonetic;
+    const nextImageUrl =
+      dto.imageUrl !== undefined ? dto.imageUrl : vocabulary.imageUrl;
+    const nextAudioUrl =
+      dto.audioUrl !== undefined ? dto.audioUrl : vocabulary.audioUrl;
+
+    await this.enforceChildSafeContent({
+      contentId: `cms:vocabulary:${vocabularyId}`,
+      contentType: ContentTypeValidation.VOCABULARY,
+      title: typeof nextWord === "string" ? nextWord : "",
+      description:
+        typeof nextDefinition === "string" ? nextDefinition : undefined,
+      text: [nextWord, nextDefinition, nextExample, nextPhonetic]
+        .filter((part): part is string => typeof part === "string" && part.length > 0)
+        .join("\n"),
+      imageUrl: typeof nextImageUrl === "string" ? nextImageUrl : undefined,
+      audioUrl: typeof nextAudioUrl === "string" ? nextAudioUrl : undefined,
+    });
 
     const updatedVocabulary = await this.cmsRepository.updateVocabulary(
       vocabularyId,

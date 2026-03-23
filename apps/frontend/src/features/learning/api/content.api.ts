@@ -4,6 +4,9 @@ export interface Topic {
   id: number;
   name: string;
   description: string | null;
+  imageUrl?: string;
+  learningLevel?: number;
+  tags?: string[];
   vocabularyCount?: number;
   createdAt: string;
   completedCount?: number;
@@ -25,11 +28,8 @@ export interface Vocabulary {
   word: string;
   phonetic: string;
   translation: string;
-  meaning?: string;
   partOfSpeech: string;
-  exampleSentence?: string; // Made optional as per instruction
-  example?: string;
-  emoji?: string; // Added as per instruction
+  exampleSentence?: string;
   difficulty: number;
   audioUrl?: string;
   imageUrl?: string;
@@ -53,6 +53,9 @@ interface TopicDetailPayload {
     id: number;
     name: string;
     description: string | null;
+    imageUrl?: string;
+    learningLevel?: number;
+    tags?: string[];
     vocabularyCount?: number;
     createdAt: string;
     completedCount?: number;
@@ -89,18 +92,9 @@ const normalizeVocabulary = (raw: unknown): Vocabulary => {
   const media = Array.isArray(data.media) ? (data.media as VocabularyMedia[]) : undefined;
   const audioMedia = media?.find((item) => item.type === 'AUDIO');
   const imageMedia = media?.find((item) => item.type === 'IMAGE');
-  const translation =
-    typeof data.translation === 'string'
-      ? data.translation
-      : typeof data.meaning === 'string'
-        ? data.meaning
-        : '';
+  const translation = typeof data.translation === 'string' ? data.translation : '';
   const exampleSentence =
-    typeof data.exampleSentence === 'string'
-      ? data.exampleSentence
-      : typeof data.example === 'string'
-        ? data.example
-        : undefined;
+    typeof data.exampleSentence === 'string' ? data.exampleSentence : undefined;
 
   return {
     id: typeof data.id === 'number' ? data.id : 0,
@@ -108,11 +102,8 @@ const normalizeVocabulary = (raw: unknown): Vocabulary => {
     word: typeof data.word === 'string' ? data.word : '',
     phonetic: typeof data.phonetic === 'string' ? data.phonetic : '',
     translation,
-    meaning: translation,
     partOfSpeech: typeof data.partOfSpeech === 'string' ? data.partOfSpeech : '',
     exampleSentence,
-    example: exampleSentence,
-    emoji: typeof data.emoji === 'string' ? data.emoji : undefined,
     difficulty: typeof data.difficulty === 'number' ? data.difficulty : 1,
     audioUrl:
       typeof data.audioUrl === 'string'
@@ -171,6 +162,12 @@ export const contentApi = {
         id: baseTopic.id,
         name: baseTopic.name,
         description: baseTopic.description,
+        imageUrl: typeof baseTopic.imageUrl === 'string' ? baseTopic.imageUrl : undefined,
+        learningLevel:
+          typeof baseTopic.learningLevel === 'number' ? baseTopic.learningLevel : undefined,
+        tags: Array.isArray(baseTopic.tags)
+          ? (baseTopic.tags as unknown[]).filter((tag): tag is string => typeof tag === 'string')
+          : undefined,
         vocabularyCount: total,
         createdAt: baseTopic.createdAt,
         completedCount: completed,
@@ -196,6 +193,11 @@ export const contentApi = {
         id: typeof flatTopic.id === 'number' ? flatTopic.id : id,
         name: typeof flatTopic.name === 'string' ? flatTopic.name : '',
         description: typeof flatTopic.description === 'string' || flatTopic.description === null ? flatTopic.description : null,
+        imageUrl: typeof flatTopic.imageUrl === 'string' ? flatTopic.imageUrl : undefined,
+        learningLevel: typeof flatTopic.learningLevel === 'number' ? flatTopic.learningLevel : undefined,
+        tags: Array.isArray(flatTopic.tags)
+          ? (flatTopic.tags as unknown[]).filter((tag): tag is string => typeof tag === 'string')
+          : undefined,
         vocabularyCount: typeof flatTopic.vocabularyCount === 'number' ? flatTopic.vocabularyCount : 0,
         createdAt: typeof flatTopic.createdAt === 'string' ? flatTopic.createdAt : new Date().toISOString(),
         completedCount: typeof flatTopic.completedCount === 'number' ? flatTopic.completedCount : 0,

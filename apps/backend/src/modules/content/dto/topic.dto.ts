@@ -21,6 +21,28 @@ export class TopicDto {
   @ApiProperty({ example: 15, description: "Total vocabulary count" })
   vocabularyCount?: number;
 
+  @ApiProperty({
+    example: "https://res.cloudinary.com/edukids/image/topic-animals.jpg",
+    description: "Topic thumbnail image URL",
+    required: false,
+  })
+  imageUrl?: string;
+
+  @ApiProperty({
+    example: 1,
+    description: "Topic learning level",
+    required: false,
+  })
+  learningLevel?: number;
+
+  @ApiProperty({
+    example: ["animals", "basic"],
+    description: "Topic tags",
+    required: false,
+    type: [String],
+  })
+  tags?: string[];
+
   @ApiProperty({ example: "2024-01-01T00:00:00.000Z" })
   createdAt: Date;
 
@@ -51,4 +73,11 @@ export class TopicDto {
     required: false,
   })
   hasVideo?: boolean;
+
+  @ApiProperty({
+    example: "https://res.cloudinary.com/edukids/video/animals-intro.mp4",
+    description: "Optional topic video URL",
+    required: false,
+  })
+  videoUrl?: string;
 }

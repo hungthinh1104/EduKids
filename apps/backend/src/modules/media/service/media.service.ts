@@ -48,7 +48,7 @@ export class MediaService {
       const normalized = value.trim();
       if (!normalized) return false;
       // Avoid common placeholder values from env templates
-      return !/^(your-|change-me|example)/i.test(normalized);
+      return !/^(your[-_]|change[-_]?me|replace[-_]?me|example|test|dummy)/i.test(normalized);
     };
 
     return Boolean(

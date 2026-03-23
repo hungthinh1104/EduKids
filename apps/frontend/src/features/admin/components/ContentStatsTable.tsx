@@ -24,8 +24,8 @@ export function ContentStatsTable({ contentStats }: ContentStatsTableProps) {
             className="rounded-2xl"
         >
             <SectionHeader title="Hiệu quả chủ đề"
-                action={<button className="text-primary text-sm font-heading font-bold hover:underline flex items-center gap-1"><Eye size={14} /> Xem tất cả</button>}
-            />
+            action={<button type="button" className="text-primary text-sm font-heading font-bold hover:underline flex items-center gap-1"><Eye size={14} /> Xem tất cả</button>}
+        />
             <div className="overflow-x-auto mt-2">
                 <table className="w-full text-sm">
                     <thead className="bg-background/80 border-b border-border">

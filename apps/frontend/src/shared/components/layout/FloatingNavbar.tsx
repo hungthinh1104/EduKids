@@ -39,7 +39,7 @@ export function FloatingNavbar({ links, rightActions, showThemeToggle = false }:
             animate={{ y: 0, opacity: 1 }}
             transition={{ duration: 0.45, ease: 'easeOut' }}
             className={`fixed z-[100] flex items-center justify-between px-6 max-w-7xl mx-auto transition-all duration-500 ease-out left-0 right-0 ${isScrolled
-                ? 'top-4 py-3 bg-white/70 dark:bg-slate-900/70 backdrop-blur-2xl border border-white/50 dark:border-slate-800/50 shadow-[0_8px_30px_rgb(0,0,0,0.08)] rounded-full'
+                ? 'top-4 py-3 bg-card/70 backdrop-blur-2xl border border-white/50 dark:border-border/50 shadow-[0_8px_30px_rgb(0,0,0,0.08)] rounded-full'
                 : 'top-6 py-5 bg-transparent border-transparent shadow-none rounded-3xl'
                 }`}
         >
@@ -70,7 +70,7 @@ export function FloatingNavbar({ links, rightActions, showThemeToggle = false }:
                 {showThemeToggle && (
                     <button
                         onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
-                        className="p-3 rounded-full bg-white/50 dark:bg-slate-800/50 backdrop-blur-md border border-slate-200/50 dark:border-slate-700/50 text-body hover:text-primary transition-all hover:scale-110 shadow-sm min-h-[46px] min-w-[46px] flex items-center justify-center group"
+                        className="p-3 rounded-full bg-card/50 backdrop-blur-md border border-border/50 text-body hover:text-primary transition-all hover:scale-110 shadow-sm min-h-[46px] min-w-[46px] flex items-center justify-center group"
                         aria-label="Toggle Dark Mode"
                     >
                         <Sun size={20} className="hidden dark:block group-hover:rotate-12 transition-transform" />
@@ -82,7 +82,7 @@ export function FloatingNavbar({ links, rightActions, showThemeToggle = false }:
                 {/* Mobile Menu Toggle Button */}
                 <button 
                     onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                    className="md:hidden p-3 text-body hover:text-primary bg-white/50 dark:bg-slate-800/50 backdrop-blur-md border border-slate-200/50 dark:border-slate-700/50 rounded-full shadow-sm"
+                    className="md:hidden p-3 text-body hover:text-primary bg-card/50 backdrop-blur-md border border-border/50 rounded-full shadow-sm"
                     aria-label="Toggle Mobile Menu"
                 >
                     {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
@@ -97,7 +97,7 @@ export function FloatingNavbar({ links, rightActions, showThemeToggle = false }:
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: -20, scale: 0.95 }}
                         transition={{ duration: 0.2 }}
-                        className="absolute top-full left-0 right-0 mt-4 mx-2 sm:mx-6 p-6 rounded-3xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-3xl border border-slate-200/80 dark:border-slate-800/80 shadow-2xl md:hidden flex flex-col gap-6"
+                        className="absolute top-full left-0 right-0 mt-4 mx-2 sm:mx-6 p-6 rounded-3xl bg-card/95 backdrop-blur-3xl border border-border/80 shadow-2xl md:hidden flex flex-col gap-6"
                     >
                         {links.map((link) => (
                             <Link

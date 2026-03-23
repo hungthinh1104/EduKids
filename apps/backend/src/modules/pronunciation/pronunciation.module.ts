@@ -4,10 +4,11 @@ import { PronunciationController } from './pronunciation.controller';
 import { PronunciationService } from './pronunciation.service';
 import { PronunciationRepository } from './repositories/pronunciation.repository';
 import { PronunciationAssessmentService } from './pronunciation-assessment.service';
-import { PrismaService } from '../../prisma/prisma.service';
+import { PrismaModule } from '../../prisma/prisma.module';
 
 @Module({
   imports: [
+    PrismaModule,
     CacheModule.register({
       ttl: 3600000, // 1 hour in milliseconds
       max: 100, // Max 100 pronunciation pronunciations in cache
@@ -18,7 +19,6 @@ import { PrismaService } from '../../prisma/prisma.service';
     PronunciationService,
     PronunciationRepository,
     PronunciationAssessmentService,
-    PrismaService,
   ],
   exports: [PronunciationService, PronunciationRepository],
 })

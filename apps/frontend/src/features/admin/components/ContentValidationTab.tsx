@@ -92,6 +92,7 @@ export function ContentValidationTab({ pendingItems, onItemsChange, onApproveIte
                                 </div>
                                 <div className="flex items-center gap-2 shrink-0">
                                     <button
+                                        type="button"
                                         onClick={() => void handleApprove(item)}
                                         disabled={processing.has(item.id)}
                                         className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-success-light text-success font-heading font-bold text-xs border border-success/30 hover:bg-success hover:text-white transition-colors disabled:opacity-50"
@@ -99,6 +100,7 @@ export function ContentValidationTab({ pendingItems, onItemsChange, onApproveIte
                                         <ShieldCheck size={13} /> Duyệt
                                     </button>
                                     <button
+                                        type="button"
                                         onClick={() => void handleReject(item)}
                                         disabled={processing.has(item.id)}
                                         className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-error-light text-error font-heading font-bold text-xs border border-error/30 hover:bg-error hover:text-white transition-colors disabled:opacity-50"

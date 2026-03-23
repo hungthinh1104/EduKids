@@ -42,7 +42,7 @@ export function CtaSection() {
                 transition={{ duration: 0.8, type: 'spring' }}
                 className="max-w-4xl mx-auto px-4 z-10 relative text-center"
             >
-                <div className="inline-flex justify-center items-center w-20 h-20 bg-white/20 rounded-3xl backdrop-blur-md mb-8 shadow-2xl border border-white/30">
+                <div className="inline-flex justify-center items-center w-20 h-20 bg-card/20 rounded-3xl backdrop-blur-md mb-8 shadow-2xl border border-white/30">
                     <Trophy size={40} className="text-white fill-white/50" />
                 </div>
                 <h2 className="text-5xl md:text-7xl text-white mb-8 font-black font-heading tracking-wide drop-shadow-lg">
@@ -52,7 +52,7 @@ export function CtaSection() {
                     Đăng ký ngay hôm nay để nhận thú cưng đồng hành và <strong className="text-warning-light">1,000 kim cương</strong> miễn phí!
                 </p>
                 <Link href={targetHref}>
-                    <button className="bg-white text-primary text-2xl font-bold px-12 py-6 rounded-full shadow-[0_10px_40px_rgba(0,0,0,0.2)] hover:shadow-[0_20px_50px_rgba(255,255,255,0.3)] hover:-translate-y-2 transition-all duration-300 transform inline-flex items-center gap-3">
+                    <button className="bg-card text-primary text-2xl font-bold px-12 py-6 rounded-full shadow-[0_10px_40px_rgba(0,0,0,0.2)] hover:shadow-[0_20px_50px_rgba(255,255,255,0.3)] hover:-translate-y-2 transition-all duration-300 transform inline-flex items-center gap-3">
                         {isAuthenticated ? 'Vào ứng dụng ngay' : 'Bắt đầu miễn phí'} <ArrowRight size={28} />
                     </button>
                 </Link>

@@ -6,7 +6,7 @@ import { Heading, Body } from '@/shared/components/Typography';
 
 export default function AuthLayout({ children }: { children: ReactNode }) {
     return (
-        <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex overflow-hidden relative selection:bg-primary/20">
+        <div className="min-h-screen bg-background flex overflow-hidden relative selection:bg-primary/20">
             {/* Background Decorative Elements (Glowing Orbs) */}
             <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/20 dark:bg-primary/10 rounded-full blur-[120px] mix-blend-multiply dark:mix-blend-lighten opacity-70 animate-blob pointer-events-none z-0" />
             <div className="absolute top-[20%] right-[-10%] w-[35%] h-[40%] bg-secondary/20 dark:bg-secondary/10 rounded-full blur-[100px] mix-blend-multiply dark:mix-blend-lighten opacity-50 animate-blob animation-delay-2000 pointer-events-none z-0" />
@@ -23,7 +23,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
             <div className="hidden lg:flex w-1/2 bg-gradient-candy flex-col justify-center items-center p-12 relative text-white shadow-2xl z-10">
                 <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
                 <div className="relative z-10 w-full max-w-lg text-center space-y-8 flex flex-col items-center">
-                    <div className="w-48 h-48 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm border-4 border-white/30 shadow-2xl animate-bounce-gentle">
+                    <div className="w-48 h-48 bg-card/20 rounded-full flex items-center justify-center backdrop-blur-sm border-4 border-white/30 shadow-2xl animate-bounce-gentle">
                         <Image
                             src="https://api.dicebear.com/7.x/bottts/svg?seed=edukids-hero"
                             alt="EduKids Mascot"
@@ -44,7 +44,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
                 {/* Return Home Button */}
                 <div className="absolute top-8 left-8 z-10">
                     <Link href="/">
-                        <div className="inline-flex items-center gap-2 text-white/90 hover:text-white font-heading font-bold text-lg transition-colors cursor-pointer bg-white/10 hover:bg-white/20 px-4 py-2 rounded-xl backdrop-blur-sm">
+                        <div className="inline-flex items-center gap-2 text-white/90 hover:text-white font-heading font-bold text-lg transition-colors cursor-pointer bg-card/10 hover:bg-card/20 px-4 py-2 rounded-xl backdrop-blur-sm">
                             <MoveLeft size={20} /> Quay lại trang chủ
                         </div>
                     </Link>
@@ -62,15 +62,15 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
                             width={80}
                             height={80}
                             priority
-                            className="bg-white/50 backdrop-blur-md shadow-lg rounded-full p-2 border border-white/40"
+                            className="bg-card/50 backdrop-blur-md shadow-lg rounded-full p-2 border border-white/40"
                         />
-                        <Link href="/" className="inline-flex items-center gap-2 text-slate-600 dark:text-slate-300 hover:text-primary transition-colors font-medium bg-white/50 dark:bg-slate-800/50 px-4 py-2 rounded-full backdrop-blur-sm">
+                        <Link href="/" className="inline-flex items-center gap-2 text-body hover:text-primary transition-colors font-medium bg-card/50 dark:bg-card/50 px-4 py-2 rounded-full backdrop-blur-sm">
                             <MoveLeft size={16} /> Trang chủ
                         </Link>
                     </div>
 
                     {/* Forms rendered here with Ultra Glassmorphism */}
-                    <div className="bg-white/70 dark:bg-slate-900/70 backdrop-blur-2xl border border-white/50 dark:border-slate-700/50 rounded-[2.5rem] p-8 sm:p-10 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] relative overflow-hidden">
+                    <div className="bg-card/70 dark:bg-background/70 backdrop-blur-2xl border border-white/50 dark:border-border/50 rounded-[2.5rem] p-8 sm:p-10 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] relative overflow-hidden">
                         {/* Decorative inner glow for the glass card */}
                         <div className="absolute inset-x-0 -top-px h-px w-full bg-gradient-to-r from-transparent via-white/80 to-transparent"></div>
                         <div className="relative z-10">

@@ -210,11 +210,15 @@ export class GamificationService {
     const ownedItems = await this.gamificationRepository.getOwnedShopItems(
       childId,
     );
+    const avatarPreview = await this.gamificationRepository.getAvatarPreviewForChild(
+      child.id,
+      child.avatar,
+    );
 
     return {
       childId: child.id,
       childName: child.nickname || "Player",
-      avatar: child.avatar || GamificationService.DEFAULT_AVATAR_URL,
+      avatar: avatarPreview || GamificationService.DEFAULT_AVATAR_URL,
       ownedItems,
     };
   }

@@ -114,7 +114,7 @@ export default function AdminQuizzesPage() {
     description: string;
     questionText: string;
     options: string[];
-    correctAnswerIndex: 0 | 1 | 2 | 3;
+    correctAnswerIndex: number;
     difficultyLevel: 1 | 2 | 3 | 4 | 5;
   }) => {
     if (!selectedTopicId) return;
@@ -209,7 +209,7 @@ export default function AdminQuizzesPage() {
       case 3: return 'text-yellow-600 bg-yellow-50 border-yellow-200';
       case 4: return 'text-orange-600 bg-orange-50 border-orange-200';
       case 5: return 'text-red-600 bg-red-50 border-red-200';
-      default: return 'text-gray-600 bg-gray-50 border-gray-200';
+      default: return 'text-body bg-background border-border';
     }
   };
 
@@ -288,11 +288,11 @@ export default function AdminQuizzesPage() {
                 <span
                   key={vocabulary.id}
                   className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary-light/40 px-3 py-1.5 text-xs font-semibold text-primary-dark"
-                  title={vocabulary.definition}
+                  title={vocabulary.translation}
                 >
                   <span>{vocabulary.word}</span>
-                  {vocabulary.definition ? (
-                    <span className="text-caption font-medium">• {vocabulary.definition}</span>
+                  {vocabulary.translation ? (
+                    <span className="text-caption font-medium">• {vocabulary.translation}</span>
                   ) : null}
                 </span>
               ))}
@@ -336,7 +336,7 @@ export default function AdminQuizzesPage() {
                     <span className={`px-3 py-1 rounded-full text-xs font-bold ${
                       quiz.status === 'PUBLISHED' ? 'bg-green-100 text-green-700' :
                       quiz.status === 'DRAFT' ? 'bg-amber-100 text-amber-700' :
-                      'bg-gray-100 text-gray-700'
+                      'bg-muted/10 text-heading'
                     }`}>
                       {quiz.status}
                     </span>
@@ -352,8 +352,9 @@ export default function AdminQuizzesPage() {
 
                 <div className="flex gap-2">
                   <button
+                    type="button"
                     onClick={() => openEditModal(quiz)}
-                    className="flex-[2] flex justify-center items-center gap-1.5 px-3 py-2 bg-gray-50 hover:bg-blue-50 text-gray-600 hover:text-blue-600 rounded-xl transition-colors font-medium text-sm border border-transparent hover:border-blue-100"
+                    className="flex-[2] flex justify-center items-center gap-1.5 px-3 py-2 bg-background hover:bg-blue-50 text-body hover:text-blue-600 rounded-xl transition-colors font-medium text-sm border border-transparent hover:border-blue-100"
                   >
                     <Edit2 className="w-4 h-4" />
                     <span>Chỉnh sửa</span>
@@ -361,6 +362,7 @@ export default function AdminQuizzesPage() {
 
                   {quiz.status === 'DRAFT' && (
                     <button
+                      type="button"
                       onClick={() => handlePublish(quiz.id)}
                       className="flex-1 flex justify-center items-center gap-1.5 px-3 py-2 bg-green-50/50 hover:bg-green-100/80 text-green-700 rounded-xl transition-colors text-sm"
                       title="Xuất bản"
@@ -371,8 +373,9 @@ export default function AdminQuizzesPage() {
                   )}
 
                   <button
+                    type="button"
                     onClick={() => handleDelete(quiz.id)}
-                    className="flex items-center justify-center px-4 py-2 bg-gray-50/80 hover:bg-red-50 text-gray-400 hover:text-red-500 rounded-xl transition-colors"
+                    className="flex items-center justify-center px-4 py-2 bg-background/80 hover:bg-red-50 text-muted hover:text-red-500 rounded-xl transition-colors"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -393,11 +396,11 @@ export default function AdminQuizzesPage() {
                         className={`flex items-start gap-3 p-3.5 rounded-xl border transition-all ${
                           isCorrect
                             ? 'bg-green-50 border-green-200 text-green-800 shadow-sm'
-                            : 'bg-white border-gray-200 text-gray-600'
+                            : 'bg-card border-border text-body'
                         }`}
                       >
                         <span className={`flex shrink-0 w-6 h-6 items-center justify-center rounded-full text-xs font-bold ${
-                          isCorrect ? 'bg-green-200 text-green-800' : 'bg-gray-100 text-gray-500'
+                          isCorrect ? 'bg-green-200 text-green-800' : 'bg-muted/10 text-muted'
                         }`}>
                           {String.fromCharCode(65 + idx)}
                         </span>

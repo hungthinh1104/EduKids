@@ -278,6 +278,12 @@ export class QuizService {
       include: { media: { where: { type: "IMAGE" }, take: 1 } },
     });
 
+    if (allVocabulary.length === 0) {
+      throw new BadRequestException(
+        `No vocabulary available for topic ${dto.topicId}. Please complete lessons first.`,
+      );
+    }
+
     const questions = await Promise.all(
       allVocabulary.map(async (vocab, index) => {
         const distractors = await this.quizRepository.generateDistractors(

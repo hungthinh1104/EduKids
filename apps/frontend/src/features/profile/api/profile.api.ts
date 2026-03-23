@@ -1,5 +1,6 @@
 import { apiClient } from '@/shared/services/api.client';
 import { setTopicModeProgressChildScope } from '@/features/learning/utils/topic-mode-progress';
+import { backupParentSession } from '@/shared/utils/parent-session-handoff';
 
 export interface ChildProfile {
   id: number;
@@ -91,6 +92,7 @@ export const getActiveProfile = async (): Promise<ChildProfileWithStats | null> 
  * @returns New JWT tokens with LEARNER role
  */
 export const switchProfile = async (childId: number): Promise<ProfileSwitchResponse> => {
+  backupParentSession();
   const response = await apiClient.post('/profiles/switch', { childId });
   const data = response.data.data;
   

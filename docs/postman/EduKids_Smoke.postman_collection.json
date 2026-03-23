@@ -1,0 +1,295 @@
+{
+  "info": {
+    "name": "EduKids Smoke Tests",
+    "description": "Quick smoke test flow for EduKids backend. Import into Postman and run in order from top to bottom.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3001/api" },
+    { "key": "parentToken", "value": "" },
+    { "key": "learnerToken", "value": "" },
+    { "key": "childId", "value": "" },
+    { "key": "topicId", "value": "" },
+    { "key": "vocabularyId", "value": "" },
+    { "key": "quizSessionId", "value": "" },
+    { "key": "questionId", "value": "" },
+    { "key": "selectedOptionId", "value": "" },
+    { "key": "testEmail", "value": "qa_{{$timestamp}}@example.com" },
+    { "key": "testPassword", "value": "Test12345A" }
+  ],
+  "item": [
+    {
+      "name": "00 - Health",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": { "raw": "{{baseUrl}}/system/health", "host": ["{{baseUrl}}"], "path": ["system", "health"] }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": { "type": "text/javascript", "exec": [
+            "pm.test('Health is 200', function () { pm.response.to.have.status(200); });"
+          ] }
+        }
+      ]
+    },
+    {
+      "name": "01 - Register Parent",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{testEmail}}\",\n  \"password\": \"{{testPassword}}\",\n  \"firstName\": \"QA\",\n  \"lastName\": \"Smoke\"\n}"
+        },
+        "url": { "raw": "{{baseUrl}}/auth/register", "host": ["{{baseUrl}}"], "path": ["auth", "register"] }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": { "type": "text/javascript", "exec": [
+            "pm.test('Register returns 201/200', function () { pm.expect([200,201]).to.include(pm.response.code); });",
+            "const json = pm.response.json();",
+            "const token = json?.data?.accessToken;",
+            "pm.expect(token, 'parent accessToken').to.be.a('string');",
+            "pm.collectionVariables.set('parentToken', token);"
+          ] }
+        }
+      ]
+    },
+    {
+      "name": "02 - Create Child Profile",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{parentToken}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"nickname\": \"Kid {{$timestamp}}\",\n  \"age\": 7\n}"
+        },
+        "url": { "raw": "{{baseUrl}}/profiles", "host": ["{{baseUrl}}"], "path": ["profiles"] }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": { "type": "text/javascript", "exec": [
+            "pm.test('Create profile returns 201/200', function () { pm.expect([200,201]).to.include(pm.response.code); });",
+            "const json = pm.response.json();",
+            "const id = json?.data?.profile?.id ?? json?.data?.id;",
+            "pm.expect(id, 'childId').to.be.ok;",
+            "pm.collectionVariables.set('childId', String(id));"
+          ] }
+        }
+      ]
+    },
+    {
+      "name": "03 - Switch Profile (Learner Token)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{parentToken}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"childId\": {{childId}}\n}"
+        },
+        "url": { "raw": "{{baseUrl}}/auth/switch-profile", "host": ["{{baseUrl}}"], "path": ["auth", "switch-profile"] }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": { "type": "text/javascript", "exec": [
+            "pm.test('Switch profile returns 200', function () { pm.response.to.have.status(200); });",
+            "const json = pm.response.json();",
+            "const token = json?.data?.learnerToken;",
+            "pm.expect(token, 'learnerToken').to.be.a('string');",
+            "pm.collectionVariables.set('learnerToken', token);"
+          ] }
+        }
+      ]
+    },
+    {
+      "name": "04 - Get Topics",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{learnerToken}}" }
+        ],
+        "url": { "raw": "{{baseUrl}}/content/topics", "host": ["{{baseUrl}}"], "path": ["content", "topics"] }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": { "type": "text/javascript", "exec": [
+            "pm.test('Topics returns 200', function () { pm.response.to.have.status(200); });",
+            "const json = pm.response.json();",
+            "const items = json?.data?.items || [];",
+            "pm.expect(items.length, 'topics list should not be empty').to.be.greaterThan(0);",
+            "pm.collectionVariables.set('topicId', String(items[0].id));"
+          ] }
+        }
+      ]
+    },
+    {
+      "name": "05 - Get Topic Detail",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{learnerToken}}" }
+        ],
+        "url": { "raw": "{{baseUrl}}/content/topics/{{topicId}}", "host": ["{{baseUrl}}"], "path": ["content", "topics", "{{topicId}}"] }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": { "type": "text/javascript", "exec": [
+            "pm.test('Topic detail returns 200', function () { pm.response.to.have.status(200); });",
+            "const json = pm.response.json();",
+            "const vocab = json?.data?.vocabularies?.[0];",
+            "if (vocab?.id) pm.collectionVariables.set('vocabularyId', String(vocab.id));"
+          ] }
+        }
+      ]
+    },
+    {
+      "name": "06 - Get Flashcard by Vocabulary",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{learnerToken}}" }
+        ],
+        "url": { "raw": "{{baseUrl}}/flashcard/{{vocabularyId}}", "host": ["{{baseUrl}}"], "path": ["flashcard", "{{vocabularyId}}"] }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": { "type": "text/javascript", "exec": [
+            "pm.test('Flashcard returns 200', function () { pm.response.to.have.status(200); });"
+          ] }
+        }
+      ]
+    },
+    {
+      "name": "07 - Start Quiz",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{learnerToken}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"topicId\": {{topicId}}\n}"
+        },
+        "url": { "raw": "{{baseUrl}}/quiz/start", "host": ["{{baseUrl}}"], "path": ["quiz", "start"] }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": { "type": "text/javascript", "exec": [
+            "pm.test('Quiz start returns 201/200', function () { pm.expect([200,201]).to.include(pm.response.code); });",
+            "const json = pm.response.json();",
+            "const sessionId = json?.data?.quizSessionId;",
+            "const q = json?.data?.firstQuestion || (json?.data?.questions || [])[0];",
+            "pm.expect(sessionId, 'quizSessionId').to.be.a('string');",
+            "pm.expect(q?.questionId, 'questionId').to.be.ok;",
+            "pm.expect((q?.options || []).length, 'options').to.be.greaterThan(0);",
+            "pm.collectionVariables.set('quizSessionId', sessionId);",
+            "pm.collectionVariables.set('questionId', String(q.questionId));",
+            "pm.collectionVariables.set('selectedOptionId', String(q.options[0].id));"
+          ] }
+        }
+      ]
+    },
+    {
+      "name": "08 - Submit Quiz Answer",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Authorization", "value": "Bearer {{learnerToken}}" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"quizSessionId\": \"{{quizSessionId}}\",\n  \"questionId\": {{questionId}},\n  \"selectedOptionId\": {{selectedOptionId}},\n  \"timeTakenMs\": 1500\n}"
+        },
+        "url": { "raw": "{{baseUrl}}/quiz/answer", "host": ["{{baseUrl}}"], "path": ["quiz", "answer"] }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": { "type": "text/javascript", "exec": [
+            "pm.test('Quiz answer returns 201/200', function () { pm.expect([200,201]).to.include(pm.response.code); });"
+          ] }
+        }
+      ]
+    },
+    {
+      "name": "09 - Get Quiz Results",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{learnerToken}}" }
+        ],
+        "url": { "raw": "{{baseUrl}}/quiz/results/{{quizSessionId}}", "host": ["{{baseUrl}}"], "path": ["quiz", "results", "{{quizSessionId}}"] }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": { "type": "text/javascript", "exec": [
+            "pm.test('Quiz results returns 200', function () { pm.response.to.have.status(200); });"
+          ] }
+        }
+      ]
+    },
+    {
+      "name": "10 - Leaderboard",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{learnerToken}}" }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/gamification/leaderboard?limit=3",
+          "host": ["{{baseUrl}}"],
+          "path": ["gamification", "leaderboard"],
+          "query": [
+            { "key": "limit", "value": "3" }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": { "type": "text/javascript", "exec": [
+            "pm.test('Leaderboard returns 200', function () { pm.response.to.have.status(200); });"
+          ] }
+        }
+      ]
+    },
+    {
+      "name": "11 - Badges",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{learnerToken}}" }
+        ],
+        "url": { "raw": "{{baseUrl}}/gamification/badges", "host": ["{{baseUrl}}"], "path": ["gamification", "badges"] }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": { "type": "text/javascript", "exec": [
+            "pm.test('Badges returns 200', function () { pm.response.to.have.status(200); });"
+          ] }
+        }
+      ]
+    }
+  ]
+}

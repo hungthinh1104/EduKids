@@ -103,7 +103,7 @@ export interface NoDataResponse {
 export const getAnalyticsOverview = async (
   childId: number,
   period: '7d' | '30d' | '90d' = '7d'
-): Promise<AnalyticsOverview> => {
+): Promise<AnalyticsOverview | NoDataResponse> => {
   const response = await apiClient.get(
     `/analytics/overview?childId=${childId}&period=${toBackendPeriod(period)}`,
   );

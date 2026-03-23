@@ -257,7 +257,7 @@ export class PreviewService {
     accessLog: string;
   }> {
     // Check permissions
-    if (!["admin", "moderator"].includes(role)) {
+    if (String(role).toUpperCase() !== "ADMIN") {
       throw new Error("Insufficient permissions for preview download");
     }
 

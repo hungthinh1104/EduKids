@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Mic, Volume2, RotateCcw, ArrowLeft, Star } from 'lucide-react';
 import { Heading, Body, Caption } from '@/shared/components/Typography';
 import { KidButton } from '@/components/edukids/KidButton';
-import { submitPronunciation } from '@/features/pronunciation/api/pronunciation.api';
+import { getPronunciationErrorMessage, submitPronunciation } from '@/features/pronunciation/api/pronunciation.api';
 import { contentApi } from '@/features/learning/api/content.api';
 
 // WAV encoder
@@ -78,7 +78,6 @@ interface VocabItem {
     translation?: string;
     exampleSentence?: string;
     audioUrl?: string;
-    emoji?: string;
 }
 
 type Stage = 'ready' | 'recording' | 'result';
@@ -107,7 +106,6 @@ export default function PronunciationPage({ params }: PronunciationPageProps) {
                     translation: item.translation,
                     exampleSentence: item.exampleSentence,
                     audioUrl: item.audioUrl,
-                    emoji: item.emoji,
                 });
             } catch {
                 setLoadError('Không thể tải từ vựng để luyện phát âm.');
@@ -191,10 +189,11 @@ export default function PronunciationPage({ params }: PronunciationPageProps) {
                 setConfidence(res.confidenceScore);
                 setDetailedFeedback(res.detailedFeedback ?? undefined);
                 setStage('result');
-            } catch {
+            } catch (error) {
+                console.error('Pronunciation request failed:', error);
                 setConfidence(0);
                 setDetailedFeedback(undefined);
-                setPracticeError('Chưa thể chấm phát âm lúc này. Kiểm tra micro rồi thử lại nhé.');
+                setPracticeError(getPronunciationErrorMessage(error));
                 setStage('ready');
             }
         })();
@@ -246,15 +245,13 @@ export default function PronunciationPage({ params }: PronunciationPageProps) {
                     animate={{ opacity: 1, y: 0 }}
                     className="bg-card border-2 border-accent/60 rounded-[2.5rem] p-7 flex flex-col items-center gap-4 shadow-xl shadow-accent/10 text-center"
                 >
-                    {vocab.emoji && (
-                        <motion.div
-                            animate={{ scale: [1, 1.06, 1] }}
-                            transition={{ duration: 3, repeat: Infinity }}
-                            className="text-7xl"
-                        >
-                            {vocab.emoji}
-                        </motion.div>
-                    )}
+                    <motion.div
+                        animate={{ scale: [1, 1.06, 1] }}
+                        transition={{ duration: 3, repeat: Infinity }}
+                        className="text-7xl"
+                    >
+                        🔊
+                    </motion.div>
                     <Heading level={2} className="text-heading text-4xl font-black break-words">{vocab.word}</Heading>
                     {vocab.phonetic && <Caption className="text-caption text-xl">{vocab.phonetic}</Caption>}
                     {vocab.translation && <Caption className="text-caption">{vocab.translation}</Caption>}

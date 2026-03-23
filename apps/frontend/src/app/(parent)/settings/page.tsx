@@ -45,7 +45,7 @@ function Toggle({ value, onChange }: { value: boolean; onChange: (v: boolean) =>
             <motion.div
                 animate={{ x: value ? (16 + 8) : 2 }}
                 transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-                className="w-4 h-4 bg-white rounded-full shadow-md"
+                className="w-4 h-4 bg-card rounded-full shadow-md"
             />
         </motion.button>
     );
@@ -264,7 +264,7 @@ export default function SettingsPage() {
                 transition={{ delay: 0.1 }}
                 className="bg-gradient-candy rounded-xl md:rounded-[2rem] p-4 md:p-6 flex flex-col sm:flex-row items-start sm:items-center gap-3 md:gap-5 mb-6 md:mb-8"
             >
-                <div className="w-14 h-14 md:w-16 md:h-16 rounded-full bg-white/20 border-4 border-white/50 flex items-center justify-center overflow-hidden flex-shrink-0">
+                <div className="w-14 h-14 md:w-16 md:h-16 rounded-full bg-card/20 border-4 border-white/50 flex items-center justify-center overflow-hidden flex-shrink-0">
                     <Image 
                         src="https://api.dicebear.com/7.x/bottts/svg?seed=parent" 
                         alt="Ảnh đại diện phụ huynh" 
@@ -280,7 +280,7 @@ export default function SettingsPage() {
                             : user?.email?.split('@')[0] || 'Phụ huynh'}
                     </Heading>
                     <Caption className="text-white/80 text-xs md:text-sm truncate">{user?.email || 'parent@example.com'}</Caption>
-                    <div className="mt-2 inline-flex items-center gap-1.5 bg-white/20 px-2.5 md:px-3 py-1 rounded-full text-[10px] md:text-xs font-heading font-black backdrop-blur-sm">
+                    <div className="mt-2 inline-flex items-center gap-1.5 bg-card/20 px-2.5 md:px-3 py-1 rounded-full text-[10px] md:text-xs font-heading font-black backdrop-blur-sm">
                         ⭐ Premium đến 31/12/2026
                     </div>
                 </div>

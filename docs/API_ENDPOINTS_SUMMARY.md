@@ -49,8 +49,7 @@ Authorization: Bearer <JWT_TOKEN>
 |--------|----------|-------------|------|
 | GET | `/content/topics` | Get all vocabulary topics (paginated) | PARENT, LEARNER |
 | GET | `/content/topics/:id` | Get topic details with flashcards + video | LEARNER |
-| GET | `/content/topics/:id/progress` | Get viewing progress for topic | LEARNER |
-| POST | `/content/topics/:topicId/media-error` | Report media loading error | LEARNER |
+| GET | `/content/vocabularies/:id` | Get single vocabulary detail | LEARNER |
 
 ---
 
@@ -60,8 +59,8 @@ Authorization: Bearer <JWT_TOKEN>
 | Method | Endpoint | Description | Role |
 |--------|----------|-------------|------|
 | POST | `/quiz/start` | Start new adaptive quiz session | LEARNER |
-| POST | `/quiz/submit-answer` | Submit answer and get instant feedback | LEARNER |
-| GET | `/quiz/session/:sessionId` | Get current quiz session state | LEARNER |
+| POST | `/quiz/answer` | Submit answer and get instant feedback | LEARNER |
+| GET | `/quiz/results/:quizSessionId` | Get quiz session results | LEARNER |
 
 ---
 
@@ -96,11 +95,9 @@ Authorization: Bearer <JWT_TOKEN>
 | GET | `/gamification/badges/earned` | Get earned badges only | LEARNER |
 | GET | `/gamification/shop/items` | Get all virtual shop items | LEARNER |
 | POST | `/gamification/shop/purchase` | Purchase shop item | LEARNER |
-| POST | `/gamification/avatar/equip` | Equip avatar item | LEARNER |
-| POST | `/gamification/avatar/unequip` | Unequip avatar item | LEARNER |
+| POST | `/gamification/shop/equip` | Equip purchased avatar item | LEARNER |
 | GET | `/gamification/avatar/customization` | Get current avatar customization | LEARNER |
-| GET | `/gamification/leaderboard/class` | Get class leaderboard | LEARNER |
-| GET | `/gamification/leaderboard/global` | Get global leaderboard | LEARNER |
+| GET | `/gamification/leaderboard` | Get global leaderboard | LEARNER |
 
 ---
 
@@ -111,11 +108,13 @@ Authorization: Bearer <JWT_TOKEN>
 |--------|----------|-------------|------|
 | GET | `/recommendations/child/:childId` | Get recommendations for child | PARENT |
 | POST | `/recommendations/child/:childId/apply` | Apply recommendation | PARENT |
+| POST | `/recommendations/child/:childId/regenerate` | Regenerate recommendations | PARENT |
 | POST | `/recommendations/child/:childId/regenerate-gemini` | Regenerate with Gemini AI | PARENT |
 | GET | `/recommendations/child/:childId/applied-paths` | Get applied learning paths | PARENT |
 | GET | `/recommendations/child/:childId/statistics` | Get recommendation statistics | PARENT |
-| POST | `/recommendations/feedback` | Submit feedback on recommendation | PARENT |
-| POST | `/recommendations/dismiss` | Dismiss recommendations | PARENT |
+| GET | `/recommendations/child/:childId/insights` | Get recommendation insights | PARENT |
+| POST | `/recommendations/child/:childId/feedback` | Submit feedback on recommendation | PARENT |
+| POST | `/recommendations/child/:childId/dismiss` | Dismiss recommendations | PARENT |
 
 ---
 
@@ -124,9 +123,8 @@ Authorization: Bearer <JWT_TOKEN>
 
 | Method | Endpoint | Description | Role |
 |--------|----------|-------------|------|
-| GET | `/flashcard/topic/:topicId` | Get flashcards for topic | LEARNER |
-| POST | `/flashcard/:vocabularyId/complete` | Mark flashcard as completed | LEARNER |
-| GET | `/flashcard/progress/:topicId` | Get flashcard progress | LEARNER |
+| GET | `/flashcard/:vocabularyId` | Get flashcard for vocabulary | LEARNER |
+| POST | `/flashcard/:vocabularyId/drag-drop` | Submit drag-drop activity | LEARNER |
 
 ---
 
@@ -150,9 +148,11 @@ Authorization: Bearer <JWT_TOKEN>
 | POST | `/profiles` | Create new child profile | PARENT |
 | GET | `/profiles` | Get all child profiles for parent | PARENT |
 | GET | `/profiles/:id` | Get child profile details | PARENT |
-| PATCH | `/profiles/:id` | Update child profile | PARENT |
+| PUT | `/profiles/:id` | Update child profile | PARENT |
 | DELETE | `/profiles/:id` | Delete child profile | PARENT |
-| GET | `/profiles/:childId/analytics` | Get child analytics | PARENT |
+| POST | `/profiles/switch` | Switch active child profile | PARENT |
+| POST | `/profiles/active` | Set active child profile (parent session) | PARENT |
+| GET | `/profiles/active/current` | Get currently active child profile | PARENT, LEARNER |
 
 ---
 
@@ -161,11 +161,8 @@ Authorization: Bearer <JWT_TOKEN>
 
 | Method | Endpoint | Description | Role |
 |--------|----------|-------------|------|
-| GET | `/gamification/avatar` | Get current avatar state | LEARNER |
-| POST | `/gamification/avatar/equip` | Equip avatar item | LEARNER |
-| POST | `/gamification/avatar/unequip/:itemId` | Unequip avatar item | LEARNER |
-| GET | `/gamification/avatar/inventory` | Get purchased items inventory | LEARNER |
-| GET | `/gamification/avatar/history` | Get avatar change history | LEARNER |
+| GET | `/gamification/avatar/customization` | Get current avatar customization | LEARNER |
+| POST | `/gamification/shop/equip` | Equip purchased avatar item | LEARNER |
 
 ---
 
@@ -174,10 +171,12 @@ Authorization: Bearer <JWT_TOKEN>
 
 | Method | Endpoint | Description | Role |
 |--------|----------|-------------|------|
-| GET | `/analytics/child/:childId/overview` | Get analytics overview | PARENT |
-| GET | `/analytics/child/:childId/topic/:topicId` | Get topic-specific analytics | PARENT |
-| GET | `/analytics/child/:childId/streak` | Get learning streak data | PARENT |
-| GET | `/analytics/child/:childId/time-series` | Get time-series analytics | PARENT |
+| GET | `/analytics/overview` | Get analytics overview (supports `childId`, `period` query) | PARENT |
+| GET | `/analytics/learning-time` | Get learning time analytics | PARENT |
+| GET | `/analytics/vocabulary` | Get vocabulary retention analytics | PARENT |
+| GET | `/analytics/pronunciation` | Get pronunciation analytics | PARENT |
+| GET | `/analytics/quiz` | Get quiz performance analytics | PARENT |
+| GET | `/analytics/gamification` | Get gamification analytics | PARENT |
 
 ---
 
@@ -186,10 +185,15 @@ Authorization: Bearer <JWT_TOKEN>
 
 | Method | Endpoint | Description | Role |
 |--------|----------|-------------|------|
-| GET | `/reports/child/:childId/weekly` | Get weekly progress report | PARENT |
-| GET | `/reports/child/:childId/monthly` | Get monthly progress report | PARENT |
-| GET | `/reports/child/:childId/overall` | Get overall progress report | PARENT |
-| POST | `/reports/child/:childId/export` | Export report as PDF/CSV | PARENT |
+| POST | `/reports/generate` | Generate progress report | PARENT |
+| POST | `/reports/send` | Generate and send report | PARENT |
+| POST | `/reports/subscribe` | Subscribe to recurring reports | PARENT |
+| POST | `/reports/unsubscribe` | Unsubscribe from recurring reports | PARENT |
+| GET | `/reports/preferences` | Get report preferences | PARENT |
+| PUT | `/reports/preferences` | Update report preferences | PARENT |
+| GET | `/reports/history` | Get report history | PARENT |
+| GET | `/reports/notifications` | Get report notifications | PARENT |
+| PATCH | `/reports/notifications/:id/read` | Mark report notification as read | PARENT |
 
 ---
 
@@ -209,10 +213,12 @@ Authorization: Bearer <JWT_TOKEN>
 
 | Method | Endpoint | Description | Role |
 |--------|----------|-------------|------|
-| POST | `/media/validation/submit` | Submit media for validation | PARENT |
-| GET | `/media/validation/pending` | Get pending validations | ADMIN |
-| POST | `/media/validation/:id/approve` | Approve media | ADMIN |
-| POST | `/media/validation/:id/reject` | Reject media | ADMIN |
+| POST | `/media/validation/validate` | Submit media/content for validation | ADMIN, MODERATOR |
+| POST | `/media/validation/validate-batch` | Submit batch validation | ADMIN, MODERATOR |
+| GET | `/media/validation/:validationId` | Get validation result | ADMIN, MODERATOR |
+| GET | `/media/validation/content/:contentId/history` | Get validation history | ADMIN, MODERATOR |
+| POST | `/media/validation/:contentId/approve` | Approve content | ADMIN, MODERATOR |
+| POST | `/media/validation/:contentId/reject` | Reject content | ADMIN, MODERATOR |
 
 ---
 
@@ -222,10 +228,10 @@ Authorization: Bearer <JWT_TOKEN>
 | Method | Endpoint | Description | Role |
 |--------|----------|-------------|------|
 | POST | `/cms/topics` | Create new topic | ADMIN |
-| PATCH | `/cms/topics/:id` | Update topic | ADMIN |
+| PUT | `/cms/topics/:id` | Update topic | ADMIN |
 | DELETE | `/cms/topics/:id` | Delete topic | ADMIN |
 | POST | `/cms/vocabularies` | Create vocabulary | ADMIN |
-| PATCH | `/cms/vocabularies/:id` | Update vocabulary | ADMIN |
+| PUT | `/cms/vocabularies/:id` | Update vocabulary | ADMIN |
 | DELETE | `/cms/vocabularies/:id` | Delete vocabulary | ADMIN |
 
 ---
@@ -236,9 +242,10 @@ Authorization: Bearer <JWT_TOKEN>
 | Method | Endpoint | Description | Role |
 |--------|----------|-------------|------|
 | GET | `/admin/analytics/dashboard` | Get admin dashboard metrics | ADMIN |
-| GET | `/admin/analytics/users` | Get user statistics | ADMIN |
-| GET | `/admin/analytics/content` | Get content usage statistics | ADMIN |
-| GET | `/admin/analytics/performance` | Get system performance metrics | ADMIN |
+| GET | `/admin/analytics/dau` | Get daily active users metrics | ADMIN |
+| GET | `/admin/analytics/session-length` | Get session length metrics | ADMIN |
+| GET | `/admin/analytics/content-popularity` | Get content popularity metrics | ADMIN |
+| GET | `/admin/analytics/db-stats` | Get DB-backed platform statistics | ADMIN |
 
 ---
 

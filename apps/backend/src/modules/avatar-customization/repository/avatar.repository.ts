@@ -2,6 +2,12 @@ import { Injectable } from "@nestjs/common";
 import { AvatarActivityType, Prisma } from "@prisma/client";
 import { PrismaService } from "../../../prisma/prisma.service";
 import { AvatarLayer } from "../dto/avatar-customization.dto";
+import {
+  buildAvatarItemImageUrl,
+  buildAvatarLayerAssetUrl,
+  ensureDefaultAvatarCatalog,
+  getAvatarLayerForCategory,
+} from "../avatar-item-catalog";
 
 @Injectable()
 export class AvatarRepository {
@@ -19,6 +25,8 @@ export class AvatarRepository {
     itemId: number,
     equipped: boolean = false,
   ) {
+    await ensureDefaultAvatarCatalog(this.prisma);
+
     return this.prisma.childAvatarItem.create({
       data: {
         childId,
@@ -35,19 +43,31 @@ export class AvatarRepository {
    * Get all avatar items owned by child
    */
   async getChildAvatarItems(childId: number) {
-    return this.prisma.childAvatarItem.findMany({
+    await ensureDefaultAvatarCatalog(this.prisma);
+
+    const items = await this.prisma.childAvatarItem.findMany({
       where: { childId },
       include: {
         item: true,
       },
       orderBy: { itemId: "asc" },
     });
+
+    return items.map((entry) => ({
+      ...entry,
+      item: {
+        ...entry.item,
+        imageUrl: buildAvatarItemImageUrl(entry.item),
+      },
+    }));
   }
 
   /**
    * Check if child owns specific item
    */
   async hasItem(childId: number, itemId: number) {
+    await ensureDefaultAvatarCatalog(this.prisma);
+
     const item = await this.prisma.childAvatarItem.findFirst({
       where: {
         childId,
@@ -100,7 +120,9 @@ export class AvatarRepository {
    * Get equipped items for child
    */
   async getEquippedItems(childId: number) {
-    return this.prisma.childAvatarItem.findMany({
+    await ensureDefaultAvatarCatalog(this.prisma);
+
+    const items = await this.prisma.childAvatarItem.findMany({
       where: {
         childId,
         equipped: true,
@@ -109,6 +131,14 @@ export class AvatarRepository {
         item: true,
       },
     });
+
+    return items.map((entry) => ({
+      ...entry,
+      item: {
+        ...entry.item,
+        imageUrl: buildAvatarItemImageUrl(entry.item),
+      },
+    }));
   }
 
   /**
@@ -184,6 +214,8 @@ export class AvatarRepository {
    * Delete avatar item (when gift expires or revoked)
    */
   async deleteAvatarItem(childId: number, itemId: number) {
+    await ensureDefaultAvatarCatalog(this.prisma);
+
     return this.prisma.childAvatarItem.deleteMany({
       where: {
         childId,
@@ -195,10 +227,52 @@ export class AvatarRepository {
   /**
    * Get available avatar items from shop
    */
-  async getAvailableAvatarItems(_layer?: AvatarLayer) {
-    return this.prisma.shopItem.findMany({
-      orderBy: { createdAt: "desc" },
+  async getAvailableAvatarItems(layer?: AvatarLayer) {
+    await ensureDefaultAvatarCatalog(this.prisma);
+
+    const category = (() => {
+      switch (layer) {
+        case AvatarLayer.HAIR:
+          return "AVATAR_HAIR";
+        case AvatarLayer.CLOTHING:
+          return "AVATAR_OUTFIT";
+        case AvatarLayer.ACCESSORIES:
+          return "AVATAR_ACCESSORY";
+        default:
+          return undefined;
+      }
+    })();
+
+    const items = await this.prisma.avatarItem.findMany({
+      where: category ? { category } : undefined,
+      orderBy: { id: "asc" },
     });
+
+    return items.map((item) => ({
+      ...item,
+      imageUrl: buildAvatarItemImageUrl(item),
+      assetUrl: buildAvatarLayerAssetUrl(item),
+      layer: getAvatarLayerForCategory(item.category),
+      isAvailable: true,
+    }));
+  }
+
+  async getAvatarItemById(itemId: number) {
+    await ensureDefaultAvatarCatalog(this.prisma);
+
+    const item = await this.prisma.avatarItem.findUnique({
+      where: { id: itemId },
+    });
+    if (!item) {
+      return null;
+    }
+
+    return {
+      ...item,
+      imageUrl: buildAvatarItemImageUrl(item),
+      assetUrl: buildAvatarLayerAssetUrl(item),
+      layer: getAvatarLayerForCategory(item.category),
+    };
   }
 
   /**

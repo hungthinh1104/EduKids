@@ -1,6 +1,7 @@
 'use client';
 
 import Cookies from 'js-cookie';
+import { clearTopicModeProgressChildScope } from '@/features/learning/utils/topic-mode-progress';
 
 const STORAGE_KEY = 'edukids:parent-session-backup';
 
@@ -60,10 +61,21 @@ export function restoreParentSession(): string | null {
       sameSite: 'lax',
     });
 
+    clearTopicModeProgressChildScope();
+
     return payload.role;
   } catch {
     return null;
   } finally {
     window.sessionStorage.removeItem(STORAGE_KEY);
+  }
+}
+
+export function clearParentSessionBackup(): void {
+  if (typeof window === 'undefined') return;
+  try {
+    window.sessionStorage.removeItem(STORAGE_KEY);
+  } catch {
+    // ignore storage cleanup errors
   }
 }

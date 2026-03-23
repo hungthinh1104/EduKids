@@ -29,13 +29,19 @@ export class AvatarItemDto {
   name: string;
 
   @IsString()
+  @IsOptional()
   description: string;
 
   @IsString()
+  @IsOptional()
   layer: AvatarLayer;
 
   @IsNumber()
   price: number;
+
+  @IsString()
+  @IsOptional()
+  imageUrl?: string;
 
   @IsString()
   assetUrl: string;

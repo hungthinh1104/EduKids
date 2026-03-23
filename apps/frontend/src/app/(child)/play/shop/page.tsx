@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import Image from 'next/image';
 import { Star, Coins, ArrowLeft, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from 'sonner';
@@ -24,6 +23,7 @@ export default function ShopPage() {
     const [coins, setCoins] = useState(0);
     const [activeCategory, setActiveCategory] = useState('Tất cả');
     const [previewItem, setPreviewItem] = useState<ShopItem | null>(null);
+    const [previewAvatarUrl, setPreviewAvatarUrl] = useState('');
     const [loading, setLoading] = useState(true);
     const [loadError, setLoadError] = useState<string | null>(null);
     const [purchased, setPurchased] = useState<number | null>(null);
@@ -47,7 +47,7 @@ export default function ShopPage() {
 
     useEffect(() => {
         async function fetchShopData() {
-            if (!childId) {
+            if (!childId || !child) {
                 return;
             }
             try {
@@ -61,6 +61,7 @@ export default function ShopPage() {
                 setShopItems(items);
                 setStars(rewards.stars);
                 setCoins(rewards.coins);
+                setPreviewAvatarUrl(customization.avatar || child.avatarUrl);
                 setEquippedBySlot({
                     'Mũ': customization.equippedItems.find((item) => item.category === 'Mũ')?.id ?? null,
                     'Áo': customization.equippedItems.find((item) => item.category === 'Áo')?.id ?? null,
@@ -95,13 +96,14 @@ export default function ShopPage() {
         try {
             const result = await gamificationApi.purchaseItem(childId, item.id);
             if (result.success) {
+                const purchasedItem = { ...item, owned: true };
                 setShopItems((prev) =>
-                    prev.map((i) => i.id === item.id ? { ...i, owned: true } : i)
+                    prev.map((i) => i.id === item.id ? purchasedItem : i)
                 );
                 setStars(result.remainingStars);
                 setCoins(result.remainingCoins);
                 setPurchased(item.id);
-                setPreviewItem(null);
+                setPreviewItem(purchasedItem);
                 purchaseTimeoutRef.current = setTimeout(() => setPurchased(null), 2500);
             }
         } catch (err) {
@@ -111,19 +113,34 @@ export default function ShopPage() {
     }
 
     async function handleEquip(item: ShopItem) {
+        if (!child) {
+            return;
+        }
         try {
             await gamificationApi.equipItem(childId, item.id);
+            const customization = await gamificationApi.getAvatarCustomization(childId);
+            setPreviewAvatarUrl(customization.avatar || child.avatarUrl);
             setShopItems((prev) =>
-                prev.map((shopItem) =>
-                    shopItem.category === item.category
-                        ? { ...shopItem, isEquipped: shopItem.id === item.id ? !shopItem.isEquipped : false }
-                        : shopItem
-                )
+                prev.map((shopItem) => {
+                    const equippedItem = customization.equippedItems.find((equipped) => equipped.id === shopItem.id);
+                    return {
+                        ...shopItem,
+                        isEquipped: Boolean(equippedItem),
+                    };
+                })
             );
-            setEquippedBySlot((prev) => ({
+            setPreviewItem((prev) => prev ? {
                 ...prev,
-                [item.category]: equippedBySlot[item.category] === item.id ? null : item.id,
-            }));
+                owned: true,
+                isEquipped: customization.equippedItems.some((equipped) => equipped.id === prev.id),
+            } : prev);
+            setEquippedBySlot({
+                'Mũ': customization.equippedItems.find((equipped) => equipped.category === 'Mũ')?.id ?? null,
+                'Áo': customization.equippedItems.find((equipped) => equipped.category === 'Áo')?.id ?? null,
+                'Thú cưng': customization.equippedItems.find((equipped) => equipped.category === 'Thú cưng')?.id ?? null,
+                'Phụ kiện': customization.equippedItems.find((equipped) => equipped.category === 'Phụ kiện')?.id ?? null,
+                'Nền': customization.equippedItems.find((equipped) => equipped.category === 'Nền')?.id ?? null,
+            });
         } catch (err) {
             console.error('Failed to equip item:', err);
             toast.error('Không thể trang bị item', { description: 'Vui lòng thử lại.' });
@@ -140,7 +157,7 @@ export default function ShopPage() {
             <div className="hidden md:block">
                 <GameHUD
                     nickname={child.nickname}
-                    avatarUrl={child.avatarUrl}
+                    avatarUrl={previewAvatarUrl || child.avatarUrl}
                     rewards={{ ...child.rewards, totalPoints: stars }}
                     activeNav="shop"
                 />
@@ -176,13 +193,13 @@ export default function ShopPage() {
                 {/* Avatar preview strip */}
                 <motion.div initial={{ opacity: 1, y: 12 }} animate={{ opacity: 1, y: 0 }} className="bg-gradient-candy rounded-[2rem] p-5 flex items-center gap-5">
                     <div className="relative w-20 h-20 flex-shrink-0">
-                        <div className="w-full h-full rounded-full bg-white/20 border-4 border-white/50 flex items-center justify-center overflow-hidden">
-                            <Image src={child.avatarUrl} alt={child.nickname} width={72} height={72} className="object-contain p-1" />
+                        <div className="w-full h-full rounded-full bg-card/20 border-4 border-white/50 flex items-center justify-center overflow-hidden">
+                            <img src={previewAvatarUrl || child.avatarUrl} alt={child.nickname} className="h-full w-full object-contain p-1" />
                         </div>
                         {/* Show equipped hat emoji on avatar */}
                         {equippedBySlot['Mũ'] && (
-                            <div className="absolute -top-2 left-1/2 -translate-x-1/2 text-2xl">
-                                {shopItems.find((i) => i.id === equippedBySlot['Mũ'])?.emoji}
+                            <div className="absolute -top-2 left-1/2 -translate-x-1/2 text-xs px-2 py-0.5 rounded-full bg-card border border-border font-heading font-bold">
+                                {shopItems.find((i) => i.id === equippedBySlot['Mũ'])?.name?.slice(0, 1) || 'M'}
                             </div>
                         )}
                     </div>
@@ -192,7 +209,11 @@ export default function ShopPage() {
                         <div className="flex gap-1.5 flex-wrap mt-1.5">
                             {equippedIds.map((eId) => {
                                 const it = shopItems.find((i) => i.id === eId);
-                                return it ? <span key={eId} className="text-base">{it.emoji}</span> : null;
+                                return it ? (
+                                    <span key={eId} className="text-[11px] px-2 py-0.5 rounded-full bg-card/25 border border-white/30 text-white">
+                                        {it.name}
+                                    </span>
+                                ) : null;
                             })}
                             {equippedIds.length === 0 && <Caption className="text-white/60 text-xs">Chưa trang bị gì</Caption>}
                         </div>

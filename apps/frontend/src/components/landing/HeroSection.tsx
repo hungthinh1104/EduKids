@@ -61,7 +61,7 @@ export function HeroSection() {
                     animate="visible"
                     className="flex-1 text-center lg:text-left z-20"
                 >
-                    <motion.div variants={fadeInUp} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white/60 dark:bg-slate-800/60 backdrop-blur-md border border-white/80 dark:border-slate-700 shadow-sm mb-8">
+                    <motion.div variants={fadeInUp} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-card/60 backdrop-blur-md border border-border/80 shadow-sm mb-8">
                         <span className="relative flex h-3 w-3">
                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75"></span>
                             <span className="relative inline-flex rounded-full h-3 w-3 bg-success"></span>
@@ -96,7 +96,7 @@ export function HeroSection() {
                         <Link href={targetHref}>
                             <MagneticButton className="group">
                                 <KidButton variant="secondary" size="lg" className="text-xl sm:text-2xl px-10 py-7 shadow-xl shadow-secondary/30 hover:shadow-secondary/50 group-hover:-translate-y-2 transition-all overflow-hidden relative w-full h-full pointer-events-none">
-                                    <div className="absolute inset-0 bg-white/20 transform -skew-x-12 -translate-x-[150%] group-hover:translate-x-[150%] transition-transform duration-700 ease-out"></div>
+                                    <div className="absolute inset-0 bg-card/20 transform -skew-x-12 -translate-x-[150%] group-hover:translate-x-[150%] transition-transform duration-700 ease-out"></div>
                                     <span className="inline-block min-w-[140px] text-center transition-all duration-300">
                                         {!isReady ? 'Khám phá ngay' : isAuthenticated ? 'Tiếp tục học' : 'Khám phá ngay'}
                                     </span>
@@ -107,7 +107,7 @@ export function HeroSection() {
                         <div className="flex items-center gap-4 text-muted font-medium mt-4 sm:mt-0">
                             <div className="flex -space-x-3">
                                 {[1, 2, 3, 4].map((i) => (
-                                    <Image priority width={40} height={40} key={i} src={`https://api.dicebear.com/7.x/notionists/svg?seed=${i}&scale=120`} alt={`Avatar ${i}`} className="w-10 h-10 rounded-full border-2 border-white dark:border-slate-900 bg-emerald-100" />
+                                    <Image priority width={40} height={40} key={i} src={`https://api.dicebear.com/7.x/notionists/svg?seed=${i}&scale=120`} alt={`Avatar ${i}`} className="w-10 h-10 rounded-full border-2 border-background bg-emerald-100" />
                                 ))}
                             </div>
                             <div>Hơn <b>10,000+</b> bé<br />đang học tập</div>
@@ -124,7 +124,7 @@ export function HeroSection() {
                     className="flex-1 w-full max-w-2xl lg:max-w-none relative mt-10 lg:mt-0"
                 >
                     {/* The iPad Frame */}
-                    <div className="relative aspect-[4/3] rounded-[2.5rem] p-4 bg-slate-100/30 dark:bg-slate-800/30 backdrop-blur-3xl shadow-[0_30px_60px_-15px_rgba(0,0,0,0.3)] border border-white/40 dark:border-slate-700/50">
+                    <div className="relative aspect-[4/3] rounded-[2.5rem] p-4 bg-background/30 backdrop-blur-3xl shadow-[0_30px_60px_-15px_rgba(0,0,0,0.3)] border border-border/40">
                         <div className="absolute inset-0 bg-gradient-to-tr from-white/20 to-transparent dark:from-slate-700/20 rounded-[2.5rem] pointer-events-none"></div>
 
                         {/* Screen Content */}
@@ -141,14 +141,14 @@ export function HeroSection() {
 
                             {/* Play Button Overlay */}
                             <div className="absolute inset-0 flex items-center justify-center">
-                                <div className="w-20 h-20 bg-white/20 backdrop-blur-md border border-white/50 rounded-full flex items-center justify-center shadow-lg cursor-pointer transform transition-all duration-300 group-hover:scale-110 group-hover:bg-white/30">
+                                <div className="w-20 h-20 bg-card/20 backdrop-blur-md border border-white/50 rounded-full flex items-center justify-center shadow-lg cursor-pointer transform transition-all duration-300 group-hover:scale-110 group-hover:bg-card/30">
                                     <Play size={40} className="text-white fill-current ml-2" />
                                 </div>
                             </div>
 
                             {/* UI Overlay Mockups within the screen */}
                             <div className="absolute bottom-6 left-6 right-6 flex items-center justify-between">
-                                <div className="bg-white/10 backdrop-blur-md px-4 py-2 rounded-2xl border border-white/20 text-white font-medium flex items-center gap-2">
+                                <div className="bg-card/10 backdrop-blur-md px-4 py-2 rounded-2xl border border-white/20 text-white font-medium flex items-center gap-2">
                                     <Star className="text-warning fill-warning" size={18} /> Đang xem bài 02
                                 </div>
                                 <div className="flex gap-2">
@@ -167,7 +167,7 @@ export function HeroSection() {
                     <motion.div
                         animate={{ y: [0, -15, 0] }}
                         transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
-                        className="absolute -bottom-8 -left-8 lg:-left-12 bg-white dark:bg-slate-800 p-4 rounded-3xl shadow-2xl border border-slate-100 dark:border-slate-700 flex items-center gap-4 z-20"
+                        className="absolute -bottom-8 -left-8 lg:-left-12 bg-card p-4 rounded-3xl shadow-2xl border border-border flex items-center gap-4 z-20"
                     >
                         <div className="w-14 h-14 bg-gradient-to-br from-success-light to-success flex items-center justify-center rounded-2xl shadow-inner">
                             <CheckCircle2 size={32} className="text-white" />
@@ -184,7 +184,7 @@ export function HeroSection() {
                     <motion.div
                         animate={{ y: [0, 15, 0], rotate: [0, -5, 0] }}
                         transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
-                        className="absolute top-10 -right-8 lg:-right-12 bg-white/90 dark:bg-slate-800/90 backdrop-blur-md p-4 rounded-3xl shadow-2xl border border-white dark:border-slate-700 flex flex-col items-center gap-2 z-20"
+                        className="absolute top-10 -right-8 lg:-right-12 bg-card/90 backdrop-blur-md p-4 rounded-3xl shadow-2xl border border-border flex flex-col items-center gap-2 z-20"
                     >
                         <div className="relative">
                             <Image
@@ -193,9 +193,9 @@ export function HeroSection() {
                                 alt="AI Avatar"
                                 width={60}
                                 height={60}
-                                className="w-16 h-16 rounded-full shadow-md border-2 border-white"
+                                className="w-16 h-16 rounded-full shadow-md border-2 border-background"
                             />
-                            <span className="absolute bottom-0 right-0 w-4 h-4 bg-success border-2 border-white rounded-full"></span>
+                            <span className="absolute bottom-0 right-0 w-4 h-4 bg-success border-2 border-background rounded-full"></span>
                         </div>
                         <div className="text-center mt-1">
                             <p className="font-heading font-bold text-heading">Robot AI</p>

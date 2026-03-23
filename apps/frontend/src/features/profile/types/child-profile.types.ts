@@ -1,9 +1,13 @@
 // ===========================================================
-// Types generated from backend DTOs — verified against source:
-// apps/backend/src/modules/child-profile/child-profile.dto.ts
-// apps/backend/src/modules/gamification/dto/gamification.dto.ts
-// apps/backend/src/modules/analytics/analytics.dto.ts
-// apps/backend/src/modules/content/dto/topic.dto.ts
+// Shared parent-dashboard types aligned with active backend DTOs.
+// Source references:
+// - apps/backend/src/modules/child-profile/child-profile.dto.ts
+// - apps/backend/src/modules/gamification/dto/gamification.dto.ts
+// - apps/backend/src/modules/analytics/analytics.dto.ts
+// - apps/backend/src/modules/content/dto/topic.dto.ts
+//
+// Child app shop/avatar screens use:
+// - apps/frontend/src/features/learning/api/gamification.api.ts
 // ===========================================================
 
 // ── Child Profile ───────────────────────────────────────────
@@ -61,27 +65,6 @@ export interface Badge {
     progress?: number;
     requirement?: number;
     earnedAt?: string;        // ISO date string
-}
-
-// Matches: ShopItemCategory enum
-export type ShopItemCategory =
-    | 'AVATAR_HAIR'
-    | 'AVATAR_OUTFIT'
-    | 'AVATAR_ACCESSORY'
-    | 'AVATAR_PET'
-    | 'BACKGROUND';
-
-// Matches: ShopItemDto
-export interface ShopItem {
-    id: number;
-    name: string;
-    description: string;
-    category: ShopItemCategory;
-    price: number;            // Price in star points
-    imageUrl: string;         // Full CDN URL
-    isPurchased: boolean;     // NOT owned — matches BE DTO
-    isEquipped: boolean;
-    purchasedAt?: string;     // ISO date string
 }
 
 // Matches: RewardSummaryDto

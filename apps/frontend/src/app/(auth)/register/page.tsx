@@ -294,7 +294,7 @@ function RegisterPageContent() {
                     onClick={() => {
                         setGlobalError('Đăng ký Google hiện chưa khả dụng. Vui lòng đăng ký bằng email.');
                     }}
-                    className="w-full flex justify-center items-center gap-3 px-4 py-3 border-2 border-border rounded-xl bg-white hover:bg-background hover:border-primary/50 transition-colors shadow-sm font-heading font-bold text-text-heading"
+                    className="w-full flex justify-center items-center gap-3 px-4 py-3 border-2 border-border rounded-xl bg-card hover:bg-background hover:border-primary/50 transition-colors shadow-sm font-heading font-bold text-text-heading"
                 >
                     <svg className="w-5 h-5" viewBox="0 0 24 24">
                         <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill={colors.blue[500]} />

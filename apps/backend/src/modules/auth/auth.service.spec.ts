@@ -6,6 +6,7 @@ import { AuthService } from "./auth.service";
 import { PrismaService } from "../../prisma/prisma.service";
 import { MailService } from "../mail/mail.service";
 import { MailTemplateService } from "../mail/mail-template.service";
+import { ChildProfileService } from "../child-profile/child-profile.service";
 import { RegisterDto } from "./dto/register.dto";
 
 describe("AuthService - register", () => {
@@ -30,6 +31,10 @@ describe("AuthService - register", () => {
     renderWeeklyProgressReportEmail: jest.fn() as jest.Mock,
   };
 
+  const childProfileServiceMock = {
+    switchProfile: jest.fn() as jest.Mock,
+  };
+
   beforeEach(async () => {
     jest.clearAllMocks();
 
@@ -40,6 +45,7 @@ describe("AuthService - register", () => {
         { provide: JwtService, useValue: jwtServiceMock },
         { provide: MailService, useValue: mailServiceMock },
         { provide: MailTemplateService, useValue: mailTemplateServiceMock },
+        { provide: ChildProfileService, useValue: childProfileServiceMock },
       ],
     }).compile();
 
@@ -80,6 +86,8 @@ describe("AuthService - register", () => {
           firstName: dto.firstName,
           lastName: dto.lastName,
           role: "PARENT",
+          isActive: true,
+          createdAt: new Date("2026-03-22T00:00:00.000Z"),
         },
       ]);
 
@@ -97,10 +105,13 @@ describe("AuthService - register", () => {
       refreshToken: "refresh-token-123",
       role: "PARENT",
       user: {
-        id: "42",
+        id: 42,
         email: dto.email,
         firstName: dto.firstName,
         lastName: dto.lastName,
+        isActive: true,
+        isEmailVerified: false,
+        createdAt: new Date("2026-03-22T00:00:00.000Z"),
       },
     });
 
@@ -128,5 +139,34 @@ describe("AuthService - register", () => {
         }),
       }),
     );
+  });
+
+  it("delegates switchProfile to ChildProfileService", async () => {
+    const expected = {
+      success: true,
+      message: "Switched to Anna's profile! 👋",
+      profile: {
+        id: 2,
+        nickname: "Anna",
+        age: 8,
+        avatar: "",
+        totalPoints: 0,
+        currentLevel: 1,
+        badgesEarned: 0,
+        streakDays: 0,
+        isActive: true,
+        createdAt: new Date("2026-03-22T00:00:00.000Z"),
+        lastActivityAt: new Date("2026-03-22T00:00:00.000Z"),
+      },
+      accessToken: "access-token",
+      refreshToken: "refresh-token",
+    };
+
+    childProfileServiceMock.switchProfile.mockImplementation(async () => expected);
+
+    const result = await service.switchProfile(1, 2);
+
+    expect(childProfileServiceMock.switchProfile).toHaveBeenCalledWith(1, 2);
+    expect(result).toEqual(expected);
   });
 });

@@ -52,10 +52,11 @@ export function TopicListTab({ topics, onEdit, onDelete }: TopicListTabProps) {
                                     <td className="px-5 py-3 text-caption text-xs">{new Date(topic.createdAt).toLocaleDateString()}</td>
                                     <td className="px-5 py-3">
                                         <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <button className="p-1.5 rounded-lg bg-background border border-border text-body hover:bg-primary-light hover:text-primary transition-colors">
+                                            <button type="button" className="p-1.5 rounded-lg bg-background border border-border text-body hover:bg-primary-light hover:text-primary transition-colors">
                                                 <Eye size={14} />
                                             </button>
                                             <button
+                                                type="button"
                                                 onClick={() => onEdit?.(topic)}
                                                 className="p-1.5 rounded-lg bg-primary-light text-primary hover:bg-primary hover:text-white transition-colors"
                                                 title="Sửa chủ đề"
@@ -63,6 +64,7 @@ export function TopicListTab({ topics, onEdit, onDelete }: TopicListTabProps) {
                                                 <Edit2 size={14} />
                                             </button>
                                             <button
+                                                type="button"
                                                 onClick={() => {
                                                     if (confirm(`Bạn có chắc chắn muốn xóa chủ đề "${topic.name}" không?`)) {
                                                         onDelete?.(topic);

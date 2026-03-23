@@ -1,3 +1,10 @@
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'CmsContentStatus') THEN
+    CREATE TYPE "CmsContentStatus" AS ENUM ('DRAFT', 'REVIEW', 'PUBLISHED', 'ARCHIVED');
+  END IF;
+END $$;
+
 -- Add missing columns to Topic table
 ALTER TABLE "Topic" 
   ADD COLUMN IF NOT EXISTS "learningLevel" INTEGER NOT NULL DEFAULT 1,

@@ -48,51 +48,51 @@ export function ContactForm() {
         <form className="space-y-6" onSubmit={handleSubmit}>
             <div className="grid md:grid-cols-2 gap-6">
                 <div className="space-y-3">
-                    <Label htmlFor="name" className="text-base font-bold text-slate-700">Tên của ba/mẹ <span className="text-secondary">*</span></Label>
+                    <Label htmlFor="name" className="text-base font-bold text-body">Tên của ba/mẹ <span className="text-secondary">*</span></Label>
                     <Input
                         id="name"
                         value={name}
                         onChange={(e) => setName(e.target.value)}
                         placeholder="Ví dụ: Nguyễn Văn A"
-                        className="h-14 rounded-2xl bg-background dark:bg-slate-900 border-2 dark:border-slate-700"
+                        className="h-14 rounded-2xl bg-background border-2 dark:border-border"
                         disabled={isSubmitting}
                     />
                 </div>
                 <div className="space-y-3">
-                    <Label htmlFor="phone" className="text-base font-bold text-slate-700">Số điện thoại</Label>
+                    <Label htmlFor="phone" className="text-base font-bold text-body">Số điện thoại</Label>
                     <Input
                         id="phone"
                         type="tel"
                         value={phone}
                         onChange={(e) => setPhone(e.target.value)}
                         placeholder="0901234567"
-                        className="h-14 rounded-2xl bg-background dark:bg-slate-900 border-2 dark:border-slate-700"
+                        className="h-14 rounded-2xl bg-background border-2 dark:border-border"
                         disabled={isSubmitting}
                     />
                 </div>
             </div>
 
             <div className="space-y-3">
-                <Label htmlFor="email" className="text-base font-bold text-slate-700">Địa chỉ Email (Tùy chọn)</Label>
+                <Label htmlFor="email" className="text-base font-bold text-body">Địa chỉ Email (Tùy chọn)</Label>
                 <Input
                     id="email"
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="email@vi-du.com"
-                    className="h-14 rounded-2xl bg-background dark:bg-slate-900 border-2 dark:border-slate-700"
+                    className="h-14 rounded-2xl bg-background border-2 dark:border-border"
                     disabled={isSubmitting}
                 />
             </div>
 
             <div className="space-y-3">
-                <Label htmlFor="message" className="text-base font-bold text-slate-700">Nội dung tin nhắn <span className="text-secondary">*</span></Label>
+                <Label htmlFor="message" className="text-base font-bold text-body">Nội dung tin nhắn <span className="text-secondary">*</span></Label>
                 <Textarea
                     id="message"
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
                     placeholder="Ba mẹ đang gặp vấn đề gì hoặc cần tư vấn lộ trình nào ạ?"
-                    className="min-h-[160px] rounded-2xl bg-background dark:bg-slate-900 border-2 resize-none p-4 dark:border-slate-700"
+                    className="min-h-[160px] rounded-2xl bg-background border-2 resize-none p-4 dark:border-border"
                     disabled={isSubmitting}
                 />
             </div>

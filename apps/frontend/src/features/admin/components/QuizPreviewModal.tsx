@@ -48,7 +48,7 @@ export function QuizPreviewModal({ quiz, onClose }: QuizPreviewModalProps) {
                                     <TableBadge label={DIFFICULTY_LABELS[quiz.difficulty]} variant={DIFFICULTY_COLORS[quiz.difficulty]} />
                                     <Caption className="text-caption text-xs mt-1">{quiz.topicName}</Caption>
                                 </div>
-                                <button onClick={onClose} className="p-2 rounded-xl bg-background border border-border hover:bg-error hover:text-white transition-colors text-body">✕</button>
+                                <button type="button" onClick={onClose} className="p-2 rounded-xl bg-background border border-border hover:bg-error hover:text-white transition-colors text-body">✕</button>
                             </div>
 
                             {/* Question */}

@@ -39,6 +39,15 @@ export const setTopicModeProgressChildScope = (childId: number | null | undefine
   }
 };
 
+export const clearTopicModeProgressChildScope = () => {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.removeItem(ACTIVE_CHILD_STORAGE_KEY);
+  } catch {
+    // ignore storage write errors
+  }
+};
+
 const getStorageKey = (topicId: number) => {
   const activeChildId = readActiveChildId();
   return activeChildId

@@ -20,7 +20,6 @@ import { VocabularyReviewModule } from "./modules/vocabulary-review/vocabulary-r
 import { ChildProfileModule } from "./modules/child-profile/child-profile.module";
 import { CmsModule } from "./modules/cms/cms.module";
 import { AdminAnalyticsModule } from "./modules/admin-analytics/admin-analytics.module";
-import { MediaValidationModule } from "./modules/media-validation/media-validation.module";
 import { UsersModule } from "./modules/users/users.module";
 import { RootController } from "./root.controller";
 
@@ -52,7 +51,6 @@ import { RootController } from "./root.controller";
     ChildProfileModule,
     CmsModule,
     AdminAnalyticsModule,
-    MediaValidationModule,
     UsersModule,
   ],
   providers: [

@@ -11,14 +11,16 @@ import {
   AvatarLayerConfigDto,
   ApplyAvatarItemRequestDto,
 } from "../dto/avatar-customization.dto";
-import { PrismaService } from "../../../prisma/prisma.service";
+import {
+  DEFAULT_AVATAR_ITEMS,
+  buildAvatarLayerAssetUrl,
+} from "../avatar-item-catalog";
 
 @Injectable()
 export class AvatarCustomizationService {
   constructor(
     private avatarRepository: AvatarRepository,
     private cacheService: AvatarCacheService,
-    private prisma: PrismaService,
   ) {}
 
   /**
@@ -43,9 +45,7 @@ export class AvatarCustomizationService {
     const configData = this.toAvatarConfigPayload(config.config);
 
     // Get item details
-    const item = await this.prisma.shopItem.findUnique({
-      where: { id: request.itemId },
-    });
+    const item = await this.avatarRepository.getAvatarItemById(request.itemId);
 
     if (!item) {
       throw new NotFoundException("Item not found");
@@ -56,7 +56,7 @@ export class AvatarCustomizationService {
       layer: request.layer,
       itemId: request.itemId,
       itemName: item.name,
-      assetUrl: `/assets/avatar/items/${item.id}.svg`,
+      assetUrl: item.assetUrl,
     };
 
     // Replace or add layer
@@ -222,13 +222,15 @@ export class AvatarCustomizationService {
    * Initialize default avatar for new child
    */
   private async initializeDefaultAvatar(childId: number) {
+    const defaultHair = DEFAULT_AVATAR_ITEMS.find((item) => item.id === 1);
+
     const defaultConfig = {
       layers: [
         {
           layer: AvatarLayer.HAIR,
           itemId: 1, // Default hair
-          itemName: "Default Hair",
-          assetUrl: "/assets/avatar/hair/default.svg",
+          itemName: defaultHair?.name || "Default Hair",
+          assetUrl: buildAvatarLayerAssetUrl(defaultHair || DEFAULT_AVATAR_ITEMS[0]),
         },
       ],
     };
@@ -261,8 +263,8 @@ export class AvatarCustomizationService {
         {
           layer: AvatarLayer.HAIR,
           itemId: 1,
-          itemName: "Default Hair",
-          assetUrl: "/assets/avatar/hair/default.svg",
+          itemName: DEFAULT_AVATAR_ITEMS[0]?.name || "Default Hair",
+          assetUrl: buildAvatarLayerAssetUrl(DEFAULT_AVATAR_ITEMS[0]),
         },
       ],
       previewUrl: `/avatar/${childId}/preview`,

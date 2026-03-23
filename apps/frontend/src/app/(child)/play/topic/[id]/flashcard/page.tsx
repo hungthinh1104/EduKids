@@ -44,9 +44,13 @@ function FlipCard({ card, flipped, onFlip }: { card: Vocabulary; flipped: boolea
                     <motion.div
                         animate={{ scale: [1, 1.08, 1], rotate: [0, -3, 3, 0] }}
                         transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
-                        className="text-8xl"
+                        className="flex items-center justify-center w-36 h-36"
                     >
-                        {card.emoji}
+                        {card.imageUrl ? (
+                            <img src={card.imageUrl} alt={card.word} className="w-full h-full object-contain" />
+                        ) : (
+                            <span className="text-8xl">📘</span>
+                        )}
                     </motion.div>
                     <Heading level={2} className="text-heading text-4xl md:text-5xl font-black tracking-wide text-center break-words line-clamp-2">{card.word}</Heading>
                     <Caption className="text-caption text-base font-medium">{card.phonetic}</Caption>
@@ -60,12 +64,28 @@ function FlipCard({ card, flipped, onFlip }: { card: Vocabulary; flipped: boolea
                     className="absolute inset-0 w-full bg-gradient-candy rounded-[2.5rem] p-6 md:p-8 flex flex-col items-center justify-center gap-4 md:gap-5 shadow-2xl h-[380px]"
                     style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
                 >
-                    <div className="text-7xl">{card.emoji}</div>
-                    <Heading level={2} className="text-white text-4xl md:text-5xl font-black drop-shadow-md text-center break-words">{card.translation}</Heading>
-                    <div className="bg-white/20 backdrop-blur-sm rounded-2xl px-5 py-3 border border-white/30">
-                        <Body className="text-white text-base italic text-center">&quot;{card.exampleSentence || `${card.word} means ${card.translation}`}&quot;</Body>
+                    <div className="flex items-center justify-center w-28 h-28">
+                        {card.imageUrl ? (
+                            <img src={card.imageUrl} alt={card.word} className="w-full h-full object-contain" />
+                        ) : (
+                            <span className="text-7xl">📘</span>
+                        )}
                     </div>
-                    <Caption className="text-white/70 text-sm">Nhấn để đánh giá ↓</Caption>
+                    <Heading
+                        level={2}
+                        color="textInverse"
+                        className="text-4xl md:text-5xl font-black drop-shadow-md text-center break-words"
+                    >
+                        {card.translation}
+                    </Heading>
+                    <div className="bg-card/20 backdrop-blur-sm rounded-2xl px-5 py-3 border border-white/30">
+                        <Body color="textInverse" className="text-base italic text-center text-white/95">
+                            &quot;{card.exampleSentence || `${card.word} means ${card.translation}`}&quot;
+                        </Body>
+                    </div>
+                    <Caption color="textInverse" className="text-sm text-white/70">
+                        Nhấn để đánh giá ↓
+                    </Caption>
                 </div>
             </motion.div>
         </div>
@@ -75,10 +95,10 @@ function FlipCard({ card, flipped, onFlip }: { card: Vocabulary; flipped: boolea
 // ── SRS Rating Buttons ─────────────────────────────────────────────────────
 function SRSButtons({ onRate }: { onRate: (r: SRSRating) => void }) {
     const buttons: { label: string; rating: SRSRating; subLabel: string; cls: string }[] = [
-        { label: 'Quên rồi', rating: 'again', subLabel: '<1 phút', cls: 'bg-error hover:bg-error/90 text-white border-error-dark' },
-        { label: 'Khó', rating: 'hard', subLabel: '~6 phút', cls: 'bg-warning hover:bg-warning/90 text-white border-warning/80' },
-        { label: 'Tốt', rating: 'good', subLabel: '~1 ngày', cls: 'bg-primary hover:bg-primary/90 text-white border-primary-dark' },
-        { label: 'Dễ', rating: 'easy', subLabel: '~4 ngày', cls: 'bg-success hover:bg-success/90 text-white border-success-dark' },
+        { label: 'Quên rồi', rating: 'again', subLabel: '<1 phút', cls: 'bg-error hover:bg-error/90 text-white border-error-dark/50' },
+        { label: 'Khó', rating: 'hard', subLabel: '~6 phút', cls: 'bg-warning hover:bg-warning/90 text-white border-warning-dark/50' },
+        { label: 'Tốt', rating: 'good', subLabel: '~1 ngày', cls: 'bg-primary hover:bg-primary/90 text-white border-primary-dark/50' },
+        { label: 'Dễ', rating: 'easy', subLabel: '~4 ngày', cls: 'bg-success hover:bg-success/90 text-white border-success-dark/50' },
     ];
     return (
         <motion.div

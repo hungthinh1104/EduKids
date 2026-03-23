@@ -83,9 +83,20 @@ export class VocabularyReviewController {
   @ApiResponse({ status: 200, description: "Array of review results" })
   async submitBulkReviews(
     @Request() req: RequestWithUser,
-    @Body() reviews: SubmitReviewRequestDto[],
+    @Body()
+    body:
+      | SubmitReviewRequestDto[]
+      | { reviews?: SubmitReviewRequestDto[] },
   ) {
     const childId = this.getChildId(req);
+
+    const reviews = Array.isArray(body) ? body : body?.reviews;
+    if (!Array.isArray(reviews)) {
+      throw new BadRequestException(
+        "Invalid payload. Expected an array of reviews or { reviews: [...] }",
+      );
+    }
+
     return this.reviewService.submitBulkReviews(childId, reviews);
   }
 

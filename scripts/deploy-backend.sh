@@ -48,8 +48,59 @@ done
 echo "[INFO] Building backend image..."
 docker compose --env-file "$ENV_FILE" build backend
 
-echo "[INFO] Starting postgres, redis, backend..."
-docker compose --env-file "$ENV_FILE" up -d postgres redis backend
+echo "[INFO] Starting postgres, redis (without backend yet)..."
+docker compose --env-file "$ENV_FILE" up -d postgres redis
+
+# Wait for DB to be ready before migrations
+echo "[INFO] Waiting for PostgreSQL to be ready..."
+max_attempts=30
+attempt=1
+while (( attempt <= max_attempts )); do
+  if docker compose --env-file "$ENV_FILE" exec -T postgres pg_isready -U postgres >/dev/null 2>&1; then
+    echo "[INFO] PostgreSQL is ready."
+    break
+  fi
+  echo "[INFO] Attempt $attempt/$max_attempts - waiting for PostgreSQL..."
+  sleep 2
+  ((attempt++))
+done
+
+if (( attempt > max_attempts )); then
+  echo "[ERROR] PostgreSQL did not become ready in time."
+  exit 1
+fi
+
+# ⭐ CRITICAL: Run migrations BEFORE starting app
+echo "[INFO] Running Prisma migrations (before app start)..."
+if docker compose --env-file "$ENV_FILE" exec -T postgres pg_isready >/dev/null 2>&1; then
+  # Get DATABASE_URL from environment or .env
+  migration_db_url="$(grep -E '^DATABASE_URL=' "$ENV_FILE" | tail -n1 | cut -d'=' -f2- | tr -d '"')"
+  
+  if [[ -z "$migration_db_url" ]]; then
+    echo "[ERROR] DATABASE_URL not found in $ENV_FILE"
+    exit 1
+  fi
+
+  (
+    cd "$ROOT_DIR/apps/backend"
+    DATABASE_URL="$migration_db_url" \
+    POOLED_DATABASE_URL="$migration_db_url" \
+    DIRECT_DATABASE_URL="$migration_db_url" \
+    npm run prisma:migrate:deploy
+  )
+
+  if (( $? != 0 )); then
+    echo "[ERROR] Migration failed - aborting app start to prevent incompatible schema"
+    exit 1
+  fi
+else
+  echo "[ERROR] Cannot connect to PostgreSQL for migration"
+  exit 1
+fi
+
+# Now start backend (migrations already completed)
+echo "[INFO] Starting backend container (migrations already completed)..."
+docker compose --env-file "$ENV_FILE" up -d backend
 
 echo "[INFO] Waiting for backend health..."
 max_attempts=30
@@ -70,29 +121,6 @@ if (( attempt > max_attempts )); then
   echo "[ERROR] Backend did not become healthy in time."
   docker compose --env-file "$ENV_FILE" logs --tail=120 backend
   exit 1
-fi
-
-echo "[INFO] Running Prisma migrations (deploy)..."
-if docker compose --env-file "$ENV_FILE" exec -T backend sh -lc 'command -v prisma >/dev/null 2>&1'; then
-  docker compose --env-file "$ENV_FILE" exec -T backend npm run prisma:migrate:deploy
-else
-  echo "[WARN] Prisma CLI is not available in backend runtime container. Falling back to host migration."
-  container_db_url="$(docker compose --env-file "$ENV_FILE" exec -T backend printenv DATABASE_URL 2>/dev/null | tr -d '\r')"
-  if [[ -z "$container_db_url" ]]; then
-    echo "[ERROR] Cannot read DATABASE_URL from backend container for migration fallback."
-    exit 1
-  fi
-
-  migration_db_url="$container_db_url"
-  migration_db_url="${migration_db_url/@postgres:5432/@localhost:5432}"
-
-  (
-    cd "$ROOT_DIR/apps/backend"
-    DATABASE_URL="$migration_db_url" \
-    POOLED_DATABASE_URL="$migration_db_url" \
-    DIRECT_DATABASE_URL="$migration_db_url" \
-    npm run prisma:migrate:deploy
-  )
 fi
 
 echo "[INFO] Backend deploy test completed."

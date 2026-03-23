@@ -3,8 +3,21 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useParams } from 'next/navigation';
-import { ArrowLeft, Brain, Mic, HelpCircle, Play, Star, Lock, CheckCircle2 } from 'lucide-react';
+import {
+    ArrowLeft,
+    Brain,
+    Mic,
+    HelpCircle,
+    Play,
+    Star,
+    Lock,
+    CheckCircle2,
+    BookOpen,
+    Video,
+    Sparkles,
+} from 'lucide-react';
 import { Heading, Body, Caption } from '@/shared/components/Typography';
 import { LoadingScreen } from '@/components/edukids/LoadingScreen';
 import { contentApi, Topic } from '@/features/learning/api/content.api';
@@ -162,6 +175,8 @@ export default function TopicDetailPage() {
     const starsEarned = topic.progress?.starsEarned ?? 0;
     const vocabularyCount = topic.vocabularyCount || (topic.vocabularies?.length || 0);
     const progressPct = vocabularyCount > 0 ? (completedCount / vocabularyCount) * 100 : 0;
+    const learningLevelLabel = topic.learningLevel ? `Level ${topic.learningLevel}/5` : 'Level cơ bản';
+    const topicTags = (topic.tags || []).slice(0, 3);
     const gameModes: GameMode[] = BASE_GAME_MODES.map((mode) => ({
         ...mode,
         locked:
@@ -178,34 +193,138 @@ export default function TopicDetailPage() {
     return (
         <div className="min-h-screen pb-20 md:pb-8">
             {/* Hero Banner */}
-            <div className={`${colors.bg} relative overflow-hidden`}>
-                <div className="absolute inset-0 bg-gradient-to-br from-black/10 to-black/30" />
-                <div className="relative z-10 max-w-lg md:max-w-4xl lg:max-w-7xl mx-auto px-6 md:px-8 pt-6 pb-12">
-                    {/* Back Button */}
-                    <Link href="/play">
-                        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="inline-flex items-center gap-2 text-white/90 hover:text-white font-heading font-bold mb-6 bg-white/20 hover:bg-white/30 px-4 py-2 rounded-xl backdrop-blur-sm transition-colors">
-                            <ArrowLeft size={18} /> Bản đồ học tập
-                        </motion.div>
-                    </Link>
-
-                    <motion.div initial={{ opacity: 1, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="text-center">
-                        <motion.div
-                            animate={{ rotate: [0, -5, 5, 0], scale: [1, 1.05, 1] }}
-                            transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-                            className="text-8xl mb-4 block"
-                        >
-                            {icon}
-                        </motion.div>
-                        <Heading level={2} className="text-white text-3xl mb-2 drop-shadow-md">{topic.name}</Heading>
-                        <Body className="text-white/85 text-base">{topic.description}</Body>
-
-                        {/* Stars */}
-                        <div className="flex justify-center gap-2 mt-4">
-                            {[1, 2, 3].map((s) => (
-                                <Star key={s} size={28} className={s <= starsEarned ? 'text-star fill-star drop-shadow-md' : 'text-white/30'} />
-                            ))}
+            <div className="relative overflow-hidden">
+                <div className={`absolute inset-0 ${colors.bg}`} />
+                <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-black/20" />
+                <div className="relative z-10 max-w-lg md:max-w-4xl lg:max-w-7xl mx-auto px-4 md:px-8 pt-4 md:pt-6 pb-10">
+                    <div className="rounded-[2rem] border border-white/20 bg-black/10 p-4 md:p-6 shadow-xl backdrop-blur-md">
+                        <div className="mb-4">
+                            <Link href="/play">
+                                <motion.div
+                                    whileHover={{ scale: 1.03 }}
+                                    whileTap={{ scale: 0.97 }}
+                                    className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-heading font-bold text-white/95 transition-colors hover:bg-white/15"
+                                >
+                                    <ArrowLeft size={18} /> Bản đồ học tập
+                                </motion.div>
+                            </Link>
                         </div>
-                    </motion.div>
+
+                        <div className="grid gap-6 lg:grid-cols-[1.45fr_0.95fr] lg:items-center">
+                            <motion.div
+                                initial={{ opacity: 1, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.5 }}
+                                className="space-y-5"
+                            >
+                                <div className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1.5 text-xs font-bold text-white/90">
+                                    <Sparkles size={14} />
+                                    {learningLevelLabel}
+                                </div>
+
+                                <div>
+                                    <Heading level={2} color="textInverse" className="text-3xl md:text-4xl drop-shadow-md">
+                                        {topic.name}
+                                    </Heading>
+                                    <Body color="textInverse" className="mt-3 max-w-2xl text-sm md:text-base leading-7 text-white/90">
+                                        {topic.description || 'Chủ đề học tập được thiết kế để bé vừa chơi vừa học một cách nhẹ nhàng.'}
+                                    </Body>
+                                </div>
+
+                                <div className="flex flex-wrap gap-2">
+                                    <div className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-2 text-sm font-semibold text-white">
+                                        <BookOpen size={16} />
+                                        {vocabularyCount} từ vựng
+                                    </div>
+                                    <div className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-2 text-sm font-semibold text-white">
+                                        <Star size={16} className="fill-current" />
+                                        {starsEarned}/3 sao
+                                    </div>
+                                    <div className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-2 text-sm font-semibold text-white">
+                                        <Video size={16} />
+                                        {topic.hasVideo ? 'Có video' : 'Chưa có video'}
+                                    </div>
+                                </div>
+
+                                {topicTags.length > 0 && (
+                                    <div className="flex flex-wrap gap-2">
+                                        {topicTags.map((tag) => (
+                                            <span
+                                                key={tag}
+                                                className="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-bold text-white/90"
+                                            >
+                                                #{tag}
+                                            </span>
+                                        ))}
+                                    </div>
+                                )}
+
+                                <div className="flex flex-wrap gap-3">
+                                    {[1, 2, 3].map((s) => (
+                                        <Star
+                                            key={s}
+                                            size={28}
+                                            className={s <= starsEarned ? 'text-star fill-star drop-shadow-md' : 'text-white/25'}
+                                        />
+                                    ))}
+                                </div>
+                            </motion.div>
+
+                            <motion.div
+                                initial={{ opacity: 1, y: 20, scale: 0.98 }}
+                                animate={{ opacity: 1, y: 0, scale: 1 }}
+                                transition={{ duration: 0.55, delay: 0.08 }}
+                                className="relative overflow-hidden rounded-[1.75rem] border border-white/20 bg-white/10 shadow-2xl"
+                            >
+                                <div className="absolute inset-0 bg-gradient-to-br from-black/10 via-transparent to-black/25" />
+                                <div className="relative flex min-h-[220px] items-center justify-center p-5">
+                                    {topic.imageUrl ? (
+                                        <Image
+                                            src={topic.imageUrl}
+                                            alt={topic.name}
+                                            fill
+                                            sizes="(max-width: 1024px) 100vw, 420px"
+                                            className="object-cover"
+                                        />
+                                    ) : (
+                                        <div className="flex flex-col items-center gap-3 text-center">
+                                            <motion.div
+                                                animate={{ rotate: [0, -5, 5, 0], scale: [1, 1.04, 1] }}
+                                                transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+                                                className="text-8xl drop-shadow-md"
+                                            >
+                                                {icon}
+                                            </motion.div>
+                                            <Caption color="textInverse" className="text-white/75">
+                                                Chủ đề {topic.id}
+                                            </Caption>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="relative border-t border-white/15 bg-black/20 px-4 py-3 backdrop-blur-sm">
+                                    <div className="flex items-center justify-between gap-3">
+                                        <div>
+                                            <Caption color="textInverse" className="text-white/70 uppercase tracking-[0.18em]">
+                                                Tiến độ hiện tại
+                                            </Caption>
+                                            <div className="mt-1 text-lg font-black text-white">
+                                                {completedCount}/{vocabularyCount} từ
+                                            </div>
+                                        </div>
+                                        <div className="text-right">
+                                            <Caption color="textInverse" className="text-white/70">
+                                                Hoàn thành
+                                            </Caption>
+                                            <div className="mt-1 text-lg font-black text-white">
+                                                {Math.round(progressPct)}%
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </motion.div>
+                        </div>
+                    </div>
                 </div>
             </div>
             {/* Progress panel (overlapping) */}

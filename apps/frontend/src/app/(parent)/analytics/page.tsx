@@ -41,6 +41,7 @@ interface AnalyticsState {
 
 const isNoDataResponse = (
   value:
+    | AnalyticsOverview
     | LearningTimeAnalytics
     | VocabularyRetentionAnalytics
     | PronunciationAccuracyAnalytics
@@ -90,7 +91,7 @@ export default function ParentAnalyticsPage() {
         ]);
 
       setAnalytics({
-        overview,
+        overview: isNoDataResponse(overview) ? null : overview,
         learningTime: isNoDataResponse(learningTime) ? null : learningTime,
         vocabulary: isNoDataResponse(vocabulary) ? null : vocabulary,
         pronunciation: isNoDataResponse(pronunciation) ? null : pronunciation,
@@ -120,37 +121,37 @@ export default function ParentAnalyticsPage() {
           <div className="flex items-center gap-4">
             <button
               onClick={() => router.back()}
-              className="p-2 hover:bg-white rounded-lg transition"
+              className="p-2 hover:bg-card rounded-lg transition"
             >
-              <ArrowLeft className="w-6 h-6 text-gray-600" />
+              <ArrowLeft className="w-6 h-6 text-body" />
             </button>
             <div>
               <Heading level={2} className="text-3xl mb-1">
                 Chi tiết học tập
               </Heading>
-              <Body className="text-gray-600">
+              <Body className="text-body">
                 Phân tích chi tiết tiến bộ học tập
               </Body>
             </div>
           </div>
           <button
             onClick={handleExportPDF}
-            className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition"
+            className="flex items-center gap-2 px-4 py-2 bg-card border border-border rounded-lg hover:bg-background transition"
           >
             <Download className="w-5 h-5" />
             <span>Xuất PDF</span>
           </button>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-md p-6 flex items-center justify-between flex-wrap gap-4">
+        <div className="bg-card rounded-2xl shadow-md p-6 flex items-center justify-between flex-wrap gap-4">
           <div>
-            <label className="text-sm font-bold text-gray-700 block mb-2">Chọn bé</label>
+            <label className="text-sm font-bold text-heading block mb-2">Chọn bé</label>
             <select
               value={selectedChildId ?? ''}
               onChange={(e) =>
                 setSelectedChildId(e.target.value ? Number(e.target.value) : null)
               }
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
             >
               {profiles.map((p) => (
                 <option key={p.id} value={p.id}>
@@ -161,7 +162,7 @@ export default function ParentAnalyticsPage() {
           </div>
 
           <div>
-            <label className="text-sm font-bold text-gray-700 block mb-2">
+            <label className="text-sm font-bold text-heading block mb-2">
               Khoảng thời gian
             </label>
             <div className="flex gap-2">
@@ -172,7 +173,7 @@ export default function ParentAnalyticsPage() {
                   className={`px-4 py-2 rounded-lg font-medium transition ${
                     period === p
                       ? 'bg-purple-600 text-white'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      : 'bg-muted/10 text-body hover:bg-gray-200'
                   }`}
                 >
                   {p === '7d' ? '7 ngày' : p === '30d' ? '30 ngày' : '90 ngày'}
@@ -187,7 +188,7 @@ export default function ParentAnalyticsPage() {
         <div className="max-w-7xl mx-auto text-center py-12">
           <div className="inline-block">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
-            <p className="mt-4 text-gray-600">Đang tải dữ liệu...</p>
+            <p className="mt-4 text-body">Đang tải dữ liệu...</p>
           </div>
         </div>
       ) : (
@@ -198,29 +199,29 @@ export default function ParentAnalyticsPage() {
               animate={{ opacity: 1, y: 0 }}
               className="grid grid-cols-2 md:grid-cols-4 gap-4"
             >
-              <div className="bg-white rounded-2xl shadow-md p-6 text-center">
+              <div className="bg-card rounded-2xl shadow-md p-6 text-center">
                 <div className="text-4xl font-bold text-purple-600 mb-2">
                   {analytics.overview.learningTime.totalSessions}
                 </div>
-                <p className="text-gray-600 text-sm">Buổi học</p>
+                <p className="text-body text-sm">Buổi học</p>
               </div>
-              <div className="bg-white rounded-2xl shadow-md p-6 text-center">
+              <div className="bg-card rounded-2xl shadow-md p-6 text-center">
                 <div className="text-4xl font-bold text-blue-600 mb-2">
                   {analytics.overview.learningTime.totalMinutes}m
                 </div>
-                <p className="text-gray-600 text-sm">Thời gian học</p>
+                <p className="text-body text-sm">Thời gian học</p>
               </div>
-              <div className="bg-white rounded-2xl shadow-md p-6 text-center">
+              <div className="bg-card rounded-2xl shadow-md p-6 text-center">
                 <div className="text-4xl font-bold text-green-600 mb-2">
                   {analytics.overview.vocabulary.wordsMastered}
                 </div>
-                <p className="text-gray-600 text-sm">Từ nắm vững</p>
+                <p className="text-body text-sm">Từ nắm vững</p>
               </div>
-              <div className="bg-white rounded-2xl shadow-md p-6 text-center">
+              <div className="bg-card rounded-2xl shadow-md p-6 text-center">
                 <div className="text-4xl font-bold text-pink-600 mb-2">
                   {analytics.overview.quizPerformance.averageScore}%
                 </div>
-                <p className="text-gray-600 text-sm">Điểm TB Quiz</p>
+                <p className="text-body text-sm">Điểm TB Quiz</p>
               </div>
             </motion.div>
           )}
@@ -230,20 +231,20 @@ export default function ParentAnalyticsPage() {
               initial={{ opacity: 1, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              className="bg-white rounded-2xl shadow-md p-8"
+              className="bg-card rounded-2xl shadow-md p-8"
             >
               <div className="flex items-center gap-3 mb-6">
                 <Clock className="w-6 h-6 text-blue-600" />
-                <h3 className="text-2xl font-bold text-gray-800">Thời gian học</h3>
+                <h3 className="text-2xl font-bold text-heading">Thời gian học</h3>
               </div>
 
               <div className="space-y-4">
-                <div className="text-sm text-gray-600">
+                <div className="text-sm text-body">
                   Trung bình: {analytics.learningTime.averageSessionMinutes} phút/phiên
                 </div>
                 {analytics.learningTime.chartData.slice(-7).map((day) => (
                   <div key={day.date} className="flex items-center gap-3">
-                    <span className="text-sm font-medium text-gray-600 w-20">
+                    <span className="text-sm font-medium text-body w-20">
                       {day.label}
                     </span>
                     <div className="flex-1 h-6 bg-gradient-to-r from-blue-100 to-blue-200 rounded-full relative overflow-hidden">
@@ -266,11 +267,11 @@ export default function ParentAnalyticsPage() {
               initial={{ opacity: 1, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="bg-white rounded-2xl shadow-md p-8"
+              className="bg-card rounded-2xl shadow-md p-8"
             >
               <div className="flex items-center gap-3 mb-6">
                 <BookOpen className="w-6 h-6 text-green-600" />
-                <h3 className="text-2xl font-bold text-gray-800">Tiến độ từ vựng</h3>
+                <h3 className="text-2xl font-bold text-heading">Tiến độ từ vựng</h3>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -278,34 +279,34 @@ export default function ParentAnalyticsPage() {
                   <div className="text-3xl font-bold text-green-600 mb-2">
                     {analytics.vocabulary.totalWordsEncountered}
                   </div>
-                  <p className="text-gray-600">Từ đã gặp</p>
+                  <p className="text-body">Từ đã gặp</p>
                 </div>
                 <div className="text-center">
                   <div className="text-3xl font-bold text-orange-600 mb-2">
                     {analytics.vocabulary.wordsReviewed}
                   </div>
-                  <p className="text-gray-600">Đã ôn tập</p>
+                  <p className="text-body">Đã ôn tập</p>
                 </div>
                 <div className="text-center">
                   <div className="text-3xl font-bold text-purple-600 mb-2">
                     {analytics.vocabulary.wordsMastered}
                   </div>
-                  <p className="text-gray-600">Nắm vững</p>
+                  <p className="text-body">Nắm vững</p>
                 </div>
               </div>
 
               <div className="mt-6 space-y-3">
-                <p className="text-sm text-gray-600 font-medium">Phân bố mức độ:</p>
+                <p className="text-sm text-body font-medium">Phân bố mức độ:</p>
                 {Object.entries(analytics.vocabulary.wordsByLevel).map(([level, count]) => (
                   <div key={level} className="flex items-center gap-3">
-                    <span className="text-sm font-medium text-gray-600 w-20">{level}</span>
-                    <div className="flex-1 h-6 bg-gray-100 rounded-full overflow-hidden">
+                    <span className="text-sm font-medium text-body w-20">{level}</span>
+                    <div className="flex-1 h-6 bg-muted/10 rounded-full overflow-hidden">
                       <div
                         className="h-full bg-gradient-to-r from-green-400 to-green-600 rounded-full transition-all"
                         style={{ width: `${Math.min((count / 100) * 100, 100)}%` }}
                       ></div>
                     </div>
-                    <span className="text-sm font-bold text-gray-700 w-12 text-right">
+                    <span className="text-sm font-bold text-heading w-12 text-right">
                       {count}
                     </span>
                   </div>
@@ -319,11 +320,11 @@ export default function ParentAnalyticsPage() {
               initial={{ opacity: 1, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
-              className="bg-white rounded-2xl shadow-md p-8"
+              className="bg-card rounded-2xl shadow-md p-8"
             >
               <div className="flex items-center gap-3 mb-6">
                 <Mic className="w-6 h-6 text-pink-600" />
-                <h3 className="text-2xl font-bold text-gray-800">Phát âm</h3>
+                <h3 className="text-2xl font-bold text-heading">Phát âm</h3>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -331,19 +332,19 @@ export default function ParentAnalyticsPage() {
                   <div className="text-3xl font-bold text-pink-600 mb-2">
                     {analytics.pronunciation.totalPractices}
                   </div>
-                  <p className="text-gray-600">Lần luyện tập</p>
+                  <p className="text-body">Lần luyện tập</p>
                 </div>
                 <div className="bg-pink-50 rounded-xl p-6 text-center">
                   <div className="text-3xl font-bold text-pink-600 mb-2">
                     {analytics.pronunciation.averageAccuracy}%
                   </div>
-                  <p className="text-gray-600">Điểm TB</p>
+                  <p className="text-body">Điểm TB</p>
                 </div>
                 <div className="bg-pink-50 rounded-xl p-6 text-center">
                   <div className="text-3xl font-bold text-pink-600 mb-2">
                     {analytics.pronunciation.highAccuracyCount}
                   </div>
-                  <p className="text-gray-600">Lần đạt cao</p>
+                  <p className="text-body">Lần đạt cao</p>
                 </div>
               </div>
             </motion.div>
@@ -354,11 +355,11 @@ export default function ParentAnalyticsPage() {
               initial={{ opacity: 1, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}
-              className="bg-white rounded-2xl shadow-md p-8"
+              className="bg-card rounded-2xl shadow-md p-8"
             >
               <div className="flex items-center gap-3 mb-6">
                 <TrendingUp className="w-6 h-6 text-blue-600" />
-                <h3 className="text-2xl font-bold text-gray-800">Kiểm tra</h3>
+                <h3 className="text-2xl font-bold text-heading">Kiểm tra</h3>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
@@ -366,34 +367,34 @@ export default function ParentAnalyticsPage() {
                   <div className="text-2xl font-bold text-blue-600 mb-1">
                     {analytics.quiz.totalQuizzes}
                   </div>
-                  <p className="text-xs text-gray-600">Bài kiểm tra</p>
+                  <p className="text-xs text-body">Bài kiểm tra</p>
                 </div>
                 <div className="text-center">
                   <div className="text-2xl font-bold text-green-600 mb-1">
                     {analytics.quiz.quizzesPassed}
                   </div>
-                  <p className="text-xs text-gray-600">Đạt chuẩn</p>
+                  <p className="text-xs text-body">Đạt chuẩn</p>
                 </div>
                 <div className="text-center">
                   <div className="text-2xl font-bold text-orange-600 mb-1">
                     {analytics.quiz.averageScore}%
                   </div>
-                  <p className="text-xs text-gray-600">Điểm TB</p>
+                  <p className="text-xs text-body">Điểm TB</p>
                 </div>
                 <div className="text-center">
                   <div className="text-2xl font-bold text-purple-600 mb-1">
                     {analytics.quiz.highestScore}%
                   </div>
-                  <p className="text-xs text-gray-600">Điểm cao nhất</p>
+                  <p className="text-xs text-body">Điểm cao nhất</p>
                 </div>
               </div>
 
               <div className="space-y-3">
-                <p className="text-sm text-gray-600 font-medium">Phân tích theo độ khó:</p>
+                <p className="text-sm text-body font-medium">Phân tích theo độ khó:</p>
                 {Object.entries(analytics.quiz.scoresByDifficulty).map(([difficulty, score]) => (
                   <div key={difficulty} className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-600">{difficulty}</span>
-                    <span className="text-sm text-gray-700">{score}%</span>
+                    <span className="text-sm font-medium text-body">{difficulty}</span>
+                    <span className="text-sm text-heading">{score}%</span>
                   </div>
                 ))}
               </div>
@@ -405,11 +406,11 @@ export default function ParentAnalyticsPage() {
               initial={{ opacity: 1, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5 }}
-              className="bg-white rounded-2xl shadow-md p-8"
+              className="bg-card rounded-2xl shadow-md p-8"
             >
               <div className="flex items-center gap-3 mb-6">
                 <Trophy className="w-6 h-6 text-yellow-600" />
-                <h3 className="text-2xl font-bold text-gray-800">Gamification</h3>
+                <h3 className="text-2xl font-bold text-heading">Gamification</h3>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -417,24 +418,24 @@ export default function ParentAnalyticsPage() {
                   <div className="text-3xl font-bold text-yellow-600 mb-2">
                     {analytics.gamification.totalPoints}
                   </div>
-                  <p className="text-gray-600">Tổng sao</p>
+                  <p className="text-body">Tổng sao</p>
                 </div>
                 <div className="text-center">
                   <div className="text-3xl font-bold text-purple-600 mb-2">
                     Level {analytics.gamification.currentLevel}
                   </div>
-                  <p className="text-gray-600">Cấp độ hiện tại</p>
+                  <p className="text-body">Cấp độ hiện tại</p>
                 </div>
                 <div className="text-center">
                   <div className="text-3xl font-bold text-orange-600 mb-2">
                     {analytics.gamification.badgesEarned}
                   </div>
-                  <p className="text-gray-600">Huy hiệu</p>
+                  <p className="text-body">Huy hiệu</p>
                 </div>
               </div>
 
               <div className="mt-6">
-                <p className="text-sm text-gray-600 font-medium mb-3">Tiến độ huy hiệu:</p>
+                <p className="text-sm text-body font-medium mb-3">Tiến độ huy hiệu:</p>
                 <div className="h-3 bg-gray-200 rounded-full overflow-hidden">
                   <div
                     className="h-full bg-gradient-to-r from-purple-500 to-pink-500 rounded-full transition-all"
@@ -451,7 +452,7 @@ export default function ParentAnalyticsPage() {
                     }}
                   ></div>
                 </div>
-                <p className="text-xs text-gray-500 mt-1 text-right">
+                <p className="text-xs text-muted mt-1 text-right">
                   {analytics.gamification.badgesEarned}/{analytics.gamification.totalBadges}
                 </p>
               </div>

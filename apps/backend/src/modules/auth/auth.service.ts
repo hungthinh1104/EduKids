@@ -13,6 +13,7 @@ import { createClient, RedisClientType } from "redis";
 import { PrismaService } from "../../prisma/prisma.service";
 import { MailService } from "../mail/mail.service";
 import { MailTemplateService } from "../mail/mail-template.service";
+import { ChildProfileService } from "../child-profile/child-profile.service";
 import { RegisterDto } from "./dto/register.dto";
 import { LoginDto } from "./dto/login.dto";
 import { ForgotPasswordDto } from "./dto/forgot-password.dto";
@@ -21,8 +22,8 @@ import { ChangePasswordDto } from "./dto/change-password.dto";
 import { UpdateProfileDto } from "./dto/update-profile.dto";
 import {
   AuthResponseDto,
-  SwitchProfileResponseDto,
 } from "./dto/auth-response.dto";
+import { ProfileActionResultDto } from "../child-profile/child-profile.dto";
 
 // [C-4] Redis client for rate limiting — persistent across server restarts,
 // works correctly with multiple instances (load balancer).
@@ -95,6 +96,7 @@ export class AuthService {
     private jwtService: JwtService,
     private mailService: MailService,
     private mailTemplateService: MailTemplateService,
+    private childProfileService: ChildProfileService,
   ) {}
 
   /**
@@ -121,6 +123,8 @@ export class AuthService {
       firstName: string | null;
       lastName: string | null;
       role: string;
+      isActive: boolean;
+      createdAt: Date;
     }>;
 
     try {
@@ -131,10 +135,12 @@ export class AuthService {
           firstName: string | null;
           lastName: string | null;
           role: string;
+          isActive: boolean;
+          createdAt: Date;
         }>
       >`INSERT INTO "User" ("email", "passwordHash", "firstName", "lastName", "role", "isActive", "createdAt", "updatedAt")
         VALUES (${dto.email}, ${passwordHash}, ${dto.firstName}, ${dto.lastName}, ${"PARENT"}, true, NOW(), NOW())
-        RETURNING "id", "email", "firstName", "lastName", "role"`;
+        RETURNING "id", "email", "firstName", "lastName", "role", "isActive", "createdAt"`;
     } catch (error: unknown) {
       const code =
         typeof error === "object" && error !== null && "code" in error
@@ -177,10 +183,13 @@ export class AuthService {
       refreshToken: tokens.refreshToken,
       role: user.role,
       user: {
-        id: user.id.toString(),
+        id: user.id,
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,
+        isActive: user.isActive,
+        isEmailVerified: false,
+        createdAt: user.createdAt,
       },
     };
   }
@@ -203,8 +212,9 @@ export class AuthService {
         lastName: string | null;
         role: string;
         isActive: boolean;
+        createdAt: Date;
       }>
-    >`SELECT "id", "email", "passwordHash", "firstName", "lastName", "role", "isActive"
+    >`SELECT "id", "email", "passwordHash", "firstName", "lastName", "role", "isActive", "createdAt"
       FROM "User"
       WHERE "email" = ${dto.email}
       LIMIT 1`;
@@ -268,70 +278,27 @@ export class AuthService {
       refreshToken: tokens.refreshToken,
       role: user.role,
       user: {
-        id: user.id.toString(),
+        id: user.id,
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,
+        isActive: user.isActive,
+        isEmailVerified: false,
+        createdAt: user.createdAt,
       },
     };
   }
 
   /**
-   * UC-00: Switch to child profile (get learner token)
+   * UC-00: Switch to child profile
    * Step 3: Role-based redirect
-   * Updates User.activeChildId for subsequent API calls
+   * Delegates active profile handling to ChildProfileService
    */
   async switchProfile(
     parentId: number,
-    childId: string,
-  ): Promise<SwitchProfileResponseDto> {
-    const parsedChildId = Number.parseInt(childId, 10);
-    if (!Number.isInteger(parsedChildId) || parsedChildId <= 0) {
-      throw new BadRequestException("Invalid child profile id");
-    }
-
-    // Verify child belongs to parent
-    const child = await this.prisma.childProfile.findFirst({
-      where: {
-        id: parsedChildId,
-        parentId,
-      },
-    });
-
-    if (!child) {
-      throw new ForbiddenException("Not owner of this child profile");
-    }
-
-    // Update User.activeChildId in database
-    await this.prisma.user.update({
-      where: { id: parentId },
-      data: { activeChildId: child.id },
-    });
-
-    // Generate learner token with childId
-    const learnerToken = this.jwtService.sign({
-      sub: parentId,
-      childId: child.id,
-      role: "LEARNER",
-    }, { expiresIn: "15m" });
-
-    // Log profile switch
-    await this.prisma.auditLog.create({
-      data: {
-        userId: parentId,
-        action: "PROFILE_SWITCH",
-        details: `Switched to child profile ID: ${child.id}`,
-      },
-    });
-
-    return {
-      learnerToken,
-      child: {
-        id: child.id.toString(),
-        nickname: child.nickname,
-        age: child.age,
-      },
-    };
+    childId: number,
+  ): Promise<ProfileActionResultDto> {
+    return this.childProfileService.switchProfile(parentId, childId);
   }
 
   /**
@@ -381,6 +348,7 @@ export class AuthService {
         lastName: true,
         role: true,
         isActive: true,
+        createdAt: true,
       },
     });
 
@@ -411,10 +379,13 @@ export class AuthService {
       refreshToken: tokens.refreshToken,
       role: user.role,
       user: {
-        id: user.id.toString(),
+        id: user.id,
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,
+        isActive: user.isActive,
+        isEmailVerified: false,
+        createdAt: user.createdAt,
       },
     };
   }

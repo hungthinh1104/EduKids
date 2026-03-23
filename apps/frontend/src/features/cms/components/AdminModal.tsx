@@ -53,6 +53,7 @@ export function AdminModal({ isOpen, onClose, title, children, maxWidth = '2xl' 
         <div className="flex items-center justify-between px-6 md:px-8 py-5 border-b border-border/70 bg-background/70 rounded-t-3xl">
           <Heading level={3} className="text-heading text-2xl">{title}</Heading>
           <button 
+            type="button"
             onClick={onClose}
             className="p-2 text-caption hover:text-body hover:bg-card rounded-full transition-all shadow-sm border border-transparent hover:border-border/70"
           >

@@ -19,7 +19,7 @@ const NAV = [
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
     return (
-        <div className="min-h-screen bg-slate-50 dark:bg-slate-900 relative overflow-hidden flex flex-col">
+        <div className="min-h-screen bg-background relative overflow-hidden flex flex-col">
             {/* Ambient Background Orbs */}
             <div className="fixed top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/20 dark:bg-primary/10 rounded-full blur-[120px] mix-blend-multiply dark:mix-blend-overlay opacity-60 animate-blob pointer-events-none z-0" />
             <div className="fixed top-[20%] right-[-10%] w-[35%] h-[40%] bg-success/20 dark:bg-success/10 rounded-full blur-[100px] mix-blend-multiply dark:mix-blend-overlay opacity-50 animate-blob animation-delay-2000 pointer-events-none z-0" />
@@ -43,9 +43,9 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
             </div>
 
             {/* Mobile bottom tab bar */}
-            <div data-admin-bottom-nav="true" className="md:hidden fixed bottom-0 left-0 right-0 z-[100] flex border-t border-white/50 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-2xl pb-1 shadow-[0_-8px_30px_rgb(0,0,0,0.05)] overflow-x-auto no-scrollbar transition-all duration-200 ease-out">
+            <div data-admin-bottom-nav="true" className="md:hidden fixed bottom-0 left-0 right-0 z-[100] flex border-t border-white/50 dark:border-border bg-card/80 dark:bg-background/80 backdrop-blur-2xl pb-1 shadow-[0_-8px_30px_rgb(0,0,0,0.05)] overflow-x-auto no-scrollbar transition-all duration-200 ease-out">
                 {NAV.map((item) => (
-                    <Link key={item.href} href={item.href} className="flex-1 min-w-[64px] flex flex-col items-center justify-center gap-0.5 py-3 text-slate-600 dark:text-slate-400 hover:text-primary dark:hover:text-primary-light transition-colors relative">
+                    <Link key={item.href} href={item.href} className="flex-1 min-w-[64px] flex flex-col items-center justify-center gap-0.5 py-3 text-body hover:text-primary dark:hover:text-primary-light transition-colors relative">
                         {item.icon}
                         <span className="text-[9px] font-heading font-bold mt-0.5 whitespace-nowrap">{item.label}</span>
                     </Link>
@@ -58,7 +58,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
             </main>
 
             {/* Mobile safe zone for bottom navbar */}
-            <div className="md:hidden h-24 bg-slate-50 dark:bg-slate-900" aria-hidden="true" />
+            <div className="md:hidden h-24 bg-background" aria-hidden="true" />
         </div>
     );
 }

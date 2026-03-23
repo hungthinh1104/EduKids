@@ -37,13 +37,13 @@ export const KidButton = React.forwardRef<HTMLButtonElement, KidButtonProps>(
                 gamifiedClasses = 'bg-error hover:bg-error/90 text-white border-error-dark';
                 break;
             case 'outline':
-                gamifiedClasses = 'bg-white hover:bg-slate-50 text-slate-700 border-slate-300 active:border-b-2 dark:bg-slate-900 dark:border-slate-700 dark:text-slate-200';
+                gamifiedClasses = 'bg-card hover:bg-background text-body border-border active:border-b-2 dark:bg-background dark:border-border dark:text-heading';
                 break;
             case 'secondary':
                 gamifiedClasses = 'bg-secondary hover:bg-secondary/90 text-white border-secondary-dark';
                 break;
             case 'ghost':
-                gamifiedClasses = 'border-b-0 active:translate-y-0 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 rounded-full';
+                gamifiedClasses = 'border-b-0 active:translate-y-0 hover:bg-slate-100 dark:hover:bg-slate-800 text-body dark:text-heading rounded-full';
                 break;
             default:
                 gamifiedClasses = '';

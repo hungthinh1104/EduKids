@@ -1,13 +1,14 @@
 import { create } from 'zustand';
 import Cookies from 'js-cookie';
+import { clearTopicModeProgressChildScope } from '@/features/learning/utils/topic-mode-progress';
 
 // Tương đương với Entity User ở Backend
 export interface User {
-    id: number | string;
+    id: number;
     email: string;
     role: string;
-    isEmailVerified: boolean;
-    isActive: boolean;
+    isEmailVerified?: boolean;
+    isActive?: boolean;
     firstName?: string;
     lastName?: string;
     createdAt?: string;
@@ -55,6 +56,10 @@ export const useAuthStore = create<AuthState>((set) => ({
             sameSite: 'lax',
         });
 
+        if (normalizedRole === 'PARENT' || normalizedRole === 'ADMIN') {
+            clearTopicModeProgressChildScope();
+        }
+
         set({
             user: {
                 ...user,
@@ -69,6 +74,7 @@ export const useAuthStore = create<AuthState>((set) => ({
         Cookies.remove('access_token');
         Cookies.remove('refresh_token');
         Cookies.remove('role');
+        clearTopicModeProgressChildScope();
         set({ user: null, isAuthenticated: false, isLoading: false });
 
         // Use window.location.href for logout to ensure hard page reload

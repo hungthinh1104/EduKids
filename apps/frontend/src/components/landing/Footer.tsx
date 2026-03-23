@@ -3,7 +3,7 @@ import { Sparkles, Facebook, Youtube, Instagram } from 'lucide-react';
 
 export function Footer() {
     return (
-        <footer className="bg-slate-950 text-slate-400 pt-24 pb-12 px-6 border-t border-slate-900">
+        <footer className="bg-[#101130] text-muted pt-24 pb-12 px-6 border-t border-border/10">
             <div className="max-w-7xl mx-auto grid md:grid-cols-4 gap-12 mb-16">
                 <div className="col-span-2 md:col-span-1 pr-0 lg:pr-12">
                     <div className="flex items-center gap-3 mb-6 font-heading font-black text-3xl text-white">
@@ -13,13 +13,13 @@ export function Footer() {
                         Học viện Anh ngữ thông minh kỷ nguyên mới. Khơi nguồn đam mê học tập bằng Gamification và Trí Tuệ Nhân Tạo.
                     </p>
                     <div className="flex items-center gap-4">
-                        <a href="#" className="w-12 h-12 rounded-full bg-slate-900 flex items-center justify-center hover:bg-primary hover:text-white transition-all hover:-translate-y-1" aria-label="Facebook">
+                        <a href="#" className="w-12 h-12 rounded-full bg-slate-900/50 flex items-center justify-center hover:bg-primary hover:text-white transition-all hover:-translate-y-1" aria-label="Facebook">
                             <Facebook size={20} />
                         </a>
-                        <a href="#" className="w-12 h-12 rounded-full bg-slate-900 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all hover:-translate-y-1" aria-label="YouTube">
+                        <a href="#" className="w-12 h-12 rounded-full bg-slate-900/50 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all hover:-translate-y-1" aria-label="YouTube">
                             <Youtube size={20} />
                         </a>
-                        <a href="#" className="w-12 h-12 rounded-full bg-slate-900 flex items-center justify-center hover:bg-pink-500 hover:text-white transition-all hover:-translate-y-1" aria-label="Instagram">
+                        <a href="#" className="w-12 h-12 rounded-full bg-slate-900/50 flex items-center justify-center hover:bg-pink-500 hover:text-white transition-all hover:-translate-y-1" aria-label="Instagram">
                             <Instagram size={20} />
                         </a>
                     </div>
@@ -47,7 +47,7 @@ export function Footer() {
                 <div>
                     <h4 className="text-white font-bold font-heading mb-6 text-xl">Đăng Ký Nhận Tin</h4>
                     <p className="text-sm mb-4">Nhận giáo án và bài tập mầm non miễn phí mỗi tuần qua Email.</p>
-                    <div className="flex border border-slate-800 rounded-full p-1 bg-slate-900 focus-within:border-primary transition-colors overflow-hidden">
+                    <div className="flex border border-border/20 rounded-full p-1 bg-background/20 focus-within:border-primary transition-colors overflow-hidden">
                         <input type="email" placeholder="Email của ba/mẹ..." className="bg-transparent border-none outline-none px-4 w-full text-white text-sm" />
                         <button className="bg-primary hover:bg-primary-dark text-white px-5 py-2.5 rounded-full text-sm font-bold transition-colors">
                             Gửi

@@ -17,10 +17,10 @@ const quizSchema = z
       z.object({
         value: z.string().trim().min(1, 'Lựa chọn không được để trống')
       })
-    ).length(4, 'Phải có đúng 4 lựa chọn'),
+    ).min(2, 'Phải có ít nhất 2 lựa chọn').max(6, 'Tối đa 6 lựa chọn'),
     correctAnswerIndex: z
       .string()
-      .refine((value) => ['0', '1', '2', '3'].includes(value), 'Vui lòng chọn 1 đáp án đúng'),
+      .refine((value) => ['0', '1', '2', '3', '4', '5'].includes(value), 'Vui lòng chọn 1 đáp án đúng'),
     difficultyLevel: z.number().min(1).max(5),
   })
   .superRefine((data, ctx) => {
@@ -45,6 +45,15 @@ const quizSchema = z
       }
       seen.set(option, index);
     });
+
+    const selectedIndex = Number.parseInt(data.correctAnswerIndex, 10);
+    if (!Number.isInteger(selectedIndex) || selectedIndex < 0 || selectedIndex >= data.options.length) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['correctAnswerIndex'],
+        message: 'Đáp án đúng phải nằm trong các lựa chọn hiện có',
+      });
+    }
   });
 
 export type QuizFormData = z.infer<typeof quizSchema>;
@@ -58,7 +67,7 @@ interface QuizFormProps {
     description: string;
     questionText: string;
     options: string[];
-    correctAnswerIndex: 0 | 1 | 2 | 3;
+    correctAnswerIndex: number;
     difficultyLevel: 1 | 2 | 3 | 4 | 5;
   }) => void;
   onCancel: () => void;
@@ -93,7 +102,7 @@ export function QuizForm({
     }
   });
 
-  const { fields } = useFieldArray({
+  const { fields, append, remove } = useFieldArray({
     control,
     name: "options",
   });
@@ -108,11 +117,10 @@ export function QuizForm({
             .map((opt) => (typeof opt === 'string' ? opt : opt.text))
             .filter(Boolean)
         : ['', '', '', ''];
-      
-      // Pad to 4 if less than 4
-      while (parsedOptions.length < 4) parsedOptions.push('');
-      // Cap at 4
-      const finalOptions = parsedOptions.slice(0, 4);
+
+      // Keep between 2 and 6 options to match backend validation
+      while (parsedOptions.length < 2) parsedOptions.push('');
+      const finalOptions = parsedOptions.slice(0, 6);
 
       // Find correct answer index
       const exactAnswer = initialData.correctAnswer || '';
@@ -123,6 +131,9 @@ export function QuizForm({
         );
       }
       if (correctIdx === -1) correctIdx = 0;
+      if (finalOptions.length > 0) {
+        correctIdx = Math.min(Math.max(correctIdx, 0), finalOptions.length - 1);
+      }
 
       const difficulty =
         initialData.difficultyLevel && initialData.difficultyLevel >= 1 && initialData.difficultyLevel <= 5
@@ -134,40 +145,76 @@ export function QuizForm({
         description: initialData.description || '',
         questionText: initialData.questionText,
         options: finalOptions.map((v: string) => ({ value: v })),
-        correctAnswerIndex: String(correctIdx) as '0' | '1' | '2' | '3',
+        correctAnswerIndex: String(correctIdx),
         difficultyLevel: difficulty,
       });
     } else {
-      reset({
-        title: '',
-        description: '',
-        questionText: '',
-        options: [{ value: '' }, { value: '' }, { value: '' }, { value: '' }],
-        correctAnswerIndex: '0',
-        difficultyLevel: 1,
-      });
+        reset({
+          title: '',
+          description: '',
+          questionText: '',
+          options: [{ value: '' }, { value: '' }, { value: '' }, { value: '' }],
+          correctAnswerIndex: '0',
+          difficultyLevel: 1,
+        });
     }
   }, [initialData, reset]);
 
   const handleFormSubmit = (data: QuizFormData) => {
     const stringOptions = data.options.map((opt) => opt.value.trim());
     const correctIndex = Number.parseInt(data.correctAnswerIndex, 10);
-    const safeCorrectIndex = Number.isInteger(correctIndex) && correctIndex >= 0 && correctIndex <= 3 ? correctIndex : 0;
+    const safeCorrectIndex =
+      Number.isInteger(correctIndex) && correctIndex >= 0 && correctIndex < stringOptions.length
+        ? correctIndex
+        : 0;
     
     onSubmit({
       title: data.title.trim(),
       description: data.description.trim(),
       questionText: data.questionText.trim(),
       options: stringOptions,
-      correctAnswerIndex: safeCorrectIndex as 0 | 1 | 2 | 3,
+      correctAnswerIndex: safeCorrectIndex,
       difficultyLevel: data.difficultyLevel as 1 | 2 | 3 | 4 | 5,
     });
+  };
+
+  const addOption = () => {
+    if (fields.length >= 6) {
+      toast.warning('Quiz chỉ hỗ trợ tối đa 6 lựa chọn.');
+      return;
+    }
+    append({ value: '' });
+  };
+
+  const removeOption = (index: number) => {
+    if (fields.length <= 2) {
+      toast.warning('Quiz cần ít nhất 2 lựa chọn.');
+      return;
+    }
+
+    const currentCorrectIndex = Number.parseInt(correctAnswerIndex, 10);
+    remove(index);
+
+    if (Number.isInteger(currentCorrectIndex)) {
+      let nextCorrectIndex = currentCorrectIndex;
+
+      if (index === currentCorrectIndex) {
+        nextCorrectIndex = Math.max(0, index === 0 ? 0 : index - 1);
+      } else if (index < currentCorrectIndex) {
+        nextCorrectIndex = currentCorrectIndex - 1;
+      }
+
+      setValue('correctAnswerIndex', String(nextCorrectIndex), {
+        shouldValidate: true,
+        shouldDirty: true,
+      });
+    }
   };
 
   const insertVocabularyIntoNextSlot = (word: string) => {
     const nextEmptyIndex = optionValues.findIndex((option) => option.value.trim().length === 0);
     if (nextEmptyIndex < 0) {
-      toast.warning('4 đáp án đã đầy. Hãy xóa hoặc chỉnh một đáp án trước khi thêm từ mới.');
+      toast.warning('Đáp án đã đầy. Hãy xóa hoặc chỉnh một đáp án trước khi thêm từ mới.');
       return;
     }
     const targetIndex = nextEmptyIndex;
@@ -189,10 +236,10 @@ export function QuizForm({
       setValue('title', `${topicName || 'Quiz'} - ${vocabulary.word}`, { shouldValidate: true, shouldDirty: true });
     }
 
-    if (vocabulary.definition?.trim() && !questionTextValue) {
+    if (vocabulary.translation?.trim() && !questionTextValue) {
       setValue(
         'questionText',
-        `Từ tiếng Anh nào có nghĩa là "${vocabulary.definition.trim()}"?`,
+        `Từ tiếng Anh nào có nghĩa là "${vocabulary.translation.trim()}"?`,
         { shouldValidate: true, shouldDirty: true },
       );
     }
@@ -215,11 +262,11 @@ export function QuizForm({
       <div className="space-y-4">
         {/* Title */}
         <div>
-          <label className="block text-sm font-bold text-gray-700 mb-2">Tiêu đề *</label>
+          <label className="block text-sm font-bold text-heading mb-2">Tiêu đề *</label>
           <input
             {...register('title')}
             className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all ${
-              errors.title ? 'border-red-500 bg-red-50' : 'border-gray-300'
+              errors.title ? 'border-red-500 bg-red-50' : 'border-border'
             }`}
             placeholder="Bài tập về thú cưng..."
           />
@@ -228,12 +275,12 @@ export function QuizForm({
 
         {/* Description */}
         <div>
-          <label className="block text-sm font-bold text-gray-700 mb-2">Mô tả *</label>
+          <label className="block text-sm font-bold text-heading mb-2">Mô tả *</label>
           <textarea
             {...register('description')}
             rows={2}
             className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all ${
-              errors.description ? 'border-red-500 bg-red-50' : 'border-gray-300'
+              errors.description ? 'border-red-500 bg-red-50' : 'border-border'
             }`}
             placeholder="Mô tả ngắn cho bài kiểm tra"
           />
@@ -242,12 +289,12 @@ export function QuizForm({
 
         {/* Question */}
         <div>
-          <label className="block text-sm font-bold text-gray-700 mb-2">Câu hỏi *</label>
+          <label className="block text-sm font-bold text-heading mb-2">Câu hỏi *</label>
           <textarea
             {...register('questionText')}
             rows={3}
             className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all ${
-              errors.questionText ? 'border-red-500 bg-red-50' : 'border-gray-300'
+              errors.questionText ? 'border-red-500 bg-red-50' : 'border-border'
             }`}
             placeholder="Con chó trong tiếng Anh là gì?"
           />
@@ -256,25 +303,25 @@ export function QuizForm({
 
         {/* Difficulty */}
         <div>
-          <label className="block text-sm font-bold text-gray-700 mb-2">Độ khó (1-5)</label>
+          <label className="block text-sm font-bold text-heading mb-2">Độ khó (1-5)</label>
           <input
             type="number"
             {...register('difficultyLevel', { valueAsNumber: true })}
             min={1} max={5}
             className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all ${
-              errors.difficultyLevel ? 'border-red-500 bg-red-50' : 'border-gray-300'
+              errors.difficultyLevel ? 'border-red-500 bg-red-50' : 'border-border'
             }`}
           />
         </div>
 
         {/* Options */}
-        <div className="bg-gray-50 p-6 rounded-2xl border border-gray-100">
-          <label className="block text-sm font-bold text-gray-700 mb-4">Các lựa chọn (chọn đáp án đúng)</label>
+        <div className="bg-background p-6 rounded-2xl border border-border">
+          <label className="block text-sm font-bold text-heading mb-4">Các lựa chọn (chọn đáp án đúng)</label>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {fields.map((field, index) => (
               <div key={field.id} className="relative">
-                <div className="flex items-center gap-3 bg-white p-3 rounded-xl border border-gray-200">
+                <div className="flex items-center gap-3 bg-card p-3 rounded-xl border border-border">
                   <input
                     type="radio"
                     {...register('correctAnswerIndex')}
@@ -284,16 +331,38 @@ export function QuizForm({
                   <input
                     {...register(`options.${index}.value` as const)}
                     className={`flex-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                      errors.options?.[index]?.value ? 'border-red-500 bg-red-50' : 'border-gray-200'
+                      errors.options?.[index]?.value ? 'border-red-500 bg-red-50' : 'border-border'
                     }`}
                     placeholder={`Lựa chọn ${String.fromCharCode(65 + index)}`}
                   />
+                  {fields.length > 2 && (
+                    <button
+                      type="button"
+                      onClick={() => removeOption(index)}
+                      className="px-2 py-1 rounded-lg text-xs font-semibold text-error hover:bg-error/10"
+                    >
+                      Xóa
+                    </button>
+                  )}
                 </div>
                 {errors.options?.[index]?.value && (
                   <p className="text-red-500 text-xs mt-1 ml-9">{errors.options[index]?.value?.message}</p>
                 )}
               </div>
             ))}
+          </div>
+          <div className="mt-3 flex items-center justify-between gap-3">
+            <p className="text-xs text-caption">
+              Tối thiểu 2 lựa chọn, tối đa 6 lựa chọn. Backend sẽ giữ đúng structure này.
+            </p>
+            <button
+              type="button"
+              onClick={addOption}
+              disabled={fields.length >= 6}
+              className="px-3 py-2 rounded-xl border border-border bg-background text-sm font-semibold hover:border-primary/40 hover:text-primary disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Thêm lựa chọn
+            </button>
           </div>
           {errors.correctAnswerIndex && (
             <p className="text-red-500 text-sm mt-3 font-medium text-center">Vui lòng chọn 1 đáp án đúng</p>
@@ -309,7 +378,7 @@ export function QuizForm({
                   Bấm vào từ để thêm nhanh vào đáp án, hoặc dùng làm đáp án đúng hiện tại.
                 </p>
               </div>
-              <span className="px-3 py-1 rounded-full bg-white text-primary text-xs font-bold border border-primary/10">
+              <span className="px-3 py-1 rounded-full bg-card text-primary text-xs font-bold border border-primary/10">
                 {topicVocabularies.length} từ
               </span>
             </div>
@@ -318,12 +387,12 @@ export function QuizForm({
               {topicVocabularies.map((vocabulary) => (
                 <div
                   key={vocabulary.id}
-                  className="bg-white rounded-2xl border border-primary/10 p-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between"
+                  className="bg-card rounded-2xl border border-primary/10 p-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between"
                 >
                   <div className="min-w-0">
                     <div className="font-bold text-heading">{vocabulary.word}</div>
                     <div className="text-sm text-caption">
-                      {vocabulary.definition || 'Chưa có nghĩa tiếng Việt'}
+                      {vocabulary.translation || 'Chưa có nghĩa tiếng Việt'}
                     </div>
                   </div>
 
@@ -351,12 +420,12 @@ export function QuizForm({
       </div>
 
       {/* Actions */}
-      <div className="flex gap-4 pt-6 mt-6 border-t border-gray-100">
+      <div className="flex gap-4 pt-6 mt-6 border-t border-border">
         <button
           type="button"
           onClick={onCancel}
           disabled={isLoading}
-          className="flex-1 px-6 py-3.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-bold transition-all disabled:opacity-50"
+          className="flex-1 px-6 py-3.5 bg-muted/10 hover:bg-gray-200 text-heading rounded-xl font-bold transition-all disabled:opacity-50"
         >
           Hủy bỏ
         </button>

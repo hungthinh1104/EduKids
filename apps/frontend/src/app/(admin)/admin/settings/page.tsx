@@ -97,6 +97,7 @@ export default function AdminSettingsPage() {
 
                     {/* Logout Button */}
                     <KidButton 
+                        type="button"
                         variant="outline" 
                         className="w-full text-error border-error/20 hover:bg-error hover:text-white"
                         onClick={handleLogout}

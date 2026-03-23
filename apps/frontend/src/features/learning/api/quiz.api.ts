@@ -2,8 +2,7 @@ import { apiClient as axiosInstance } from '@/shared/services/api.client';
 
 export interface QuizQuestion {
   questionId: number;
-  vocabularyId: number;
-  question: string;
+  questionText: string;
   options: QuizOption[];
   questionImage?: string;
 }
@@ -66,15 +65,13 @@ export const quizApi = {
       startedAt: string;
       questions?: Array<{
         questionId: number;
-        questionText?: string;
-        question?: string;
+        questionText: string;
         questionImage?: string;
         options?: QuizOption[];
       }>;
       firstQuestion?: {
         questionId: number;
-        questionText?: string;
-        question?: string;
+        questionText: string;
         questionImage?: string;
         options?: QuizOption[];
       };
@@ -82,19 +79,14 @@ export const quizApi = {
 
     const normalizeQuestion = (question?: {
       questionId: number;
-      questionText?: string;
-      question?: string;
+      questionText: string;
       questionImage?: string;
       options?: QuizOption[];
     }): QuizQuestion | undefined =>
-      question
+      question && typeof question.questionText === 'string' && question.questionText.trim().length > 0
         ? {
             questionId: question.questionId,
-            vocabularyId: 0,
-            question:
-              question.questionText ||
-              question.question ||
-              'What is this in English?',
+            questionText: question.questionText,
             questionImage: question.questionImage,
             options: Array.isArray(question.options) ? question.options : [],
           }

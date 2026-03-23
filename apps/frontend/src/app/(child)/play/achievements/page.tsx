@@ -11,10 +11,23 @@ import { gamificationApi, Badge } from '@/features/learning/api/gamification.api
 import { useCurrentChild } from '@/features/learning/hooks/useCurrentChild';
 
 const RARITY_STYLE: Record<string, { label: string; earnedCls: string; lockedCls: string }> = {
-    common: { label: 'Thường', earnedCls: 'from-slate-100 to-slate-200 border-slate-300', lockedCls: 'from-slate-50 to-slate-100 border-slate-200' },
-    rare: { label: 'Hiếm', earnedCls: 'from-primary-light to-blue-100 border-primary/40', lockedCls: 'from-slate-50 to-slate-100 border-slate-200' },
-    epic: { label: 'Huyền thoại', earnedCls: 'from-accent-light to-purple-100 border-accent/40', lockedCls: 'from-slate-50 to-slate-100 border-slate-200' },
-    legendary: { label: '✨ Huyền tích', earnedCls: 'from-warning-light to-yellow-100 border-warning/50', lockedCls: 'from-slate-50 to-slate-100 border-slate-200' },
+    common: { label: 'Thường', earnedCls: 'from-muted/20 to-muted/10 border-border', lockedCls: 'from-card/50 to-card border-border/60' },
+    rare: { label: 'Hiếm', earnedCls: 'from-primary-light/40 to-primary-light/20 border-primary/40', lockedCls: 'from-card/50 to-card border-border/60' },
+    epic: { label: 'Huyền thoại', earnedCls: 'from-accent-light/40 to-accent-light/20 border-accent/40', lockedCls: 'from-card/50 to-card border-border/60' },
+    legendary: { label: '✨ Huyền tích', earnedCls: 'from-warning-light/40 to-warning-light/20 border-warning/50', lockedCls: 'from-card/50 to-card border-border/60' },
+};
+
+const badgeTone = (category?: string) => {
+    switch (category) {
+        case 'MILESTONE':
+            return 'legendary';
+        case 'QUIZ':
+            return 'epic';
+        case 'PRONUNCIATION':
+            return 'rare';
+        default:
+            return 'common';
+    }
 };
 
 export default function AchievementsPage() {
@@ -29,14 +42,12 @@ export default function AchievementsPage() {
     useEffect(() => {
         const childId = child?.id;
         if (!childId) return;
-        async function loadBadges(resolvedChildId: number) {
+        async function loadBadges() {
             try {
                 setLoading(true);
                 setLoadError(null);
-                const [all, earned] = await Promise.all([
-                    gamificationApi.getBadges(),
-                    gamificationApi.getEarnedBadges(resolvedChildId)
-                ]);
+                const all = await gamificationApi.getBadges();
+                const earned = all.filter((badge) => badge.isEarned);
                 setAllBadges(all);
                 setEarnedBadges(earned);
             } catch (error) {
@@ -48,7 +59,7 @@ export default function AchievementsPage() {
                 setLoading(false);
             }
         }
-        void loadBadges(childId);
+        void loadBadges();
     }, [child?.id]);
 
     const categories = Array.from(new Set(['Tất cả', ...allBadges.map(b => b.category || 'Khác')]));
@@ -117,11 +128,11 @@ export default function AchievementsPage() {
                                 </div>
                                 <div className="text-5xl font-heading font-black text-white/90">{allBadges.length > 0 ? Math.round((totalEarned / allBadges.length) * 100) : 0}%</div>
                             </div>
-                            <div className="w-full h-3 bg-white/30 rounded-full overflow-hidden">
+                            <div className="w-full h-3 bg-card/30 rounded-full overflow-hidden">
                                 <motion.div
                                     initial={{ width: 0 }} animate={{ width: `${allBadges.length > 0 ? (totalEarned / allBadges.length) * 100 : 0}%` }}
                                     transition={{ duration: 1, ease: 'easeOut', delay: 0.3 }}
-                                    className="h-full bg-white rounded-full"
+                                    className="h-full bg-card rounded-full"
                                 />
                             </div>
                         </motion.div>
@@ -143,8 +154,8 @@ export default function AchievementsPage() {
                         <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 md:gap-4">
                             <AnimatePresence mode="popLayout">
                                 {filtered.map((badge, i) => {
-                                    const isEarned = earnedIds.includes(badge.id);
-                                    const rarity = RARITY_STYLE[badge.rarity || 'common'] ?? RARITY_STYLE.common;
+                                    const isEarned = Boolean(badge.isEarned);
+                                    const rarity = RARITY_STYLE[badgeTone(badge.category)] ?? RARITY_STYLE.common;
 
                                     return (
                                         <motion.button
@@ -161,7 +172,7 @@ export default function AchievementsPage() {
                                 ${isEarned ? rarity.earnedCls : rarity.lockedCls}`}
                                         >
                                             {/* Legendary shimmer effect */}
-                                            {isEarned && badge.rarity === 'legendary' && (
+                                            {isEarned && badgeTone(badge.category) === 'legendary' && (
                                                 <motion.div
                                                     animate={{ opacity: [0, 0.6, 0], x: [-30, 30] }}
                                                     transition={{ duration: 2, repeat: Infinity, repeatDelay: 1 }}
@@ -188,6 +199,12 @@ export default function AchievementsPage() {
                                 })}
                             </AnimatePresence>
                         </div>
+                        {filtered.length === 0 && (
+                            <div className="rounded-[2rem] border-2 border-dashed border-border bg-card p-8 text-center">
+                                <Heading level={4} className="text-heading text-lg mb-2">Chưa có huy hiệu trong mục này</Heading>
+                                <Body className="text-caption">Thử chuyển sang nhóm khác hoặc hoàn thành thêm hoạt động để mở khóa huy hiệu.</Body>
+                            </div>
+                        )}
                     </>
                 )}
             </div>
@@ -205,7 +222,7 @@ export default function AchievementsPage() {
                             <div className="w-12 h-1.5 bg-border rounded-full mx-auto mb-5" />
                             <div className="flex flex-col items-center text-center gap-4">
                                 <motion.span
-                                    animate={{ rotate: earnedIds.includes(selectedBadge.id) ? [0, -8, 8, 0] : [] }}
+                                    animate={{ rotate: selectedBadge.isEarned ? [0, -8, 8, 0] : [] }}
                                     transition={{ duration: 1, delay: 0.2 }}
                                     className="text-8xl"
                                 >
@@ -213,14 +230,14 @@ export default function AchievementsPage() {
                                 </motion.span>
 
                                 <div>
-                                    <div className={`text-xs font-heading font-black px-3 py-0.5 rounded-full border inline-block mb-2 ${RARITY_STYLE[selectedBadge.rarity || 'common']?.earnedCls}`}>
-                                        {RARITY_STYLE[selectedBadge.rarity || 'common']?.label}
+                                    <div className={`text-xs font-heading font-black px-3 py-0.5 rounded-full border inline-block mb-2 ${RARITY_STYLE[badgeTone(selectedBadge.category)]?.earnedCls}`}>
+                                        {RARITY_STYLE[badgeTone(selectedBadge.category)]?.label}
                                     </div>
                                     <Heading level={3} className="text-heading text-2xl mb-1">{selectedBadge.name}</Heading>
                                     <Body className="text-body">{selectedBadge.description}</Body>
                                 </div>
 
-                                {earnedIds.includes(selectedBadge.id) ? (
+                                {selectedBadge.isEarned ? (
                                     <div className="w-full bg-success-light border-2 border-success/30 text-success font-heading font-black text-sm rounded-2xl py-3 flex items-center justify-center gap-2">
                                         <Star size={16} className="fill-success" />
                                         Đã đạt ngày {selectedBadge.earnedAt ? new Date(selectedBadge.earnedAt).toLocaleDateString('vi-VN') : 'N/A'}
@@ -231,7 +248,11 @@ export default function AchievementsPage() {
                                             <Info size={14} className="text-primary" />
                                             <Caption className="text-primary font-bold text-xs">Cách đạt huy hiệu</Caption>
                                         </div>
-                                        <Body className="text-body text-sm">{selectedBadge.criteria}</Body>
+                                        <Body className="text-body text-sm">
+                                            {selectedBadge.progress !== undefined && selectedBadge.requirement !== undefined
+                                                ? `Tiến độ: ${selectedBadge.progress}/${selectedBadge.requirement}. ${selectedBadge.description}`
+                                                : selectedBadge.description}
+                                        </Body>
                                     </div>
                                 )}
                             </div>

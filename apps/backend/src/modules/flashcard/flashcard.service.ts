@@ -31,7 +31,7 @@ export class FlashcardService {
     private activityRepository: FlashcardActivityRepository,
     private learningProgressRepository: LearningProgressRepository,
     private prisma: PrismaService,
-  ) {}
+  ) { }
 
   /**
    * UC-02: Get flashcard with image, audio, and drag-drop options
@@ -73,6 +73,7 @@ export class FlashcardService {
         vocabularyId: vocabulary.id,
         word: vocabulary.word,
         phonetic: vocabulary.phonetic,
+        exampleSentence: vocabulary.exampleSentence,
         translation: vocabulary.translation,
         difficulty: vocabulary.difficulty,
         media: vocabulary.media.map((m) => ({
@@ -216,10 +217,10 @@ export class FlashcardService {
           updatedPoints.currentLevel === calculatedLevel
             ? updatedPoints
             : await tx.childProfile.update({
-                where: { id: childId },
-                data: { currentLevel: calculatedLevel },
-                select: { totalPoints: true, currentLevel: true },
-              });
+              where: { id: childId },
+              data: { currentLevel: calculatedLevel },
+              select: { totalPoints: true, currentLevel: true },
+            });
 
         return { activity, updatedChild };
       });

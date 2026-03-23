@@ -2,7 +2,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Check, Wand2, ShoppingCart } from 'lucide-react';
 import { Heading, Caption } from '@/shared/components/Typography';
 import { ShopItem } from '@/features/learning/api/gamification.api';
-import { RARITY_STYLE } from './constants';
 
 interface ItemPreviewDrawerProps {
     previewItem: ShopItem | null;
@@ -31,10 +30,16 @@ export function ItemPreviewDrawer({
                     >
                         <div className="w-12 h-1.5 bg-border rounded-full mx-auto mb-5" />
                         <div className="flex items-center gap-5 mb-6">
-                            <span className="text-7xl">{previewItem.emoji}</span>
+                            <div className="w-20 h-20 flex items-center justify-center rounded-2xl bg-background border border-border overflow-hidden">
+                                {previewItem.imageUrl ? (
+                                    <img src={previewItem.imageUrl} alt={previewItem.name} className="w-full h-full object-contain" />
+                                ) : (
+                                    <span className="text-5xl">🛍️</span>
+                                )}
+                            </div>
                             <div>
-                                <div className={`text-xs font-heading font-black px-2 py-0.5 rounded-full border inline-block mb-2 ${RARITY_STYLE[previewItem.rarity]?.cls}`}>
-                                    {RARITY_STYLE[previewItem.rarity]?.label}
+                                <div className="text-xs font-heading font-black px-2 py-0.5 rounded-full border inline-block mb-2 bg-background text-caption border-border">
+                                    {previewItem.category}
                                 </div>
                                 <Heading level={3} className="text-heading text-xl">{previewItem.name}</Heading>
                                 <Caption className="text-caption">{previewItem.category}</Caption>
@@ -54,7 +59,7 @@ export function ItemPreviewDrawer({
                                         }`}
                                 >
                                     <Wand2 size={16} />
-                                    {equippedBySlot[previewItem.category] === previewItem.id ? '✓ Đang mặc' : 'Mặc vào nhân vật'}
+                                    {equippedBySlot[previewItem.category] === previewItem.id ? '✓ Đang mặc trên avatar' : 'Mặc lên avatar'}
                                 </button>
                             </div>
                         ) : (

@@ -22,9 +22,9 @@ export interface CMSVocabulary {
   id: number;
   topicId: number;
   word: string;
-  definition: string; // backend uses "definition", Prisma stores as "translation"
+  translation: string;
   phonetic?: string;
-  example?: string; // backend uses "example", Prisma stores as "exampleSentence"
+  exampleSentence?: string;
   imageUrl?: string; // backend DTO field
   audioUrl?: string; // backend DTO field
   status?: 'DRAFT' | 'REVIEW' | 'PUBLISHED' | 'ARCHIVED';
@@ -164,18 +164,18 @@ const normalizeVocabulary = (value: unknown): CMSVocabulary => {
           ? topic.id
           : 0,
     word: typeof record.word === 'string' ? record.word : '',
-    definition:
-      typeof record.definition === 'string'
-        ? record.definition
-        : typeof record.translation === 'string'
-          ? record.translation
+    translation:
+      typeof record.translation === 'string'
+        ? record.translation
+        : typeof record.definition === 'string'
+          ? record.definition
           : '',
     phonetic: typeof record.phonetic === 'string' ? record.phonetic : undefined,
-    example:
-      typeof record.example === 'string'
-        ? record.example
-        : typeof record.exampleSentence === 'string'
-          ? record.exampleSentence
+    exampleSentence:
+      typeof record.exampleSentence === 'string'
+        ? record.exampleSentence
+        : typeof record.example === 'string'
+          ? record.example
           : undefined,
     imageUrl:
       typeof record.imageUrl === 'string' ? record.imageUrl : imageFromMedia,
@@ -201,12 +201,12 @@ const toVocabularyPayload = (data: Partial<CMSVocabulary> & { topicId?: number }
 
   if (typeof data.topicId === 'number') payload.topicId = data.topicId;
   if (typeof data.word === 'string') payload.word = data.word.trim();
-  if (typeof data.definition === 'string') payload.definition = data.definition.trim();
+  if (typeof data.translation === 'string') payload.definition = data.translation.trim();
 
   const phonetic = toFormString(data.phonetic);
   if (phonetic !== undefined) payload.phonetic = phonetic;
 
-  const example = toFormString(data.example);
+  const example = toFormString(data.exampleSentence);
   if (example !== undefined) payload.example = example;
 
   const imageUrl = toFormString(data.imageUrl);
@@ -418,8 +418,8 @@ export const archiveTopic = async (id: number): Promise<CMSTopic> => {
 export const createVocabulary = async (data: {
   topicId: number;
   word: string;
-  definition: string; // backend uses "definition"
-  example?: string;
+  translation: string;
+  exampleSentence?: string;
   imageUrl?: string;
   audioUrl?: string;
   status?: 'DRAFT' | 'REVIEW' | 'PUBLISHED' | 'ARCHIVED';

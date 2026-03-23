@@ -5,6 +5,7 @@ interface FlashcardResponseDto {
   vocabularyId: number;
   word: string;
   phonetic?: string;
+  exampleSentence?: string;
   translation?: string;
   imageUrl: string;
   audioUrl: string;
@@ -64,7 +65,7 @@ export const flashcardApi = {
       word: payload.word,
       translation: payload.translation || '',
       phonetic: payload.phonetic || '',
-      exampleSentence: '',
+      exampleSentence: payload.exampleSentence || '',
       imageUrl: payload.imageUrl || payload.media?.find((item) => item.type === 'IMAGE')?.url,
       audioUrl: payload.audioUrl || payload.media?.find((item) => item.type === 'AUDIO')?.url,
       options: Array.isArray(payload.options) ? payload.options : [],

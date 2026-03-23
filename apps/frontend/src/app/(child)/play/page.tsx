@@ -17,6 +17,8 @@ import { LoadingScreen } from '@/components/edukids/LoadingScreen';
 import { reviewApi } from '@/features/learning/api/review.api';
 import { authApi } from '@/features/auth/api/auth.api';
 import { useAuthStore } from '@/shared/store/auth.store';
+import { clearTopicModeProgressChildScope } from '@/features/learning/utils/topic-mode-progress';
+import { clearParentSessionBackup, restoreParentSession } from '@/shared/utils/parent-session-handoff';
 
 // ── Play Page (Learning Map) ───────────────────────────────────────────────
 export default function PlayPage() {
@@ -44,16 +46,27 @@ export default function PlayPage() {
         try {
             const auth = await authApi.exitChildMode();
             setAuth(auth.user, auth.accessToken, auth.refreshToken, auth.role);
+            clearParentSessionBackup();
+            clearTopicModeProgressChildScope();
             router.replace('/dashboard');
         } catch (error) {
             console.error('Failed to exit child mode:', error);
 
+            const restoredRole = restoreParentSession();
+            clearTopicModeProgressChildScope();
+
+            if (restoredRole) {
+                clearParentSessionBackup();
+                router.replace('/dashboard');
+                return;
+            }
+
             // Backward compatibility: if backend does not expose /auth/exit-child yet,
             // or if it fails, gracefully fallback to dashboard instead of un-authing the parent.
             if (axios.isAxiosError(error) && error.response?.status === 404) {
-                 router.replace('/dashboard');
+                router.replace('/dashboard');
             } else {
-                 router.replace('/dashboard');
+                router.replace('/dashboard');
             }
         } finally {
             setIsExitingChild(false);

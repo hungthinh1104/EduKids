@@ -26,7 +26,7 @@ export const FeatureCard = React.forwardRef<HTMLDivElement, FeatureCardProps>(
             error: 'border-b-error',
         };
 
-        const baseClasses = 'rounded-[2rem] border-t-8 border-x-2 border-b-8 bg-white dark:bg-card shadow-lg hover:shadow-xl transition-shadow overflow-hidden relative';
+        const baseClasses = 'rounded-[2rem] border-t-8 border-x-2 border-b-8 bg-card shadow-lg hover:shadow-xl transition-shadow overflow-hidden relative';
         const borderBClass = borderClassMap[borderColor as string] || 'border-b-primary';
         const borderTClass = borderClassMap[borderColor as string]?.replace('border-b-', 'border-t-') || 'border-t-primary';
 

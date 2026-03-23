@@ -22,8 +22,8 @@ export function RecentUsersTable({ recentUsers }: RecentUsersTableProps) {
     return (
         <section>
             <SectionHeader title="Người dùng mới đăng ký"
-                action={<button className="text-primary text-sm font-heading font-bold hover:underline flex items-center gap-1"><Eye size={14} /> Quản lý</button>}
-            />
+            action={<button type="button" className="text-primary text-sm font-heading font-bold hover:underline flex items-center gap-1"><Eye size={14} /> Quản lý</button>}
+        />
             <div className="bg-card rounded-2xl overflow-hidden border border-border/70">
                 <div className="overflow-x-auto">
                     <table className="w-full text-sm">

@@ -118,7 +118,7 @@ export class FlashcardController {
 
     if (!childId) {
       throw new HttpException(
-        "Child profile required. Please switch to child profile first (POST /auth/switch-profile).",
+        "Child profile required. Please switch to child profile first (POST /api/profiles/switch).",
         HttpStatus.FORBIDDEN,
       );
     }

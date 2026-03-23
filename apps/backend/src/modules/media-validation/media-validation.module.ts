@@ -1,6 +1,6 @@
 import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
-import { PrismaService } from "../../prisma/prisma.service";
+import { PrismaModule } from "../../prisma/prisma.module";
 import { ValidationController } from "./controller/validation.controller";
 import { ContentValidationService } from "./service/content-validation.service";
 import { SafetyValidationService } from "./service/safety-validation.service";
@@ -46,9 +46,8 @@ import { ValidationRepository } from "./repository/validation.repository";
  * - ContentRejection: Rejection history
  */
 @Module({
-  imports: [ConfigModule],
+  imports: [ConfigModule, PrismaModule],
   providers: [
-    PrismaService,
     ContentValidationService,
     SafetyValidationService,
     ApprovalService,

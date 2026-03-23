@@ -102,6 +102,7 @@ export function AdminPagination({ currentPage, totalPages, onPageChange }: Admin
             </Caption>
             <div className="flex items-center gap-2">
                 <button
+                    type="button"
                     onClick={() => onPageChange(currentPage - 1)}
                     disabled={currentPage === 1}
                     className="p-1.5 rounded-lg border border-border text-body hover:bg-card disabled:opacity-50 disabled:hover:bg-transparent transition-colors"
@@ -111,6 +112,7 @@ export function AdminPagination({ currentPage, totalPages, onPageChange }: Admin
                 <div className="flex items-center gap-1">
                     {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
                         <button
+                            type="button"
                             key={page}
                             onClick={() => onPageChange(page)}
                             className={`w-8 h-8 rounded-lg text-sm font-heading font-bold transition-colors ${currentPage === page
@@ -123,6 +125,7 @@ export function AdminPagination({ currentPage, totalPages, onPageChange }: Admin
                     ))}
                 </div>
                 <button
+                    type="button"
                     onClick={() => onPageChange(currentPage + 1)}
                     disabled={currentPage === totalPages}
                     className="p-1.5 rounded-lg border border-border text-body hover:bg-card disabled:opacity-50 disabled:hover:bg-transparent transition-colors"

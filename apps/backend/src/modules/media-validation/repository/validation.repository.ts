@@ -45,6 +45,22 @@ export class ValidationRepository {
         validatedAt: data.validatedAt,
         contentType: data.contentType,
         contentTitle: data.contentTitle,
+        safetyFlags: data.flags?.length
+          ? {
+              createMany: {
+                data: data.flags.map((flag) => ({
+                  id: flag.flagId,
+                  type: flag.type,
+                  severity: flag.severity,
+                  description: flag.description,
+                  detectedText: flag.detectedText,
+                  confidence: flag.confidence,
+                  isAutoDetected: flag.isAutoDetected,
+                  suggestedAction: flag.suggestedAction,
+                })),
+              },
+            }
+          : undefined,
       },
       include: { safetyFlags: true },
     });
@@ -108,7 +124,7 @@ export class ValidationRepository {
           in: [ValidationStatus.IN_REVIEW, ValidationStatus.AUTO_FLAGGED],
         },
       },
-      orderBy: { validatedAt: "asc" },
+      orderBy: { validatedAt: "desc" },
       take: limit,
       include: { safetyFlags: true },
     });

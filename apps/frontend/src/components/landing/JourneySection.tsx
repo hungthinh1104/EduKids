@@ -30,7 +30,7 @@ export function JourneySection() {
                         <motion.div
                             animate={{ left: ['0%', '100%'] }}
                             transition={{ duration: 6, repeat: Infinity, ease: 'linear' }}
-                            className="absolute top-[-5px] w-3 h-3 bg-white rounded-full shadow-[0_0_15px_white]"
+                            className="absolute top-[-5px] w-3 h-3 bg-card rounded-full shadow-[0_0_15px_white]"
                         />
                     </div>
 
@@ -48,7 +48,7 @@ export function JourneySection() {
                                 transition={{ duration: 0.7, delay: index * 0.2 }}
                                 className="flex flex-col items-center text-center group"
                             >
-                                <div className="w-64 h-64 bg-white/5 backdrop-blur-md rounded-[3rem] border border-white/10 p-8 flex flex-col items-center justify-center relative mb-8 group-hover:bg-white/10 transition-colors duration-500 shadow-2xl">
+                                <div className="w-64 h-64 bg-card/5 backdrop-blur-md rounded-[3rem] border border-white/10 p-8 flex flex-col items-center justify-center relative mb-8 group-hover:bg-card/10 transition-colors duration-500 shadow-2xl">
                                     <div className={`absolute -top-8 w-16 h-16 ${item.bg} rounded-2xl rotate-12 flex items-center justify-center font-heading font-black text-2xl shadow-lg ring-4 ring-slate-900 group-hover:rotate-0 transition-transform duration-500`}>
                                         {item.step}
                                     </div>

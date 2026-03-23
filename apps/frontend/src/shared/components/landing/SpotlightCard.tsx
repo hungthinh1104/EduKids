@@ -23,7 +23,7 @@ export default function SpotlightCard({
 
     return (
         <div
-            className={`group relative overflow-hidden rounded-[2.5rem] border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 ${className}`}
+            className={`group relative overflow-hidden rounded-[2.5rem] border border-border bg-background dark:bg-card/50 ${className}`}
             onMouseMove={handleMouseMove}
         >
             <motion.div

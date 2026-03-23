@@ -1,6 +1,11 @@
 import { Injectable } from "@nestjs/common";
 import { PrismaService } from "../../../prisma/prisma.service";
 import { BadgeCategory, ShopItemCategory } from "../dto/gamification.dto";
+import {
+  buildAvatarItemImageUrl,
+  buildAvatarPreviewImageUrl,
+  ensureDefaultAvatarCatalog,
+} from "../../avatar-customization/avatar-item-catalog";
 
 interface BadgeCondition {
   id: number;
@@ -17,92 +22,6 @@ interface BadgeCondition {
 @Injectable()
 export class GamificationRepository {
   private badgeDefinitions: BadgeCondition[] = [];
-  private readonly shopItems = [
-    // Hair
-    {
-      id: 1,
-      name: "Rainbow Hair",
-      description: "Colorful rainbow hairstyle",
-      category: ShopItemCategory.AVATAR_HAIR,
-      price: 50,
-      imageUrl: "https://cdn.edukids.com/shop/hair-rainbow.png",
-    },
-    {
-      id: 2,
-      name: "Star Crown",
-      description: "Shiny golden crown",
-      category: ShopItemCategory.AVATAR_HAIR,
-      price: 80,
-      imageUrl: "https://cdn.edukids.com/shop/hair-crown.png",
-    },
-    {
-      id: 3,
-      name: "Wizard Hat",
-      description: "Magical wizard hat",
-      category: ShopItemCategory.AVATAR_HAIR,
-      price: 100,
-      imageUrl: "https://cdn.edukids.com/shop/hair-wizard.png",
-    },
-    // Outfits
-    {
-      id: 4,
-      name: "Superhero Cape",
-      description: "Fly like a hero!",
-      category: ShopItemCategory.AVATAR_OUTFIT,
-      price: 75,
-      imageUrl: "https://cdn.edukids.com/shop/outfit-cape.png",
-    },
-    {
-      id: 5,
-      name: "Princess Dress",
-      description: "Elegant royal dress",
-      category: ShopItemCategory.AVATAR_OUTFIT,
-      price: 120,
-      imageUrl: "https://cdn.edukids.com/shop/outfit-princess.png",
-    },
-    {
-      id: 6,
-      name: "Space Suit",
-      description: "Explore the galaxy",
-      category: ShopItemCategory.AVATAR_OUTFIT,
-      price: 150,
-      imageUrl: "https://cdn.edukids.com/shop/outfit-space.png",
-    },
-    // Accessories
-    {
-      id: 7,
-      name: "Magic Wand",
-      description: "Cast learning spells",
-      category: ShopItemCategory.AVATAR_ACCESSORY,
-      price: 60,
-      imageUrl: "https://cdn.edukids.com/shop/accessory-wand.png",
-    },
-    {
-      id: 8,
-      name: "Star Glasses",
-      description: "See everything sparkle",
-      category: ShopItemCategory.AVATAR_ACCESSORY,
-      price: 40,
-      imageUrl: "https://cdn.edukids.com/shop/accessory-glasses.png",
-    },
-    // Pets
-    {
-      id: 9,
-      name: "Flying Dragon",
-      description: "Your loyal dragon friend",
-      category: ShopItemCategory.AVATAR_PET,
-      price: 200,
-      imageUrl: "https://cdn.edukids.com/shop/pet-dragon.png",
-    },
-    {
-      id: 10,
-      name: "Unicorn Buddy",
-      description: "Magical unicorn companion",
-      category: ShopItemCategory.AVATAR_PET,
-      price: 180,
-      imageUrl: "https://cdn.edukids.com/shop/pet-unicorn.png",
-    },
-  ];
 
   constructor(private prisma: PrismaService) {
     this.initializeBadgeDefinitions();
@@ -280,6 +199,8 @@ export class GamificationRepository {
   }
 
   private async getShopState(childId: number) {
+    await ensureDefaultAvatarCatalog(this.prisma);
+
     const purchases = await this.prisma.purchase.findMany({
       where: { childId },
       select: { itemId: true, purchasedAt: true },
@@ -301,47 +222,72 @@ export class GamificationRepository {
     return { purchaseMap, equippedItemIds };
   }
 
+  private mapAvatarItemToShopItem(
+    item: {
+      id: number;
+      name: string;
+      description: string | null;
+      category: string | null;
+      price: number;
+      rarity: string | null;
+      imageUrl: string | null;
+    },
+    purchaseMap: Map<number, Date>,
+    equippedItemIds: Set<number>,
+  ) {
+    return {
+      id: item.id,
+      name: item.name,
+      description: item.description || "",
+      category: (item.category || "BACKGROUND") as ShopItemCategory,
+      price: item.price,
+      rarity: item.rarity || "COMMON",
+      imageUrl: buildAvatarItemImageUrl(item),
+      isPurchased: purchaseMap.has(item.id),
+      isEquipped: equippedItemIds.has(item.id),
+      purchasedAt: purchaseMap.get(item.id) as Date | undefined,
+    };
+  }
+
   /**
    * Get all shop items with purchase status
    */
   async getAllShopItems(childId: number) {
     const { purchaseMap, equippedItemIds } = await this.getShopState(childId);
+    const items = await this.prisma.avatarItem.findMany({
+      orderBy: { id: "asc" },
+    });
 
-    return this.shopItems.map((item) => ({
-      ...item,
-      isPurchased: purchaseMap.has(item.id),
-      isEquipped: equippedItemIds.has(item.id),
-      purchasedAt: purchaseMap.get(item.id) as Date | undefined,
-    }));
+    return items.map((item) =>
+      this.mapAvatarItemToShopItem(item, purchaseMap, equippedItemIds),
+    );
   }
 
   async getShopItemsByCategory(childId: number, category: ShopItemCategory) {
     const { purchaseMap, equippedItemIds } = await this.getShopState(childId);
+    const items = await this.prisma.avatarItem.findMany({
+      where: { category },
+      orderBy: { id: "asc" },
+    });
 
-    return this.shopItems
-      .filter((item) => item.category === category)
-      .map((item) => ({
-        ...item,
-        isPurchased: purchaseMap.has(item.id),
-        isEquipped: equippedItemIds.has(item.id),
-        purchasedAt: purchaseMap.get(item.id) as Date | undefined,
-      }));
+    return items.map((item) =>
+      this.mapAvatarItemToShopItem(item, purchaseMap, equippedItemIds),
+    );
   }
 
   async getShopItemById(childId: number, itemId: number) {
-    const item = this.shopItems.find((shopItem) => shopItem.id === itemId);
+    await ensureDefaultAvatarCatalog(this.prisma);
+
+    const item = await this.prisma.avatarItem.findUnique({
+      where: { id: itemId },
+    });
     if (!item) {
       return null;
     }
 
     const { purchaseMap, equippedItemIds } = await this.getShopState(childId);
 
-    return {
-      ...item,
-      isPurchased: purchaseMap.has(item.id),
-      isEquipped: equippedItemIds.has(item.id),
-      purchasedAt: purchaseMap.get(item.id) as Date | undefined,
-    };
+    return this.mapAvatarItemToShopItem(item, purchaseMap, equippedItemIds);
   }
 
   async getOwnedShopItems(childId: number) {
@@ -353,6 +299,8 @@ export class GamificationRepository {
    * Purchase shop item
    */
   async purchaseItem(childId: number, itemId: number, price: number) {
+    await ensureDefaultAvatarCatalog(this.prisma);
+
     try {
       return await this.prisma.$transaction(async (tx) => {
         const child = await tx.childProfile.findUnique({
@@ -429,22 +377,25 @@ export class GamificationRepository {
    * Equip item to avatar
    */
   async equipItem(childId: number, itemId: number, category: ShopItemCategory) {
-    const categoryItemIds = {
-      [ShopItemCategory.AVATAR_HAIR]: [1, 2, 3],
-      [ShopItemCategory.AVATAR_OUTFIT]: [4, 5, 6],
-      [ShopItemCategory.AVATAR_ACCESSORY]: [7, 8],
-      [ShopItemCategory.AVATAR_PET]: [9, 10],
-      [ShopItemCategory.BACKGROUND]: [],
-    };
-
-    const idsInCategory = categoryItemIds[category] || [];
+    await ensureDefaultAvatarCatalog(this.prisma);
 
     return this.prisma.$transaction(async (tx) => {
-      if (idsInCategory.length > 0) {
+      const equippedInCategory = await tx.childAvatarItem.findMany({
+        where: {
+          childId,
+          equipped: true,
+          item: {
+            category,
+          },
+        },
+        select: { itemId: true },
+      });
+
+      if (equippedInCategory.length > 0) {
         await tx.childAvatarItem.updateMany({
           where: {
             childId,
-            itemId: { in: idsInCategory },
+            itemId: { in: equippedInCategory.map((item) => item.itemId) },
             equipped: true,
           },
           data: { equipped: false },
@@ -471,6 +422,27 @@ export class GamificationRepository {
         },
       });
     });
+  }
+
+  async getAvatarPreviewForChild(childId: number, fallbackAvatar?: string | null) {
+    await ensureDefaultAvatarCatalog(this.prisma);
+
+    const equippedItems = await this.prisma.childAvatarItem.findMany({
+      where: {
+        childId,
+        equipped: true,
+      },
+      include: {
+        item: true,
+      },
+      orderBy: { itemId: "asc" },
+    });
+
+    if (equippedItems.length === 0) {
+      return fallbackAvatar || buildAvatarPreviewImageUrl([]);
+    }
+
+    return buildAvatarPreviewImageUrl(equippedItems.map((entry) => entry.item));
   }
 
   /**
@@ -548,7 +520,7 @@ export class GamificationRepository {
           rank: index + 1,
           childId: child.id,
           childName: child.nickname,
-          avatar: child.avatar || "https://cdn.edukids.com/avatars/default.png",
+          avatar: await this.getAvatarPreviewForChild(child.id, child.avatar),
           totalPoints: child.totalPoints,
           currentLevel: Math.floor(child.totalPoints / 50) + 1,
           badgesEarned: badgeCount,

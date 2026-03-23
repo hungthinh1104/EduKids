@@ -127,7 +127,7 @@ export default function AdminUsersPage() {
                     <Heading level={2} className="text-heading text-3xl mb-1">Người dùng 👥</Heading>
                     <Caption className="text-caption">Quản lý tài khoản phụ huynh và học sinh</Caption>
                 </div>
-                <button onClick={handleExportCSV} className="flex items-center gap-2 px-4 py-2.5 bg-card border border-border rounded-xl text-sm font-heading font-bold text-body hover:bg-primary hover:text-white hover:border-primary transition-colors shadow-sm">
+                <button type="button" onClick={handleExportCSV} className="flex items-center gap-2 px-4 py-2.5 bg-card border border-border rounded-xl text-sm font-heading font-bold text-body hover:bg-primary hover:text-white hover:border-primary transition-colors shadow-sm">
                     <Download size={16} /> Xuất CSV
                 </button>
             </motion.div>
@@ -209,10 +209,10 @@ export default function AdminUsersPage() {
                             <span className="font-heading font-bold text-primary">Đã chọn {selectedUserIds.length} người dùng</span>
                         </div>
                         <div className="flex items-center gap-3">
-                            <button className="flex items-center gap-2 px-4 py-2 bg-white text-error font-heading font-bold text-sm rounded-xl border border-border shadow-sm hover:bg-error-light hover:border-error transition-all" onClick={() => handleBulkStatusUpdate('banned')}>
+                            <button type="button" className="flex items-center gap-2 px-4 py-2 bg-card text-error font-heading font-bold text-sm rounded-xl border border-border shadow-sm hover:bg-error-light hover:border-error transition-all" onClick={() => handleBulkStatusUpdate('banned')}>
                                 <Ban size={16} /> Khóa tài khoản
                             </button>
-                            <button className="flex items-center gap-2 px-4 py-2 bg-white text-success font-heading font-bold text-sm rounded-xl border border-border shadow-sm hover:bg-success-light hover:border-success transition-all" onClick={() => handleBulkStatusUpdate('active')}>
+                            <button type="button" className="flex items-center gap-2 px-4 py-2 bg-card text-success font-heading font-bold text-sm rounded-xl border border-border shadow-sm hover:bg-success-light hover:border-success transition-all" onClick={() => handleBulkStatusUpdate('active')}>
                                 <Shield size={16} /> Mở khóa
                             </button>
                         </div>

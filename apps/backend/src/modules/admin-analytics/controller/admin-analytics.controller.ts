@@ -30,7 +30,7 @@ export class AdminAnalyticsController {
   constructor(private readonly analyticsService: AdminAnalyticsService) {}
 
   @Get("dashboard")
-  @Roles("admin")
+  @Roles("ADMIN")
   @ApiOperation({
     summary: "Get dashboard summary",
     description:
@@ -54,7 +54,7 @@ export class AdminAnalyticsController {
   }
 
   @Get("dau")
-  @Roles("admin")
+  @Roles("ADMIN")
   @ApiOperation({
     summary: "Get Daily Active Users (DAU)",
     description:
@@ -85,7 +85,7 @@ export class AdminAnalyticsController {
   }
 
   @Get("session-length")
-  @Roles("admin")
+  @Roles("ADMIN")
   @ApiOperation({
     summary: "Get average session length",
     description: "Retrieve average session duration metrics over time",
@@ -115,7 +115,7 @@ export class AdminAnalyticsController {
   }
 
   @Get("content-popularity")
-  @Roles("admin")
+  @Roles("ADMIN")
   @ApiOperation({    summary: "Get content popularity rankings",
     description:
       "Retrieve most popular content with views, engagement, and completion stats",
@@ -145,7 +145,7 @@ export class AdminAnalyticsController {
   }
 
   @Get("db-stats")
-  @Roles("admin")
+  @Roles("ADMIN")
   @ApiOperation({
     summary: "Get real DB-backed platform statistics",
     description:

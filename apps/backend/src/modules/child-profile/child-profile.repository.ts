@@ -46,6 +46,7 @@ export class ChildProfileRepository {
     return this.prisma.childProfile.findMany({
       where: {
         parentId,
+        deletedAt: null,
       },
       include: {
         badges: {
@@ -73,6 +74,7 @@ export class ChildProfileRepository {
       where: {
         id: childId,
         parentId, // Ensure parent owns this profile
+        deletedAt: null,
       },
       include: {
         badges: true,
@@ -144,6 +146,7 @@ export class ChildProfileRepository {
     return this.prisma.childProfile.count({
       where: {
         parentId: parentId,
+        deletedAt: null,
       },
     });
   }
@@ -170,6 +173,7 @@ export class ChildProfileRepository {
       where: {
         id: activeChildId,
         parentId,
+        deletedAt: null,
       },
       include: {
         badges: true,

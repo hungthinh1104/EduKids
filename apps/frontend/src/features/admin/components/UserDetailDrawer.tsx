@@ -41,6 +41,7 @@ export function UserDetailDrawer({ user, onClose }: UserDetailDrawerProps) {
                             <div className="flex items-start justify-between">
                                 <SectionHeader title="Chi tiết tài khoản" />
                                 <button
+                                    type="button"
                                     onClick={onClose}
                                     className="p-2 rounded-xl bg-background border border-border hover:bg-error hover:text-white transition-colors text-body"
                                 >
@@ -112,15 +113,15 @@ export function UserDetailDrawer({ user, onClose }: UserDetailDrawerProps) {
 
                             {/* Actions */}
                             <div className="flex gap-2 pt-2">
-                                <button className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-primary-light text-primary font-heading font-bold text-sm hover:bg-primary hover:text-white transition-colors border-2 border-primary/30">
+                                <button type="button" className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-primary-light text-primary font-heading font-bold text-sm hover:bg-primary hover:text-white transition-colors border-2 border-primary/30">
                                     <Mail size={15} /> Gửi email
                                 </button>
                                 {user.status !== 'banned' ? (
-                                    <button className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-error-light text-error font-heading font-bold text-sm hover:bg-error hover:text-white transition-colors border-2 border-error/30">
+                                    <button type="button" className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-error-light text-error font-heading font-bold text-sm hover:bg-error hover:text-white transition-colors border-2 border-error/30">
                                         <Ban size={15} /> Khóa tài khoản
                                     </button>
                                 ) : (
-                                    <button className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-success-light text-success font-heading font-bold text-sm hover:bg-success hover:text-white transition-colors border-2 border-success/30">
+                                    <button type="button" className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-success-light text-success font-heading font-bold text-sm hover:bg-success hover:text-white transition-colors border-2 border-success/30">
                                         <Shield size={15} /> Mở khóa
                                     </button>
                                 )}

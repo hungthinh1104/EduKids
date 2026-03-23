@@ -42,6 +42,7 @@ export function AdminSearchBar({
           <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0 hide-scrollbar items-center">
             {filterOptions.map((opt) => (
               <button
+                type="button"
                 key={opt.value}
                 onClick={() => onStatusFilterChange(opt.value)}
                 className={`whitespace-nowrap px-4 py-2.5 rounded-xl font-medium text-sm transition-all ${

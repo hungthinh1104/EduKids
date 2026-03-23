@@ -69,10 +69,11 @@ export function VocabularyListTab({ vocabularies, topics, onEdit, onDelete }: Vo
                                         </td>
                                         <td className="px-5 py-3">
                                             <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <button className="p-1.5 rounded-lg bg-background border border-border text-body hover:bg-primary-light hover:text-primary transition-colors">
+                                                <button type="button" className="p-1.5 rounded-lg bg-background border border-border text-body hover:bg-primary-light hover:text-primary transition-colors">
                                                     <Eye size={13} />
                                                 </button>
                                                 <button
+                                                    type="button"
                                                     onClick={() => onEdit?.(v)}
                                                     className="p-1.5 rounded-lg bg-primary-light text-primary hover:bg-primary hover:text-white transition-colors"
                                                     title="Sửa từ vựng"
@@ -80,6 +81,7 @@ export function VocabularyListTab({ vocabularies, topics, onEdit, onDelete }: Vo
                                                     <Edit2 size={13} />
                                                 </button>
                                                 <button
+                                                    type="button"
                                                     onClick={() => {
                                                         if (confirm(`Bạn có chắc chắn muốn xóa từ vựng "${v.word}" không?`)) {
                                                             onDelete?.(v);

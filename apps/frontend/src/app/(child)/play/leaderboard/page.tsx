@@ -13,21 +13,21 @@ import { gamificationApi, type LeaderboardEntry } from '@/features/learning/api/
 
 const PODIUM_STYLES = [
   {
-    wrapper: 'from-warning-light via-yellow-100 to-orange-100 border-warning/40',
+    wrapper: 'from-warning-light/40 via-yellow-100/20 to-orange-100/20 border-warning/40',
     badge: 'bg-warning text-white',
     text: 'text-warning',
     icon: '👑',
     label: 'Hạng 1',
   },
   {
-    wrapper: 'from-slate-100 via-slate-50 to-white border-slate-300',
-    badge: 'bg-slate-500 text-white',
-    text: 'text-slate-600',
+    wrapper: 'from-muted/20 via-muted/10 to-card border-border',
+    badge: 'bg-muted text-white',
+    text: 'text-heading',
     icon: '🥈',
     label: 'Hạng 2',
   },
   {
-    wrapper: 'from-orange-100 via-amber-50 to-white border-orange-200',
+    wrapper: 'from-orange-100/40 via-amber-50/20 to-card border-orange-200/50',
     badge: 'bg-orange-500 text-white',
     text: 'text-orange-600',
     icon: '🥉',
@@ -113,7 +113,7 @@ export default function LeaderboardPage() {
         >
           <div className="flex items-start justify-between gap-4">
             <div>
-              <div className="inline-flex items-center gap-2 rounded-full bg-white/20 px-3 py-1 text-xs font-heading font-black">
+              <div className="inline-flex items-center gap-2 rounded-full bg-card/20 px-3 py-1 text-xs font-heading font-black">
                 <Sparkles size={14} />
                 Top học viên tuần này
               </div>
@@ -126,7 +126,7 @@ export default function LeaderboardPage() {
             </div>
 
             {currentUser && (
-              <div className="min-w-[112px] rounded-[1.5rem] bg-white/20 px-4 py-3 text-center backdrop-blur-sm">
+              <div className="min-w-[112px] rounded-[1.5rem] bg-card/20 px-4 py-3 text-center backdrop-blur-sm">
                 <Caption className="text-white/75 text-xs">Thứ hạng của bé</Caption>
                 <div className="mt-1 text-3xl font-heading font-black">#{currentUser.rank}</div>
                 <Caption className="text-white/85 text-xs">{currentUser.totalPoints.toLocaleString()} điểm</Caption>
@@ -153,19 +153,19 @@ export default function LeaderboardPage() {
               >
                 <div className="flex items-center gap-4">
                   <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-primary to-accent text-2xl font-heading font-black text-white shadow-lg">
-                    {(currentUser.childName || currentUser.nickname || child.nickname).charAt(0).toUpperCase()}
+                    {(currentUser.childName || child.nickname).charAt(0).toUpperCase()}
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
                       <Heading level={4} className="text-heading text-lg">
-                        {currentUser.childName || currentUser.nickname || child.nickname}
+                        {currentUser.childName || child.nickname}
                       </Heading>
                       <span className="rounded-full bg-primary-light px-2 py-0.5 text-[10px] font-heading font-black text-primary">
                         Bạn
                       </span>
                     </div>
                     <Caption className="text-caption text-sm">
-                      Level {currentUser.currentLevel || currentUser.level} • {currentUser.badgesEarned || 0} huy hiệu
+                      Level {currentUser.currentLevel} • {currentUser.badgesEarned || 0} huy hiệu
                     </Caption>
                     <div className="mt-3 h-2.5 rounded-full bg-background border border-border overflow-hidden">
                       <div
@@ -208,23 +208,23 @@ export default function LeaderboardPage() {
                               {style.label}
                             </div>
                             <Heading level={4} className="mt-3 text-heading text-lg">
-                              {entry.childName || entry.nickname || 'User'}
+                              {entry.childName || 'User'}
                             </Heading>
                             <Caption className="text-caption text-sm">
-                              Level {entry.currentLevel || entry.level}
+                              Level {entry.currentLevel}
                             </Caption>
                           </div>
                           <div className="text-4xl">{style.icon}</div>
                         </div>
 
                         <div className="mt-5 grid grid-cols-2 gap-3">
-                          <div className="rounded-2xl bg-white/70 px-3 py-3 text-center">
+                          <div className="rounded-2xl bg-card/70 px-3 py-3 text-center">
                             <div className={`text-xl font-heading font-black ${style.text}`}>
                               {entry.totalPoints.toLocaleString()}
                             </div>
                             <Caption className="text-[11px] text-caption">Điểm</Caption>
                           </div>
-                          <div className="rounded-2xl bg-white/70 px-3 py-3 text-center">
+                          <div className="rounded-2xl bg-card/70 px-3 py-3 text-center">
                             <div className={`text-xl font-heading font-black ${style.text}`}>
                               {entry.badgesEarned || 0}
                             </div>
@@ -268,13 +268,13 @@ export default function LeaderboardPage() {
                         </div>
 
                         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-pink-400 to-purple-500 text-lg font-heading font-black text-white">
-                          {(entry.childName || entry.nickname || 'U').charAt(0).toUpperCase()}
+                          {(entry.childName || 'U').charAt(0).toUpperCase()}
                         </div>
 
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2">
                             <Heading level={4} className="truncate text-heading text-base">
-                              {entry.childName || entry.nickname || 'User'}
+                              {entry.childName || 'User'}
                             </Heading>
                             {entry.isCurrentUser && (
                               <span className="rounded-full bg-primary px-2 py-0.5 text-[10px] font-heading font-black text-white">
@@ -283,7 +283,7 @@ export default function LeaderboardPage() {
                             )}
                           </div>
                           <Caption className="text-caption text-xs">
-                            Level {entry.currentLevel || entry.level} • {entry.badgesEarned || 0} huy hiệu
+                            Level {entry.currentLevel} • {entry.badgesEarned || 0} huy hiệu
                           </Caption>
                         </div>
 

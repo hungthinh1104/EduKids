@@ -8,7 +8,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import axios from 'axios';
 import * as z from 'zod';
 import { Heading, Body, Caption } from '@/shared/components/Typography';
-import { Mail, Lock, Loader2, AlertCircle, MoveLeft } from 'lucide-react';
+import { Mail, Lock, Loader2, AlertCircle } from 'lucide-react';
 import { authApi } from '@/features/auth/api/auth.api';
 import { useAuthStore } from '@/shared/store/auth.store';
 import { motion } from 'framer-motion';
@@ -117,12 +117,7 @@ function LoginPageContent() {
             className="w-full"
         >
             <motion.div variants={fadeInUp} className="text-center mb-8">
-                <div className="flex items-center justify-center gap-2 mb-2">
-                    <Heading level={2} className="text-3xl text-primary">Đăng Nhập</Heading>
-                    <Link href="/" className="inline-flex items-center gap-1 text-sm font-semibold text-primary hover:text-primary-dark">
-                        <MoveLeft size={16} /> Trang chủ
-                    </Link>
-                </div>
+                <Heading level={2} className="text-3xl text-primary mb-2">Đăng Nhập</Heading>
                 <Body className="text-text-heading">Chào mừng ba mẹ quay lại cùng bé!</Body>
             </motion.div>
 

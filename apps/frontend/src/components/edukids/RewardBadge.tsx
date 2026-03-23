@@ -27,7 +27,7 @@ export function RewardBadge({ className, variant = 'default', showSparkle = true
             variantClasses = 'bg-error-light text-error border-error/20';
             break;
         case 'outline':
-            variantClasses = 'bg-white text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-200';
+            variantClasses = 'bg-card text-body border-border dark:bg-card dark:text-heading';
             break;
     }
 

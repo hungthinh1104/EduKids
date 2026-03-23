@@ -555,6 +555,7 @@ model AvatarItem {
   updatedAt DateTime @updatedAt
 
   children ChildAvatarItem[]
+  purchases Purchase[]
 
   @@index([category])
   @@index([price])
@@ -844,6 +845,7 @@ model Purchase {
   updatedAt   DateTime @updatedAt
 
   child ChildProfile @relation(fields: [childId], references: [id], onDelete: Cascade)
+  item  AvatarItem   @relation(fields: [itemId], references: [id], onDelete: Cascade)
 
   @@unique([childId, itemId])
   @@index([childId])
@@ -881,25 +883,6 @@ model Media {
   @@index([mediaType, context])
   @@index([status])
   @@index([uploadedBy])
-}
-
-model ShopItem {
-  id          Int     @id @default(autoincrement())
-  name        String
-  price       Int     @default(0)
-  description String?
-  category    String? @default("GENERAL")
-  imageUrl    String?
-  rarity      String? @default("COMMON")
-  isActive    Boolean @default(true)
-  stock       Int?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([category])
-  @@index([price])
-  @@index([isActive])
 }
 
 model Recommendation {
