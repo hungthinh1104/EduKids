@@ -72,8 +72,8 @@ describe("FlashcardService", () => {
         { id: 3, text: "chim", isCorrect: false },
       ];
 
-      (flashcardRepository.getFlashcardByVocabularyId as jest.Mock).mockResolvedValue(mockVocab);
-      (flashcardRepository.generateDragDropOptions as jest.Mock).mockResolvedValue(mockOptions);
+      flashcardRepository.getFlashcardByVocabularyId.mockResolvedValue(mockVocab);
+      flashcardRepository.generateDragDropOptions.mockResolvedValue(mockOptions);
 
       const result = await service.getFlashcard(vocabularyId);
 
@@ -89,7 +89,7 @@ describe("FlashcardService", () => {
     });
 
     it("throws NotFoundException when vocabulary not found", async () => {
-      (flashcardRepository.getFlashcardByVocabularyId as jest.Mock).mockResolvedValue(null);
+      flashcardRepository.getFlashcardByVocabularyId.mockResolvedValue(null);
 
       await expect(service.getFlashcard(999)).rejects.toThrow(NotFoundException);
     });
@@ -101,8 +101,8 @@ describe("FlashcardService", () => {
         media: [],
         topicId: 1,
       };
-      (flashcardRepository.getFlashcardByVocabularyId as jest.Mock).mockResolvedValue(mockVocab);
-      (flashcardRepository.generateDragDropOptions as jest.Mock).mockResolvedValue([]);
+      flashcardRepository.getFlashcardByVocabularyId.mockResolvedValue(mockVocab);
+      flashcardRepository.generateDragDropOptions.mockResolvedValue([]);
 
       await expect(service.getFlashcard(5)).rejects.toThrow(BadRequestException);
     });
@@ -130,14 +130,14 @@ describe("FlashcardService", () => {
         { id: 3, text: "chim" },
       ];
 
-      (flashcardRepository.getFlashcardByVocabularyId as jest.Mock).mockResolvedValue(mockVocab);
-      (flashcardRepository.getOptionById as jest.Mock).mockResolvedValue(mockCorrectOption);
-      (flashcardRepository.generateDragDropOptions as jest.Mock).mockResolvedValue([
+      flashcardRepository.getFlashcardByVocabularyId.mockResolvedValue(mockVocab);
+      flashcardRepository.getOptionById.mockResolvedValue(mockCorrectOption);
+      flashcardRepository.generateDragDropOptions.mockResolvedValue([
         mockCorrectOption,
         ...mockOtherOptions,
       ]);
-      (activityRepository.create as jest.Mock).mockResolvedValue({ id: 1 });
-      (learningProgressRepository.updatePoints as jest.Mock).mockResolvedValue({
+      activityRepository.create.mockResolvedValue({ id: 1 });
+      learningProgressRepository.updatePoints.mockResolvedValue({
         totalPoints: 120,
         currentLevel: 2,
       });
@@ -173,14 +173,14 @@ describe("FlashcardService", () => {
       const mockCorrectOption = { id: 1, text: "chó", isCorrect: true };
       const mockWrongOption = { id: 2, text: "mèo", isCorrect: false };
 
-      (flashcardRepository.getFlashcardByVocabularyId as jest.Mock).mockResolvedValue(mockVocab);
-      (flashcardRepository.getOptionById as jest.Mock).mockResolvedValue(mockWrongOption);
-      (flashcardRepository.generateDragDropOptions as jest.Mock).mockResolvedValue([
+      flashcardRepository.getFlashcardByVocabularyId.mockResolvedValue(mockVocab);
+      flashcardRepository.getOptionById.mockResolvedValue(mockWrongOption);
+      flashcardRepository.generateDragDropOptions.mockResolvedValue([
         mockCorrectOption,
         mockWrongOption,
       ]);
-      (activityRepository.create as jest.Mock).mockResolvedValue({ id: 1 });
-      (learningProgressRepository.updatePoints as jest.Mock).mockResolvedValue({
+      activityRepository.create.mockResolvedValue({ id: 1 });
+      learningProgressRepository.updatePoints.mockResolvedValue({
         totalPoints: 100,
         currentLevel: 1,
       });
@@ -199,7 +199,7 @@ describe("FlashcardService", () => {
         activityType: ActivityType.DRAG_DROP,
       };
 
-      (flashcardRepository.getFlashcardByVocabularyId as jest.Mock).mockResolvedValue(null);
+      flashcardRepository.getFlashcardByVocabularyId.mockResolvedValue(null);
 
       await expect(service.submitDragDropActivity(childId, dto)).rejects.toThrow(
         NotFoundException,

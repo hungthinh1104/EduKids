@@ -66,10 +66,10 @@ describe("QuizService", () => {
         },
       ];
 
-      (quizRepository.getTopicById as jest.Mock).mockResolvedValue(mockTopic);
-      (quizRepository.getPublishedTopicQuizzes as jest.Mock).mockResolvedValue(mockQuizzes);
-      (cacheManager.get as jest.Mock).mockResolvedValue(null); // No cached quiz session
-      (prismaService.quizSession.create as jest.Mock).mockResolvedValue({
+      quizRepository.getTopicById.mockResolvedValue(mockTopic);
+      quizRepository.getPublishedTopicQuizzes.mockResolvedValue(mockQuizzes);
+      cacheManager.get.mockResolvedValue(null); // No cached quiz session
+      prismaService.quizSession.create.mockResolvedValue({
         id: "session-1",
         childId,
         topicId,
@@ -86,7 +86,7 @@ describe("QuizService", () => {
       const childId = 5;
       const dto = { topicId: 999, questionCount: 10 };
 
-      (quizRepository.getTopicById as jest.Mock).mockResolvedValue(null);
+      quizRepository.getTopicById.mockResolvedValue(null);
 
       await expect(service.startQuiz(childId, dto)).rejects.toThrow(NotFoundException);
     });
@@ -98,9 +98,9 @@ describe("QuizService", () => {
 
       const mockTopic = { id: 1, title: "Animals" };
 
-      (quizRepository.getTopicById as jest.Mock).mockResolvedValue(mockTopic);
-      (quizRepository.getPublishedTopicQuizzes as jest.Mock).mockResolvedValue([]);
-      (cacheManager.get as jest.Mock).mockResolvedValue(null);
+      quizRepository.getTopicById.mockResolvedValue(mockTopic);
+      quizRepository.getPublishedTopicQuizzes.mockResolvedValue([]);
+      cacheManager.get.mockResolvedValue(null);
 
       try {
         await service.startQuiz(childId, dto as any);
@@ -138,9 +138,9 @@ describe("QuizService", () => {
         answers: [],
       };
 
-      (cacheManager.get as jest.Mock).mockResolvedValue(JSON.stringify(mockSession));
-      (cacheManager.set as jest.Mock).mockResolvedValue(null);
-      (prismaService.activity.create as jest.Mock).mockResolvedValue({ id: 1 });
+      cacheManager.get.mockResolvedValue(JSON.stringify(mockSession));
+      cacheManager.set.mockResolvedValue(null);
+      prismaService.activity.create.mockResolvedValue({ id: 1 });
 
       const result = await service.submitAnswer(childId, dto);
 
@@ -173,9 +173,9 @@ describe("QuizService", () => {
         answers: [],
       };
 
-      (cacheManager.get as jest.Mock).mockResolvedValue(JSON.stringify(mockSession));
-      (cacheManager.set as jest.Mock).mockResolvedValue(null);
-      (prismaService.activity.create as jest.Mock).mockResolvedValue({ id: 1 });
+      cacheManager.get.mockResolvedValue(JSON.stringify(mockSession));
+      cacheManager.set.mockResolvedValue(null);
+      prismaService.activity.create.mockResolvedValue({ id: 1 });
 
       const result = await service.submitAnswer(childId, dto);
 
@@ -211,8 +211,8 @@ describe("QuizService", () => {
         startedAt: new Date(),
       };
 
-      (cacheManager.get as jest.Mock).mockResolvedValue(JSON.stringify(mockSession));
-      (prismaService.quizSession.findUnique as jest.Mock).mockResolvedValue(mockSession);
+      cacheManager.get.mockResolvedValue(JSON.stringify(mockSession));
+      prismaService.quizSession.findUnique.mockResolvedValue(mockSession);
 
       const result = await service.getQuizResults(childId, sessionId);
 
