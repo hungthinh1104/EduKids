@@ -29,8 +29,21 @@ describe("FlashcardService", () => {
       updatePoints: jest.fn(),
       getProgress: jest.fn(),
     };
-    const mockPrismaService = {
-      childProfile: { update: jest.fn() },
+    const mockPrismaService: any = {
+      childProfile: { update: jest.fn(), findUnique: jest.fn() },
+      $transaction: jest.fn(async (callback: any) => {
+        const tx: any = {
+          childProfile: { update: jest.fn(), findUnique: jest.fn() },
+          activityLog: { create: jest.fn() },
+          dragDropActivity: { create: jest.fn() },
+        };
+        tx.childProfile.update.mockResolvedValue({ totalPoints: 120 });
+        tx.activityLog.create.mockResolvedValue({ id: 1 });
+        tx.dragDropActivity.create.mockResolvedValue({ id: 1 });
+        return callback(tx);
+      }),
+      activityLog: { create: jest.fn() },
+      dragDropActivity: { create: jest.fn() },
     };
 
     const module: TestingModule = await Test.createTestingModule({

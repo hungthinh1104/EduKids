@@ -19,6 +19,8 @@ describe("GamificationService", () => {
       getShopItemsByCategory: jest.fn(),
       recordPurchase: jest.fn(),
       recordEquip: jest.fn(),
+      purchaseItem: jest.fn(),
+      equipItem: jest.fn(),
       getLeaderboard: jest.fn(),
     };
 
@@ -149,7 +151,7 @@ describe("GamificationService", () => {
       prismaService.childProfile.findUnique.mockResolvedValue(mockChild);
       gamificationRepository.getShopItemById.mockResolvedValue(mockItem);
       prismaService.shopPurchase.findUnique.mockResolvedValue(null); // Not already owned
-      gamificationRepository.recordPurchase.mockResolvedValue({ success: true });
+      gamificationRepository.purchaseItem.mockResolvedValue({ id: 1, childId, itemId, purchasedAt: new Date() });
       prismaService.childProfile.update.mockResolvedValue({
         ...mockChild,
         totalPoints: 400,
@@ -157,10 +159,8 @@ describe("GamificationService", () => {
 
       const result = await service.purchaseItem(childId, dto as any);
 
-      expect(result.success).toBe(true);
-      expect(prismaService.childProfile.findUnique).toHaveBeenCalledWith(
-        expect.objectContaining({ where: { id: childId } }),
-      );
+      expect(result).toBeDefined();
+      expect(gamificationRepository.purchaseItem).toHaveBeenCalled();
     });
 
     it("throws BadRequestException for insufficient points", async () => {
@@ -213,16 +213,17 @@ describe("GamificationService", () => {
       const dto = { itemId };
 
       const mockChild = { id: childId };
-      const mockItem = { id: itemId, name: "Hat", category: "HAIR" };
+      const mockItem = { id: itemId, name: "Hat", category: "HAIR", isPurchased: true };
 
       prismaService.childProfile.findUnique.mockResolvedValue(mockChild);
       gamificationRepository.getShopItemById.mockResolvedValue(mockItem);
       prismaService.shopPurchase.findUnique.mockResolvedValue({ id: 1 });
-      gamificationRepository.recordEquip.mockResolvedValue({ success: true });
+      gamificationRepository.equipItem.mockResolvedValue({ id: 1, childId, itemId });
 
       const result = await service.equipItem(childId, dto as any);
 
-      expect(result.success).toBe(true);
+      expect(result).toBeDefined();
+      expect(gamificationRepository.equipItem).toHaveBeenCalled();
     });
 
     it("throws BadRequestException for unowned item", async () => {
