@@ -128,7 +128,18 @@ jobs:
     if: ${{ vars.DEPLOY_TARGET == 'vm' || vars.DEPLOY_TARGET == '' }}
     environment: ${{ github.event.inputs.environment || 'production' }}
     steps:
+      - name: Validate VM SSH secrets
+        id: vm-secrets
+        run: |
+          if [ -z "${{ secrets.VM_HOST }}" ] || [ -z "${{ secrets.VM_USERNAME }}" ] || [ -z "${{ secrets.VM_SSH_PRIVATE_KEY }}" ]; then
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "⚠️ Missing VM_HOST, VM_USERNAME, or VM_SSH_PRIVATE_KEY. Skipping VM deploy."
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Deploy to VM via SSH
+        if: steps.vm-secrets.outputs.ready == 'true'
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.VM_HOST }}
@@ -217,6 +228,10 @@ jobs:
               | tail -n +4 | xargs docker rmi --force 2>/dev/null || true
 
             echo "🚀 Deploy complete: $IMAGE"
+
+      - name: VM deploy skipped summary
+        if: steps.vm-secrets.outputs.ready != 'true'
+        run: echo "⏭️ VM deploy skipped because required SSH secrets are not configured."
 
   # ─────────────────────────────────────────────
   # 2b. Deploy to Azure Container Apps (alternative)
