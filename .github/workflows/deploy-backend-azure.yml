@@ -48,7 +48,8 @@ jobs:
       - name: ESLint - Backend
         run: |
           cd apps/backend
-          npm run lint -- --format json --exit-on-fatal-error 2>&1 | grep -q "error\|Error" && exit 1 || echo "✅ ESLint passed"
+          npm run lint -- --exit-on-fatal-error
+          echo "✅ ESLint passed"
 
       - name: TypeScript Type Check - Backend
         run: |
