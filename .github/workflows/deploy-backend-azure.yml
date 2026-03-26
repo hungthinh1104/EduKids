@@ -70,7 +70,6 @@ jobs:
     name: Build & Push to Docker Hub
     runs-on: ubuntu-latest
     needs: ci-gates
-    environment: ${{ github.event.inputs.environment || 'production' }}
     outputs:
       image_tag: ${{ steps.meta.outputs.tag }}
     steps:
@@ -118,7 +117,6 @@ jobs:
     needs: build-and-push
     # Switch to deploy-container-app if using Container Apps instead
     if: ${{ vars.DEPLOY_TARGET == 'vm' || vars.DEPLOY_TARGET == '' }}
-    environment: ${{ github.event.inputs.environment || 'production' }}
     steps:
       - name: Deploy to VM via SSH
         uses: appleboy/ssh-action@v1.0.3
@@ -218,7 +216,6 @@ jobs:
     runs-on: ubuntu-latest
     needs: build-and-push
     if: ${{ vars.DEPLOY_TARGET == 'container-app' }}
-    environment: ${{ github.event.inputs.environment || 'production' }}
     steps:
       - name: Azure login
         uses: azure/login@v2
