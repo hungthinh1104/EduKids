@@ -128,7 +128,10 @@ export class ContentController {
       return await this.contentService.getTopicById(topicId, childId);
     } catch (error) {
       // UC-01 Exception: Media loading fails
-      if (error.message === "Connection is slow, try again!") {
+      if (
+        error instanceof Error &&
+        error.message === "Connection is slow, try again!"
+      ) {
         throw new HttpException(
           {
             errorCode: "MEDIA_LOAD_FAILED",

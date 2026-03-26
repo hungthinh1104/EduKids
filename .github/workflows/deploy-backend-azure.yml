@@ -43,6 +43,7 @@ jobs:
         run: |
           cd apps/backend
           npm ci
+          npm run prisma:generate
 
       - name: ESLint - Backend
         run: |

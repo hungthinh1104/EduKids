@@ -61,7 +61,9 @@ export class PreviewService {
       this.logger.log(`Preview generated successfully: ${previewId}`);
       return preview;
     } catch (error) {
-      this.logger.error(`Preview generation failed: ${error.message}`);
+      this.logger.error(
+        `Preview generation failed: ${error instanceof Error ? error.message : String(error)}`,
+      );
       // Return basic preview without watermark on error
       return {
         contentId,
@@ -331,7 +333,7 @@ export class PreviewService {
         previews.push(preview);
       } catch (error) {
         this.logger.error(
-          `Failed to generate preview for ${item.contentId}: ${error.message}`,
+          `Failed to generate preview for ${item.contentId}: ${error instanceof Error ? error.message : String(error)}`,
         );
       }
     }

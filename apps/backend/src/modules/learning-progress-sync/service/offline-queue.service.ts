@@ -59,7 +59,9 @@ export class OfflineQueueService {
       this.logger.debug(`Queued update ${queueId} for ${userId}:${deviceId}`);
       return queueId;
     } catch (error) {
-      this.logger.error(`Failed to queue update: ${error.message}`);
+      this.logger.error(
+        `Failed to queue update: ${error instanceof Error ? error.message : String(error)}`,
+      );
       throw error;
     }
   }
@@ -77,7 +79,9 @@ export class OfflineQueueService {
       const entries = await this.redis.lrange(queueKey, 0, -1);
       return entries.map((entry) => JSON.parse(entry));
     } catch (error) {
-      this.logger.error(`Failed to get queued updates: ${error.message}`);
+      this.logger.error(
+        `Failed to get queued updates: ${error instanceof Error ? error.message : String(error)}`,
+      );
       return [];
     }
   }
@@ -91,7 +95,9 @@ export class OfflineQueueService {
     try {
       return await this.redis.llen(queueKey);
     } catch (error) {
-      this.logger.error(`Failed to get queue size: ${error.message}`);
+      this.logger.error(
+        `Failed to get queue size: ${error instanceof Error ? error.message : String(error)}`,
+      );
       return 0;
     }
   }
@@ -131,7 +137,9 @@ export class OfflineQueueService {
 
       return false;
     } catch (error) {
-      this.logger.error(`Failed to mark as synced: ${error.message}`);
+      this.logger.error(
+        `Failed to mark as synced: ${error instanceof Error ? error.message : String(error)}`,
+      );
       return false;
     }
   }
@@ -192,7 +200,9 @@ export class OfflineQueueService {
 
       return false;
     } catch (error) {
-      this.logger.error(`Failed to mark as failed: ${error.message}`);
+      this.logger.error(
+        `Failed to mark as failed: ${error instanceof Error ? error.message : String(error)}`,
+      );
       return false;
     }
   }
@@ -229,7 +239,9 @@ export class OfflineQueueService {
           return false;
         });
     } catch (error) {
-      this.logger.error(`Failed to get retryable updates: ${error.message}`);
+      this.logger.error(
+        `Failed to get retryable updates: ${error instanceof Error ? error.message : String(error)}`,
+      );
       return [];
     }
   }
@@ -245,7 +257,9 @@ export class OfflineQueueService {
       this.logger.log(`Cleared queue for ${userId}:${deviceId}`);
       return true;
     } catch (error) {
-      this.logger.error(`Failed to clear queue: ${error.message}`);
+      this.logger.error(
+        `Failed to clear queue: ${error instanceof Error ? error.message : String(error)}`,
+      );
       return false;
     }
   }
@@ -273,7 +287,9 @@ export class OfflineQueueService {
       await this.redis.ltrim(auditKey, 0, 999);
       await this.redis.expire(auditKey, 30 * 86400); // 30 days
     } catch (error) {
-      this.logger.error(`Failed to record synced update: ${error.message}`);
+      this.logger.error(
+        `Failed to record synced update: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
   }
 
@@ -300,7 +316,9 @@ export class OfflineQueueService {
       await this.redis.ltrim(dlqKey, 0, 99);
       await this.redis.expire(dlqKey, 7 * 86400); // 7 days
     } catch (error) {
-      this.logger.error(`Failed to record failed update: ${error.message}`);
+      this.logger.error(
+        `Failed to record failed update: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
   }
 
@@ -317,7 +335,9 @@ export class OfflineQueueService {
       const items = await this.redis.lrange(dlqKey, 0, -1);
       return items.map((item) => JSON.parse(item));
     } catch (error) {
-      this.logger.error(`Failed to get DLQ items: ${error.message}`);
+      this.logger.error(
+        `Failed to get DLQ items: ${error instanceof Error ? error.message : String(error)}`,
+      );
       return [];
     }
   }
@@ -363,7 +383,9 @@ export class OfflineQueueService {
         oldestUpdate: oldestTime,
       };
     } catch (error) {
-      this.logger.error(`Failed to get queue stats: ${error.message}`);
+      this.logger.error(
+        `Failed to get queue stats: ${error instanceof Error ? error.message : String(error)}`,
+      );
       return {
         queueSize: 0,
         pendingUpdates: 0,

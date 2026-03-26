@@ -39,7 +39,9 @@ export class RedisProgressCacheService {
       );
       return true;
     } catch (error) {
-      this.logger.error(`Failed to cache progress update: ${error.message}`);
+      this.logger.error(
+        `Failed to cache progress update: ${error instanceof Error ? error.message : String(error)}`,
+      );
       return false;
     }
   }
@@ -64,7 +66,9 @@ export class RedisProgressCacheService {
         value: JSON.parse(parsed.value),
       };
     } catch (error) {
-      this.logger.error(`Failed to get latest progress: ${error.message}`);
+      this.logger.error(
+        `Failed to get latest progress: ${error instanceof Error ? error.message : String(error)}`,
+      );
       return null;
     }
   }
@@ -119,7 +123,9 @@ export class RedisProgressCacheService {
 
       return true;
     } catch (error) {
-      this.logger.error(`Failed to register device session: ${error.message}`);
+      this.logger.error(
+        `Failed to register device session: ${error instanceof Error ? error.message : String(error)}`,
+      );
       return false;
     }
   }
@@ -164,7 +170,9 @@ export class RedisProgressCacheService {
 
       return true;
     } catch (error) {
-      this.logger.error(`Failed to mark device online: ${error.message}`);
+      this.logger.error(
+        `Failed to mark device online: ${error instanceof Error ? error.message : String(error)}`,
+      );
       return false;
     }
   }
@@ -185,7 +193,9 @@ export class RedisProgressCacheService {
       await this.redis.set(key, JSON.stringify(session));
       return true;
     } catch (error) {
-      this.logger.error(`Failed to mark device offline: ${error.message}`);
+      this.logger.error(
+        `Failed to mark device offline: ${error instanceof Error ? error.message : String(error)}`,
+      );
       return false;
     }
   }
@@ -250,7 +260,9 @@ export class RedisProgressCacheService {
       await this.redis.expire(key, this.retentionDays * 86400);
       return true;
     } catch (error) {
-      this.logger.error(`Failed to record sync event: ${error.message}`);
+      this.logger.error(
+        `Failed to record sync event: ${error instanceof Error ? error.message : String(error)}`,
+      );
       return false;
     }
   }
@@ -265,7 +277,9 @@ export class RedisProgressCacheService {
       const events = await this.redis.lrange(key, 0, limit - 1);
       return events.map((e) => JSON.parse(e));
     } catch (error) {
-      this.logger.error(`Failed to get sync events: ${error.message}`);
+      this.logger.error(
+        `Failed to get sync events: ${error instanceof Error ? error.message : String(error)}`,
+      );
       return [];
     }
   }
@@ -291,7 +305,9 @@ export class RedisProgressCacheService {
       await this.redis.expire(key, this.retentionDays * 86400);
       return true;
     } catch (error) {
-      this.logger.error(`Failed to record conflict: ${error.message}`);
+      this.logger.error(
+        `Failed to record conflict: ${error instanceof Error ? error.message : String(error)}`,
+      );
       return false;
     }
   }
@@ -321,7 +337,9 @@ export class RedisProgressCacheService {
 
       return result;
     } catch (error) {
-      this.logger.error(`Failed to get conflicts: ${error.message}`);
+      this.logger.error(
+        `Failed to get conflicts: ${error instanceof Error ? error.message : String(error)}`,
+      );
       return [];
     }
   }
@@ -344,7 +362,9 @@ export class RedisProgressCacheService {
       await this.redis.publish(channel, JSON.stringify(message));
       return true;
     } catch (error) {
-      this.logger.error(`Failed to publish sync update: ${error.message}`);
+      this.logger.error(
+        `Failed to publish sync update: ${error instanceof Error ? error.message : String(error)}`,
+      );
       return false;
     }
   }
@@ -361,7 +381,9 @@ export class RedisProgressCacheService {
       this.logger.debug(`Cleanup checked ${keys.length} progress keys`);
       return cleanedCount;
     } catch (error) {
-      this.logger.error(`Cleanup error: ${error.message}`);
+      this.logger.error(
+        `Cleanup error: ${error instanceof Error ? error.message : String(error)}`,
+      );
       return 0;
     }
   }
@@ -401,7 +423,9 @@ export class RedisProgressCacheService {
         activeSessions: sessionKeys.length,
       };
     } catch (error) {
-      this.logger.error(`Failed to get cache stats: ${error.message}`);
+      this.logger.error(
+        `Failed to get cache stats: ${error instanceof Error ? error.message : String(error)}`,
+      );
       return {
         totalKeys: 0,
         memoryUsage: "unknown",

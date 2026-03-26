@@ -151,7 +151,7 @@ export class VocabularyReviewService {
       } catch (error) {
         results.push({
           vocabularyId: review.vocabularyId,
-          error: error.message,
+          error: error instanceof Error ? error.message : String(error),
         });
       }
     }

@@ -150,7 +150,7 @@ export class RecommendationController {
         dto.parentNotes,
       );
     } catch (error) {
-      if (error.message.includes('not found')) {
+      if (error instanceof Error && error.message.includes('not found')) {
         throw new NotFoundException('Recommendation not found');
       }
       throw error;

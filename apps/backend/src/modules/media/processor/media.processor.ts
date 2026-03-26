@@ -81,7 +81,7 @@ export class MediaProcessor {
 
       // Update status to failed
       await this.mediaRepository.updateMediaStatus(mediaId, ProcessingStatus.FAILED, {
-        errorMessage: error.message || 'Unknown processing error',
+        errorMessage: error instanceof Error ? error.message : 'Unknown processing error',
       });
 
       // Clean up temp file

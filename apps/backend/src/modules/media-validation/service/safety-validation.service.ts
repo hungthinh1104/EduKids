@@ -133,7 +133,9 @@ export class SafetyValidationService {
         `Image validation found ${safetyFlags.length} safetyFlags for ${contentId}`,
       );
     } catch (error) {
-      this.logger.error(`Image validation error: ${error.message}`);
+      this.logger.error(
+        `Image validation error: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
 
     return safetyFlags;
@@ -167,7 +169,9 @@ export class SafetyValidationService {
         `Video validation found ${safetyFlags.length} safetyFlags for ${contentId}`,
       );
     } catch (error) {
-      this.logger.error(`Video validation error: ${error.message}`);
+      this.logger.error(
+        `Video validation error: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
 
     return safetyFlags;
@@ -195,7 +199,9 @@ export class SafetyValidationService {
         `Audio validation found ${safetyFlags.length} safetyFlags for ${contentId}`,
       );
     } catch (error) {
-      this.logger.error(`Audio validation error: ${error.message}`);
+      this.logger.error(
+        `Audio validation error: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
 
     return safetyFlags;

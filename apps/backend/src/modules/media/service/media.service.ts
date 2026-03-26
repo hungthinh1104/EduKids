@@ -191,7 +191,7 @@ export class MediaService {
       );
       this.logger.log(`Media processing queued for ${media.id}`);
     } catch (error) {
-      this.logger.warn(`Failed to queue media ${media.id}: ${error.message}`);
+      this.logger.warn(`Failed to queue media ${media.id}: ${error instanceof Error ? error.message : String(error)}`);
       // Don't fail the upload if queueing fails - file is already in Cloudinary
       // Mark as completed since Cloudinary already has the optimized version from eager
       await this.mediaRepository.updateMediaStatus(media.id, ProcessingStatus.COMPLETED);

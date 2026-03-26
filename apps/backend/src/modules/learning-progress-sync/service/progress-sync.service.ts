@@ -169,7 +169,9 @@ export class ProgressSyncService {
 
       return syncState;
     } catch (error) {
-      this.logger.error(`Error processing update: ${error.message}`);
+      this.logger.error(
+        `Error processing update: ${error instanceof Error ? error.message : String(error)}`,
+      );
 
       // Queue failed update
       try {
@@ -179,7 +181,9 @@ export class ProgressSyncService {
           update,
         );
       } catch (queueError) {
-        this.logger.error(`Failed to queue update: ${queueError.message}`);
+        this.logger.error(
+          `Failed to queue update: ${queueError instanceof Error ? queueError.message : String(queueError)}`,
+        );
       }
 
       return {
@@ -188,7 +192,7 @@ export class ProgressSyncService {
         syncTimestamp: Date.now(),
         clientTimestamp: update.clientTimestamp || update.timestamp,
         syncStatus: "FAILED",
-        message: error.message,
+        message: error instanceof Error ? error.message : String(error),
       };
     }
   }
@@ -246,7 +250,9 @@ export class ProgressSyncService {
             );
           }
         } catch (error) {
-          this.logger.error(`Failed to sync queued update: ${error.message}`);
+          this.logger.error(
+            `Failed to sync queued update: ${error instanceof Error ? error.message : String(error)}`,
+          );
           stats.failed++;
           await this.offlineQueue.markAsFailed(userId, deviceId, entry.queueId);
         }
@@ -261,7 +267,9 @@ export class ProgressSyncService {
 
       return stats;
     } catch (error) {
-      this.logger.error(`Offline sync failed: ${error.message}`);
+      this.logger.error(
+        `Offline sync failed: ${error instanceof Error ? error.message : String(error)}`,
+      );
       return stats;
     }
   }
@@ -302,7 +310,9 @@ export class ProgressSyncService {
         `Broadcasted update to ${broadcastDevices.length} devices for ${update.userId}`,
       );
     } catch (error) {
-      this.logger.error(`Failed to broadcast: ${error.message}`);
+      this.logger.error(
+        `Failed to broadcast: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
 
     return broadcastDevices;
@@ -348,7 +358,9 @@ export class ProgressSyncService {
 
       return null;
     } catch (error) {
-      this.logger.error(`Failed to get current progress: ${error.message}`);
+      this.logger.error(
+        `Failed to get current progress: ${error instanceof Error ? error.message : String(error)}`,
+      );
       return null;
     }
   }
@@ -403,9 +415,7 @@ export class ProgressSyncService {
             const pct =
               update.score.percentageScore ??
               (update.score.maxScore > 0
-                ? Math.round(
-                    (update.score.score / update.score.maxScore) * 100,
-                  )
+                ? Math.round((update.score.score / update.score.maxScore) * 100)
                 : 0);
             await this.prisma.userProgress.upsert({
               where: {
@@ -440,7 +450,9 @@ export class ProgressSyncService {
 
       return true;
     } catch (error) {
-      this.logger.error(`Failed to apply update: ${error.message}`);
+      this.logger.error(
+        `Failed to apply update: ${error instanceof Error ? error.message : String(error)}`,
+      );
       return false;
     }
   }
@@ -551,7 +563,9 @@ export class ProgressSyncService {
         conflictRate: (conflictCount / total) * 100,
       };
     } catch (error) {
-      this.logger.error(`Failed to get metrics: ${error.message}`);
+      this.logger.error(
+        `Failed to get metrics: ${error instanceof Error ? error.message : String(error)}`,
+      );
       return {
         averageLatency: 0,
         successRate: 0,

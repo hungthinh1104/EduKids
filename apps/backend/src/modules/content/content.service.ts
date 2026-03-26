@@ -54,7 +54,9 @@ export class ContentService {
             vocabularyCount > 0
               ? Math.round((completedCount / vocabularyCount) * 100)
               : 0;
-          const hasVideo = await this.topicRepository.hasVideoByTopicId(topic.id);
+          const hasVideo = await this.topicRepository.hasVideoByTopicId(
+            topic.id,
+          );
           return {
             ...topic,
             vocabularyCount,
@@ -75,8 +77,8 @@ export class ContentService {
       };
     } catch (error) {
       this.logger.error(
-        `Failed to fetch paginated topics: ${error.message}`,
-        error.stack,
+        `Failed to fetch paginated topics: ${error instanceof Error ? error.message : String(error)}`,
+        error instanceof Error ? error.stack : undefined,
       );
       throw error;
     }
@@ -107,8 +109,8 @@ export class ContentService {
       };
     } catch (error) {
       this.logger.error(
-        `Failed to fetch topics: ${error.message}`,
-        error.stack,
+        `Failed to fetch topics: ${error instanceof Error ? error.message : String(error)}`,
+        error instanceof Error ? error.stack : undefined,
       );
       throw error;
     }
@@ -186,8 +188,8 @@ export class ContentService {
       };
     } catch (error) {
       this.logger.error(
-        `Failed to fetch topic ${topicId} for child ${childId}: ${error.message}`,
-        error.stack,
+        `Failed to fetch topic ${topicId} for child ${childId}: ${error instanceof Error ? error.message : String(error)}`,
+        error instanceof Error ? error.stack : undefined,
       );
 
       // UC-01 Exception: Media loading fails
