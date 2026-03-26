@@ -37,30 +37,27 @@ jobs:
         with:
           node-version: "18"
           cache: "npm"
+          cache-dependency-path: apps/backend/package-lock.json
 
       - name: Install dependencies
         run: |
           cd apps/backend
           npm ci
-          cd ../../
 
       - name: ESLint - Backend
         run: |
           cd apps/backend
           npm run lint -- --format json --exit-on-fatal-error 2>&1 | grep -q "error\|Error" && exit 1 || echo "✅ ESLint passed"
-          cd ../../
 
       - name: TypeScript Type Check - Backend
         run: |
           cd apps/backend
           npx tsc --noEmit --strict
-          cd ../../
 
       - name: Prisma Schema Validate
         run: |
           cd apps/backend
           npx prisma validate
-          cd ../../
 
       - name: ✅ All CI gates passed
         run: echo "Lint, TypeScript, and Prisma validation successful"
