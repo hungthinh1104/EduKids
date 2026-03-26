@@ -1,29 +1,31 @@
-FROM node:20-alpine AS deps-dev
+FROM node:22-alpine AS base
 WORKDIR /app
+RUN apk add --no-cache python3 make g++ dumb-init
 COPY package*.json ./
+
+FROM base AS deps-dev
 RUN npm ci --prefer-offline --no-audit --legacy-peer-deps
 
-FROM node:20-alpine AS deps-prod
-WORKDIR /app
-COPY package*.json ./
+FROM base AS deps-prod
 RUN npm ci --omit=dev --prefer-offline --no-audit --legacy-peer-deps && npm cache clean --force
 
-FROM node:20-alpine AS builder
-WORKDIR /app
+FROM base AS prisma-gen
 COPY --from=deps-dev /app/node_modules ./node_modules
-COPY package*.json ./
 COPY prisma.config.ts ./
 COPY prisma ./prisma
+RUN npx prisma generate
+
+FROM base AS builder
+COPY --from=prisma-gen /app/node_modules ./node_modules
 COPY tsconfig*.json ./
 COPY nest-cli.json ./
 COPY src ./src
-RUN npx prisma generate
 RUN npm run build
 
-FROM node:20-alpine AS runtime
+FROM node:22-alpine AS runtime
 
 LABEL maintainer="EduKids Team"
-LABEL version="1.0.0"
+LABEL version="2.0.0"
 LABEL description="EduKids Backend API - NestJS + Prisma"
 
 WORKDIR /app
@@ -34,17 +36,19 @@ RUN apk add --no-cache dumb-init && \
 
 ENV NODE_ENV=production
 ENV PORT=3001
+ENV NODE_OPTIONS="--enable-source-maps --max-old-space-size=512"
 
-# Production dependencies only
+# Copy production dependencies
 COPY --from=deps-prod --chown=nodejs:nodejs /app/node_modules ./node_modules
 COPY --chown=nodejs:nodejs package*.json ./
 COPY --chown=nodejs:nodejs prisma.config.ts ./
 
-# Prisma schema + generated artifacts needed at runtime
+# Copy Prisma schema + pre-generated types
 COPY --chown=nodejs:nodejs prisma ./prisma
-COPY --from=builder --chown=nodejs:nodejs /app/node_modules/.prisma ./node_modules/.prisma
-COPY --from=builder --chown=nodejs:nodejs /app/node_modules/@prisma ./node_modules/@prisma
+COPY --from=prisma-gen --chown=nodejs:nodejs /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=prisma-gen --chown=nodejs:nodejs /app/node_modules/@prisma ./node_modules/@prisma
 
+# Copy compiled application
 COPY --from=builder --chown=nodejs:nodejs /app/dist ./dist
 
 USER nodejs
