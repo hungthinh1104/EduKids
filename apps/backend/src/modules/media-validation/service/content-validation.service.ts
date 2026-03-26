@@ -194,9 +194,8 @@ export class ContentValidationService {
   async getValidationResult(
     validationId: string,
   ): Promise<ContentValidationResponseDto | null> {
-    const result = await this.validationRepository.findValidationById(
-      validationId,
-    );
+    const result =
+      await this.validationRepository.findValidationById(validationId);
 
     if (!result) return null;
 

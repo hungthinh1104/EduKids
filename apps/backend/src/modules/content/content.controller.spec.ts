@@ -31,7 +31,11 @@ describe("ContentController", () => {
     const req = { user: { role: "LEARNER", childId: 7 } };
     const result = await controller.getTopics(1, 20, req as any);
 
-    expect(contentServiceMock.getTopicsPaginated).toHaveBeenCalledWith(1, 20, 7);
+    expect(contentServiceMock.getTopicsPaginated).toHaveBeenCalledWith(
+      1,
+      20,
+      7,
+    );
     expect(result).toEqual(expected);
   });
 
@@ -51,15 +55,15 @@ describe("ContentController", () => {
   });
 
   it("getTopicById throws FORBIDDEN when childId is missing", async () => {
-    await expect(controller.getTopicById(1, { user: {} } as any)).rejects.toThrow(
-      HttpException,
-    );
+    await expect(
+      controller.getTopicById(1, { user: {} } as any),
+    ).rejects.toThrow(HttpException);
 
-    await expect(controller.getTopicById(1, { user: {} } as any)).rejects.toMatchObject(
-      {
-        status: HttpStatus.FORBIDDEN,
-      },
-    );
+    await expect(
+      controller.getTopicById(1, { user: {} } as any),
+    ).rejects.toMatchObject({
+      status: HttpStatus.FORBIDDEN,
+    });
   });
 
   it("getTopicById maps media loading error to internal server error", async () => {

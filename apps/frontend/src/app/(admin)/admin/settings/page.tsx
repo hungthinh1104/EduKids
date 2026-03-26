@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { LogOut, Shield, User, Bell } from 'lucide-react';
@@ -32,6 +32,28 @@ export default function AdminSettingsPage() {
     const user = useAuthStore((state) => state.user);
     const [notifications, setNotifications] = useState(true);
 
+    useEffect(() => {
+        try {
+            const saved = localStorage.getItem('edukids_admin_settings');
+            if (!saved) return;
+            const parsed = JSON.parse(saved) as { notifications?: boolean };
+            if (typeof parsed.notifications === 'boolean') {
+                setNotifications(parsed.notifications);
+            }
+        } catch {
+            // ignore
+        }
+    }, []);
+
+    const saveSettings = (patch: { notifications?: boolean }) => {
+        try {
+            const prev = JSON.parse(localStorage.getItem('edukids_admin_settings') ?? '{}') as Record<string, unknown>;
+            localStorage.setItem('edukids_admin_settings', JSON.stringify({ ...prev, ...patch }));
+        } catch {
+            // ignore
+        }
+    };
+
     const handleLogout = async () => {
         try {
             await authApi.logout();
@@ -41,6 +63,11 @@ export default function AdminSettingsPage() {
             logout();
             router.push('/login');
         }
+    };
+
+    const handleNotificationsChange = (next: boolean) => {
+        setNotifications(next);
+        saveSettings({ notifications: next });
     };
 
     return (
@@ -89,7 +116,7 @@ export default function AdminSettingsPage() {
                             <input
                                 type="checkbox"
                                 checked={notifications}
-                                onChange={(e) => setNotifications(e.target.checked)}
+                                onChange={(e) => handleNotificationsChange(e.target.checked)}
                                 className="w-10 h-6 rounded-full appearance-none cursor-pointer transition-colors relative bg-slate-300 checked:bg-primary"
                             />
                         </SettingRow>

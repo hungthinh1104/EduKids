@@ -424,7 +424,10 @@ export class GamificationRepository {
     });
   }
 
-  async getAvatarPreviewForChild(childId: number, fallbackAvatar?: string | null) {
+  async getAvatarPreviewForChild(
+    childId: number,
+    fallbackAvatar?: string | null,
+  ) {
     await ensureDefaultAvatarCatalog(this.prisma);
 
     const equippedItems = await this.prisma.childAvatarItem.findMany({

@@ -138,7 +138,8 @@ export class MailTemplateService {
       `,
       ctaLabel: "Đặt lại mật khẩu",
       ctaUrl: params.resetUrl,
-      footerNote: "Vì lý do bảo mật, vui lòng không chia sẻ liên kết này với người khác.",
+      footerNote:
+        "Vì lý do bảo mật, vui lòng không chia sẻ liên kết này với người khác.",
     });
 
     const text = [
@@ -171,8 +172,11 @@ export class MailTemplateService {
       : "Xin chào,";
     const child: ReportChildSummaryDto | undefined = params.report.children[0];
     const childName = child?.childName || params.childName;
-    const deliveryChannel = params.report.deliveryChannel || DeliveryChannel.EMAIL;
-    const generatedDate = new Date(params.report.generatedAt).toLocaleDateString("vi-VN");
+    const deliveryChannel =
+      params.report.deliveryChannel || DeliveryChannel.EMAIL;
+    const generatedDate = new Date(
+      params.report.generatedAt,
+    ).toLocaleDateString("vi-VN");
 
     const statCard = (label: string, value: string) => `
       <td style="width: 50%; padding: 0 6px 12px;">
@@ -220,7 +224,9 @@ export class MailTemplateService {
       `,
       ctaLabel: "Xem thêm trên EduKids",
       ctaUrl: `${frontendBaseUrl}/reports`,
-      footerNote: child?.aiInsight || "Tiếp tục duy trì nhịp học đều đặn để bé giữ phong độ nhé.",
+      footerNote:
+        child?.aiInsight ||
+        "Tiếp tục duy trì nhịp học đều đặn để bé giữ phong độ nhé.",
     });
 
     const text = [

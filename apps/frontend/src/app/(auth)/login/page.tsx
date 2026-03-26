@@ -118,7 +118,7 @@ function LoginPageContent() {
         >
             <motion.div variants={fadeInUp} className="text-center mb-8">
                 <Heading level={2} className="text-3xl text-primary mb-2">Đăng Nhập</Heading>
-                <Body className="text-text-heading">Chào mừng ba mẹ quay lại cùng bé!</Body>
+                <Body className="text-heading">Chào mừng ba mẹ quay lại cùng bé!</Body>
             </motion.div>
 
             {globalError && (
@@ -131,9 +131,9 @@ function LoginPageContent() {
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
                 {/* Email Field */}
                 <motion.div variants={fadeInUp} className="space-y-2 group">
-                    <label className="text-sm font-bold text-text-heading ml-1 block">Email</label>
+                    <label className="text-sm font-bold text-heading ml-1 block">Email</label>
                     <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-text-heading">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-heading">
                             <Mail size={18} />
                         </div>
                         <input
@@ -152,13 +152,13 @@ function LoginPageContent() {
                 {/* Password Field */}
                 <motion.div variants={fadeInUp} className="space-y-2 group">
                     <div className="flex justify-between items-center ml-1">
-                        <label className="text-sm font-bold text-text-heading block">Mật khẩu</label>
+                        <label className="text-sm font-bold text-heading block">Mật khẩu</label>
                         <Link href="/forgot-password" className="text-sm font-semibold text-primary hover:text-primary-dark transition-colors">
                             Quên mật khẩu?
                         </Link>
                     </div>
                     <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-text-heading">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-heading">
                             <Lock size={18} />
                         </div>
                         <input

@@ -75,7 +75,10 @@ export class QuizRepository {
     ).length;
     const accuracyRate = (correctCount / recentQuizzes.length) * 100;
 
-    const recentWindow = recentQuizzes.slice(0, Math.min(10, recentQuizzes.length));
+    const recentWindow = recentQuizzes.slice(
+      0,
+      Math.min(10, recentQuizzes.length),
+    );
     const recentIncorrect = recentWindow.filter(
       (quiz) =>
         (quiz.metadata as { isCorrect?: unknown } | null)?.isCorrect !== true,

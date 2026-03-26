@@ -162,7 +162,9 @@ describe("AuthService - register", () => {
       refreshToken: "refresh-token",
     };
 
-    childProfileServiceMock.switchProfile.mockImplementation(async () => expected);
+    childProfileServiceMock.switchProfile.mockImplementation(
+      async () => expected,
+    );
 
     const result = await service.switchProfile(1, 2);
 

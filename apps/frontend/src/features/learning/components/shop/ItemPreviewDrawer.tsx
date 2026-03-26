@@ -1,4 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
+import Image from 'next/image';
 import { Check, Wand2, ShoppingCart } from 'lucide-react';
 import { Heading, Caption } from '@/shared/components/Typography';
 import { ShopItem } from '@/features/learning/api/gamification.api';
@@ -32,7 +33,7 @@ export function ItemPreviewDrawer({
                         <div className="flex items-center gap-5 mb-6">
                             <div className="w-20 h-20 flex items-center justify-center rounded-2xl bg-background border border-border overflow-hidden">
                                 {previewItem.imageUrl ? (
-                                    <img src={previewItem.imageUrl} alt={previewItem.name} className="w-full h-full object-contain" />
+                                    <Image src={previewItem.imageUrl} alt={previewItem.name} width={80} height={80} className="w-full h-full object-contain" />
                                 ) : (
                                     <span className="text-5xl">🛍️</span>
                                 )}

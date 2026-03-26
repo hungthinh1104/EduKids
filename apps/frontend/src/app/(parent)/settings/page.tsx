@@ -274,12 +274,12 @@ export default function SettingsPage() {
                     />
                 </div>
                 <div className="flex-1 text-white min-w-0">
-                    <Heading level={3} className="text-white text-lg md:text-xl mb-0.5 line-clamp-1">
+                    <Heading level={3} color="textInverse" className="text-lg md:text-xl mb-0.5 line-clamp-1">
                         {user?.firstName
                             ? `${user.firstName} ${user.lastName ?? ''}`.trim()
                             : user?.email?.split('@')[0] || 'Phụ huynh'}
                     </Heading>
-                    <Caption className="text-white/80 text-xs md:text-sm truncate">{user?.email || 'parent@example.com'}</Caption>
+                    <Caption color="textInverse" className="text-xs md:text-sm truncate text-white/80">{user?.email || 'parent@example.com'}</Caption>
                     <div className="mt-2 inline-flex items-center gap-1.5 bg-card/20 px-2.5 md:px-3 py-1 rounded-full text-[10px] md:text-xs font-heading font-black backdrop-blur-sm">
                         ⭐ Premium đến 31/12/2026
                     </div>
@@ -387,7 +387,9 @@ export default function SettingsPage() {
                                         </div>
 
                                         <SettingRow icon={<Sliders size={14} className="md:w-4 md:h-4" />} label="Độ khó học tập" desc="Điều chỉnh SRS">
-                                            <ChevronRight size={14} className="md:w-4 md:h-4 text-caption flex-shrink-0" />
+                                            <span className="inline-flex items-center gap-1 text-[10px] md:text-xs font-heading font-bold px-2 py-1 rounded-full bg-warning-light text-warning flex-shrink-0">
+                                                Sắp hỗ trợ
+                                            </span>
                                         </SettingRow>
                                         {selectedChild && (
                                             <SettingRow 
@@ -436,15 +438,24 @@ export default function SettingsPage() {
                                             </li>
                                         ))}
                                     </ul>
-                                    {!plan.current && (
-                                        <KidButton variant="default" className="w-full mt-3 md:mt-4 text-xs md:text-sm py-1.5 md:py-2">Nâng cấp</KidButton>
-                                    )}
+                                        {!plan.current && (
+                                            <KidButton
+                                                type="button"
+                                                variant="default"
+                                                className="w-full mt-3 md:mt-4 text-xs md:text-sm py-1.5 md:py-2"
+                                                onClick={() => setActiveTab('security')}
+                                            >
+                                                Nâng cấp
+                                            </KidButton>
+                                        )}
                                 </motion.div>
                             ))}
 
                             <div className="bg-card border-2 border-border rounded-lg md:rounded-2xl px-3 md:px-5">
                                 <SettingRow icon={<CreditCard size={14} className="md:w-4 md:h-4" />} label="Lịch sử thanh toán" desc="Xem hóa đơn">
-                                    <ChevronRight size={14} className="md:w-4 md:h-4 text-caption flex-shrink-0" />
+                                    <span className="inline-flex items-center gap-1 text-[10px] md:text-xs font-heading font-bold px-2 py-1 rounded-full bg-background border border-border text-caption flex-shrink-0">
+                                        Chưa có
+                                    </span>
                                 </SettingRow>
                             </div>
                         </div>

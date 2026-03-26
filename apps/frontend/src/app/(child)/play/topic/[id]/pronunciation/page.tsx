@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useParams } from 'next/navigation';
 import { Mic, Volume2, Star, RotateCcw, ChevronRight } from 'lucide-react';
 import { Heading, Body, Caption } from '@/shared/components/Typography';
@@ -277,7 +278,7 @@ export default function PronunciationPage() {
                                 <motion.div className="bg-card border-2 border-accent/60 rounded-[2.5rem] p-6 md:p-8 flex flex-col items-center gap-5 shadow-xl shadow-accent/10 text-center">
                                     <motion.div animate={{ scale: [1, 1.06, 1] }} transition={{ duration: 3, repeat: Infinity }} className="flex items-center justify-center w-36 h-36">
                                         {vocab.imageUrl ? (
-                                            <img src={vocab.imageUrl} alt={vocab.word} className="w-full h-full object-contain" />
+                                            <Image src={vocab.imageUrl} alt={vocab.word} width={144} height={144} className="w-full h-full object-contain" />
                                         ) : (
                                             <span className="text-8xl">🔊</span>
                                         )}

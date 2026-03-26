@@ -45,7 +45,10 @@ describe("ValidationController", () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [ValidationController],
       providers: [
-        { provide: ContentValidationService, useValue: contentValidationServiceMock },
+        {
+          provide: ContentValidationService,
+          useValue: contentValidationServiceMock,
+        },
         { provide: ApprovalService, useValue: approvalServiceMock },
         { provide: PreviewService, useValue: previewServiceMock },
         { provide: ValidationRepository, useValue: validationRepositoryMock },
@@ -64,19 +67,25 @@ describe("ValidationController", () => {
   it("validateContent delegates when actor is valid", async () => {
     const request = { contentId: "c1", contentText: "hello" };
     const expected = { validationId: "v1" };
-    (contentValidationServiceMock.validateContent as any).mockResolvedValue(expected);
+    (contentValidationServiceMock.validateContent as any).mockResolvedValue(
+      expected,
+    );
 
-    const result = await controller.validateContent(request as any, { userId: 7 } as any);
+    const result = await controller.validateContent(
+      request as any,
+      { userId: 7 } as any,
+    );
 
-    expect(contentValidationServiceMock.validateContent).toHaveBeenCalledWith(request);
+    expect(contentValidationServiceMock.validateContent).toHaveBeenCalledWith(
+      request,
+    );
     expect(result).toEqual(expected);
   });
 
   it("batchValidateContent returns wrapped batch response", async () => {
-    (contentValidationServiceMock.batchValidateContent as any).mockResolvedValue([
-      { isApproved: true },
-      { isApproved: false },
-    ]);
+    (
+      contentValidationServiceMock.batchValidateContent as any
+    ).mockResolvedValue([{ isApproved: true }, { isApproved: false }]);
 
     const result = await controller.batchValidateContent(
       { items: [{ contentId: "1" }, { contentId: "2" }] } as any,
@@ -105,28 +114,29 @@ describe("ValidationController", () => {
   });
 
   it("getContentValidationHistory parses limit and delegates", async () => {
-    (contentValidationServiceMock.getContentValidationHistory as any).mockResolvedValue([]);
+    (
+      contentValidationServiceMock.getContentValidationHistory as any
+    ).mockResolvedValue([]);
 
     await controller.getContentValidationHistory("c-5", "25");
     await controller.getContentValidationHistory("c-5", undefined);
 
-    expect(contentValidationServiceMock.getContentValidationHistory).toHaveBeenNthCalledWith(
-      1,
-      "c-5",
-      25,
-    );
-    expect(contentValidationServiceMock.getContentValidationHistory).toHaveBeenNthCalledWith(
-      2,
-      "c-5",
-      10,
-    );
+    expect(
+      contentValidationServiceMock.getContentValidationHistory,
+    ).toHaveBeenNthCalledWith(1, "c-5", 25);
+    expect(
+      contentValidationServiceMock.getContentValidationHistory,
+    ).toHaveBeenNthCalledWith(2, "c-5", 10);
   });
 
   it("healthCheck returns service health payload", async () => {
     const result = await controller.healthCheck();
 
     expect(result).toEqual(
-      expect.objectContaining({ status: "healthy", service: "media-validation" }),
+      expect.objectContaining({
+        status: "healthy",
+        service: "media-validation",
+      }),
     );
   });
 });

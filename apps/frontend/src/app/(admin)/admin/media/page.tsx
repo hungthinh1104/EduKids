@@ -11,6 +11,7 @@ export default function AdminMediaPage() {
   const [mediaFiles, setMediaFiles] = useState<MediaFile[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<'all' | 'image' | 'audio' | 'video'>('all');
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -32,8 +33,7 @@ export default function AdminMediaPage() {
     }
   };
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.currentTarget.files;
+  const processFiles = async (files: FileList | File[]) => {
     if (!files) return;
 
     for (const file of Array.from(files)) {
@@ -65,6 +65,22 @@ export default function AdminMediaPage() {
         setIsUploading(false);
       }
     }
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.currentTarget.files;
+    if (!files) return;
+    await processFiles(files);
+    e.currentTarget.value = '';
+  };
+
+  const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(false);
+    if (isUploading) return;
+    const files = e.dataTransfer.files;
+    if (!files?.length) return;
+    await processFiles(files);
   };
 
   const handleDelete = async (id: string) => {
@@ -168,7 +184,17 @@ export default function AdminMediaPage() {
       </div>
 
       {/* Upload Section */}
-      <div className="bg-gradient-to-br from-primary-light/40 to-accent-light/35 rounded-2xl shadow-sm border-2 border-dashed border-primary/35 p-8 mb-6 cursor-pointer hover:border-primary/60 transition group">
+      <div
+        onDrop={handleDrop}
+        onDragOver={(e) => {
+          e.preventDefault();
+          setIsDragging(true);
+        }}
+        onDragLeave={() => setIsDragging(false)}
+        className={`bg-gradient-to-br from-primary-light/40 to-accent-light/35 rounded-2xl shadow-sm border-2 border-dashed p-8 mb-6 cursor-pointer transition group ${
+          isDragging ? 'border-primary bg-primary-light/60' : 'border-primary/35 hover:border-primary/60'
+        }`}
+      >
         <input
           type="file"
           multiple
@@ -182,7 +208,7 @@ export default function AdminMediaPage() {
           <div className="text-center">
             <Upload className="w-12 h-12 text-blue-600 mx-auto mb-3 group-hover:scale-110 transition" />
             <p className="font-bold text-heading mb-1">
-              {isUploading ? 'Đang tải...' : 'Kéo và thả file vào đây hoặc nhấp để chọn'}
+              {isUploading ? 'Đang tải...' : isDragging ? 'Thả file vào đây để tải lên' : 'Kéo và thả file vào đây hoặc nhấp để chọn'}
             </p>
             <p className="text-sm text-body">Hỗ trợ: Hình ảnh, Âm thanh, Video</p>
           </div>

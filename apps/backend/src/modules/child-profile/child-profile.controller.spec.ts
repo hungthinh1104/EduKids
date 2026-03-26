@@ -36,9 +36,12 @@ describe("ChildProfileController", () => {
     const expected = { success: true };
     (childProfileServiceMock.createProfile as any).mockResolvedValue(expected);
 
-    const result = await controller.createProfile(dto as any, {
-      user: { userId: 12, role: "PARENT" },
-    } as any);
+    const result = await controller.createProfile(
+      dto as any,
+      {
+        user: { userId: 12, role: "PARENT" },
+      } as any,
+    );
 
     expect(childProfileServiceMock.createProfile).toHaveBeenCalledWith(12, dto);
     expect(result).toEqual(expected);
@@ -83,7 +86,9 @@ describe("ChildProfileController", () => {
 
   it("getActiveProfile for PARENT uses getActiveProfile service", async () => {
     const expected = { id: 11, nickname: "Tom" };
-    (childProfileServiceMock.getActiveProfile as any).mockResolvedValue(expected);
+    (childProfileServiceMock.getActiveProfile as any).mockResolvedValue(
+      expected,
+    );
 
     const result = await controller.getActiveProfile({
       user: { userId: 30, role: "PARENT" },
@@ -97,7 +102,9 @@ describe("ChildProfileController", () => {
     (childProfileServiceMock.getActiveProfile as any).mockResolvedValue(null);
 
     await expect(
-      controller.getActiveProfile({ user: { userId: 44, role: "PARENT" } } as any),
+      controller.getActiveProfile({
+        user: { userId: 44, role: "PARENT" },
+      } as any),
     ).rejects.toThrow(NotFoundException);
   });
 });

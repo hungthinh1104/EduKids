@@ -19,7 +19,11 @@ export class TopicEntity {
   @ApiProperty({ example: 1, required: false })
   learningLevel?: number;
 
-  @ApiProperty({ example: ["animals", "basic"], required: false, type: [String] })
+  @ApiProperty({
+    example: ["animals", "basic"],
+    required: false,
+    type: [String],
+  })
   tags?: string[];
 
   @ApiProperty({ example: "2024-01-01T00:00:00.000Z" })

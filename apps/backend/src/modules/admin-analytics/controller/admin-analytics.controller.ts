@@ -116,7 +116,8 @@ export class AdminAnalyticsController {
 
   @Get("content-popularity")
   @Roles("ADMIN")
-  @ApiOperation({    summary: "Get content popularity rankings",
+  @ApiOperation({
+    summary: "Get content popularity rankings",
     description:
       "Retrieve most popular content with views, engagement, and completion stats",
   })

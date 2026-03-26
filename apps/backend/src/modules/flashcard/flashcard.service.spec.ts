@@ -50,8 +50,14 @@ describe("FlashcardService", () => {
       providers: [
         FlashcardService,
         { provide: FlashcardRepository, useValue: mockFlashcardRepository },
-        { provide: FlashcardActivityRepository, useValue: mockActivityRepository },
-        { provide: LearningProgressRepository, useValue: mockLearningProgressRepository },
+        {
+          provide: FlashcardActivityRepository,
+          useValue: mockActivityRepository,
+        },
+        {
+          provide: LearningProgressRepository,
+          useValue: mockLearningProgressRepository,
+        },
         { provide: PrismaService, useValue: mockPrismaService },
       ],
     }).compile();
@@ -85,8 +91,12 @@ describe("FlashcardService", () => {
         { id: 3, text: "chim", isCorrect: false },
       ];
 
-      flashcardRepository.getFlashcardByVocabularyId.mockResolvedValue(mockVocab);
-      flashcardRepository.generateDragDropOptions.mockResolvedValue(mockOptions);
+      flashcardRepository.getFlashcardByVocabularyId.mockResolvedValue(
+        mockVocab,
+      );
+      flashcardRepository.generateDragDropOptions.mockResolvedValue(
+        mockOptions,
+      );
 
       const result = await service.getFlashcard(vocabularyId);
 
@@ -104,7 +114,9 @@ describe("FlashcardService", () => {
     it("throws NotFoundException when vocabulary not found", async () => {
       flashcardRepository.getFlashcardByVocabularyId.mockResolvedValue(null);
 
-      await expect(service.getFlashcard(999)).rejects.toThrow(NotFoundException);
+      await expect(service.getFlashcard(999)).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it("throws BadRequestException when insufficient options", async () => {
@@ -114,10 +126,14 @@ describe("FlashcardService", () => {
         media: [],
         topicId: 1,
       };
-      flashcardRepository.getFlashcardByVocabularyId.mockResolvedValue(mockVocab);
+      flashcardRepository.getFlashcardByVocabularyId.mockResolvedValue(
+        mockVocab,
+      );
       flashcardRepository.generateDragDropOptions.mockResolvedValue([]);
 
-      await expect(service.getFlashcard(5)).rejects.toThrow(BadRequestException);
+      await expect(service.getFlashcard(5)).rejects.toThrow(
+        BadRequestException,
+      );
     });
   });
 
@@ -143,7 +159,9 @@ describe("FlashcardService", () => {
         { id: 3, text: "chim" },
       ];
 
-      flashcardRepository.getFlashcardByVocabularyId.mockResolvedValue(mockVocab);
+      flashcardRepository.getFlashcardByVocabularyId.mockResolvedValue(
+        mockVocab,
+      );
       flashcardRepository.getOptionById.mockResolvedValue(mockCorrectOption);
       flashcardRepository.generateDragDropOptions.mockResolvedValue([
         mockCorrectOption,
@@ -186,7 +204,9 @@ describe("FlashcardService", () => {
       const mockCorrectOption = { id: 1, text: "chó", isCorrect: true };
       const mockWrongOption = { id: 2, text: "mèo", isCorrect: false };
 
-      flashcardRepository.getFlashcardByVocabularyId.mockResolvedValue(mockVocab);
+      flashcardRepository.getFlashcardByVocabularyId.mockResolvedValue(
+        mockVocab,
+      );
       flashcardRepository.getOptionById.mockResolvedValue(mockWrongOption);
       flashcardRepository.generateDragDropOptions.mockResolvedValue([
         mockCorrectOption,
@@ -214,9 +234,9 @@ describe("FlashcardService", () => {
 
       flashcardRepository.getFlashcardByVocabularyId.mockResolvedValue(null);
 
-      await expect(service.submitDragDropActivity(childId, dto)).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(
+        service.submitDragDropActivity(childId, dto),
+      ).rejects.toThrow(NotFoundException);
     });
   });
 });

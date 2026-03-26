@@ -123,8 +123,8 @@ export default function AchievementsPage() {
                         <motion.div initial={{ opacity: 1, y: 12 }} animate={{ opacity: 1, y: 0 }} className="bg-gradient-to-r from-warning to-orange-400 rounded-[2rem] p-5 text-white">
                             <div className="flex items-center justify-between mb-3">
                                 <div>
-                                    <Heading level={3} className="text-white text-xl mb-0.5">Bộ sưu tập</Heading>
-                                    <Body className="text-white/80 text-sm">Còn {allBadges.length - totalEarned} huy hiệu chưa đạt</Body>
+                                    <Heading level={3} color="textInverse" className="text-xl mb-0.5">Bộ sưu tập</Heading>
+                                    <Body color="textInverse" className="text-sm text-white/80">Còn {allBadges.length - totalEarned} huy hiệu chưa đạt</Body>
                                 </div>
                                 <div className="text-5xl font-heading font-black text-white/90">{allBadges.length > 0 ? Math.round((totalEarned / allBadges.length) * 100) : 0}%</div>
                             </div>

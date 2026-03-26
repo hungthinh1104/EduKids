@@ -125,10 +125,10 @@ export function HeroSection() {
                 >
                     {/* The iPad Frame */}
                     <div className="relative aspect-[4/3] rounded-[2.5rem] p-4 bg-background/30 backdrop-blur-3xl shadow-[0_30px_60px_-15px_rgba(0,0,0,0.3)] border border-border/40">
-                        <div className="absolute inset-0 bg-gradient-to-tr from-white/20 to-transparent dark:from-slate-700/20 rounded-[2.5rem] pointer-events-none"></div>
+                        <div className="absolute inset-0 bg-gradient-to-tr from-background/20 to-transparent dark:from-background/10 rounded-[2.5rem] pointer-events-none"></div>
 
                         {/* Screen Content */}
-                        <div className="relative w-full h-full bg-slate-900 rounded-[1.8rem] overflow-hidden shadow-inner group">
+                        <div className="relative w-full h-full bg-background rounded-[1.8rem] overflow-hidden shadow-inner group">
                             <Image
                                 src="https://images.unsplash.com/photo-1543269865-cbf427effbad?q=80&w=1400&auto=format&fit=crop"
                                 alt="Trẻ em tương tác thiết bị thông minh"
@@ -137,25 +137,25 @@ export function HeroSection() {
                                 sizes="(min-width: 1024px) 50vw, 90vw"
                                 className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 opacity-90"
                             />
-                            <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-transparent to-transparent"></div>
+                            <div className="absolute inset-0 bg-gradient-to-t from-background/70 via-transparent to-transparent"></div>
 
                             {/* Play Button Overlay */}
                             <div className="absolute inset-0 flex items-center justify-center">
-                                <div className="w-20 h-20 bg-card/20 backdrop-blur-md border border-white/50 rounded-full flex items-center justify-center shadow-lg cursor-pointer transform transition-all duration-300 group-hover:scale-110 group-hover:bg-card/30">
+                                <div className="w-20 h-20 bg-card/20 backdrop-blur-md border border-border/40 rounded-full flex items-center justify-center shadow-lg cursor-pointer transform transition-all duration-300 group-hover:scale-110 group-hover:bg-card/30">
                                     <Play size={40} className="text-white fill-current ml-2" />
                                 </div>
                             </div>
 
                             {/* UI Overlay Mockups within the screen */}
                             <div className="absolute bottom-6 left-6 right-6 flex items-center justify-between">
-                                <div className="bg-card/10 backdrop-blur-md px-4 py-2 rounded-2xl border border-white/20 text-white font-medium flex items-center gap-2">
+                                <div className="bg-card/10 backdrop-blur-md px-4 py-2 rounded-2xl border border-border/20 text-white font-medium flex items-center gap-2">
                                     <Star className="text-warning fill-warning" size={18} /> Đang xem bài 02
                                 </div>
                                 <div className="flex gap-2">
-                                    <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white border-2 border-white shadow-lg z-10">
+                                    <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white border-2 border-background shadow-lg z-10">
                                         <Brain size={18} />
                                     </div>
-                                    <div className="w-10 h-10 rounded-full bg-success flex items-center justify-center text-white border-2 border-white shadow-lg -ml-4 z-0">
+                                    <div className="w-10 h-10 rounded-full bg-success flex items-center justify-center text-white border-2 border-background shadow-lg -ml-4 z-0">
                                         <Mic size={18} />
                                     </div>
                                 </div>

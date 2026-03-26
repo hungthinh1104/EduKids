@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect } from 'react';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useParams } from 'next/navigation';
 import { Volume2, RotateCcw, Star, ChevronRight } from 'lucide-react';
 import { Heading, Body, Caption } from '@/shared/components/Typography';
@@ -47,7 +48,7 @@ function FlipCard({ card, flipped, onFlip }: { card: Vocabulary; flipped: boolea
                         className="flex items-center justify-center w-36 h-36"
                     >
                         {card.imageUrl ? (
-                            <img src={card.imageUrl} alt={card.word} className="w-full h-full object-contain" />
+                            <Image src={card.imageUrl} alt={card.word} width={144} height={144} className="w-full h-full object-contain" />
                         ) : (
                             <span className="text-8xl">📘</span>
                         )}
@@ -66,7 +67,7 @@ function FlipCard({ card, flipped, onFlip }: { card: Vocabulary; flipped: boolea
                 >
                     <div className="flex items-center justify-center w-28 h-28">
                         {card.imageUrl ? (
-                            <img src={card.imageUrl} alt={card.word} className="w-full h-full object-contain" />
+                            <Image src={card.imageUrl} alt={card.word} width={112} height={112} className="w-full h-full object-contain" />
                         ) : (
                             <span className="text-7xl">📘</span>
                         )}

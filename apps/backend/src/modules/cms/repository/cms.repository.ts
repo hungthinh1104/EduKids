@@ -35,7 +35,8 @@ export class CmsRepository {
 
     if (dto.name) updateData.name = dto.name;
     if (dto.description) updateData.description = dto.description;
-    if (dto.learningLevel !== undefined) updateData.learningLevel = dto.learningLevel;
+    if (dto.learningLevel !== undefined)
+      updateData.learningLevel = dto.learningLevel;
     if (dto.imageUrl !== undefined) updateData.imageUrl = dto.imageUrl;
     if (dto.status !== undefined) updateData.status = dto.status;
     if (dto.tags !== undefined) updateData.tags = dto.tags;
@@ -134,7 +135,8 @@ export class CmsRepository {
     // "phonetic" maps directly
     if (dto.phonetic !== undefined) updateData.phonetic = dto.phonetic || null;
     // "example" in DTO maps to "exampleSentence" in the Prisma Vocabulary model
-    if (dto.example !== undefined) updateData.exampleSentence = dto.example || null;
+    if (dto.example !== undefined)
+      updateData.exampleSentence = dto.example || null;
     if (dto.imageUrl !== undefined) updateData.imageUrl = dto.imageUrl || null;
     if (dto.audioUrl !== undefined) updateData.audioUrl = dto.audioUrl || null;
     if (dto.status !== undefined) updateData.status = dto.status;
@@ -198,7 +200,9 @@ export class CmsRepository {
     dto: CreateQuizStructureDto,
     _createdByUserId: number,
   ) {
-    this.logger.debug(`Creating quiz structure for topic ${dto.topicId}: ${dto.title}`);
+    this.logger.debug(
+      `Creating quiz structure for topic ${dto.topicId}: ${dto.title}`,
+    );
     return this.prisma.topicQuiz.create({
       data: {
         topicId: dto.topicId,
@@ -236,8 +240,10 @@ export class CmsRepository {
     const updateData: Record<string, unknown> = {};
     if (dto.title !== undefined) updateData.title = dto.title;
     if (dto.description !== undefined) updateData.description = dto.description;
-    if (dto.questionText !== undefined) updateData.questionText = dto.questionText;
-    if (dto.difficultyLevel !== undefined) updateData.difficultyLevel = dto.difficultyLevel;
+    if (dto.questionText !== undefined)
+      updateData.questionText = dto.questionText;
+    if (dto.difficultyLevel !== undefined)
+      updateData.difficultyLevel = dto.difficultyLevel;
     if (dto.status !== undefined) updateData.status = dto.status;
 
     return this.prisma.topicQuiz.update({

@@ -29,14 +29,16 @@ describe("GamificationController", () => {
   });
 
   it("getRewardSummary throws when child profile is missing", async () => {
-    await expect(controller.getRewardSummary({ id: 1 } as any)).rejects.toBeInstanceOf(
-      BadRequestException,
-    );
+    await expect(
+      controller.getRewardSummary({ id: 1 } as any),
+    ).rejects.toBeInstanceOf(BadRequestException);
   });
 
   it("getRewardSummary delegates to service", async () => {
     const expected = { totalPoints: 100, currentLevel: 2 };
-    (gamificationServiceMock.getRewardSummary as any).mockResolvedValue(expected);
+    (gamificationServiceMock.getRewardSummary as any).mockResolvedValue(
+      expected,
+    );
 
     const result = await controller.getRewardSummary({ childId: 7 } as any);
 
@@ -50,9 +52,12 @@ describe("GamificationController", () => {
       expected,
     );
 
-    const result = await controller.getShopItems("AVATAR_HAIR" as any, {
-      childId: 7,
-    } as any);
+    const result = await controller.getShopItems(
+      "AVATAR_HAIR" as any,
+      {
+        childId: 7,
+      } as any,
+    );
 
     expect(gamificationServiceMock.getShopItemsByCategory).toHaveBeenCalledWith(
       7,
@@ -66,7 +71,10 @@ describe("GamificationController", () => {
     const expected = { success: true, remainingPoints: 50 };
     (gamificationServiceMock.purchaseItem as any).mockResolvedValue(expected);
 
-    const result = await controller.purchaseItem(dto as any, { childId: 9 } as any);
+    const result = await controller.purchaseItem(
+      dto as any,
+      { childId: 9 } as any,
+    );
 
     expect(gamificationServiceMock.purchaseItem).toHaveBeenCalledWith(9, dto);
     expect(result).toEqual(expected);
@@ -76,9 +84,12 @@ describe("GamificationController", () => {
     const expected = [{ rank: 1, childId: 9, points: 300 }];
     (gamificationServiceMock.getLeaderboard as any).mockResolvedValue(expected);
 
-    const result = await controller.getLeaderboard(undefined as any, {
-      childId: 9,
-    } as any);
+    const result = await controller.getLeaderboard(
+      undefined as any,
+      {
+        childId: 9,
+      } as any,
+    );
 
     expect(gamificationServiceMock.getLeaderboard).toHaveBeenCalledWith(9, 10);
     expect(result).toEqual(expected);

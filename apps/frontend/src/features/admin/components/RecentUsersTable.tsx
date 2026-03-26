@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Eye } from 'lucide-react';
 import { SectionHeader, TableBadge, TableBadgeVariant } from '@/features/admin/components/AdminUI';
@@ -20,9 +21,9 @@ export const statusVariant = (s: string): TableBadgeVariant =>
 
 export function RecentUsersTable({ recentUsers }: RecentUsersTableProps) {
     return (
-        <section>
+            <section>
             <SectionHeader title="Người dùng mới đăng ký"
-            action={<button type="button" className="text-primary text-sm font-heading font-bold hover:underline flex items-center gap-1"><Eye size={14} /> Quản lý</button>}
+            action={<Link href="/admin/users" className="text-primary text-sm font-heading font-bold hover:underline flex items-center gap-1"><Eye size={14} /> Quản lý</Link>}
         />
             <div className="bg-card rounded-2xl overflow-hidden border border-border/70">
                 <div className="overflow-x-auto">

@@ -18,7 +18,9 @@ describe("FlashcardController", () => {
 
     const module: TestingModule = await Test.createTestingModule({
       controllers: [FlashcardController],
-      providers: [{ provide: FlashcardService, useValue: flashcardServiceMock }],
+      providers: [
+        { provide: FlashcardService, useValue: flashcardServiceMock },
+      ],
     }).compile();
 
     controller = module.get<FlashcardController>(FlashcardController);
@@ -62,7 +64,9 @@ describe("FlashcardController", () => {
     };
 
     await expect(
-      controller.submitDragDropActivity(3, dto, { user: { childId: 2 } } as any),
+      controller.submitDragDropActivity(3, dto, {
+        user: { childId: 2 },
+      } as any),
     ).rejects.toMatchObject({ status: HttpStatus.BAD_REQUEST });
   });
 
@@ -83,11 +87,9 @@ describe("FlashcardController", () => {
       expected,
     );
 
-    const result = await controller.submitDragDropActivity(
-      3,
-      dto,
-      { user: { childId: 2 } } as any,
-    );
+    const result = await controller.submitDragDropActivity(3, dto, {
+      user: { childId: 2 },
+    } as any);
 
     expect(flashcardServiceMock.submitDragDropActivity).toHaveBeenCalledWith(
       2,

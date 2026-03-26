@@ -20,16 +20,17 @@ import { ForgotPasswordDto } from "./dto/forgot-password.dto";
 import { ResetPasswordDto } from "./dto/reset-password.dto";
 import { ChangePasswordDto } from "./dto/change-password.dto";
 import { UpdateProfileDto } from "./dto/update-profile.dto";
-import {
-  AuthResponseDto,
-} from "./dto/auth-response.dto";
+import { AuthResponseDto } from "./dto/auth-response.dto";
 import { ProfileActionResultDto } from "../child-profile/child-profile.dto";
 
 // [C-4] Redis client for rate limiting — persistent across server restarts,
 // works correctly with multiple instances (load balancer).
 const redisLogger = new Logger("AuthRedisClient");
 let redisClient: RedisClientType | null = null;
-const localLoginAttemptStore = new Map<string, { count: number; expiresAt: number }>();
+const localLoginAttemptStore = new Map<
+  string,
+  { count: number; expiresAt: number }
+>();
 
 async function getRedisClient(): Promise<RedisClientType | null> {
   if (!process.env.REDIS_URL) return null;
@@ -38,7 +39,10 @@ async function getRedisClient(): Promise<RedisClientType | null> {
       url: process.env.REDIS_URL,
     }) as RedisClientType;
     redisClient.on("error", (err) =>
-      redisLogger.error("Rate limit client error", err instanceof Error ? err.stack : String(err)),
+      redisLogger.error(
+        "Rate limit client error",
+        err instanceof Error ? err.stack : String(err),
+      ),
     );
     await redisClient.connect();
   }
@@ -54,7 +58,9 @@ function normalizeEmailForRateLimit(email: string): string {
   return email.trim().toLowerCase();
 }
 
-function getLocalLoginAttempts(email: string): { count: number; expiresAt: number } | null {
+function getLocalLoginAttempts(
+  email: string,
+): { count: number; expiresAt: number } | null {
   const key = normalizeEmailForRateLimit(email);
   const entry = localLoginAttemptStore.get(key);
   if (!entry) return null;
@@ -403,7 +409,9 @@ export class AuthService {
 
     // Anti-enumeration: always return same message regardless of result
     if (users.length === 0) {
-      return { message: "If this email is registered, a reset link has been sent." };
+      return {
+        message: "If this email is registered, a reset link has been sent.",
+      };
     }
 
     const userId = users[0].id;
@@ -465,9 +473,7 @@ export class AuthService {
   /**
    * UC-00: Reset password using Redis-backed token
    */
-  async resetPassword(
-    dto: ResetPasswordDto,
-  ): Promise<{ message: string }> {
+  async resetPassword(dto: ResetPasswordDto): Promise<{ message: string }> {
     const redis = await getRedisClient();
     if (!redis) {
       throw new BadRequestException(
@@ -476,7 +482,7 @@ export class AuthService {
     }
 
     const rawUserIdStr = await redis.get(`pwd_reset:${dto.token}`);
-    const userIdStr = typeof rawUserIdStr === 'string' ? rawUserIdStr : null;
+    const userIdStr = typeof rawUserIdStr === "string" ? rawUserIdStr : null;
     if (!userIdStr) {
       throw new BadRequestException(
         "Invalid or expired reset link. Please request a new one.",
@@ -503,7 +509,10 @@ export class AuthService {
       },
     });
 
-    return { message: "Password reset successfully. Please log in with your new password." };
+    return {
+      message:
+        "Password reset successfully. Please log in with your new password.",
+    };
   }
 
   /**
@@ -521,7 +530,10 @@ export class AuthService {
       throw new UnauthorizedException("User not found");
     }
 
-    const isValid = await bcrypt.compare(dto.currentPassword, users[0].passwordHash);
+    const isValid = await bcrypt.compare(
+      dto.currentPassword,
+      users[0].passwordHash,
+    );
     if (!isValid) {
       throw new BadRequestException("Current password is incorrect");
     }
@@ -684,7 +696,9 @@ export class AuthService {
       if (!localEntry) return;
 
       if (localEntry.count >= MAX_LOGIN_ATTEMPTS) {
-        const minutesLeft = Math.ceil((localEntry.expiresAt - Date.now()) / 60000);
+        const minutesLeft = Math.ceil(
+          (localEntry.expiresAt - Date.now()) / 60000,
+        );
         throw new ForbiddenException(
           `Account temporarily locked. Try again in ${Math.max(1, minutesLeft)} minute(s).`,
         );

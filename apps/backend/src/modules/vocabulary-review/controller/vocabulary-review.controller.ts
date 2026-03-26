@@ -84,9 +84,7 @@ export class VocabularyReviewController {
   async submitBulkReviews(
     @Request() req: RequestWithUser,
     @Body()
-    body:
-      | SubmitReviewRequestDto[]
-      | { reviews?: SubmitReviewRequestDto[] },
+    body: SubmitReviewRequestDto[] | { reviews?: SubmitReviewRequestDto[] },
   ) {
     const childId = this.getChildId(req);
 

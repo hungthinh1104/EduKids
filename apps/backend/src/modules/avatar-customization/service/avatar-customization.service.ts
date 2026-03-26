@@ -230,7 +230,9 @@ export class AvatarCustomizationService {
           layer: AvatarLayer.HAIR,
           itemId: 1, // Default hair
           itemName: defaultHair?.name || "Default Hair",
-          assetUrl: buildAvatarLayerAssetUrl(defaultHair || DEFAULT_AVATAR_ITEMS[0]),
+          assetUrl: buildAvatarLayerAssetUrl(
+            defaultHair || DEFAULT_AVATAR_ITEMS[0],
+          ),
         },
       ],
     };

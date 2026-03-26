@@ -7,11 +7,11 @@ import axios from 'axios';
 import { BookOpen, Flame, Mic, Trophy, Star, TrendingUp, Calendar, Send, Mail, CheckCircle2, Download, Bell, Loader2 } from 'lucide-react';
 import { Heading, Body, Caption } from '@/shared/components/Typography';
 import { useChildProfiles, useChildAnalytics } from '@/features/dashboard/hooks/useChildProfiles';
-import { 
+import {
   sendReport,
   getReportPreferences, 
+  updateReportPreferences,
   subscribeToReports,
-  unsubscribeFromReports,
   type ReportPreferences 
 } from '@/features/reports/api/reports.api';
 
@@ -42,6 +42,13 @@ export default function ReportsPage() {
     );
 
     useEffect(() => {
+        if (!profiles.length) return;
+        if (selectedChildId === null || !profiles.some((p) => p.id === selectedChildId)) {
+            setSelectedChildId(profiles[0].id);
+        }
+    }, [profiles, selectedChildId]);
+
+    useEffect(() => {
         getReportPreferences()
             .then(setSubscriptionPrefs)
             .catch(() => setSubscriptionPrefs(null))
@@ -54,16 +61,13 @@ export default function ReportsPage() {
         try {
             const nextPrefs = enabled
                 ? await subscribeToReports(channel)
-                : await (async () => {
-                    await unsubscribeFromReports();
-                    return getReportPreferences();
-                })();
+                : await getReportPreferences();
 
             setSubscriptionPrefs(nextPrefs);
             setSubscriptionMessage(
                 enabled
                     ? `Đã bật gửi báo cáo tự động qua ${channel === 'zalo' ? 'Zalo' : 'email'}.`
-                    : 'Đã tắt gửi báo cáo tự động.'
+                    : 'Đã cập nhật cài đặt gửi báo cáo.'
             );
         } catch (err) {
             console.error(`Failed to ${enabled ? 'enable' : 'disable'} ${channel} reports:`, err);
@@ -443,6 +447,13 @@ export default function ReportsPage() {
                                         : 'Hiện tại bạn chưa bật gửi báo cáo tự động.'}
                                 </div>
 
+                                <p className="text-xs md:text-sm font-bold text-heading dark:text-body">
+                                    Chọn kênh nhận báo cáo tự động
+                                </p>
+                                <p className="mt-1 text-[10px] md:text-xs text-muted">
+                                    Hệ thống chỉ hỗ trợ một kênh tại một thời điểm.
+                                </p>
+
                                 {/* Email Subscription */}
                                 <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/30 rounded-lg md:rounded-2xl p-3 md:p-4">
                                     <div className="flex items-center justify-between mb-2 md:mb-3">
@@ -452,8 +463,9 @@ export default function ReportsPage() {
                                         </div>
                                         <label className="relative inline-flex items-center cursor-pointer">
                                             <input
-                                                type="checkbox"
-                                                checked={subscriptionPrefs?.emailEnabled ?? false}
+                                                type="radio"
+                                                name="report-channel"
+                                                checked={subscriptionPrefs?.preferredChannel === 'EMAIL'}
                                                 onChange={async (e) => {
                                                     const enabled = e.target.checked;
 
@@ -481,8 +493,9 @@ export default function ReportsPage() {
                                         </div>
                                         <label className="relative inline-flex items-center cursor-pointer">
                                             <input
-                                                type="checkbox"
-                                                checked={subscriptionPrefs?.zaloEnabled ?? false}
+                                                type="radio"
+                                                name="report-channel"
+                                                checked={subscriptionPrefs?.preferredChannel === 'ZALO'}
                                                 onChange={async (e) => {
                                                     const enabled = e.target.checked;
 
@@ -500,6 +513,31 @@ export default function ReportsPage() {
                                     </div>
                                     <p className="text-xs md:text-sm text-body dark:text-muted">Nhận báo cáo qua Zalo mỗi tuần</p>
                                 </div>
+
+                                <button
+                                    type="button"
+                                    onClick={async () => {
+                                        setIsSavingPrefs(true);
+                                        setSubscriptionMessage(null);
+                                        try {
+                                            const nextPrefs = await updateReportPreferences({
+                                                emailEnabled: false,
+                                                zaloEnabled: false,
+                                            });
+                                            setSubscriptionPrefs(nextPrefs);
+                                            setSubscriptionMessage('Đã tắt gửi báo cáo tự động.');
+                                        } catch (err) {
+                                            console.error('Failed to unsubscribe reports:', err);
+                                            setSubscriptionMessage('Không thể tắt gửi báo cáo tự động. Vui lòng thử lại.');
+                                        } finally {
+                                            setIsSavingPrefs(false);
+                                        }
+                                    }}
+                                    disabled={isSavingPrefs || !subscriptionPrefs?.isSubscribed}
+                                    className="w-full rounded-lg md:rounded-xl border border-border bg-card px-4 py-2.5 text-xs md:text-sm font-bold text-body transition disabled:opacity-50"
+                                >
+                                    Tắt báo cáo tự động
+                                </button>
 
                                 {/* Frequency Selector */}
                                 <div>

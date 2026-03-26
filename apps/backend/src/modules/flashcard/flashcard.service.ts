@@ -31,7 +31,7 @@ export class FlashcardService {
     private activityRepository: FlashcardActivityRepository,
     private learningProgressRepository: LearningProgressRepository,
     private prisma: PrismaService,
-  ) { }
+  ) {}
 
   /**
    * UC-02: Get flashcard with image, audio, and drag-drop options
@@ -53,7 +53,8 @@ export class FlashcardService {
 
       const audioMedia = vocabulary.media.find((m) => m.type === "AUDIO");
       const imageMedia = vocabulary.media.find((m) => m.type === "IMAGE");
-      const audioUrl = audioMedia?.url || this.getFallbackAudioUrl(vocabulary.word);
+      const audioUrl =
+        audioMedia?.url || this.getFallbackAudioUrl(vocabulary.word);
       const imageUrl = imageMedia?.url || this.PLACEHOLDER_IMAGE;
 
       // Generate drag-drop options (correct + 3 distractors)
@@ -64,7 +65,7 @@ export class FlashcardService {
 
       if (!options || options.length < 2) {
         throw new BadRequestException(
-          'At least two drag-drop options are required for this vocabulary',
+          "At least two drag-drop options are required for this vocabulary",
         );
       }
 
@@ -130,7 +131,7 @@ export class FlashcardService {
 
       if (!options || options.length < 2) {
         throw new BadRequestException(
-          'At least two drag-drop options are required for this vocabulary',
+          "At least two drag-drop options are required for this vocabulary",
         );
       }
 
@@ -158,7 +159,7 @@ export class FlashcardService {
           data: {
             childId,
             vocabularyId: dto.vocabularyId,
-            activityType: 'FLASHCARD',
+            activityType: "FLASHCARD",
             pointsEarned,
             score: isCorrect ? 100 : 0,
             metadata: {
@@ -217,10 +218,10 @@ export class FlashcardService {
           updatedPoints.currentLevel === calculatedLevel
             ? updatedPoints
             : await tx.childProfile.update({
-              where: { id: childId },
-              data: { currentLevel: calculatedLevel },
-              select: { totalPoints: true, currentLevel: true },
-            });
+                where: { id: childId },
+                data: { currentLevel: calculatedLevel },
+                select: { totalPoints: true, currentLevel: true },
+              });
 
         return { activity, updatedChild };
       });

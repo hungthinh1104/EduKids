@@ -33,7 +33,10 @@ describe("GamificationService", () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         GamificationService,
-        { provide: GamificationRepository, useValue: mockGamificationRepository },
+        {
+          provide: GamificationRepository,
+          useValue: mockGamificationRepository,
+        },
         { provide: PrismaService, useValue: mockPrismaService },
       ],
     }).compile();
@@ -100,7 +103,9 @@ describe("GamificationService", () => {
       const result = await service.getAllBadges(childId);
 
       expect(result).toHaveLength(2);
-      expect(gamificationRepository.getAllBadgesForChild).toHaveBeenCalledWith(childId);
+      expect(gamificationRepository.getAllBadgesForChild).toHaveBeenCalledWith(
+        childId,
+      );
     });
   });
 
@@ -135,7 +140,9 @@ describe("GamificationService", () => {
       const result = await service.getShopItems(childId);
 
       expect(result).toHaveLength(2);
-      expect(gamificationRepository.getAllShopItems).toHaveBeenCalledWith(childId);
+      expect(gamificationRepository.getAllShopItems).toHaveBeenCalledWith(
+        childId,
+      );
     });
   });
 
@@ -151,7 +158,12 @@ describe("GamificationService", () => {
       prismaService.childProfile.findUnique.mockResolvedValue(mockChild);
       gamificationRepository.getShopItemById.mockResolvedValue(mockItem);
       prismaService.shopPurchase.findUnique.mockResolvedValue(null); // Not already owned
-      gamificationRepository.purchaseItem.mockResolvedValue({ id: 1, childId, itemId, purchasedAt: new Date() });
+      gamificationRepository.purchaseItem.mockResolvedValue({
+        id: 1,
+        childId,
+        itemId,
+        purchasedAt: new Date(),
+      });
       prismaService.childProfile.update.mockResolvedValue({
         ...mockChild,
         totalPoints: 400,
@@ -213,12 +225,21 @@ describe("GamificationService", () => {
       const dto = { itemId };
 
       const mockChild = { id: childId };
-      const mockItem = { id: itemId, name: "Hat", category: "HAIR", isPurchased: true };
+      const mockItem = {
+        id: itemId,
+        name: "Hat",
+        category: "HAIR",
+        isPurchased: true,
+      };
 
       prismaService.childProfile.findUnique.mockResolvedValue(mockChild);
       gamificationRepository.getShopItemById.mockResolvedValue(mockItem);
       prismaService.shopPurchase.findUnique.mockResolvedValue({ id: 1 });
-      gamificationRepository.equipItem.mockResolvedValue({ id: 1, childId, itemId });
+      gamificationRepository.equipItem.mockResolvedValue({
+        id: 1,
+        childId,
+        itemId,
+      });
 
       const result = await service.equipItem(childId, dto as any);
 
@@ -252,7 +273,13 @@ describe("GamificationService", () => {
       const mockLeaderboard = [
         { rank: 1, childId: 1, nickname: "Anna", totalPoints: 1000 },
         { rank: 2, childId: 2, nickname: "Bob", totalPoints: 900 },
-        { rank: 3, childId: 5, nickname: "Charlie", totalPoints: 800, isCurrentUser: true },
+        {
+          rank: 3,
+          childId: 5,
+          nickname: "Charlie",
+          totalPoints: 800,
+          isCurrentUser: true,
+        },
       ];
 
       gamificationRepository.getLeaderboard.mockResolvedValue(mockLeaderboard);
@@ -261,7 +288,10 @@ describe("GamificationService", () => {
 
       expect(result).toHaveLength(3);
       expect(result[0].totalPoints).toBe(1000);
-      expect(gamificationRepository.getLeaderboard).toHaveBeenCalledWith(childId, limit);
+      expect(gamificationRepository.getLeaderboard).toHaveBeenCalledWith(
+        childId,
+        limit,
+      );
     });
   });
 });

@@ -35,7 +35,10 @@ describe("QuizController", () => {
     const expected = { quizSessionId: "s1", topicId: 1 };
     (quizServiceMock.startQuiz as any).mockResolvedValue(expected);
 
-    const result = await controller.startQuiz(dto as any, { childId: 5 } as any);
+    const result = await controller.startQuiz(
+      dto as any,
+      { childId: 5 } as any,
+    );
 
     expect(quizServiceMock.startQuiz).toHaveBeenCalledWith(5, dto);
     expect(result).toEqual(expected);
@@ -51,7 +54,10 @@ describe("QuizController", () => {
     const expected = { isCorrect: true, pointsEarned: 10 };
     (quizServiceMock.submitAnswer as any).mockResolvedValue(expected);
 
-    const result = await controller.submitAnswer(dto as any, { childId: 5 } as any);
+    const result = await controller.submitAnswer(
+      dto as any,
+      { childId: 5 } as any,
+    );
 
     expect(quizServiceMock.submitAnswer).toHaveBeenCalledWith(5, dto);
     expect(result).toEqual(expected);

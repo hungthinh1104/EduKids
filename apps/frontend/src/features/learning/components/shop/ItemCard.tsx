@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion';
+import Image from 'next/image';
 import { Check, ShoppingCart, Lock, Wand2 } from 'lucide-react';
 import { ShopItem } from '@/features/learning/api/gamification.api';
 
@@ -40,7 +41,7 @@ export function ItemCard({ item, onBuy, onPreview, stars, coins }: ItemCardProps
                 className="flex items-center justify-center pt-8 pb-3 bg-gradient-to-b from-background to-transparent"
             >
                 {item.imageUrl ? (
-                    <img src={item.imageUrl} alt={item.name} className="w-16 h-16 object-contain" />
+                    <Image src={item.imageUrl} alt={item.name} width={64} height={64} className="w-16 h-16 object-contain" />
                 ) : (
                     <motion.span className="text-5xl select-none">🛍️</motion.span>
                 )}

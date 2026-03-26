@@ -29,7 +29,9 @@ describe("AvatarCustomizationController", () => {
       ],
     }).compile();
 
-    controller = module.get<AvatarCustomizationController>(AvatarCustomizationController);
+    controller = module.get<AvatarCustomizationController>(
+      AvatarCustomizationController,
+    );
   });
 
   it("applyItem throws BadRequestException when childId missing", async () => {
@@ -52,7 +54,11 @@ describe("AvatarCustomizationController", () => {
       layer: "HAIR",
     });
     expect(result).toEqual(
-      expect.objectContaining({ childId: 7, success: true, avatarConfig: config }),
+      expect.objectContaining({
+        childId: 7,
+        success: true,
+        avatarConfig: config,
+      }),
     );
   });
 
@@ -83,7 +89,10 @@ describe("AvatarCustomizationController", () => {
     const expected = [{ id: 1 }];
     (avatarServiceMock.getActivityHistory as any).mockResolvedValue(expected);
 
-    const result = await controller.getHistory({ user: { childId: 9 } } as any, undefined);
+    const result = await controller.getHistory(
+      { user: { childId: 9 } } as any,
+      undefined,
+    );
 
     expect(avatarServiceMock.getActivityHistory).toHaveBeenCalledWith(9, 20);
     expect(result).toEqual(expected);

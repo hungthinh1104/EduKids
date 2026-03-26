@@ -116,7 +116,9 @@ export const DEFAULT_AVATAR_ITEMS: AvatarCatalogItem[] = [
 
 let pendingCatalogSeed: Promise<void> | null = null;
 
-export function getAvatarCategory(category?: string | null): AvatarCatalogCategory {
+export function getAvatarCategory(
+  category?: string | null,
+): AvatarCatalogCategory {
   switch (category) {
     case "AVATAR_HAIR":
     case "AVATAR_OUTFIT":

@@ -23,7 +23,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
             <div className="hidden lg:flex w-1/2 bg-gradient-candy flex-col justify-center items-center p-12 relative text-white shadow-2xl z-10">
                 <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
                 <div className="relative z-10 w-full max-w-lg text-center space-y-8 flex flex-col items-center">
-                    <div className="w-48 h-48 bg-card/20 rounded-full flex items-center justify-center backdrop-blur-sm border-4 border-white/30 shadow-2xl animate-bounce-gentle">
+                    <div className="w-48 h-48 bg-card/20 rounded-full flex items-center justify-center backdrop-blur-sm border-4 border-background/30 shadow-2xl animate-bounce-gentle">
                         <Image
                             src="https://api.dicebear.com/7.x/bottts/svg?seed=edukids-hero"
                             alt="EduKids Mascot"
@@ -33,10 +33,10 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
                             className="drop-shadow-lg"
                         />
                     </div>
-                    <Heading level={2} className="text-white drop-shadow-md text-5xl">
+                    <Heading level={2} color="textInverse" className="drop-shadow-md text-5xl">
                         Học Tiếng Anh Thật Vui!
                     </Heading>
-                    <Body className="text-white/90 text-xl font-medium">
+                    <Body color="textInverse" className="text-white/90 text-xl font-medium">
                         Tham gia ngay để nhận điểm thưởng, phiêu lưu vượt ải và mở khóa hàng ngàn từ vựng mới mỗi ngày.
                     </Body>
                 </div>
@@ -62,7 +62,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
                             width={80}
                             height={80}
                             priority
-                            className="bg-card/50 backdrop-blur-md shadow-lg rounded-full p-2 border border-white/40"
+                            className="bg-card/50 backdrop-blur-md shadow-lg rounded-full p-2 border border-background/40"
                         />
                         <Link href="/" className="inline-flex items-center gap-2 text-body hover:text-primary transition-colors font-medium bg-card/50 dark:bg-card/50 px-4 py-2 rounded-full backdrop-blur-sm">
                             <MoveLeft size={16} /> Trang chủ
@@ -70,7 +70,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
                     </div>
 
                     {/* Forms rendered here with Ultra Glassmorphism */}
-                    <div className="bg-card/70 dark:bg-background/70 backdrop-blur-2xl border border-white/50 dark:border-border/50 rounded-[2.5rem] p-8 sm:p-10 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] relative overflow-hidden">
+                    <div className="bg-card/70 dark:bg-background/70 backdrop-blur-2xl border border-border/50 rounded-[2.5rem] p-8 sm:p-10 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] relative overflow-hidden">
                         {/* Decorative inner glow for the glass card */}
                         <div className="absolute inset-x-0 -top-px h-px w-full bg-gradient-to-r from-transparent via-white/80 to-transparent"></div>
                         <div className="relative z-10">

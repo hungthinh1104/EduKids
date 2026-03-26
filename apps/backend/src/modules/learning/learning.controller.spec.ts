@@ -24,9 +24,12 @@ describe("LearningController", () => {
 
   it("throws FORBIDDEN when childId missing", async () => {
     await expect(
-      controller.updateProgress({ vocabularyId: 1 } as any, {
-        user: { role: "LEARNER" },
-      } as any),
+      controller.updateProgress(
+        { vocabularyId: 1 } as any,
+        {
+          user: { role: "LEARNER" },
+        } as any,
+      ),
     ).rejects.toMatchObject({
       status: HttpStatus.FORBIDDEN,
     });
@@ -35,13 +38,21 @@ describe("LearningController", () => {
   it("delegates updateProgress to service with childId", async () => {
     const dto = { vocabularyId: 2, isCompleted: true };
     const expected = { success: true };
-    (learningServiceMock.updateViewingProgress as any).mockResolvedValue(expected);
+    (learningServiceMock.updateViewingProgress as any).mockResolvedValue(
+      expected,
+    );
 
-    const result = await controller.updateProgress(dto as any, {
-      user: { childId: 99, role: "LEARNER" },
-    } as any);
+    const result = await controller.updateProgress(
+      dto as any,
+      {
+        user: { childId: 99, role: "LEARNER" },
+      } as any,
+    );
 
-    expect(learningServiceMock.updateViewingProgress).toHaveBeenCalledWith(99, dto);
+    expect(learningServiceMock.updateViewingProgress).toHaveBeenCalledWith(
+      99,
+      dto,
+    );
     expect(result).toEqual(expected);
   });
 });

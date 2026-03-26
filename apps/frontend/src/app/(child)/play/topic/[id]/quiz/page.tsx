@@ -163,6 +163,49 @@ export default function QuizPage() {
     const answerTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const timeLeftRef = useRef(TIME_LIMIT);
 
+    const loadQuiz = useCallback(async () => {
+        try {
+            setLoading(true);
+            setLoadError(null);
+
+            if (!Number.isInteger(parsedTopicId) || parsedTopicId <= 0) {
+                setLoadError('Chủ đề không hợp lệ.');
+                setQuestions([]);
+                return;
+            }
+
+            const session = await quizApi.startQuiz(parsedTopicId);
+            setQuizSessionId(session.quizSessionId);
+
+            const questionList = session.questions?.length
+                ? session.questions
+                : session.firstQuestion
+                    ? [session.firstQuestion]
+                    : [];
+
+            setQuestions(questionList.map((q: QuizQuestion) => ({
+                ...q,
+                shuffledOptions: shuffleOptions(q.options),
+                image: '❓', // Fallback image since not in schema yet
+            })));
+            setIndex(0);
+            setSelected(null);
+            setRevealedCorrectOptionId(null);
+            setAnswerState('idle');
+            setHp(MAX_HP);
+            setStreak(0);
+            setCorrectCount(0);
+            setDone(false);
+            setTimeLeft(TIME_LIMIT);
+        } catch (error) {
+            console.error('Failed to load quiz:', error);
+            setLoadError('Không thể tải quiz. Vui lòng thử lại.');
+            setQuestions([]);
+        } finally {
+            setLoading(false);
+        }
+    }, [parsedTopicId]);
+
     useEffect(() => {
         timeLeftRef.current = timeLeft;
     }, [timeLeft]);
@@ -176,40 +219,8 @@ export default function QuizPage() {
     }, []);
 
     useEffect(() => {
-        async function loadQuiz() {
-            try {
-                setLoading(true);
-                setLoadError(null);
-
-                if (!Number.isInteger(parsedTopicId) || parsedTopicId <= 0) {
-                    setLoadError('Chủ đề không hợp lệ.');
-                    return;
-                }
-
-                const session = await quizApi.startQuiz(parsedTopicId);
-                setQuizSessionId(session.quizSessionId);
-
-                const questionList = session.questions?.length
-                    ? session.questions
-                    : session.firstQuestion
-                        ? [session.firstQuestion]
-                        : [];
-
-                setQuestions(questionList.map((q: QuizQuestion) => ({
-                    ...q,
-                    shuffledOptions: shuffleOptions(q.options),
-                    image: '❓' // Fallback image since not in schema yet
-                })));
-            } catch (error) {
-                console.error('Failed to load quiz:', error);
-                setLoadError('Không thể tải quiz. Vui lòng thử lại.');
-                setQuestions([]);
-            } finally {
-                setLoading(false);
-            }
-        }
-        loadQuiz();
-    }, [parsedTopicId]);
+        void loadQuiz();
+    }, [loadQuiz]);
 
     const q = questions[index];
 
@@ -287,7 +298,18 @@ export default function QuizPage() {
     if (done) {
         return (
             <div className="min-h-screen bg-gradient-to-b from-warning-light via-background to-background">
-                <QuizComplete correct={correctCount} total={index + 1} topicId={id} onRestart={() => { setIndex(0); setSelected(null); setRevealedCorrectOptionId(null); setAnswerState('idle'); setHp(MAX_HP); setStreak(0); setCorrectCount(0); setDone(false); setTimeLeft(TIME_LIMIT); }} />
+                <QuizComplete
+                    correct={correctCount}
+                    total={index + 1}
+                    topicId={id}
+                    onRestart={() => {
+                        if (answerTimeoutRef.current) {
+                            clearTimeout(answerTimeoutRef.current);
+                            answerTimeoutRef.current = null;
+                        }
+                        void loadQuiz();
+                    }}
+                />
             </div>
         );
     }

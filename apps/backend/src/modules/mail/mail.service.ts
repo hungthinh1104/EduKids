@@ -22,15 +22,17 @@ export class MailService {
   isConfigured(): boolean {
     return Boolean(
       process.env.SMTP_HOST &&
-        process.env.SMTP_PORT &&
-        process.env.SMTP_USER &&
-        process.env.SMTP_PASSWORD &&
-        process.env.SMTP_FROM,
+      process.env.SMTP_PORT &&
+      process.env.SMTP_USER &&
+      process.env.SMTP_PASSWORD &&
+      process.env.SMTP_FROM,
     );
   }
 
   private getFromAddress(): string {
-    return process.env.SMTP_FROM || process.env.SMTP_USER || "noreply@edukids.local";
+    return (
+      process.env.SMTP_FROM || process.env.SMTP_USER || "noreply@edukids.local"
+    );
   }
 
   private getTransporter(): Promise<nodemailer.Transporter> | null {
@@ -83,7 +85,8 @@ export class MailService {
         messageId: info.messageId,
       };
     } catch (error) {
-      const message = error instanceof Error ? error.message : "UNKNOWN_SMTP_ERROR";
+      const message =
+        error instanceof Error ? error.message : "UNKNOWN_SMTP_ERROR";
       this.logger.error(
         `Failed to send email "${input.subject}" to ${input.to}: ${message}`,
       );

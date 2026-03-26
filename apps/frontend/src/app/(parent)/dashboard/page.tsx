@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { BookOpen, Trophy, Mic, TrendingUp } from 'lucide-react';
 import Image from 'next/image';
@@ -36,6 +37,19 @@ export default function ParentDashboardPage() {
         () => selectedChildId ?? activeProfileId ?? profiles[0]?.id ?? null,
         [selectedChildId, activeProfileId, profiles],
     );
+
+    useEffect(() => {
+        if (!profiles.length) return;
+        if (selectedChildId === null || !profiles.some((p) => p.id === selectedChildId)) {
+            const newChildId = activeProfileId ?? profiles[0]?.id;
+            if (newChildId !== undefined) {
+                setSelectedChildId(newChildId);
+            }
+            if (newChildId !== undefined) {
+                setSelectedChildId(newChildId);
+            }
+        }
+    }, [profiles, selectedChildId, activeProfileId]);
 
     // analytics shape: AnalyticsOverviewDto from GET /api/analytics/overview?childId=X
     const {

@@ -207,13 +207,13 @@ export class GamificationService {
       throw new NotFoundException("Child profile not found");
     }
 
-    const ownedItems = await this.gamificationRepository.getOwnedShopItems(
-      childId,
-    );
-    const avatarPreview = await this.gamificationRepository.getAvatarPreviewForChild(
-      child.id,
-      child.avatar,
-    );
+    const ownedItems =
+      await this.gamificationRepository.getOwnedShopItems(childId);
+    const avatarPreview =
+      await this.gamificationRepository.getAvatarPreviewForChild(
+        child.id,
+        child.avatar,
+      );
 
     return {
       childId: child.id,
@@ -239,9 +239,8 @@ export class GamificationService {
    */
   async getLeaderboard(childId: number, limit: number = 10) {
     const safeLimit = this.normalizeLimit(limit, 10);
-    const leaderboard = await this.gamificationRepository.getLeaderboard(
-      safeLimit,
-    );
+    const leaderboard =
+      await this.gamificationRepository.getLeaderboard(safeLimit);
     return leaderboard.map((entry) => ({
       ...entry,
       isCurrentUser: entry.childId === childId,

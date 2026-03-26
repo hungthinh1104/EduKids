@@ -17,7 +17,7 @@ module.exports = [
     ],
   },
   {
-    files: ['**/*.ts'],
+    files: ['**/*.ts', '!**/*.spec.ts'],
     languageOptions: {
       parser: tseslint.parser,
       parserOptions: {
@@ -37,11 +37,41 @@ module.exports = [
       '@typescript-eslint/interface-name-prefix': 'off',
       '@typescript-eslint/explicit-function-return-type': 'off',
       '@typescript-eslint/explicit-module-boundary-types': 'off',
-      '@typescript-eslint/no-explicit-any': 'warn',
+      '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-unused-vars': [
         'warn',
         { argsIgnorePattern: '^_' },
       ],
+      'prefer-const': 'warn',
+      'prettier/prettier': 'warn',
+      'no-useless-assignment': 'warn',
+      'no-unused-vars': 'off',
+      'preserve-caught-error': 'warn',
+    },
+  },
+  {
+    files: ['**/*.spec.ts'],
+    languageOptions: {
+      parser: tseslint.parser,
+      parserOptions: {
+        project: "tsconfig.eslint.json",
+        sourceType: 'module',
+      },
+      globals: {
+        node: 'readonly',
+        jest: 'readonly',
+      },
+    },
+    plugins: {
+      '@typescript-eslint': tseslint.plugin,
+      prettier: prettierPlugin,
+    },
+    rules: {
+      '@typescript-eslint/interface-name-prefix': 'off',
+      '@typescript-eslint/explicit-function-return-type': 'off',
+      '@typescript-eslint/explicit-module-boundary-types': 'off',
+      '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-unused-vars': 'off',
       'prefer-const': 'warn',
       'prettier/prettier': 'warn',
       'no-useless-assignment': 'warn',

@@ -27,7 +27,11 @@ describe("QuizService", () => {
     };
 
     const mockPrismaService: any = {
-      quizSession: { create: jest.fn(), findUnique: jest.fn(), update: jest.fn() },
+      quizSession: {
+        create: jest.fn(),
+        findUnique: jest.fn(),
+        update: jest.fn(),
+      },
       activity: { create: jest.fn() },
       childProfile: { findUnique: jest.fn(), update: jest.fn() },
     };
@@ -85,7 +89,9 @@ describe("QuizService", () => {
 
       quizRepository.getTopicById.mockResolvedValue(null);
 
-      await expect(service.startQuiz(childId, dto)).rejects.toThrow(NotFoundException);
+      await expect(service.startQuiz(childId, dto)).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it("uses default question count when not provided", async () => {
@@ -195,8 +201,18 @@ describe("QuizService", () => {
         childId,
         topicId: 1,
         answers: [
-          { questionId: 1, isCorrect: true, pointsEarned: 10, timeTakenMs: 5000 },
-          { questionId: 2, isCorrect: false, pointsEarned: 0, timeTakenMs: 3000 },
+          {
+            questionId: 1,
+            isCorrect: true,
+            pointsEarned: 10,
+            timeTakenMs: 5000,
+          },
+          {
+            questionId: 2,
+            isCorrect: false,
+            pointsEarned: 0,
+            timeTakenMs: 3000,
+          },
         ],
         currentScore: 10,
         startedAt: new Date(),

@@ -66,7 +66,7 @@ export function playSound(type: SoundType) {
                 playTone(523.25, 'triangle', 0.6, ctx.currentTime + 1.2); // C5
                 break;
         }
-    } catch (e) {
+    } catch {
         // Suppress audio errors silently if browser blocks autoplay
         console.debug('Audio blocked or not supported');
     }

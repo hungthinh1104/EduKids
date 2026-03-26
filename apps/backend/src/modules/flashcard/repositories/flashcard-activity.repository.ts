@@ -7,13 +7,15 @@ import { $Enums } from "@prisma/client";
 export class FlashcardActivityRepository {
   constructor(private prisma: PrismaService) {}
 
-  private toPrismaActivityType(activityType: ActivityType): $Enums.ActivityType {
+  private toPrismaActivityType(
+    activityType: ActivityType,
+  ): $Enums.ActivityType {
     switch (activityType) {
       case ActivityType.DRAG_DROP:
       case ActivityType.MATCHING:
       case ActivityType.FILL_BLANK:
       default:
-        return 'FLASHCARD';
+        return "FLASHCARD";
     }
   }
 

@@ -310,13 +310,11 @@ export class AdminAnalyticsRepository {
       totalVocabularies,
       totalQuizQuestions,
       totalTopicQuizzes: topicQuizCount,
-      avgPronunciationScore: Math.round(
-        (pronunciationStats._avg.accuracyScore ?? 0) * 100,
-      ) / 100,
+      avgPronunciationScore:
+        Math.round((pronunciationStats._avg.accuracyScore ?? 0) * 100) / 100,
       totalPronunciationAttempts: pronunciationStats._count.id,
-      avgLearningScore: Math.round(
-        (learningStats._avg.quizScore ?? 0) * 100,
-      ) / 100,
+      avgLearningScore:
+        Math.round((learningStats._avg.quizScore ?? 0) * 100) / 100,
       totalLearningRecords: learningStats._count.id,
     };
   }

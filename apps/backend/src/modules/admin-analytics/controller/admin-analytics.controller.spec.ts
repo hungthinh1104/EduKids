@@ -29,7 +29,9 @@ describe("AdminAnalyticsController", () => {
 
   it("getDashboardSummary delegates", async () => {
     const expected = { dau: 100 };
-    (analyticsServiceMock.getDashboardSummary as any).mockResolvedValue(expected);
+    (analyticsServiceMock.getDashboardSummary as any).mockResolvedValue(
+      expected,
+    );
 
     const result = await controller.getDashboardSummary();
 
@@ -39,20 +41,28 @@ describe("AdminAnalyticsController", () => {
 
   it("getDailyActiveUsers delegates query", async () => {
     const query = { period: "7d" };
-    (analyticsServiceMock.getDailyActiveUsers as any).mockResolvedValue({ points: [] });
+    (analyticsServiceMock.getDailyActiveUsers as any).mockResolvedValue({
+      points: [],
+    });
 
     await controller.getDailyActiveUsers(query as any);
 
-    expect(analyticsServiceMock.getDailyActiveUsers).toHaveBeenCalledWith(query);
+    expect(analyticsServiceMock.getDailyActiveUsers).toHaveBeenCalledWith(
+      query,
+    );
   });
 
   it("getContentPopularity delegates query", async () => {
     const query = { limit: 5 };
-    (analyticsServiceMock.getContentPopularity as any).mockResolvedValue({ items: [] });
+    (analyticsServiceMock.getContentPopularity as any).mockResolvedValue({
+      items: [],
+    });
 
     await controller.getContentPopularity(query as any);
 
-    expect(analyticsServiceMock.getContentPopularity).toHaveBeenCalledWith(query);
+    expect(analyticsServiceMock.getContentPopularity).toHaveBeenCalledWith(
+      query,
+    );
   });
 
   it("getDbStats delegates", async () => {

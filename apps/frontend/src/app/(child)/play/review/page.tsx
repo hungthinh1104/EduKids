@@ -71,11 +71,11 @@ function ReviewCard({
                     style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
                 >
                     <div className="text-6xl">{emoji}</div>
-                    <Heading level={2} className="text-white text-4xl font-black drop-shadow">{card.translation}</Heading>
+                    <Heading level={2} color="textInverse" className="text-4xl font-black drop-shadow">{card.translation}</Heading>
                     <div className="bg-card/20 backdrop-blur-sm rounded-2xl px-4 py-2 border border-white/30">
-                        <Caption className="text-white/90 text-sm">{card.word} — {card.phonetic || '/word/'}</Caption>
+                        <Caption color="textInverse" className="text-sm text-white/90">{card.word} — {card.phonetic || '/word/'}</Caption>
                     </div>
-                    <Caption className="text-white/60 text-sm">Bé nhớ mức nào? ↓</Caption>
+                    <Caption color="textInverse" className="text-sm text-white/60">Bé nhớ mức nào? ↓</Caption>
                 </div>
             </motion.div>
         </div>

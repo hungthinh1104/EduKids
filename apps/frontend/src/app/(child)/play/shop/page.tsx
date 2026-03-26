@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import Image from 'next/image';
 import { Star, Coins, ArrowLeft, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from 'sonner';
@@ -194,7 +195,7 @@ export default function ShopPage() {
                 <motion.div initial={{ opacity: 1, y: 12 }} animate={{ opacity: 1, y: 0 }} className="bg-gradient-candy rounded-[2rem] p-5 flex items-center gap-5">
                     <div className="relative w-20 h-20 flex-shrink-0">
                         <div className="w-full h-full rounded-full bg-card/20 border-4 border-white/50 flex items-center justify-center overflow-hidden">
-                            <img src={previewAvatarUrl || child.avatarUrl} alt={child.nickname} className="h-full w-full object-contain p-1" />
+                            <Image src={previewAvatarUrl || child.avatarUrl} alt={child.nickname} width={80} height={80} className="h-full w-full object-contain p-1" />
                         </div>
                         {/* Show equipped hat emoji on avatar */}
                         {equippedBySlot['Mũ'] && (
@@ -204,8 +205,8 @@ export default function ShopPage() {
                         )}
                     </div>
                     <div className="text-white">
-                        <Heading level={3} className="text-white text-lg mb-0.5">{child.nickname}</Heading>
-                        <Body className="text-white/80 text-sm">{shopItems.filter(i => i.owned).length} item đã có</Body>
+                        <Heading level={3} color="textInverse" className="text-lg mb-0.5">{child.nickname}</Heading>
+                        <Body color="textInverse" className="text-sm text-white/80">{shopItems.filter(i => i.owned).length} item đã có</Body>
                         <div className="flex gap-1.5 flex-wrap mt-1.5">
                             {equippedIds.map((eId) => {
                                 const it = shopItems.find((i) => i.id === eId);
@@ -215,10 +216,10 @@ export default function ShopPage() {
                                     </span>
                                 ) : null;
                             })}
-                            {equippedIds.length === 0 && <Caption className="text-white/60 text-xs">Chưa trang bị gì</Caption>}
+                            {equippedIds.length === 0 && <Caption color="textInverse" className="text-xs text-white/60">Chưa trang bị gì</Caption>}
                         </div>
                         {equippedLabels.length > 0 && (
-                            <Caption className="text-white/80 text-xs mt-2 block">
+                            <Caption color="textInverse" className="text-xs mt-2 block text-white/80">
                                 {equippedLabels.join(' • ')}
                             </Caption>
                         )}

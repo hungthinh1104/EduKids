@@ -326,16 +326,25 @@ export class DbStatsResponseDto {
   @ApiProperty({ description: "Total topic-level quizzes in DB", example: 25 })
   totalTopicQuizzes: number;
 
-  @ApiProperty({ description: "Average pronunciation accuracy score (0-100)", example: 72.5 })
+  @ApiProperty({
+    description: "Average pronunciation accuracy score (0-100)",
+    example: 72.5,
+  })
   avgPronunciationScore: number;
 
   @ApiProperty({ description: "Total pronunciation attempts", example: 1500 })
   totalPronunciationAttempts: number;
 
-  @ApiProperty({ description: "Average quiz score in learning progress (0-100)", example: 68.3 })
+  @ApiProperty({
+    description: "Average quiz score in learning progress (0-100)",
+    example: 68.3,
+  })
   avgLearningScore: number;
 
-  @ApiProperty({ description: "Total learning progress records", example: 2200 })
+  @ApiProperty({
+    description: "Total learning progress records",
+    example: 2200,
+  })
   totalLearningRecords: number;
 }
 

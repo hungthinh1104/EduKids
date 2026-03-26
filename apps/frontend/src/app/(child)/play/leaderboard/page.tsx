@@ -117,19 +117,19 @@ export default function LeaderboardPage() {
                 <Sparkles size={14} />
                 Top học viên tuần này
               </div>
-              <Heading level={2} className="mt-3 text-white text-2xl md:text-3xl">
+              <Heading level={2} color="textInverse" className="mt-3 text-2xl md:text-3xl">
                 Đua top, săn sao và mở huy hiệu
               </Heading>
-              <Body className="mt-2 text-white/85 text-sm md:text-base">
+              <Body color="textInverse" className="mt-2 text-sm md:text-base text-white/85">
                 Bảng xếp hạng hiển thị top học viên toàn hệ thống theo tổng điểm tích lũy.
               </Body>
             </div>
 
             {currentUser && (
               <div className="min-w-[112px] rounded-[1.5rem] bg-card/20 px-4 py-3 text-center backdrop-blur-sm">
-                <Caption className="text-white/75 text-xs">Thứ hạng của bé</Caption>
+                <Caption color="textInverse" className="text-xs text-white/75">Thứ hạng của bé</Caption>
                 <div className="mt-1 text-3xl font-heading font-black">#{currentUser.rank}</div>
-                <Caption className="text-white/85 text-xs">{currentUser.totalPoints.toLocaleString()} điểm</Caption>
+                <Caption color="textInverse" className="text-xs text-white/85">{currentUser.totalPoints.toLocaleString()} điểm</Caption>
               </div>
             )}
           </div>

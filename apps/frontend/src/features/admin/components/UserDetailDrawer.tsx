@@ -113,15 +113,30 @@ export function UserDetailDrawer({ user, onClose }: UserDetailDrawerProps) {
 
                             {/* Actions */}
                             <div className="flex gap-2 pt-2">
-                                <button type="button" className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-primary-light text-primary font-heading font-bold text-sm hover:bg-primary hover:text-white transition-colors border-2 border-primary/30">
+                                <button
+                                    type="button"
+                                    disabled
+                                    title="Chức năng này sẽ được nối sau"
+                                    className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-primary-light/60 text-primary/70 font-heading font-bold text-sm border-2 border-primary/30 cursor-not-allowed opacity-75"
+                                >
                                     <Mail size={15} /> Gửi email
                                 </button>
                                 {user.status !== 'banned' ? (
-                                    <button type="button" className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-error-light text-error font-heading font-bold text-sm hover:bg-error hover:text-white transition-colors border-2 border-error/30">
+                                    <button
+                                        type="button"
+                                        disabled
+                                        title="Chức năng này sẽ được nối sau"
+                                        className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-error-light/60 text-error/70 font-heading font-bold text-sm border-2 border-error/30 cursor-not-allowed opacity-75"
+                                    >
                                         <Ban size={15} /> Khóa tài khoản
                                     </button>
                                 ) : (
-                                    <button type="button" className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-success-light text-success font-heading font-bold text-sm hover:bg-success hover:text-white transition-colors border-2 border-success/30">
+                                    <button
+                                        type="button"
+                                        disabled
+                                        title="Chức năng này sẽ được nối sau"
+                                        className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-success-light/60 text-success/70 font-heading font-bold text-sm border-2 border-success/30 cursor-not-allowed opacity-75"
+                                    >
                                         <Shield size={15} /> Mở khóa
                                     </button>
                                 )}

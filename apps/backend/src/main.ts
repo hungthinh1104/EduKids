@@ -60,7 +60,8 @@ async function bootstrap() {
   });
   const httpAdapter = app.getHttpAdapter().getInstance();
   const isProduction = process.env.NODE_ENV === "production";
-  const metricsEnabled = process.env.METRICS_ENABLED === "true" || !isProduction;
+  const metricsEnabled =
+    process.env.METRICS_ENABLED === "true" || !isProduction;
   const metricsToken = process.env.METRICS_TOKEN?.trim() || "";
 
   if (isProduction) {
@@ -100,7 +101,10 @@ async function bootstrap() {
   httpAdapter.use((req, res, next) => {
     // Remaining manual headers not covered by helmet above
     res.setHeader("X-DNS-Prefetch-Control", "off");
-    res.setHeader("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
+    res.setHeader(
+      "Permissions-Policy",
+      "camera=(), microphone=(), geolocation=()",
+    );
     next();
   });
 
@@ -154,7 +158,11 @@ async function bootstrap() {
         const durationSeconds = Number(process.hrtime.bigint() - start) / 1e9;
 
         httpRequestsInFlight.dec({ method, route: routeForInFlight });
-        httpRequestsTotal.inc({ method, route: resolvedRoute, status_code: statusCode });
+        httpRequestsTotal.inc({
+          method,
+          route: resolvedRoute,
+          status_code: statusCode,
+        });
         httpRequestDuration.observe(
           { method, route: resolvedRoute, status_code: statusCode },
           durationSeconds,
@@ -168,7 +176,9 @@ async function bootstrap() {
       // Require bearer token in production when METRICS_TOKEN is configured
       if (isProduction && metricsToken) {
         const authHeader: string = req.headers["authorization"] || "";
-        const provided = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
+        const provided = authHeader.startsWith("Bearer ")
+          ? authHeader.slice(7)
+          : "";
         if (provided !== metricsToken) {
           res.statusCode = 401;
           res.setHeader("WWW-Authenticate", 'Bearer realm="metrics"');
@@ -186,7 +196,8 @@ async function bootstrap() {
       ? ""
       : "http://localhost:3000,http://127.0.0.1:3000";
 
-  const normalizeOrigin = (value: string) => value.trim().replace(/\/+$/, "").toLowerCase();
+  const normalizeOrigin = (value: string) =>
+    value.trim().replace(/\/+$/, "").toLowerCase();
 
   const configuredOriginEntries = [
     process.env.CORS_ORIGIN,

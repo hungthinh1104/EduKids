@@ -139,7 +139,7 @@ function RegisterPageContent() {
         >
             <motion.div variants={fadeInUp} className="text-center mb-8">
                 <Heading level={2} className="text-3xl text-success mb-2">Đăng Ký</Heading>
-                <Body className="text-text-muted">Tạo tài khoản để bắt đầu hành trình học tập!</Body>
+                <Body className="text-muted">Tạo tài khoản để bắt đầu hành trình học tập!</Body>
             </motion.div>
 
             {globalError && (
@@ -154,9 +154,9 @@ function RegisterPageContent() {
                 {/* Name Fields Row */}
                 <motion.div variants={fadeInUp} className="grid grid-cols-2 gap-4 group">
                     <div className="space-y-2">
-                        <label className="text-sm font-bold text-text-heading ml-1 block">Họ</label>
+                        <label className="text-sm font-bold text-heading ml-1 block">Họ</label>
                         <div className="relative">
-                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-text-muted">
+                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-muted">
                                 <UserIcon size={18} />
                             </div>
                             <input
@@ -173,7 +173,7 @@ function RegisterPageContent() {
                     </div>
 
                     <div className="space-y-2">
-                        <label className="text-sm font-bold text-text-heading ml-1 block">Tên</label>
+                        <label className="text-sm font-bold text-heading ml-1 block">Tên</label>
                         <div className="relative">
                             <input
                                 {...register('firstName')}
@@ -191,9 +191,9 @@ function RegisterPageContent() {
 
                 {/* Email Field */}
                 <motion.div variants={fadeInUp} className="space-y-2 group">
-                    <label className="text-sm font-bold text-text-heading ml-1 block">Email</label>
+                    <label className="text-sm font-bold text-heading ml-1 block">Email</label>
                     <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-text-muted">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-muted">
                             <Mail size={18} />
                         </div>
                         <input
@@ -212,10 +212,10 @@ function RegisterPageContent() {
                 {/* Password Field */}
                 <motion.div variants={fadeInUp} className="space-y-2 group">
                     <div className="flex justify-between items-center ml-1">
-                        <label className="text-sm font-bold text-text-heading block">Mật khẩu</label>
+                        <label className="text-sm font-bold text-heading block">Mật khẩu</label>
                     </div>
                     <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-text-muted">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-muted">
                             <Lock size={18} />
                         </div>
                         <input
@@ -234,10 +234,10 @@ function RegisterPageContent() {
                 {/* Confirm Password Field */}
                 <motion.div variants={fadeInUp} className="space-y-2 group">
                     <div className="flex justify-between items-center ml-1">
-                        <label className="text-sm font-bold text-text-heading block">Xác nhận Mật khẩu</label>
+                        <label className="text-sm font-bold text-heading block">Xác nhận Mật khẩu</label>
                     </div>
                     <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-text-muted">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-muted">
                             <Lock size={18} />
                         </div>
                         <input
@@ -255,7 +255,7 @@ function RegisterPageContent() {
 
                 {/* Terms agreement notice */}
                 <motion.div variants={fadeInUp} className="pt-2 pb-2">
-                    <Caption className="text-text-muted text-center text-[13px]">
+                    <Caption className="text-muted text-center text-[13px]">
                         Bằng việc đăng ký, bạn đồng ý với{' '}
                         <Link href="/terms" className="text-primary hover:underline">Điều khoản Dịch vụ</Link> và{' '}
                         <Link href="/privacy" className="text-primary hover:underline">Chính sách Bảo mật</Link> của EduKids.
@@ -307,7 +307,7 @@ function RegisterPageContent() {
             </motion.div>
 
             <motion.div variants={fadeInUp} className="mt-6 text-center">
-                <p className="text-text-muted font-medium">
+                <p className="text-muted font-medium">
                     Đã có tài khoản?{' '}
                     <Link href="/login" className="text-primary font-bold hover:underline decoration-2 underline-offset-4 transition-all">
                         Đăng nhập ngay

@@ -107,9 +107,10 @@ export class FlashcardRepository {
       text: d.translation,
       isCorrect: false,
     }));
-    const insertIndex = distractorOptions.length === 0
-      ? 0
-      : vocabularyId % (distractorOptions.length + 1);
+    const insertIndex =
+      distractorOptions.length === 0
+        ? 0
+        : vocabularyId % (distractorOptions.length + 1);
 
     const options = [...distractorOptions];
     options.splice(insertIndex, 0, {

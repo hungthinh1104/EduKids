@@ -20,16 +20,19 @@ export class LearningService {
   ): Promise<ProgressResponseDto> {
     try {
       const vocabularyExists =
-        await this.learningProgressRepository.vocabularyExists(dto.vocabularyId);
+        await this.learningProgressRepository.vocabularyExists(
+          dto.vocabularyId,
+        );
 
       if (!vocabularyExists) {
         throw new NotFoundException("Vocabulary not found");
       }
 
-      const existingProgress = await this.learningProgressRepository.findProgress(
-        childId,
-        dto.vocabularyId,
-      );
+      const existingProgress =
+        await this.learningProgressRepository.findProgress(
+          childId,
+          dto.vocabularyId,
+        );
 
       if (dto.completed && existingProgress?.completedAt) {
         return {

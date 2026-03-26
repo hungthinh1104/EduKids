@@ -75,6 +75,13 @@ export default function ParentAnalyticsPage() {
     [profiles, selectedChildId],
   );
 
+  useEffect(() => {
+    if (!profiles.length) return;
+    if (selectedChildId === null || !profiles.some((p) => p.id === selectedChildId)) {
+      setSelectedChildId(profiles[0].id);
+    }
+  }, [profiles, selectedChildId]);
+
   const loadAnalytics = useCallback(async () => {
     if (!activeChild?.id) return;
     setIsLoading(true);

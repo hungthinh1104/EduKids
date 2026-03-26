@@ -25,9 +25,7 @@ if (process.env.SENTRY_DSN) {
       process.env.NODE_ENV === "production" ? 0.1 : 1,
     ),
     environment:
-      process.env.SENTRY_ENVIRONMENT ||
-      process.env.NODE_ENV ||
-      "development",
+      process.env.SENTRY_ENVIRONMENT || process.env.NODE_ENV || "development",
     // Safety net: never send expected 4xx client errors to Sentry even if
     // something accidentally calls captureException for them upstream.
     beforeSend(event, hint) {

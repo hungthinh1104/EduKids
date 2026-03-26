@@ -346,7 +346,9 @@ export class CmsService {
       title: dto.word,
       description: dto.definition,
       text: [dto.word, dto.definition, dto.example, dto.phonetic]
-        .filter((part): part is string => typeof part === "string" && part.length > 0)
+        .filter(
+          (part): part is string => typeof part === "string" && part.length > 0,
+        )
         .join("\n"),
       imageUrl: dto.imageUrl,
       audioUrl: dto.audioUrl,
@@ -408,7 +410,9 @@ export class CmsService {
       description:
         typeof nextDefinition === "string" ? nextDefinition : undefined,
       text: [nextWord, nextDefinition, nextExample, nextPhonetic]
-        .filter((part): part is string => typeof part === "string" && part.length > 0)
+        .filter(
+          (part): part is string => typeof part === "string" && part.length > 0,
+        )
         .join("\n"),
       imageUrl: typeof nextImageUrl === "string" ? nextImageUrl : undefined,
       audioUrl: typeof nextAudioUrl === "string" ? nextAudioUrl : undefined,

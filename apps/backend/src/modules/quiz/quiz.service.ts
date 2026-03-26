@@ -246,9 +246,12 @@ export class QuizService {
         { childId, topicId: dto.topicId },
         "warning",
       );
-      Sentry.captureMessage("Adaptive quiz generation fell back to static quiz", {
-        level: "warning",
-      });
+      Sentry.captureMessage(
+        "Adaptive quiz generation fell back to static quiz",
+        {
+          level: "warning",
+        },
+      );
       return this.startStaticQuiz(childId, dto);
     }
   }

@@ -63,9 +63,11 @@ export function ChildProfileCard({ profile, isActive }: ChildProfileCardProps) {
             transition={{ type: 'spring', stiffness: 300, damping: 20 }}
             className="relative"
         >
-            <div
+            <button
+                type="button"
                 onClick={handleClick}
-                className={`relative rounded-[2.25rem] p-6 border border-border/70 shadow-[0_8px_24px_rgba(0,0,0,0.05)] cursor-pointer transition-all duration-300 overflow-hidden group
+                aria-label={`Chuyển sang hồ sơ ${profile.nickname}`}
+                className={`relative w-full text-left rounded-[2.25rem] p-6 border border-border/70 shadow-[0_8px_24px_rgba(0,0,0,0.05)] cursor-pointer transition-all duration-300 overflow-hidden group
             ${switching ? 'opacity-60 cursor-wait' : ''}
             ${isActive ? 'bg-card shadow-primary/15 shadow-xl ring-2 ring-primary/40' : 'bg-card/90 hover:bg-card hover:shadow-lg hover:border-primary/30'}`}
             >
@@ -133,7 +135,7 @@ export function ChildProfileCard({ profile, isActive }: ChildProfileCardProps) {
                             <Caption className="text-error text-xs">{switchError}</Caption>
                         )}
                     </div>
-                </div>
+                </button>
             </motion.div>
     );
 }

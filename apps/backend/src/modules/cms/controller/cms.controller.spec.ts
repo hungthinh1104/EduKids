@@ -32,9 +32,12 @@ describe("CmsController", () => {
     const dto = { title: "Animals" };
     (cmsServiceMock.createTopic as any).mockResolvedValue({ id: 1 });
 
-    const result = await controller.createTopic(dto as any, {
-      user: { userId: 77 },
-    } as any);
+    const result = await controller.createTopic(
+      dto as any,
+      {
+        user: { userId: 77 },
+      } as any,
+    );
 
     expect(cmsServiceMock.createTopic).toHaveBeenCalledWith(dto, 77);
     expect(result).toEqual({ id: 1 });
@@ -44,9 +47,13 @@ describe("CmsController", () => {
     const dto = { title: "Updated" };
     (cmsServiceMock.updateTopic as any).mockResolvedValue({ id: 2 });
 
-    const result = await controller.updateTopic(2 as any, dto as any, {
-      user: { sub: 88 },
-    } as any);
+    const result = await controller.updateTopic(
+      2 as any,
+      dto as any,
+      {
+        user: { sub: 88 },
+      } as any,
+    );
 
     expect(cmsServiceMock.updateTopic).toHaveBeenCalledWith(2, dto, 88);
     expect(result).toEqual({ id: 2 });
@@ -55,9 +62,12 @@ describe("CmsController", () => {
   it("deleteTopic uses req.user.id fallback", async () => {
     (cmsServiceMock.deleteTopic as any).mockResolvedValue({ success: true });
 
-    const result = await controller.deleteTopic(3 as any, {
-      user: { id: 99 },
-    } as any);
+    const result = await controller.deleteTopic(
+      3 as any,
+      {
+        user: { id: 99 },
+      } as any,
+    );
 
     expect(cmsServiceMock.deleteTopic).toHaveBeenCalledWith(3, 99);
     expect(result).toEqual({ success: true });
@@ -66,10 +76,19 @@ describe("CmsController", () => {
   it("getAllTopics uses defaults and passes status", async () => {
     (cmsServiceMock.getAllTopics as any).mockResolvedValue({ items: [] });
 
-    await controller.getAllTopics(undefined as any, undefined as any, undefined);
+    await controller.getAllTopics(
+      undefined as any,
+      undefined as any,
+      undefined,
+    );
     await controller.getAllTopics(2 as any, 30 as any, ContentStatus.PUBLISHED);
 
-    expect(cmsServiceMock.getAllTopics).toHaveBeenNthCalledWith(1, 1, 10, undefined);
+    expect(cmsServiceMock.getAllTopics).toHaveBeenNthCalledWith(
+      1,
+      1,
+      10,
+      undefined,
+    );
     expect(cmsServiceMock.getAllTopics).toHaveBeenNthCalledWith(
       2,
       2,
@@ -79,10 +98,20 @@ describe("CmsController", () => {
   });
 
   it("getVocabulariesByTopicId uses default pagination", async () => {
-    (cmsServiceMock.getVocabulariesByTopicId as any).mockResolvedValue({ items: [] });
+    (cmsServiceMock.getVocabulariesByTopicId as any).mockResolvedValue({
+      items: [],
+    });
 
-    await controller.getVocabulariesByTopicId(10 as any, undefined as any, undefined as any);
+    await controller.getVocabulariesByTopicId(
+      10 as any,
+      undefined as any,
+      undefined as any,
+    );
 
-    expect(cmsServiceMock.getVocabulariesByTopicId).toHaveBeenCalledWith(10, 1, 20);
+    expect(cmsServiceMock.getVocabulariesByTopicId).toHaveBeenCalledWith(
+      10,
+      1,
+      20,
+    );
   });
 });
