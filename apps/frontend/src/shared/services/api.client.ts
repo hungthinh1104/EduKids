@@ -2,40 +2,57 @@ import axios, { AxiosError } from 'axios';
 import Cookies from 'js-cookie';
 import { useAuthStore } from '../store/auth.store';
 
-const resolveRawApiUrl = (): string => {
-    const envApiUrl = process.env.NEXT_PUBLIC_API_URL?.trim();
-    if (envApiUrl) {
-        if (typeof window !== 'undefined') {
-            const isHttpsPage = window.location.protocol === 'https:';
-            const isLocalhostTarget = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?(\/|$)/i.test(envApiUrl);
-            const isLocalhostPage = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+/**
+ * Resolve the API base URL.
+ *
+ * Strategy:
+ * - Browser in production (non-localhost HTTPS page)
+ *   → Use Next.js proxy at same-origin `/api`.
+ *     This avoids CORS entirely (browser ↔ Vercel is same-origin,
+ *     Vercel ↔ Azure is server-to-server with no CORS restriction).
+ * - Browser in development (localhost)
+ *   → Call backend directly using NEXT_PUBLIC_API_URL.
+ * - Server-side (SSR / SSG)
+ *   → Call backend directly using NEXT_PUBLIC_API_URL for performance.
+ */
+const resolveApiUrl = (): string => {
+    // ── Browser context ──────────────────────────────────────────
+    if (typeof window !== 'undefined') {
+        const isLocalhost =
+            window.location.hostname === 'localhost' ||
+            window.location.hostname === '127.0.0.1';
 
-            if (isHttpsPage && isLocalhostTarget && !isLocalhostPage) {
-                return `${window.location.origin}/api`;
-            }
+        // Production browser: route through Next.js proxy (same-origin → no CORS)
+        if (!isLocalhost) {
+            return `${window.location.origin}/api`;
         }
 
-        return envApiUrl.replace(/\/+$/, '');
+        // Development browser: call backend directly
+        const envUrl = process.env.NEXT_PUBLIC_API_URL?.trim();
+        if (envUrl) {
+            const stripped = envUrl.replace(/\/+$/, '');
+            if (stripped.endsWith('/api')) return stripped;
+            if (stripped.endsWith('/api/v1')) return stripped.replace(/\/api\/v1$/, '/api');
+            return `${stripped}/api`;
+        }
+
+        return 'http://localhost:3001/api';
     }
 
-    if (typeof window !== 'undefined') {
-        const { protocol, origin } = window.location;
-        const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-        if (protocol === 'https:' && !isLocalhost) {
-            return `${origin}/api`;
-        }
+    // ── Server-side context (SSR) ────────────────────────────────
+    // Call backend directly for performance (no proxy hop)
+    const envUrl = process.env.NEXT_PUBLIC_API_URL?.trim();
+    if (envUrl) {
+        const stripped = envUrl.replace(/\/+$/, '');
+        if (stripped.endsWith('/api')) return stripped;
+        if (stripped.endsWith('/api/v1')) return stripped.replace(/\/api\/v1$/, '/api');
+        return `${stripped}/api`;
     }
 
     return 'http://localhost:3001/api';
 };
 
-const RAW_API_URL = resolveRawApiUrl();
-
-const API_URL = (() => {
-    if (RAW_API_URL.endsWith('/api/v1')) return RAW_API_URL.replace(/\/api\/v1$/, '/api');
-    if (RAW_API_URL.endsWith('/api')) return RAW_API_URL;
-    return `${RAW_API_URL}/api`;
-})();
+const API_URL = resolveApiUrl();
 
 export const apiClient = axios.create({
     baseURL: API_URL,

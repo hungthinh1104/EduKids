@@ -135,13 +135,13 @@ const nextConfig = {
           },
         ],
       },
-      // Cache API responses
+      // API proxy routes must never be cached — they forward to the backend
       {
         source: '/api/:path*',
         headers: [
           {
             key: 'Cache-Control',
-            value: 'public, max-age=30, stale-while-revalidate=120',
+            value: 'no-store, no-cache, must-revalidate',
           },
         ],
       },
@@ -176,7 +176,10 @@ const nextConfig = {
   // ==========================================
   // Turbopack Configuration (Next.js 16+)
   // ==========================================
-  turbopack: {},
+  turbopack: {
+    // Fix: silence 'inferred workspace root' warning
+    root: import.meta.dirname,
+  },
 
   // ==========================================
   // TypeScript Configuration

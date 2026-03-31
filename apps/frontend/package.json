@@ -1,6 +1,7 @@
 {
   "name": "edukids-frontend",
   "version": "1.0.0",
+  "type": "module",
   "description": "EduKids - Next.js Frontend",
   "private": true,
   "scripts": {
