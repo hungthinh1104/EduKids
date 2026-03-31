@@ -117,7 +117,7 @@ function LoginPageContent() {
             className="w-full"
         >
             <motion.div variants={fadeInUp} className="text-center mb-8">
-                <Heading level={2} className="text-3xl text-primary mb-2">Đăng Nhập</Heading>
+                <Heading level={2} className="text-3xl text-heading mb-2">Đăng Nhập</Heading>
                 <Body className="text-heading">Chào mừng ba mẹ quay lại cùng bé!</Body>
             </motion.div>
 
@@ -197,16 +197,19 @@ function LoginPageContent() {
             <motion.div variants={fadeInUp} className="mt-6">
                 <div className="relative flex items-center py-4">
                     <div className="flex-grow border-t border-border"></div>
-                    <span className="shrink-0 px-4 text-text-muted text-sm font-semibold">Hoặc đăng nhập với</span>
+                    <span className="shrink-0 px-4 text-muted text-sm font-semibold">Hoặc đăng nhập với</span>
                     <div className="flex-grow border-t border-border"></div>
                 </div>
 
                 <button
                     type="button"
                     onClick={() => {
-                        setGlobalError('Đăng nhập Google hiện chưa khả dụng. Vui lòng dùng email và mật khẩu.');
+                        const envUrl = process.env.NEXT_PUBLIC_API_URL?.trim() || 'http://localhost:3001/api';
+                        const stripped = envUrl.replace(/\/+$/, '');
+                        const API_BASE = stripped.endsWith('/api') ? stripped : stripped.endsWith('/api/v1') ? stripped.replace(/\/api\/v1$/, '/api') : `${stripped}/api`;
+                        window.location.href = `${API_BASE}/auth/google`;
                     }}
-                    className="w-full flex justify-center items-center gap-3 px-4 py-3 border-2 border-border rounded-xl bg-card hover:bg-background hover:border-primary/50 transition-colors shadow-sm font-heading font-bold text-text-heading"
+                    className="w-full flex justify-center items-center gap-3 px-4 py-3 border-2 border-border rounded-xl bg-card hover:bg-background hover:border-primary/50 transition-colors shadow-sm font-heading font-bold text-heading"
                 >
                     <svg className="w-5 h-5" viewBox="0 0 24 24">
                         <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill={colors.blue[500]} />
@@ -214,12 +217,12 @@ function LoginPageContent() {
                         <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill={colors.yellow[400]} />
                         <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill={colors.red[500]} />
                     </svg>
-                    bằng Google (Sắp ra mắt)
+                    bằng Google
                 </button>
             </motion.div>
 
             <motion.div variants={fadeInUp} className="mt-8 text-center">
-                <p className="text-text-muted font-medium">
+                <p className="text-muted font-medium">
                     Chưa có tài khoản?{' '}
                     <Link href="/register" className="text-primary font-bold hover:underline decoration-2 underline-offset-4 transition-all">
                         Tạo tài khoản mới

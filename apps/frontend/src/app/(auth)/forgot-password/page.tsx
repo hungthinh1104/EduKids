@@ -87,7 +87,7 @@ function ForgotPasswordContent() {
     return (
         <motion.div initial="hidden" animate="visible" className="w-full space-y-6">
             <motion.div variants={fadeInUp} className="text-center">
-                <Heading level={2} className="text-3xl text-primary mb-2">Quên mật khẩu?</Heading>
+                <Heading level={2} className="text-3xl text-heading mb-2">Quên mật khẩu?</Heading>
                 <Body className="text-body">Nhập email để nhận link đặt lại mật khẩu</Body>
             </motion.div>
 

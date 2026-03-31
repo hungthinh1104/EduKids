@@ -4,6 +4,7 @@ import { PassportModule } from "@nestjs/passport";
 import { AuthController } from "./auth.controller";
 import { AuthService } from "./auth.service";
 import { JwtStrategy } from "./jwt.strategy";
+import { GoogleStrategy } from "./google.strategy";
 import { MailModule } from "../mail/mail.module";
 import { ChildProfileModule } from "../child-profile/child-profile.module";
 import { UserRepository } from "./repositories/user.repository";
@@ -29,7 +30,7 @@ if (!process.env.JWT_SECRET) {
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy, UserRepository],
+  providers: [AuthService, JwtStrategy, GoogleStrategy, UserRepository],
   exports: [AuthService, JwtStrategy],
 })
 export class AuthModule {}

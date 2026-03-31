@@ -100,7 +100,7 @@ function ResetPasswordContent() {
     return (
         <motion.div initial="hidden" animate="visible" className="w-full space-y-6">
             <motion.div variants={fadeInUp} className="text-center">
-                <Heading level={2} className="text-3xl text-primary mb-2">Đặt lại mật khẩu</Heading>
+                <Heading level={2} className="text-3xl text-heading mb-2">Đặt lại mật khẩu</Heading>
                 <Body className="text-body">Nhập mật khẩu mới cho tài khoản của bạn</Body>
             </motion.div>
 

@@ -229,10 +229,26 @@ async function bootstrap() {
   );
 
   // CORS configuration - MUST be set before global prefix
-  app.enableCors({
-    origin: (origin, callback) => {
-      // In production: block requests with no Origin header
-      // In dev: allow no-origin (Postman, curl, etc.)
+  // Build a permissive fallback when no origins are configured in production
+  // to avoid accidentally blocking the frontend while we update env vars.
+  let corsOriginOption: any;
+
+  if (exactAllowedOrigins.size === 0 && wildcardAllowedOrigins.length === 0) {
+    if (isProduction) {
+      logger.warn(
+        "No CORS origins configured in production. Falling back to allow all origins.\n" +
+          "Set CORS_ORIGIN or FRONTEND_URL in the environment to lock this down.",
+      );
+      // Allow the browser origin (reflect) — effectively permissive
+      corsOriginOption = true;
+    } else {
+      // Development default already includes localhost entries
+      corsOriginOption = (origin: string, callback: Function) =>
+        callback(null, true);
+    }
+  } else {
+    // Use strict matching when configured
+    corsOriginOption = (origin: any, callback: any) => {
       if (!origin) {
         if (isProduction) {
           callback(null, false);
@@ -255,7 +271,11 @@ async function bootstrap() {
 
       logger.warn(`CORS blocked for origin: ${origin}`);
       callback(null, false);
-    },
+    };
+  }
+
+  app.enableCors({
+    origin: corsOriginOption,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
     credentials: true,

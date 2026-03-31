@@ -649,15 +649,107 @@ export class AuthService {
   }
 
   /**
-   * OAuth placeholder (Google/Facebook)
-   * TODO: Implement OAuth 2.0 flow
+   * Handle Google OAuth: tìm hoặc tạo user trong DB, trả JWT + refresh token
    */
-  async loginWithOAuth(_provider: "google" | "facebook", _code: string) {
-    // TODO: Exchange code for OAuth token
-    // TODO: Get user profile from provider
-    // TODO: Create or find user in database
-    // TODO: Issue JWT tokens
-    throw new BadRequestException("OAuth not implemented yet");
+  async handleGoogleOAuth(googleUser: {
+    providerId: string;
+    email: string;
+    displayName: string;
+    photo?: string;
+    provider: string;
+  }): Promise<AuthResponseDto> {
+    const { email, displayName, photo } = googleUser;
+
+    // Tách displayName thành firstName / lastName
+    const nameParts = (displayName ?? "").split(" ");
+    const firstName = nameParts[0] ?? null;
+    const lastName = nameParts.slice(1).join(" ") || null;
+
+    // Tìm user theo email
+    const existingUsers = await this.prisma.$queryRaw<
+      Array<{
+        id: number;
+        email: string;
+        firstName: string | null;
+        lastName: string | null;
+        role: string;
+        isActive: boolean;
+        createdAt: Date;
+      }>
+    >`SELECT "id", "email", "firstName", "lastName", "role", "isActive", "createdAt"
+      FROM "User" WHERE "email" = ${email} LIMIT 1`;
+
+    let user = existingUsers[0];
+
+    if (!user) {
+      // Tạo user mới với role PARENT, không có password (OAuth user)
+      const created = await this.prisma.$queryRaw<
+        Array<{
+          id: number;
+          email: string;
+          firstName: string | null;
+          lastName: string | null;
+          role: string;
+          isActive: boolean;
+          createdAt: Date;
+        }>
+      >`INSERT INTO "User" ("email", "passwordHash", "firstName", "lastName", "role", "isActive", "isEmailVerified", "createdAt", "updatedAt")
+        VALUES (${email}, ${"__GOOGLE_OAUTH__"}, ${firstName}, ${lastName}, ${"PARENT"}, true, true, NOW(), NOW())
+        RETURNING "id", "email", "firstName", "lastName", "role", "isActive", "createdAt"`;
+      user = created[0];
+
+      await this.prisma.auditLog.create({
+        data: {
+          userId: user.id,
+          action: "USER_REGISTERED",
+          details: `User registered via Google OAuth (ID: ${user.id})`,
+        },
+      });
+    } else if (!user.isActive) {
+      throw new ForbiddenException("Account is disabled");
+    }
+
+    const tokens = await this.generateTokens(user.id, user.email, user.role);
+
+    // Lưu refresh token vào session
+    await this.prisma.session.create({
+      data: {
+        userId: user.id,
+        token: tokens.refreshToken,
+        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      },
+    });
+
+    await this.prisma.auditLog.create({
+      data: {
+        userId: user.id,
+        action: "USER_LOGIN",
+        details: `User logged in via Google OAuth (ID: ${user.id})`,
+      },
+    });
+
+    return {
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+      role: user.role,
+      user: {
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        isActive: user.isActive,
+        isEmailVerified: true, // Google đã verify email
+        createdAt: user.createdAt,
+      },
+    };
+  }
+
+  /**
+   * OAuth placeholder (Facebook)
+   * TODO: Implement Facebook OAuth flow
+   */
+  async loginWithOAuth(_provider: "facebook", _code: string) {
+    throw new BadRequestException("Facebook OAuth not implemented yet");
   }
 
   // === Private Helper Methods ===

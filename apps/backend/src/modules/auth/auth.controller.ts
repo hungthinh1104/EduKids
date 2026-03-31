@@ -6,6 +6,7 @@ import {
   Body,
   UseGuards,
   Req,
+  Res,
   HttpCode,
   HttpStatus,
   NotImplementedException,
@@ -21,6 +22,7 @@ import {
   SkipThrottle,
 } from "../../common/decorators/throttle.decorator";
 import { Public } from "../../common/decorators/public.decorator";
+import { AuthGuard } from "@nestjs/passport";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { AuthService } from "./auth.service";
 import { RegisterDto } from "./dto/register.dto";
@@ -295,24 +297,34 @@ export class AuthController {
     summary: "Login with Google OAuth",
     description: "Redirect to Google OAuth consent screen",
   })
-  @ApiResponse({ status: 501, description: "OAuth flow not available" })
   @Get("google")
+  @UseGuards(AuthGuard("google"))
   async loginWithGoogle() {
-    throw new NotImplementedException("Google OAuth is disabled");
+    // Guard will handle redirect
   }
 
   /**
-   * OAuth Callback - Google (Placeholder)
+   * OAuth Callback - Google
    */
   @Public()
   @ApiOperation({
     summary: "Google OAuth callback",
-    description: "Handle OAuth callback and issue JWT",
+    description: "Handle OAuth callback, issue JWT and redirect to frontend",
   })
-  @ApiResponse({ status: 501, description: "OAuth flow not available" })
   @Get("google/callback")
-  async googleCallback() {
-    throw new NotImplementedException("Google OAuth is disabled");
+  @UseGuards(AuthGuard("google"))
+  async googleCallback(@Req() req, @Res() res: any) {
+    const authData = await this.authService.handleGoogleOAuth(req.user);
+
+    // Convert auth data to base64 string
+    const tokenStr = Buffer.from(JSON.stringify(authData)).toString("base64");
+
+    // Get frontend URL from env or fallback to localhost
+    const frontendUrl =
+      process.env.FRONTEND_URL?.replace(/\/$/, "") || "http://localhost:3000";
+
+    // Redirect browser back to frontend to process the tokens
+    return res.redirect(`${frontendUrl}/oauth/callback?data=${tokenStr}`);
   }
 
   /**
