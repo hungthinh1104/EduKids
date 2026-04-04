@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo, useDeferredValue } from 'react';
 import axios from 'axios';
 import Image from 'next/image';
 import { Edit2, Trash2, CheckCircle, Plus } from 'lucide-react';
@@ -34,6 +34,7 @@ export default function AdminVocabulariesPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const [searchQuery, setSearchQuery] = useState('');
+  const deferredSearchQuery = useDeferredValue(searchQuery);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingVocab, setEditingVocab] = useState<CMSVocabulary | null>(null);
 
@@ -101,6 +102,7 @@ export default function AdminVocabulariesPage() {
     } catch (error) {
       console.error('Failed to save vocabulary:', error);
       toast.error('Lỗi khi lưu từ vựng');
+      throw error;
     } finally {
       setIsSubmitting(false);
     }
@@ -144,10 +146,16 @@ export default function AdminVocabulariesPage() {
     setShowCreateModal(true);
   };
 
-  const filteredVocabs = vocabularies.filter(v =>
-    v.word.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    v.translation?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredVocabs = useMemo(() => {
+    const query = deferredSearchQuery.trim().toLowerCase();
+    if (!query) return vocabularies;
+
+    return vocabularies.filter((v) => {
+      const word = v.word.toLowerCase();
+      const translation = v.translation?.toLowerCase() ?? '';
+      return word.includes(query) || translation.includes(query);
+    });
+  }, [vocabularies, deferredSearchQuery]);
 
   return (
     <div className="p-6 md:p-8 max-w-7xl mx-auto">
@@ -167,9 +175,12 @@ export default function AdminVocabulariesPage() {
         <label className="block text-sm font-bold text-heading mb-3">Chọn Chủ Đề Học</label>
         <select
           value={selectedTopicId ?? ''}
-          onChange={(e) => setSelectedTopicId(parseInt(e.target.value))}
+          onChange={(e) => {
+            const value = e.target.value;
+            setSelectedTopicId(value ? parseInt(value, 10) : null);
+          }}
           disabled={isLoadingTopics}
-          className="w-full px-4 py-3.5 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary disabled:bg-background disabled:text-caption transition-all font-medium text-heading"
+          className="h-11 w-full rounded-xl border border-border px-4 text-heading font-medium transition-all focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:bg-background disabled:text-caption"
         >
           <option value="">-- Chọn chủ đề --</option>
           {topics.map(topic => (
@@ -216,6 +227,7 @@ export default function AdminVocabulariesPage() {
                     alt={vocab.word}
                     fill
                     sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 25vw"
+                    quality={75}
                     className="object-cover group-hover:scale-105 transition-transform duration-500"
                   />
                 ) : (
@@ -238,34 +250,36 @@ export default function AdminVocabulariesPage() {
 
               {/* Card Content */}
               <div className="p-5 flex-1 flex flex-col">
-                <div className="flex items-start justify-between mb-1">
-                  <h3 className="text-xl font-extrabold text-heading tracking-tight group-hover:text-primary transition-colors">{vocab.word}</h3>
+                <div className="mb-2 flex min-h-[2.25rem] items-start justify-between gap-2">
+                  <h3 className="line-clamp-1 text-xl font-extrabold tracking-tight text-heading transition-colors group-hover:text-primary">{vocab.word}</h3>
                   {vocab.phonetic && (
-                    <span className="bg-background text-caption px-2 py-1 rounded-md text-xs font-mono border border-border/60">{vocab.phonetic}</span>
+                    <span className="rounded-md border border-border/60 bg-background px-2 py-1 text-xs font-mono text-caption">{vocab.phonetic}</span>
                   )}
                 </div>
 
-                <p className="text-body text-sm mb-3 font-medium">{vocab.translation}</p>
+                <p className="mb-3 min-h-[2.75rem] line-clamp-2 text-sm font-medium text-body">{vocab.translation}</p>
 
                 {vocab.exampleSentence && (
-                  <p className="text-caption text-sm italic mb-4 bg-background p-2.5 rounded-lg border border-border/60">&quot;{vocab.exampleSentence}&quot;</p>
+                  <p className="mb-4 line-clamp-2 min-h-[3.5rem] rounded-lg border border-border/60 bg-background p-2.5 text-sm italic text-caption">&quot;{vocab.exampleSentence}&quot;</p>
                 )}
+
+                {!vocab.exampleSentence && <div className="mb-4 min-h-[3.5rem]"></div>}
 
                 <div className="mt-auto pt-4 border-t border-border/60">
                   {vocab.audioUrl ? (
                     <div className="mb-4">
-                      <audio controls className="w-full h-8 custom-audio-player opacity-70 group-hover:opacity-100 transition-opacity">
+                      <audio controls preload="none" className="w-full h-8 custom-audio-player opacity-70 group-hover:opacity-100 transition-opacity">
                         <source src={vocab.audioUrl} type="audio/mpeg" />
                       </audio>
                     </div>
                   ) : <div className="h-10 mb-2"></div>}
 
                   {/* Actions */}
-                  <div className="flex gap-2">
+                  <div className="flex items-stretch gap-2">
                     <button
                       type="button"
                       onClick={() => openEditModal(vocab)}
-                      className="flex-[2] flex items-center justify-center gap-1.5 px-3 py-2 bg-background hover:bg-primary-light/40 text-body hover:text-primary rounded-xl transition-colors font-medium text-sm border border-border/60 hover:border-primary/30"
+                      className="flex h-10 flex-1 items-center justify-center gap-1.5 rounded-xl border border-border/60 bg-background px-3 text-sm font-medium text-body transition-colors hover:border-primary/30 hover:bg-primary-light/40 hover:text-primary"
                     >
                       <Edit2 className="w-4 h-4" />
                       <span>Sửa</span>
@@ -275,7 +289,7 @@ export default function AdminVocabulariesPage() {
                       <button
                         type="button"
                         onClick={() => handlePublish(vocab.id)}
-                        className="flex-1 flex items-center justify-center px-2 py-2 bg-success-light hover:bg-success-light/70 text-success rounded-xl transition-colors"
+                        className="flex h-10 w-10 items-center justify-center rounded-xl bg-success-light text-success transition-colors hover:bg-success-light/70"
                         title="Xuất bản"
                       >
                         <CheckCircle className="w-4 h-4" />
@@ -285,7 +299,7 @@ export default function AdminVocabulariesPage() {
                     <button
                       type="button"
                       onClick={() => handleDelete(vocab.id)}
-                      className="flex-1 flex items-center justify-center px-2 py-2 bg-background hover:bg-error-light text-caption hover:text-error rounded-xl transition-colors border border-border/60"
+                      className="flex h-10 w-10 items-center justify-center rounded-xl border border-border/60 bg-background text-caption transition-colors hover:bg-error-light hover:text-error"
                       title="Xóa từ vựng"
                     >
                       <Trash2 className="w-4 h-4" />

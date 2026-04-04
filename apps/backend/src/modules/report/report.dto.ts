@@ -192,8 +192,8 @@ export class ReportChildSummaryDto {
  * Weekly progress report DTO
  */
 export class ProgressReportDto {
-  @ApiProperty({ example: 1 })
-  reportId: number;
+  @ApiProperty({ example: 'c7dc685d-4aa6-4ff7-a6d8-c4dd4c8228af' })
+  reportId: string;
 
   @ApiProperty({ example: 1 })
   parentId: number;
@@ -395,8 +395,8 @@ export class ReportSendResultDto {
   @ApiProperty({ example: 'Report sent successfully' })
   message: string;
 
-  @ApiProperty({ example: 101 })
-  reportId: number;
+  @ApiProperty({ example: 'c7dc685d-4aa6-4ff7-a6d8-c4dd4c8228af' })
+  reportId: string;
 
   @ApiProperty({ type: ProgressReportDto })
   report: ProgressReportDto;

@@ -73,20 +73,41 @@ export default function AdminTopicsPage() {
     } catch (error) {
       console.error('Failed to save topic:', error);
       toast.error('Lỗi khi lưu chủ đề');
+      throw error;
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (topic: CMSTopic) => {
     if (!confirm('Bạn có chắc muốn xóa chủ đề này? Hành động này không thể hoàn tác.')) return;
-    
+
     try {
-      await deleteTopic(id);
+      if (topic.status === 'PUBLISHED') {
+        const shouldArchiveFirst = confirm(
+          'Topic đang ở trạng thái PUBLISHED nên cần lưu trữ trước khi xóa. Bạn có muốn lưu trữ ngay bây giờ không?',
+        );
+
+        if (!shouldArchiveFirst) {
+          return;
+        }
+
+        await archiveTopic(topic.id);
+      }
+
+      await deleteTopic(topic.id);
       toast.success('Đã xóa chủ đề');
       void loadTopics();
     } catch (error) {
       console.error('Failed to delete topic:', error);
+      if (axios.isAxiosError(error) && error.response?.status === 409) {
+        const backendMessage =
+          (error.response.data as { message?: string })?.message ||
+          'Không thể xóa topic đang được publish. Hãy lưu trữ trước rồi thử lại.';
+        toast.error(backendMessage);
+        return;
+      }
+
       toast.error('Lỗi khi xóa chủ đề');
     }
   };
@@ -189,6 +210,12 @@ export default function AdminTopicsPage() {
                 ) : (
                   <span className="text-6xl drop-shadow-sm group-hover:scale-110 transition-transform duration-300">📚</span>
                 )}
+
+                {(topic.hasVideo || topic.videoUrl) && (
+                  <div className="absolute top-4 left-4 rounded-full border border-blue-200/70 bg-blue-50/90 px-3 py-1 text-[11px] font-bold tracking-wide text-blue-700 shadow-sm backdrop-blur-sm">
+                    🎬 Có video
+                  </div>
+                )}
                 
                 {/* Status Badge Overlaid */}
                 <div className="absolute top-4 right-4 bg-card/90 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-sm border border-border/60">
@@ -218,11 +245,11 @@ export default function AdminTopicsPage() {
                 </div>
 
                 {/* Actions */}
-                <div className="flex gap-2">
+                <div className="flex items-stretch gap-2">
                   <button
                     type="button"
                     onClick={() => openEditModal(topic)}
-                    className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 bg-background hover:bg-primary-light/40 text-body hover:text-primary rounded-xl transition-colors font-medium text-sm border border-border/60 hover:border-primary/30"
+                    className="flex h-10 flex-1 items-center justify-center gap-1.5 rounded-xl border border-border/60 bg-background px-3 text-sm font-medium text-body transition-colors hover:border-primary/30 hover:bg-primary-light/40 hover:text-primary"
                   >
                     <Edit2 className="w-4 h-4" />
                     <span>Sửa</span>
@@ -232,7 +259,7 @@ export default function AdminTopicsPage() {
                     <button
                       type="button"
                       onClick={() => handlePublish(topic.id)}
-                      className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 bg-success-light hover:bg-success-light/70 text-success rounded-xl transition-colors font-medium text-sm"
+                      className="flex h-10 flex-1 items-center justify-center gap-1.5 rounded-xl bg-success-light px-3 text-sm font-medium text-success transition-colors hover:bg-success-light/70"
                     >
                       <CheckCircle className="w-4 h-4" />
                       <span>Xuất Bản</span>
@@ -243,7 +270,7 @@ export default function AdminTopicsPage() {
                     <button
                       type="button"
                       onClick={() => handleArchive(topic.id)}
-                      className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 bg-warning-light hover:bg-warning-light/70 text-warning rounded-xl transition-colors font-medium text-sm"
+                      className="flex h-10 flex-1 items-center justify-center gap-1.5 rounded-xl bg-warning-light px-3 text-sm font-medium text-warning transition-colors hover:bg-warning-light/70"
                     >
                       <Archive className="w-4 h-4" />
                       <span>Lưu trữ</span>
@@ -252,8 +279,8 @@ export default function AdminTopicsPage() {
 
                   <button
                     type="button"
-                    onClick={() => handleDelete(topic.id)}
-                    className="flex items-center justify-center px-4 py-2.5 bg-background hover:bg-error-light text-caption hover:text-error rounded-xl transition-colors border border-border/60"
+                    onClick={() => handleDelete(topic)}
+                    className="flex h-10 w-10 items-center justify-center rounded-xl border border-border/60 bg-background text-caption transition-colors hover:bg-error-light hover:text-error"
                     title="Xóa chủ đề"
                   >
                     <Trash2 className="w-4 h-4" />

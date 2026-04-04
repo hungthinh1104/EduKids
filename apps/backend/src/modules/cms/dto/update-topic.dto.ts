@@ -61,6 +61,23 @@ export class UpdateTopicDto {
   imageUrl?: string;
 
   @ApiProperty({
+    example: "https://cdn.example.com/animals.mp4",
+    description: "Topic video CDN URL",
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  videoUrl?: string;
+
+  @ApiProperty({
+    example: true,
+    description: "Whether the topic has an introductory video",
+    required: false,
+  })
+  @IsOptional()
+  hasVideo?: boolean;
+
+  @ApiProperty({
     example: "REVIEW",
     description: "Content status",
     enum: ContentStatus,

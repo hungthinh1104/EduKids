@@ -12,8 +12,13 @@ import {
   HttpCode,
   HttpStatus,
   Req,
+  BadRequestException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import { extname, join } from 'path';
+import { tmpdir } from 'os';
+import { existsSync, mkdirSync } from 'fs';
 import {
   ApiTags,
   ApiOperation,
@@ -29,6 +34,19 @@ import { QueryMediaDto } from '../dto/query-media.dto';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../../common/guards/roles.guard';
 import { Roles } from '../../../common/decorators/roles.decorator';
+import { ALLOWED_MIME_TYPES, FILE_SIZE_LIMITS } from '../config/cloudinary.config';
+
+const mediaTempDir = join(tmpdir(), 'edukids-media-upload');
+
+if (!existsSync(mediaTempDir)) {
+  mkdirSync(mediaTempDir, { recursive: true });
+}
+
+const ALL_ALLOWED_MIME_TYPES = new Set<string>([
+  ...ALLOWED_MIME_TYPES.IMAGE,
+  ...ALLOWED_MIME_TYPES.AUDIO,
+  ...ALLOWED_MIME_TYPES.VIDEO,
+]);
 
 @ApiTags('Media Management')
 @Controller('media')
@@ -39,7 +57,53 @@ export class MediaController {
 
   @Post('upload')
   @Roles('admin')
-  @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: diskStorage({
+        destination: (_req, _file, cb) => cb(null, mediaTempDir),
+        filename: (_req, file, cb) => {
+          const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
+          cb(null, `${uniqueSuffix}${extname(file.originalname || '')}`);
+        },
+      }),
+      limits: {
+        fileSize: FILE_SIZE_LIMITS.VIDEO,
+      },
+      fileFilter: (req, file, cb) => {
+        const requestedMediaType =
+          typeof req.body?.mediaType === 'string'
+            ? req.body.mediaType.toUpperCase()
+            : undefined;
+
+        if (!ALL_ALLOWED_MIME_TYPES.has(file.mimetype)) {
+          cb(
+            new BadRequestException(
+              `Định dạng file không được hỗ trợ: ${file.mimetype || 'unknown'}`,
+            ) as unknown as Error,
+            false,
+          );
+          return;
+        }
+
+        if (
+          (requestedMediaType === 'IMAGE' ||
+            requestedMediaType === 'AUDIO' ||
+            requestedMediaType === 'VIDEO') &&
+          !ALLOWED_MIME_TYPES[requestedMediaType].includes(file.mimetype)
+        ) {
+          cb(
+            new BadRequestException(
+              `MIME type ${file.mimetype} không khớp với mediaType ${requestedMediaType}`,
+            ) as unknown as Error,
+            false,
+          );
+          return;
+        }
+
+        cb(null, true);
+      },
+    }),
+  )
   @ApiConsumes('multipart/form-data')
   @ApiOperation({
     summary: 'Upload media file',

@@ -807,6 +807,7 @@ export class QuizService {
     return {
       questionId: index + 1,
       promptText: quiz.questionText,
+      imageUrl: (quiz as TopicQuiz & { questionImageUrl?: string | null }).questionImageUrl ?? undefined,
       word: correctAnswer.text,
       translation: quiz.questionText,
       correctOptionId: correctAnswer.id,

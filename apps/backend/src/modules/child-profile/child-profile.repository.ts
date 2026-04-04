@@ -158,13 +158,12 @@ export class ChildProfileRepository {
    * @returns Active child profile or null
    */
   async getActiveProfile(parentId: number) {
-    const users = await this.prisma.$queryRawUnsafe<
-      Array<{
-        activeChildId: number | null;
-      }>
-    >('SELECT "activeChildId" FROM "User" WHERE "id" = $1 LIMIT 1', parentId);
+    const user = await this.prisma.user.findUnique({
+      where: { id: parentId },
+      select: { activeChildId: true },
+    });
 
-    const activeChildId = users[0]?.activeChildId;
+    const activeChildId = user?.activeChildId;
     if (!activeChildId) {
       return null;
     }
@@ -195,12 +194,13 @@ export class ChildProfileRepository {
       throw new Error("Child profile not found or not owned by parent");
     }
 
-    // CRITICAL FIX: Actually update User.activeChildId in database
-    await this.prisma.$executeRawUnsafe(
-      'UPDATE "User" SET "activeChildId" = $1, "updatedAt" = NOW() WHERE "id" = $2',
-      childId,
-      parentId,
-    );
+    await this.prisma.user.update({
+      where: { id: parentId },
+      data: {
+        activeChildId: childId,
+        updatedAt: new Date(),
+      },
+    });
 
     return childProfile;
   }

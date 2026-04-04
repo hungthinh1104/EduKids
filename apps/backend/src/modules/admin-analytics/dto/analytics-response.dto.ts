@@ -277,8 +277,10 @@ export class DashboardSummaryDto {
   @ApiProperty({
     description: "Most popular content today",
     type: ContentPopularityItemDto,
+    required: false,
+    nullable: true,
   })
-  topContent: ContentPopularityItemDto;
+  topContent?: ContentPopularityItemDto;
 
   @ApiProperty({
     description: "Total content views today",

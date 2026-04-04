@@ -18,7 +18,7 @@ interface AnalyticsData {
     topicPopularity: { label: string; value: number; maxValue: number; meta: React.ReactNode }[];
     funnel: { label: string; value: number; barColor: string }[];
     gameModes: { mode: string; sessions: number; avgScore: number; color: string }[];
-    kpis: { label: string; value: string; delta: number; icon: React.ReactNode; colorCls: string }[];
+    kpis: { label: string; value: string; delta?: number; icon: React.ReactNode; colorCls: string }[];
     engagementRate: number;
     totalQuizzes: number;
     totalTopics: number;
@@ -58,7 +58,7 @@ export default function AdminAnalyticsPage() {
                     getAdminDashboard(),
                     getDAUMetrics(period),
                     getSessionLengthAnalytics(period),
-                    getContentPopularity({ period, limit: 10, contentType: 'TOPIC' }),
+                    getContentPopularity({ period, limit: 10 }),
                 ]);
 
                 if (dashboardResult.status === 'rejected') {
@@ -66,37 +66,33 @@ export default function AdminAnalyticsPage() {
                 }
 
                 const dashboard = dashboardResult.value;
-                const dauMetrics = dauResult.status === 'fulfilled'
-                    ? dauResult.value
-                    : { date: '', dau: 0, new: 0, returning: 0, chartData: [] };
-                const sessionLength = sessionResult.status === 'fulfilled'
-                    ? sessionResult.value
-                    : { average: 0, median: 0, byUserType: { free: 0, premium: 0 }, distribution: [], trend: [] };
-                const contentPopularity = popularityResult.status === 'fulfilled'
-                    ? popularityResult.value
-                    : { topics: [], vocabularies: [], quizzes: [] };
+                const dauMetrics = dauResult.status === 'fulfilled' ? dauResult.value : null;
+                const sessionLength = sessionResult.status === 'fulfilled' ? sessionResult.value : null;
+                const contentPopularity =
+                    popularityResult.status === 'fulfilled' ? popularityResult.value : null;
+                const averageSessionLength = sessionLength?.average ?? dashboard.averageSessionLength;
 
                 const degradedResponses = [dauResult, sessionResult, popularityResult].some((r) => r.status === 'rejected');
                 if (degradedResponses) {
                     setWarning('Một vài nguồn analytics chưa sẵn sàng. Dashboard đang hiển thị dữ liệu khả dụng.');
                 }
 
-                const dailyActive = dauMetrics.chartData.map((point) => ({
+                const dailyActive = (dauMetrics?.chartData ?? []).map((point) => ({
                     label: point.date,
                     value: point.dau,
                 }));
 
-                const retention = dauMetrics.chartData.map((point) => ({
+                const retention = (dauMetrics?.chartData ?? []).map((point) => ({
                     label: point.date,
                     value: point.dau > 0 ? Math.round((point.returning / point.dau) * 100) : 0,
                 }));
 
                 const maxTopicCompletion = Math.max(
                     1,
-                    ...contentPopularity.topics.map((topic) => topic.completions)
+                    ...(contentPopularity?.topics ?? []).map((topic) => topic.completions)
                 );
 
-                const topicPopularity = contentPopularity.topics.map((topic) => ({
+                const topicPopularity = (contentPopularity?.topics ?? []).map((topic) => ({
                     label: topic.name,
                     value: topic.completions,
                     maxValue: maxTopicCompletion,
@@ -110,15 +106,42 @@ export default function AdminAnalyticsPage() {
                 const activeUserRate = dashboard.totalUsers > 0
                     ? Math.round((dashboard.activeUsers / dashboard.totalUsers) * 100)
                     : 0;
-                const completionRate = contentPopularity.topics.length > 0
+                const completionRate = (contentPopularity?.topics?.length ?? 0) > 0
                     ? Math.round(
-                        contentPopularity.topics.reduce((sum, topic) => sum + topic.averageScore, 0) /
-                        contentPopularity.topics.length
+                        (contentPopularity?.topics ?? []).reduce((sum, topic) => sum + topic.averageScore, 0) /
+                        (contentPopularity?.topics?.length ?? 1)
                     )
                     : 0;
                 const contentViewRate = dashboard.totalUsers > 0 && (dashboard.totalContentViews ?? 0) > 0
                     ? Math.min(100, Math.round((dashboard.totalContentViews ?? 0) / dashboard.totalUsers))
                     : 0;
+
+                const gameModes = [
+                    {
+                        mode: 'Topic',
+                        sessions: (contentPopularity?.topics ?? []).reduce((sum, item) => sum + item.views, 0),
+                        avgScore: (contentPopularity?.topics?.length ?? 0) > 0
+                            ? Math.round((contentPopularity?.topics ?? []).reduce((sum, item) => sum + item.averageScore, 0) / (contentPopularity?.topics?.length ?? 1))
+                            : 0,
+                        color: 'text-primary',
+                    },
+                    {
+                        mode: 'Flashcard',
+                        sessions: (contentPopularity?.vocabularies ?? []).reduce((sum, item) => sum + item.learningCount, 0),
+                        avgScore: (contentPopularity?.vocabularies?.length ?? 0) > 0
+                            ? Math.round((contentPopularity?.vocabularies ?? []).reduce((sum, item) => sum + item.masteryRate, 0) / (contentPopularity?.vocabularies?.length ?? 1))
+                            : 0,
+                        color: 'text-secondary',
+                    },
+                    {
+                        mode: 'Quiz',
+                        sessions: (contentPopularity?.quizzes ?? []).reduce((sum, item) => sum + item.attempts, 0),
+                        avgScore: (contentPopularity?.quizzes?.length ?? 0) > 0
+                            ? Math.round((contentPopularity?.quizzes ?? []).reduce((sum, item) => sum + item.averageScore, 0) / (contentPopularity?.quizzes?.length ?? 1))
+                            : 0,
+                        color: 'text-accent',
+                    },
+                ].filter((item) => item.sessions > 0);
 
                 setData({
                     dailyActive,
@@ -129,11 +152,17 @@ export default function AdminAnalyticsPage() {
                         { label: 'Hoàn thành nội dung', value: completionRate, barColor: 'bg-success' },
                         { label: 'Lượt xem nội dung', value: contentViewRate, barColor: 'bg-warning' },
                     ],
-                    gameModes: [],
+                    gameModes,
                     kpis: [
                         { label: 'Tổng users', value: dashboard.totalUsers.toLocaleString(), delta: dashboard.userGrowth, icon: <Users size={20} />, colorCls: 'text-primary bg-primary-light' },
                         { label: 'Active users', value: dashboard.activeUsers.toLocaleString(), delta: dashboard.engagementRate, icon: <Users size={20} />, colorCls: 'text-accent bg-accent-light' },
-                        { label: 'Thời gian TB', value: `${dashboard.averageSessionLength} phút`, delta: sessionLength.average - sessionLength.median, icon: <Clock size={20} />, colorCls: 'text-success bg-success-light' },
+                        {
+                            label: 'Thời gian TB',
+                            value: `${averageSessionLength} phút`,
+                            delta: sessionLength ? Math.round((sessionLength.average - sessionLength.median) * 10) / 10 : undefined,
+                            icon: <Clock size={20} />,
+                            colorCls: 'text-success bg-success-light'
+                        },
                         { label: 'Tổng bài học', value: dashboard.totalTopics.toLocaleString(), delta: 0, icon: <BookOpen size={20} />, colorCls: 'text-secondary bg-secondary-light' },
                         { label: 'Engagement', value: `${dashboard.engagementRate}%`, delta: dashboard.engagementRate, icon: <Target size={20} />, colorCls: 'text-warning bg-warning-light' },
                         { label: 'Quiz đã tạo', value: dashboard.totalQuizzes.toLocaleString(), delta: 0, icon: <Trophy size={20} />, colorCls: 'text-primary bg-primary-light' },
@@ -142,7 +171,7 @@ export default function AdminAnalyticsPage() {
                     totalQuizzes: dashboard.totalQuizzes,
                     totalTopics: dashboard.totalTopics,
                     totalVocabularies: dashboard.totalVocabularies,
-                    averageSessionLength: dashboard.averageSessionLength,
+                    averageSessionLength,
                     avgPronunciationScore: dashboard.avgPronunciationScore,
                     totalPronunciationAttempts: dashboard.totalPronunciationAttempts,
                     totalQuizQuestions: dashboard.totalQuizQuestions,
@@ -184,17 +213,23 @@ export default function AdminAnalyticsPage() {
             )}
 
             {/* KPIs */}
-            {loading || !data ? (
+            {loading ? (
                 <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-6 gap-4">
                     {[...Array(6)].map((_, i) => (
                         <Skeleton key={i} className="h-32 w-full" />
                     ))}
                 </div>
-            ) : (
+            ) : data ? (
                 <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-6 gap-4">
                     {data.kpis.map((m, i) => (
                         <MetricCard key={m.label} {...m} index={i} />
                     ))}
+                </div>
+            ) : (
+                <div className="rounded-2xl border border-border/70 bg-card p-6 text-center shadow-sm">
+                    <Caption className="text-caption">
+                        Không có dữ liệu analytics để hiển thị ở thời điểm hiện tại.
+                    </Caption>
                 </div>
             )}
 

@@ -116,9 +116,13 @@ function LoginPageContent() {
             variants={staggerContainer}
             className="w-full"
         >
-            <motion.div variants={fadeInUp} className="text-center mb-8">
-                <Heading level={2} className="text-3xl text-heading mb-2">Đăng Nhập</Heading>
-                <Body className="text-heading">Chào mừng ba mẹ quay lại cùng bé!</Body>
+            <motion.div variants={fadeInUp} className="text-center mb-8 space-y-2">
+                <Heading level={2} className="text-heading text-4xl sm:text-[2.6rem] font-black tracking-tight leading-tight">
+                    Đăng nhập
+                </Heading>
+                <Body className="text-body text-base sm:text-lg font-medium leading-relaxed">
+                    Chào mừng ba mẹ quay lại cùng bé!
+                </Body>
             </motion.div>
 
             {globalError && (

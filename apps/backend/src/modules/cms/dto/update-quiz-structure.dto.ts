@@ -8,6 +8,7 @@ import {
   IsArray,
   ValidateNested,
   IsNumber,
+  IsUrl,
 } from "class-validator";
 import { Type } from "class-transformer";
 import { ContentStatus } from "./create-topic.dto";
@@ -52,6 +53,18 @@ export class UpdateQuizStructureDto {
   @MinLength(5)
   @MaxLength(500)
   questionText?: string;
+
+  @ApiProperty({
+    example: "https://res.cloudinary.com/edukids/image/upload/v1/quiz/question-cat.jpg",
+    description: "Optional image URL displayed with the quiz question",
+    required: false,
+  })
+  @IsOptional()
+  @IsUrl({
+    protocols: ["http", "https"],
+    require_protocol: true,
+  })
+  questionImageUrl?: string;
 
   @ApiProperty({
     example: [

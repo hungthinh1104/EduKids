@@ -13,9 +13,14 @@ describe("AuthService - register", () => {
   let service: AuthService;
 
   const prismaMock = {
-    $queryRaw: jest.fn() as jest.Mock,
-    session: { create: jest.fn() as jest.Mock },
-    auditLog: { create: jest.fn() as jest.Mock },
+    user: {
+      findUnique: jest.fn() as jest.MockedFunction<any>,
+      findFirst: jest.fn() as jest.MockedFunction<any>,
+      create: jest.fn() as jest.MockedFunction<any>,
+      update: jest.fn() as jest.MockedFunction<any>,
+    },
+    session: { create: jest.fn() as jest.MockedFunction<any> },
+    auditLog: { create: jest.fn() as jest.MockedFunction<any> },
   };
 
   const jwtServiceMock = {
@@ -60,12 +65,13 @@ describe("AuthService - register", () => {
       lastName: "Doe",
     };
 
-    prismaMock.$queryRaw.mockImplementationOnce(async () => [{ id: 1 }]);
+    // findUnique returns existing user → should throw ConflictException
+    prismaMock.user.findUnique.mockResolvedValueOnce({ id: 1 });
 
     await expect(service.register(dto)).rejects.toBeInstanceOf(
       ConflictException,
     );
-    expect(prismaMock.$queryRaw).toHaveBeenCalledTimes(1);
+    expect(prismaMock.user.findUnique).toHaveBeenCalledTimes(1);
     expect(prismaMock.session.create).not.toHaveBeenCalled();
   });
 
@@ -77,26 +83,27 @@ describe("AuthService - register", () => {
       lastName: "Nguyen",
     };
 
-    prismaMock.$queryRaw
-      .mockImplementationOnce(async () => [])
-      .mockImplementationOnce(async () => [
-        {
-          id: 42,
-          email: dto.email,
-          firstName: dto.firstName,
-          lastName: dto.lastName,
-          role: "PARENT",
-          isActive: true,
-          createdAt: new Date("2026-03-22T00:00:00.000Z"),
-        },
-      ]);
+    const createdUser = {
+      id: 42,
+      email: dto.email,
+      firstName: dto.firstName,
+      lastName: dto.lastName,
+      role: "PARENT",
+      isActive: true,
+      createdAt: new Date("2026-03-22T00:00:00.000Z"),
+    };
+
+    // findUnique returns null → no duplicate
+    prismaMock.user.findUnique.mockResolvedValueOnce(null);
+    // create returns the new user
+    prismaMock.user.create.mockResolvedValueOnce(createdUser);
 
     jwtServiceMock.sign
       .mockReturnValueOnce("access-token-123")
       .mockReturnValueOnce("refresh-token-123");
 
-    prismaMock.session.create.mockImplementation(async () => ({ id: 100 }));
-    prismaMock.auditLog.create.mockImplementation(async () => ({ id: 200 }));
+    prismaMock.session.create.mockResolvedValue({ id: 100 });
+    prismaMock.auditLog.create.mockResolvedValue({ id: 200 });
 
     const result = await service.register(dto);
 
@@ -115,13 +122,15 @@ describe("AuthService - register", () => {
       },
     });
 
-    expect(prismaMock.$queryRaw).toHaveBeenCalledTimes(2);
-
-    const secondCallArgs = prismaMock.$queryRaw.mock.calls[1];
-    expect(secondCallArgs[1]).toBe(dto.email);
-    expect(secondCallArgs[2]).not.toBe(dto.password);
-    expect(secondCallArgs[5]).toBe("PARENT");
-
+    expect(prismaMock.user.findUnique).toHaveBeenCalledTimes(1);
+    expect(prismaMock.user.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          email: dto.email,
+          role: "PARENT",
+        }),
+      }),
+    );
     expect(prismaMock.session.create).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({
@@ -130,7 +139,6 @@ describe("AuthService - register", () => {
         }),
       }),
     );
-
     expect(prismaMock.auditLog.create).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({

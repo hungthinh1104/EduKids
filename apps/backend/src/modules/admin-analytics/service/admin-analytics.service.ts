@@ -216,10 +216,7 @@ export class AdminAnalyticsService {
     }
 
     // Aggregate views across all dates
-    const contentViews = new Map<
-      string,
-      { viewCount: number; uniqueUsers: Set<string> }
-    >();
+    const contentViews = new Map<string, { viewCount: number }>();
 
     for (const dateStr of dates) {
       const date = new Date(dateStr);
@@ -240,14 +237,11 @@ export class AdminAnalyticsService {
           const key = `${type}:${content.contentId}`;
 
           if (!contentViews.has(key)) {
-            contentViews.set(key, { viewCount: 0, uniqueUsers: new Set() });
+            contentViews.set(key, { viewCount: 0 });
           }
 
           const stats = contentViews.get(key)!;
           stats.viewCount += content.viewCount;
-
-          // Get unique users (this is an approximation for aggregated data)
-          // In production, you might want to use HyperLogLog for better memory efficiency
         }
       }
     }
@@ -283,40 +277,50 @@ export class AdminAnalyticsService {
         contentName = quizzes[0]?.question || "Unknown Quiz";
       }
 
-      // Get average time spent (from last date for simplicity)
-      const lastDate = new Date(dates[dates.length - 1]);
-      const timeSpentData = await this.redisAnalytics.getContentTimeSpent(
-        contentId,
-        type as TrackableContentType,
-        lastDate,
-      );
-      const averageTimeSpent =
-        timeSpentData.length > 0
-          ? Math.round(
-              timeSpentData.reduce((acc, t) => acc + t, 0) /
-                timeSpentData.length,
-            )
-          : 0;
+      // Get average time spent across selected period
+      let totalTimeSpent = 0;
+      let totalTimeRecords = 0;
 
-      // Get completion rate
-      const completionStats =
-        await this.redisAnalytics.getContentCompletionStats(
-          contentId,
-          type as TrackableContentType,
-          lastDate,
-        );
-      const completionRate = completionStats.rate;
-
-      // Get unique viewers (approximate)
-      let uniqueUsers = 0;
       for (const dateStr of dates) {
-        const count = await this.redisAnalytics.getContentUniqueViewers(
+        const timeSpentData = await this.redisAnalytics.getContentTimeSpent(
           contentId,
           type as TrackableContentType,
           new Date(dateStr),
         );
-        uniqueUsers += count;
+        totalTimeSpent += timeSpentData.reduce((acc, t) => acc + t, 0);
+        totalTimeRecords += timeSpentData.length;
       }
+
+      const averageTimeSpent =
+        totalTimeRecords > 0 ? Math.round(totalTimeSpent / totalTimeRecords) : 0;
+
+      // Get completion rate across selected period
+      let totalStarted = 0;
+      let totalCompleted = 0;
+      for (const dateStr of dates) {
+        const completionStats =
+          await this.redisAnalytics.getContentCompletionStats(
+            contentId,
+            type as TrackableContentType,
+            new Date(dateStr),
+          );
+        totalStarted += completionStats.started;
+        totalCompleted += completionStats.completed;
+      }
+      const completionRate =
+        totalStarted > 0 ? (totalCompleted / totalStarted) * 100 : 0;
+
+      // Get unique viewers (true distinct users across selected period)
+      const uniqueUserIds = new Set<string>();
+      for (const dateStr of dates) {
+        const viewerIds = await this.redisAnalytics.getContentUniqueViewerIds(
+          contentId,
+          type as TrackableContentType,
+          new Date(dateStr),
+        );
+        viewerIds.forEach((viewerId) => uniqueUserIds.add(viewerId));
+      }
+      const uniqueUsers = uniqueUserIds.size;
 
       topContent.push({
         contentId,
@@ -385,7 +389,7 @@ export class AdminAnalyticsService {
       "TOPIC",
       1,
     );
-    let topContent: ContentPopularityItemDto;
+    let topContent: ContentPopularityItemDto | undefined;
 
     if (topContentData.length > 0) {
       const content = topContentData[0];
@@ -417,18 +421,6 @@ export class AdminAnalyticsService {
         viewCount: content.viewCount,
         uniqueUsers,
         averageTimeSpent,
-        completionRate: null,
-        rank: 1,
-      };
-    } else {
-      // Default empty content
-      topContent = {
-        contentId: "",
-        contentName: "No data yet",
-        contentType: "TOPIC",
-        viewCount: 0,
-        uniqueUsers: 0,
-        averageTimeSpent: 0,
         completionRate: null,
         rank: 1,
       };

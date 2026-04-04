@@ -6,6 +6,7 @@ import {
   NotFoundException,
   ServiceUnavailableException,
 } from "@nestjs/common";
+import * as fs from "fs/promises";
 import { InjectQueue } from "@nestjs/bull";
 import { Queue } from "bull";
 import { v2 as cloudinary, type UploadApiResponse, type UploadApiErrorResponse } from "cloudinary";
@@ -96,12 +97,32 @@ export class MediaService {
     this.ensureCloudinaryConfigured();
 
     const options = CLOUDINARY_OPTIONS[mediaType];
-    const dataUri = `data:${file.mimetype};base64,${file.buffer.toString('base64')}`;
 
     try {
-      const result = await cloudinary.uploader.upload(dataUri, {
+      const uploadOptions = {
         ...options,
         public_id: `${Date.now()}-${file.originalname.replace(/[^a-zA-Z0-9._-]/g, '-')}`,
+      };
+
+      if (file.path) {
+        const result = await cloudinary.uploader.upload(file.path, uploadOptions);
+        return result as CloudinaryUploadResult;
+      }
+
+      if (!file.buffer) {
+        throw new InternalServerErrorException('File upload payload is missing buffer data');
+      }
+
+      const result = await new Promise<CloudinaryUploadResult>((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(uploadOptions, (error, response) => {
+          if (error || !response) {
+            reject(error ?? new Error('Cloudinary upload failed'));
+            return;
+          }
+          resolve(response as CloudinaryUploadResult);
+        });
+
+        stream.end(file.buffer);
       });
 
       return result as CloudinaryUploadResult;
@@ -141,63 +162,95 @@ export class MediaService {
     uploadDto: UploadMediaDto,
     adminId: string,
   ): Promise<MediaResponseDto> {
-    this.validateFile(file, uploadDto.mediaType);
+    let shouldKeepTempFile = false;
 
-    const uploaded = await this.uploadToCloudinary(file, uploadDto.mediaType);
-
-    // Create media record with PENDING status
-    const media = await this.mediaRepository.createMedia({
-      mediaType: uploadDto.mediaType,
-      context: uploadDto.context,
-      originalFilename: file.originalname,
-      fileSize: uploaded.bytes ?? file.size,
-      mimeType: file.mimetype,
-      rawUrl: uploaded.secure_url ?? null,
-      optimizedUrl: uploaded.secure_url ?? null,
-      thumbnailUrl: uploaded.eager?.[0]?.secure_url ?? null,
-      cloudinaryPublicId: uploaded.public_id ?? null,
-      description: uploadDto.description ?? null,
-      altText: uploadDto.altText ?? null,
-      uploadedBy: adminId,
-      status: ProcessingStatus.PENDING,
-      metadata: {
-        width: uploaded.width ?? null,
-        height: uploaded.height ?? null,
-        duration: uploaded.duration ?? null,
-        format: uploaded.format ?? null,
-        resourceType: uploaded.resource_type ?? null,
-      },
-    });
-
-    // Queue media for async processing
     try {
-      await this.mediaQueue.add(
-        'process-media',
-        {
-          mediaId: media.id,
-          tempFilePath: file.path || '',
-          mediaType: uploadDto.mediaType,
-          mimeType: file.mimetype,
-        },
-        {
-          attempts: 3,
-          backoff: {
-            type: 'exponential',
-            delay: 2000,
-          },
-          removeOnComplete: true,
-          removeOnFail: false,
-        },
-      );
-      this.logger.log(`Media processing queued for ${media.id}`);
-    } catch (error) {
-      this.logger.warn(`Failed to queue media ${media.id}: ${error instanceof Error ? error.message : String(error)}`);
-      // Don't fail the upload if queueing fails - file is already in Cloudinary
-      // Mark as completed since Cloudinary already has the optimized version from eager
-      await this.mediaRepository.updateMediaStatus(media.id, ProcessingStatus.COMPLETED);
-    }
+      this.validateFile(file, uploadDto.mediaType);
 
-    return this.toResponseDto(media);
+      const uploaded = await this.uploadToCloudinary(file, uploadDto.mediaType);
+
+      // Create media record with COMPLETED status by default because Cloudinary already stores final asset
+      const media = await this.mediaRepository.createMedia({
+        mediaType: uploadDto.mediaType,
+        context: uploadDto.context,
+        originalFilename: file.originalname,
+        fileSize: uploaded.bytes ?? file.size,
+        mimeType: file.mimetype,
+        rawUrl: uploaded.secure_url ?? null,
+        optimizedUrl: uploaded.secure_url ?? null,
+        thumbnailUrl: uploaded.eager?.[0]?.secure_url ?? null,
+        cloudinaryPublicId: uploaded.public_id ?? null,
+        description: uploadDto.description ?? null,
+        altText: uploadDto.altText ?? null,
+        uploadedBy: adminId,
+        status: ProcessingStatus.COMPLETED,
+        processedAt: new Date(),
+        metadata: {
+          width: uploaded.width ?? null,
+          height: uploaded.height ?? null,
+          duration: uploaded.duration ?? null,
+          format: uploaded.format ?? null,
+          resourceType: uploaded.resource_type ?? null,
+        },
+      });
+
+      // Optional local post-processing pipeline (disabled by default).
+      // Cloudinary upload above already provides a usable optimized URL.
+      const enablePostProcessing =
+        String(process.env.MEDIA_ENABLE_POST_PROCESSING || '').toLowerCase() === 'true';
+
+      if (enablePostProcessing) {
+        if (!file.path) {
+          this.logger.warn(
+            `Skip local post-processing for ${media.id}: no temporary file path (multer memory storage).`,
+          );
+        } else {
+          try {
+            await this.mediaRepository.updateMediaStatus(media.id, ProcessingStatus.PENDING, {
+              processedAt: undefined,
+            });
+
+            await this.mediaQueue.add(
+              'process-media',
+              {
+                mediaId: media.id,
+                tempFilePath: file.path,
+                mediaType: uploadDto.mediaType,
+                mimeType: file.mimetype,
+              },
+              {
+                attempts: 3,
+                backoff: {
+                  type: 'exponential',
+                  delay: 2000,
+                },
+                removeOnComplete: true,
+                removeOnFail: false,
+              },
+            );
+            shouldKeepTempFile = true;
+            this.logger.log(`Media processing queued for ${media.id}`);
+          } catch (error) {
+            this.logger.warn(`Failed to queue media ${media.id}: ${error instanceof Error ? error.message : String(error)}`);
+            await this.mediaRepository.updateMediaStatus(media.id, ProcessingStatus.COMPLETED, {
+              processedAt: new Date(),
+            });
+          }
+        }
+      }
+
+      return this.toResponseDto(media);
+    } finally {
+      if (file.path && !shouldKeepTempFile) {
+        try {
+          await fs.unlink(file.path);
+        } catch (error) {
+          this.logger.warn(
+            `Failed to cleanup temporary upload file ${file.path}: ${error instanceof Error ? error.message : String(error)}`,
+          );
+        }
+      }
+    }
   }
 
   async getMediaById(id: string): Promise<MediaResponseDto> {

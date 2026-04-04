@@ -108,19 +108,15 @@ export default function ReportsPage() {
         window.print();
     };
 
-    const { analytics } = useChildAnalytics(activeChild?.id ?? 1, analyticsPeriod);
+    const { analytics } = useChildAnalytics(activeChild?.id ?? 0, analyticsPeriod);
     const masteredWords = (analytics?.pronunciation.mostImprovedWords ?? []).map((item, index) => ({
         vocabularyId: index + 1,
         word: item.word,
-        phonetic: '',
-        translation: `Cải thiện ${item.improvement}%`,
-        easeFactor: Math.max(1.3, Math.min(3, item.improvement / 20 + 1.5)),
+        improvement: item.improvement,
     }));
     const recentBadges = (analytics?.gamification.recentBadges ?? []).map((item, index) => ({
         id: index + 1,
         name: item.name,
-        description: 'Đạt được từ tiến trình học tập gần đây',
-        icon: '🏆',
         earnedAt: item.earnedAt,
     }));
 
@@ -310,7 +306,6 @@ export default function ReportsPage() {
                             </div>
                             <div className="space-y-2 md:space-y-3">
                                 {masteredWords.slice(0, 5).map((v, i) => {
-                                    const score = Math.min(100, Math.round(v.easeFactor * 30));
                                     return (
                                         <motion.div
                                             key={v.vocabularyId}
@@ -323,12 +318,11 @@ export default function ReportsPage() {
                                         >
                                             <div className="min-w-0 flex-1">
                                                 <span className="font-heading font-black text-heading text-sm md:text-base mr-1 md:mr-2 line-clamp-1">{v.word}</span>
-                                                <span className="text-caption text-xs md:text-xs">{v.phonetic}</span>
-                                                <div className="text-body text-xs md:text-sm mt-0.5 line-clamp-1">{v.translation}</div>
+                                                <div className="text-body text-xs md:text-sm mt-0.5 line-clamp-1">Mức cải thiện: {v.improvement}%</div>
                                             </div>
-                                            <div className={`text-xs md:text-sm font-heading font-black px-2 md:px-2.5 py-1 rounded-lg md:rounded-xl whitespace-nowrap flex-shrink-0 ${score >= 95 ? 'bg-success-light text-success' : score >= 88 ? 'bg-primary-light text-primary' : 'bg-warning-light text-warning'
+                                            <div className={`text-xs md:text-sm font-heading font-black px-2 md:px-2.5 py-1 rounded-lg md:rounded-xl whitespace-nowrap flex-shrink-0 ${v.improvement >= 20 ? 'bg-success-light text-success' : v.improvement >= 10 ? 'bg-primary-light text-primary' : 'bg-warning-light text-warning'
                                                 }`}>
-                                                {score}%
+                                                +{v.improvement}%
                                             </div>
                                         </motion.div>
                                     );
@@ -352,12 +346,11 @@ export default function ReportsPage() {
                                         transition={{ delay: i * 0.1 }}
                                         className="flex items-center gap-3 md:gap-4"
                                     >
-                                        <div className="w-12 h-12 md:w-14 md:h-14 rounded-xl md:rounded-2xl bg-warning-light flex items-center justify-center text-2xl md:text-3xl flex-shrink-0 shadow-sm">
-                                            {b.icon || '🏆'}
+                                        <div className="w-12 h-12 md:w-14 md:h-14 rounded-xl md:rounded-2xl bg-warning-light flex items-center justify-center flex-shrink-0 shadow-sm">
+                                            <Trophy size={24} className="md:w-7 md:h-7 text-warning" />
                                         </div>
                                         <div className="flex-1 min-w-0">
                                             <div className="font-heading font-black text-heading text-xs md:text-sm line-clamp-1">{b.name}</div>
-                                            <Caption className="text-caption text-[10px] md:text-xs line-clamp-2">{b.description}</Caption>
                                         </div>
                                         <div className="flex items-center gap-1 text-caption text-[9px] md:text-xs flex-shrink-0 whitespace-nowrap">
                                             <Calendar size={10} className="md:w-2.5 md:h-2.5" />

@@ -17,6 +17,19 @@ if (!process.env.JWT_SECRET) {
   );
 }
 
+const hasGoogleOAuthConfig = Boolean(
+  process.env.GOOGLE_CLIENT_ID?.trim() &&
+    process.env.GOOGLE_CLIENT_SECRET?.trim(),
+);
+
+if (!hasGoogleOAuthConfig) {
+  // Keep backend bootable even when Google OAuth is not configured.
+  // Google login endpoints will be unavailable until credentials are provided.
+  console.warn(
+    "[AuthModule] Google OAuth is disabled: missing GOOGLE_CLIENT_ID/GOOGLE_CLIENT_SECRET",
+  );
+}
+
 @Module({
   imports: [
     MailModule,
@@ -30,7 +43,12 @@ if (!process.env.JWT_SECRET) {
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy, GoogleStrategy, UserRepository],
+  providers: [
+    AuthService,
+    JwtStrategy,
+    ...(hasGoogleOAuthConfig ? [GoogleStrategy] : []),
+    UserRepository,
+  ],
   exports: [AuthService, JwtStrategy],
 })
 export class AuthModule {}

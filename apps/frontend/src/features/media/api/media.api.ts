@@ -1,4 +1,5 @@
 import { apiClient } from '@/shared/services/api.client';
+import axios from 'axios';
 
 // ==================== MEDIA UPLOAD API ====================
 // File upload and media management
@@ -57,11 +58,30 @@ export const uploadMediaFile = async (
   if (options.description) formData.append('description', options.description);
   if (options.altText) formData.append('altText', options.altText);
 
-  const response = await apiClient.post('/media/upload', formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-    },
-  });
+  let response;
+  try {
+    response = await apiClient.post('/media/upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const status = error.response?.status;
+      const backendMessage =
+        (error.response?.data as { message?: string })?.message ||
+        (error.response?.data as { error?: string })?.error;
+
+      if (backendMessage) {
+        throw new Error(status ? `[${status}] ${backendMessage}` : backendMessage);
+      }
+
+      throw new Error(status ? `Upload failed with status ${status}` : 'Không thể tải file lên');
+    }
+
+    throw error;
+  }
+
   const data = response.data.data as MediaFile;
   return {
     fileId: data.id,

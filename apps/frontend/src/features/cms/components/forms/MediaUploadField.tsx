@@ -5,8 +5,8 @@ import { Loader2, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 import { uploadMediaFile } from '@/features/media/api/media.api';
 
-type MediaType = 'IMAGE' | 'AUDIO';
-type MediaContext = 'VOCABULARY' | 'TOPIC';
+type MediaType = 'IMAGE' | 'AUDIO' | 'VIDEO';
+type MediaContext = 'VOCABULARY' | 'TOPIC' | 'QUIZ';
 
 interface MediaUploadFieldProps {
   mediaType: MediaType;
@@ -15,22 +15,8 @@ interface MediaUploadFieldProps {
   buttonLabel: string;
   disabled?: boolean;
   currentValue?: string;
-  onUploaded: (url: string) => void;
+  onUploaded: (url: string, fileId?: string) => void;
 }
-
-const readFileAsDataUrl = (file: File): Promise<string> =>
-  new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      if (typeof reader.result === 'string') {
-        resolve(reader.result);
-        return;
-      }
-      reject(new Error('Không thể đọc file đã chọn'));
-    };
-    reader.onerror = () => reject(new Error('Không thể đọc file đã chọn'));
-    reader.readAsDataURL(file);
-  });
 
 export function MediaUploadField({
   mediaType,
@@ -63,18 +49,12 @@ export function MediaUploadField({
         description: file.name,
       });
 
-      let finalUrl = result.url;
-
-      if (!finalUrl && (mediaType === 'IMAGE' || mediaType === 'AUDIO')) {
-        finalUrl = await readFileAsDataUrl(file);
-        toast.warning('Upload media chưa trả URL công khai, tạm dùng dữ liệu nhúng trong form.');
-      }
-
+      const finalUrl = result.url;
       if (!finalUrl) {
         throw new Error('Upload thành công nhưng chưa nhận được URL sử dụng được');
       }
 
-      onUploaded(finalUrl);
+      onUploaded(finalUrl, result.fileId);
       toast.success('Đã tải file lên và điền link vào form');
     } catch (error) {
       console.error('Failed to upload media from form:', error);

@@ -13,8 +13,8 @@ interface AdminPageHeaderProps {
 
 export function AdminPageHeader({ title, description, actionButton }: AdminPageHeaderProps) {
   return (
-    <div className="mb-8 flex flex-col justify-between gap-4 rounded-3xl border border-primary/15 bg-gradient-to-r from-primary-light/55 via-card to-accent-light/40 p-5 md:flex-row md:items-center md:p-6 shadow-sm">
-      <div>
+    <div className="mb-8 flex flex-col justify-between gap-4 rounded-3xl border border-primary/15 bg-gradient-to-r from-primary-light/55 via-card to-accent-light/40 p-5 shadow-sm md:flex-row md:items-center md:p-6">
+      <div className="min-w-0">
         <Caption className="mb-2 inline-flex rounded-full border border-primary/20 bg-primary-light/60 px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-primary">
           CMS Admin
         </Caption>
@@ -25,7 +25,7 @@ export function AdminPageHeader({ title, description, actionButton }: AdminPageH
         <button
           type="button"
           onClick={actionButton.onClick}
-          className="inline-flex items-center justify-center gap-2 rounded-xl border border-primary bg-primary px-6 py-3 font-heading font-bold text-white shadow-sm transition-all hover:-translate-y-0.5 hover:bg-primary-dark"
+          className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-primary bg-primary px-6 font-heading font-bold text-white shadow-sm transition-all hover:-translate-y-0.5 hover:bg-primary-dark md:w-auto"
         >
           {actionButton.icon}
           <span>{actionButton.label}</span>

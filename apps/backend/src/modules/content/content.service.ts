@@ -149,8 +149,16 @@ export class ContentService {
           createdAt: vocab.createdAt,
         }));
 
-      // Find first video URL for lesson
-      const videoUrl = this.findFirstVideoUrl(vocabularies);
+      // Resolve video URL for lesson: prefer Topic.videoUrl from CMS,
+      // fallback to first VIDEO media from vocabularies for backward compatibility.
+      const topicVideoUrl =
+        typeof topicWithVocabularies.videoUrl === "string" &&
+        topicWithVocabularies.videoUrl.trim().length > 0
+          ? topicWithVocabularies.videoUrl
+          : undefined;
+      const videoUrl = topicVideoUrl ?? this.findFirstVideoUrl(vocabularies);
+      const hasVideo =
+        Boolean(topicWithVocabularies.hasVideo) || Boolean(videoUrl);
 
       // Get progress for this child
       const completedCount =
@@ -178,7 +186,7 @@ export class ContentService {
           completedCount,
           progressPercentage,
           starsEarned: this.progressToStars(progressPercentage),
-          hasVideo: Boolean(videoUrl),
+          hasVideo,
           videoUrl,
         },
         vocabularies,

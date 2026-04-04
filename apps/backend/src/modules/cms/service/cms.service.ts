@@ -41,6 +41,7 @@ export class CmsService {
     description?: string;
     text?: string;
     imageUrl?: string;
+    videoUrl?: string;
     audioUrl?: string;
   }): Promise<void> {
     const validation = await this.contentValidationService.validateContent({
@@ -50,6 +51,7 @@ export class CmsService {
       description: params.description,
       text: params.text,
       imageUrl: params.imageUrl,
+      videoUrl: params.videoUrl,
       audioUrl: params.audioUrl,
     });
 
@@ -83,6 +85,11 @@ export class CmsService {
       throw new BadRequestException("Learning level must be between 1 and 5");
     }
 
+    const duplicateByName = await this.cmsRepository.getTopicByName(dto.name);
+    if (duplicateByName) {
+      throw new ConflictException(`Topic name "${dto.name}" already exists`);
+    }
+
     await this.enforceChildSafeContent({
       contentId: `cms:topic:new:${Date.now()}`,
       contentType: ContentTypeValidation.TOPIC,
@@ -90,9 +97,23 @@ export class CmsService {
       description: dto.description,
       text: `${dto.name}\n${dto.description}`,
       imageUrl: dto.imageUrl,
+      videoUrl: dto.videoUrl,
     });
 
-    const topic = await this.cmsRepository.createTopic(dto, userId);
+    let topic;
+    try {
+      topic = await this.cmsRepository.createTopic(dto, userId);
+    } catch (error) {
+      if (
+        typeof error === "object" &&
+        error !== null &&
+        "code" in error &&
+        (error as { code?: string }).code === "P2002"
+      ) {
+        throw new ConflictException(`Topic name "${dto.name}" already exists`);
+      }
+      throw error;
+    }
 
     // Audit log
     await this.cmsRepository.createAuditLog(
@@ -135,6 +156,13 @@ export class CmsService {
       throw new BadRequestException("Learning level must be between 1 and 5");
     }
 
+    if (dto.name && dto.name !== topic.name) {
+      const duplicateByName = await this.cmsRepository.getTopicByName(dto.name);
+      if (duplicateByName && duplicateByName.id !== topicId) {
+        throw new ConflictException(`Topic name "${dto.name}" already exists`);
+      }
+    }
+
     // Prevent status changes on published content without admin review
     const topicStatus = (topic as { status?: ContentStatus }).status;
     if (
@@ -151,6 +179,8 @@ export class CmsService {
     const nextTopicDescription = dto.description ?? topic.description;
     const nextTopicImageUrl =
       dto.imageUrl !== undefined ? dto.imageUrl : topic.imageUrl;
+    const nextTopicVideoUrl =
+      dto.videoUrl !== undefined ? dto.videoUrl : (topic as any).videoUrl;
 
     await this.enforceChildSafeContent({
       contentId: `cms:topic:${topicId}`,
@@ -160,9 +190,26 @@ export class CmsService {
       text: `${nextTopicName}\n${nextTopicDescription}`,
       imageUrl:
         typeof nextTopicImageUrl === "string" ? nextTopicImageUrl : undefined,
+      videoUrl:
+        typeof nextTopicVideoUrl === "string" ? nextTopicVideoUrl : undefined,
     });
 
-    const updatedTopic = await this.cmsRepository.updateTopic(topicId, dto);
+    let updatedTopic;
+    try {
+      updatedTopic = await this.cmsRepository.updateTopic(topicId, dto);
+    } catch (error) {
+      if (
+        typeof error === "object" &&
+        error !== null &&
+        "code" in error &&
+        (error as { code?: string }).code === "P2002"
+      ) {
+        throw new ConflictException(
+          `Topic name "${dto.name ?? topic.name}" already exists`,
+        );
+      }
+      throw error;
+    }
 
     // Audit log
     const changes: Record<string, unknown> = {};

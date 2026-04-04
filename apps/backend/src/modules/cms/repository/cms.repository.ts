@@ -23,6 +23,8 @@ export class CmsRepository {
         description: dto.description,
         learningLevel: dto.learningLevel,
         imageUrl: dto.imageUrl,
+        videoUrl: dto.videoUrl,
+        hasVideo: dto.hasVideo ?? !!dto.videoUrl,
         status: dto.status,
         tags: dto.tags ?? [],
       },
@@ -40,6 +42,12 @@ export class CmsRepository {
     if (dto.imageUrl !== undefined) updateData.imageUrl = dto.imageUrl;
     if (dto.status !== undefined) updateData.status = dto.status;
     if (dto.tags !== undefined) updateData.tags = dto.tags;
+    if (dto.videoUrl !== undefined) {
+      updateData.videoUrl = dto.videoUrl;
+      updateData.hasVideo = dto.hasVideo ?? !!dto.videoUrl;
+    } else if (dto.hasVideo !== undefined) {
+      updateData.hasVideo = dto.hasVideo;
+    }
 
     return this.prisma.topic.update({
       where: { id: topicId },
@@ -54,6 +62,13 @@ export class CmsRepository {
       include: {
         vocabularies: true,
       },
+    });
+  }
+
+  async getTopicByName(name: string) {
+    this.logger.debug(`Fetching topic by name: ${name}`);
+    return this.prisma.topic.findFirst({
+      where: { name },
     });
   }
 
@@ -203,12 +218,12 @@ export class CmsRepository {
     this.logger.debug(
       `Creating quiz structure for topic ${dto.topicId}: ${dto.title}`,
     );
-    return this.prisma.topicQuiz.create({
-      data: {
+    const data: Record<string, unknown> = {
         topicId: dto.topicId,
         title: dto.title,
         description: dto.description ?? null,
         questionText: dto.questionText,
+        questionImageUrl: dto.questionImageUrl ?? null,
         difficultyLevel: dto.difficultyLevel,
         status: dto.status,
         options: {
@@ -217,7 +232,10 @@ export class CmsRepository {
             isCorrect: opt.isCorrect,
           })),
         },
-      },
+      };
+
+    return this.prisma.topicQuiz.create({
+      data: data as never,
       include: { options: true },
     });
   }
@@ -242,6 +260,8 @@ export class CmsRepository {
     if (dto.description !== undefined) updateData.description = dto.description;
     if (dto.questionText !== undefined)
       updateData.questionText = dto.questionText;
+    if (dto.questionImageUrl !== undefined)
+      updateData.questionImageUrl = dto.questionImageUrl;
     if (dto.difficultyLevel !== undefined)
       updateData.difficultyLevel = dto.difficultyLevel;
     if (dto.status !== undefined) updateData.status = dto.status;

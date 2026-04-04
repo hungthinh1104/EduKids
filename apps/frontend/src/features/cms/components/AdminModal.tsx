@@ -50,12 +50,12 @@ export function AdminModal({ isOpen, onClose, title, children, maxWidth = '2xl' 
         className={`relative w-full ${maxWidthMap[maxWidth]} bg-card rounded-3xl border border-border/70 shadow-2xl flex flex-col max-h-[90vh] animate-in fade-in zoom-in-95 duration-200`}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 md:px-8 py-5 border-b border-border/70 bg-background/70 rounded-t-3xl">
-          <Heading level={3} className="text-heading text-2xl">{title}</Heading>
+        <div className="flex items-center justify-between border-b border-border/70 bg-background/70 px-6 py-4 md:px-8 md:py-5 rounded-t-3xl">
+          <Heading level={3} className="text-heading text-xl md:text-2xl">{title}</Heading>
           <button 
             type="button"
             onClick={onClose}
-            className="p-2 text-caption hover:text-body hover:bg-card rounded-full transition-all shadow-sm border border-transparent hover:border-border/70"
+            className="flex h-10 w-10 items-center justify-center rounded-full border border-transparent p-2 text-caption shadow-sm transition-all hover:border-border/70 hover:bg-card hover:text-body"
           >
             <X className="w-5 h-5" />
           </button>

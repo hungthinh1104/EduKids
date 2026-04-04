@@ -223,6 +223,19 @@ export class RedisAnalyticsService {
   }
 
   /**
+   * Get unique viewer IDs for content
+   */
+  async getContentUniqueViewerIds(
+    contentId: string,
+    contentType: "TOPIC" | "VOCABULARY" | "QUIZ",
+    date: Date,
+  ): Promise<string[]> {
+    const dateKey = this.getDateKey(date);
+    const uniqueViewersKey = `analytics:content:${contentType}:${contentId}:unique:${dateKey}`;
+    return this.redis.smembers(uniqueViewersKey);
+  }
+
+  /**
    * Get content time spent data
    */
   async getContentTimeSpent(

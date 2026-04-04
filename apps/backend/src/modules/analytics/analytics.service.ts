@@ -67,12 +67,14 @@ export class AnalyticsService {
       pronunciation,
       quizPerformance,
       gamification,
+      badgeCatalogTotal,
     ] = await Promise.all([
       this.repository.getLearningTimeMetrics(childId, period),
       this.repository.getVocabularyRetentionMetrics(childId, period),
       this.repository.getPronunciationAccuracyMetrics(childId, period),
       this.repository.getQuizPerformanceMetrics(childId, period),
       this.repository.getGamificationMetrics(childId, period),
+      this.repository.getTotalBadgesCount(),
     ]);
 
     // Check if any data exists
@@ -108,7 +110,8 @@ export class AnalyticsService {
       vocabulary: vocabulary || this.getEmptyVocabularyDto(),
       pronunciation: pronunciation || this.getEmptyPronunciationDto(),
       quizPerformance: quizPerformance || this.getEmptyQuizDto(),
-      gamification: gamification || this.getEmptyGamificationDto(),
+      gamification:
+        gamification || this.getEmptyGamificationDto(badgeCatalogTotal),
       generatedAt: new Date(),
       hasData,
       insightMessage,
@@ -424,12 +427,12 @@ export class AnalyticsService {
     };
   }
 
-  private getEmptyGamificationDto(): GamificationProgressDto {
+  private getEmptyGamificationDto(totalBadges: number): GamificationProgressDto {
     return {
       totalPoints: 0,
       currentLevel: 1,
       badgesEarned: 0,
-      totalBadges: 15,
+      totalBadges,
       itemsPurchased: 0,
       chartData: [],
       recentBadges: [],

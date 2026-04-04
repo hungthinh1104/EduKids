@@ -20,7 +20,6 @@ type AnswerState = 'idle' | 'correct' | 'wrong';
 
 type LocalQuizQuestion = QuizQuestion & {
     shuffledOptions: QuizOption[];
-    image?: string; // Currently missing from BE DTO, but used in UI
 };
 
 function shuffleOptions<T>(options: T[]): T[] {
@@ -186,7 +185,6 @@ export default function QuizPage() {
             setQuestions(questionList.map((q: QuizQuestion) => ({
                 ...q,
                 shuffledOptions: shuffleOptions(q.options),
-                image: '❓', // Fallback image since not in schema yet
             })));
             setIndex(0);
             setSelected(null);
@@ -410,13 +408,24 @@ export default function QuizPage() {
                     {q && (
                         <>
                             <div className="bg-card border-2 border-border rounded-[2rem] p-8 text-center shadow-lg min-h-[220px] flex flex-col items-center justify-center">
-                                <motion.div
-                                    animate={{ scale: [1, 1.06, 1] }}
-                                    transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-                                    className="text-7xl mb-5"
-                                >
-                                    {q.image}
-                                </motion.div>
+                                {q.questionImage ? (
+                                    <div className="mb-5 w-full max-w-[260px] h-[160px] rounded-2xl overflow-hidden border border-border/70 bg-background">
+                                        <img
+                                            src={q.questionImage}
+                                            alt="Quiz question"
+                                            className="w-full h-full object-cover"
+                                            loading="lazy"
+                                        />
+                                    </div>
+                                ) : (
+                                    <motion.div
+                                        animate={{ scale: [1, 1.06, 1] }}
+                                        transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+                                        className="text-7xl mb-5"
+                                    >
+                                        ❓
+                                    </motion.div>
+                                )}
                                 <Heading level={3} className="text-heading text-2xl">{q.questionText}</Heading>
                             </div>
 

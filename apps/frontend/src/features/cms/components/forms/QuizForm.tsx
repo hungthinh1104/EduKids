@@ -2,8 +2,21 @@ import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { CMSQuiz, CMSVocabulary } from '@/features/cms/api/cms.api';
-import { useEffect } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import { toast } from 'sonner';
+import { MediaUploadField } from './MediaUploadField';
+import { deleteMediaFile } from '@/features/media/api/media.api';
+
+const isSupportedAssetUrl = (value: string) => {
+  if (!value) return true;
+
+  try {
+    const url = new URL(value);
+    return ['http:', 'https:'].includes(url.protocol);
+  } catch {
+    return false;
+  }
+};
 
 const trimmedText = (min: number, minMessage: string, max: number, maxMessage: string) =>
   z.string().trim().min(min, minMessage).max(max, maxMessage);
@@ -13,6 +26,7 @@ const quizSchema = z
     title: trimmedText(3, 'Tiêu đề phải có ít nhất 3 ký tự', 100, 'Tiêu đề tối đa 100 ký tự'),
     description: trimmedText(5, 'Mô tả phải có ít nhất 5 ký tự', 500, 'Mô tả tối đa 500 ký tự'),
     questionText: trimmedText(5, 'Câu hỏi phải có ít nhất 5 ký tự', 500, 'Câu hỏi tối đa 500 ký tự'),
+    questionImageUrl: z.string().refine(isSupportedAssetUrl, 'URL hình ảnh không hợp lệ').optional().or(z.literal('')),
     options: z.array(
       z.object({
         value: z.string().trim().min(1, 'Lựa chọn không được để trống')
@@ -66,6 +80,7 @@ interface QuizFormProps {
     title: string;
     description: string;
     questionText: string;
+    questionImageUrl?: string;
     options: string[];
     correctAnswerIndex: number;
     difficultyLevel: 1 | 2 | 3 | 4 | 5;
@@ -82,6 +97,33 @@ export function QuizForm({
   onCancel,
   isLoading,
 }: QuizFormProps) {
+  const uploadedMediaIdsRef = useRef<string[]>([]);
+  const fieldMediaIdRef = useRef<{ questionImageUrl?: string }>({});
+  const didSaveRef = useRef(false);
+
+  const cleanupUnsavedUploads = useCallback(async () => {
+    const ids = [...new Set(uploadedMediaIdsRef.current)];
+    if (ids.length === 0) return;
+
+    await Promise.allSettled(ids.map((id) => deleteMediaFile(id)));
+    uploadedMediaIdsRef.current = [];
+  }, []);
+
+  const trackUploadedMedia = useCallback((field: 'questionImageUrl', fileId: string) => {
+    const previousId = fieldMediaIdRef.current[field];
+    fieldMediaIdRef.current[field] = fileId;
+
+    if (!uploadedMediaIdsRef.current.includes(fileId)) {
+      uploadedMediaIdsRef.current.push(fileId);
+    }
+
+    if (previousId && previousId !== fileId) {
+      void deleteMediaFile(previousId).finally(() => {
+        uploadedMediaIdsRef.current = uploadedMediaIdsRef.current.filter((id) => id !== previousId);
+      });
+    }
+  }, []);
+
   const {
     register,
     handleSubmit,
@@ -96,6 +138,7 @@ export function QuizForm({
       title: '',
       description: '',
       questionText: '',
+      questionImageUrl: '',
       options: [{ value: '' }, { value: '' }, { value: '' }, { value: '' }],
       correctAnswerIndex: '0',
       difficultyLevel: 1,
@@ -108,8 +151,13 @@ export function QuizForm({
   });
   const correctAnswerIndex = watch('correctAnswerIndex');
   const optionValues = watch('options');
+  const questionImageUrlValue = watch('questionImageUrl');
 
   useEffect(() => {
+    didSaveRef.current = false;
+    uploadedMediaIdsRef.current = [];
+    fieldMediaIdRef.current = {};
+
     if (initialData) {
       // Parse options from initialData which might be string[] or object[]
       const parsedOptions = Array.isArray(initialData.options)
@@ -144,6 +192,7 @@ export function QuizForm({
         title: initialData.title,
         description: initialData.description || '',
         questionText: initialData.questionText,
+        questionImageUrl: initialData.questionImageUrl || '',
         options: finalOptions.map((v: string) => ({ value: v })),
         correctAnswerIndex: String(correctIdx),
         difficultyLevel: difficulty,
@@ -153,12 +202,21 @@ export function QuizForm({
           title: '',
           description: '',
           questionText: '',
+          questionImageUrl: '',
           options: [{ value: '' }, { value: '' }, { value: '' }, { value: '' }],
           correctAnswerIndex: '0',
           difficultyLevel: 1,
         });
     }
   }, [initialData, reset]);
+
+  useEffect(() => {
+    return () => {
+      if (!didSaveRef.current && uploadedMediaIdsRef.current.length > 0) {
+        void cleanupUnsavedUploads();
+      }
+    };
+  }, [cleanupUnsavedUploads]);
 
   const handleFormSubmit = (data: QuizFormData) => {
     const stringOptions = data.options.map((opt) => opt.value.trim());
@@ -172,10 +230,31 @@ export function QuizForm({
       title: data.title.trim(),
       description: data.description.trim(),
       questionText: data.questionText.trim(),
+      questionImageUrl: data.questionImageUrl?.trim() || undefined,
       options: stringOptions,
       correctAnswerIndex: safeCorrectIndex,
       difficultyLevel: data.difficultyLevel as 1 | 2 | 3 | 4 | 5,
     });
+
+    didSaveRef.current = true;
+
+    const keepIds = new Set<string>();
+    if (data.questionImageUrl && fieldMediaIdRef.current.questionImageUrl) {
+      keepIds.add(fieldMediaIdRef.current.questionImageUrl);
+    }
+
+    const orphanIds = uploadedMediaIdsRef.current.filter((id) => !keepIds.has(id));
+    if (orphanIds.length > 0) {
+      void Promise.allSettled(orphanIds.map((id) => deleteMediaFile(id)));
+    }
+
+    uploadedMediaIdsRef.current = [];
+    fieldMediaIdRef.current = {};
+  };
+
+  const handleCancel = async () => {
+    await cleanupUnsavedUploads();
+    onCancel();
   };
 
   const addOption = () => {
@@ -301,6 +380,31 @@ export function QuizForm({
           {errors.questionText && <p className="text-red-500 text-sm mt-1">{errors.questionText.message}</p>}
         </div>
 
+        <div>
+          <label className="block text-sm font-bold text-heading mb-2">Ảnh câu hỏi (tuỳ chọn)</label>
+          <input
+            type="text"
+            {...register('questionImageUrl')}
+            className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all ${
+              errors.questionImageUrl ? 'border-red-500 bg-red-50' : 'border-border'
+            }`}
+            placeholder="https://..."
+          />
+          {errors.questionImageUrl && <p className="text-red-500 text-sm mt-1">{errors.questionImageUrl.message}</p>}
+          <MediaUploadField
+            mediaType="IMAGE"
+            context="QUIZ"
+            accept="image/*"
+            buttonLabel="Tải ảnh câu hỏi"
+            currentValue={questionImageUrlValue}
+            disabled={isLoading}
+            onUploaded={(url, fileId) => {
+              if (fileId) trackUploadedMedia('questionImageUrl', fileId);
+              setValue('questionImageUrl', url, { shouldDirty: true, shouldValidate: true });
+            }}
+          />
+        </div>
+
         {/* Difficulty */}
         <div>
           <label className="block text-sm font-bold text-heading mb-2">Độ khó (1-5)</label>
@@ -423,7 +527,7 @@ export function QuizForm({
       <div className="flex gap-4 pt-6 mt-6 border-t border-border">
         <button
           type="button"
-          onClick={onCancel}
+          onClick={() => void handleCancel()}
           disabled={isLoading}
           className="flex-1 px-6 py-3.5 bg-muted/10 hover:bg-gray-200 text-heading rounded-xl font-bold transition-all disabled:opacity-50"
         >

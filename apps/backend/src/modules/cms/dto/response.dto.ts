@@ -84,6 +84,13 @@ export class QuizStructureResponseDto {
   questionText: string;
 
   @ApiProperty({
+    example: "https://res.cloudinary.com/edukids/image/upload/v1/quiz/question-cat.jpg",
+    nullable: true,
+    required: false,
+  })
+  questionImageUrl?: string | null;
+
+  @ApiProperty({
     example: [
       { text: "Lion", isCorrect: false },
       { text: "Elephant", isCorrect: true },

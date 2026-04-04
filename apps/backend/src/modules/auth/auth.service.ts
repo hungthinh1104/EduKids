@@ -110,58 +110,45 @@ export class AuthService {
    * Step 1-3 from Main Success Scenario
    */
   async register(dto: RegisterDto): Promise<AuthResponseDto> {
-    // Check if email already exists (raw SQL workaround for Prisma adapter issue on User model)
-    const existingUsers = await this.prisma.$queryRaw<
-      Array<{ id: number }>
-    >`SELECT "id" FROM "User" WHERE "email" = ${dto.email} LIMIT 1`;
+    const existingUser = await this.prisma.user.findUnique({
+      where: { email: dto.email },
+      select: { id: true },
+    });
 
-    if (existingUsers.length > 0) {
+    if (existingUser) {
       throw new ConflictException("Email already exists");
     }
 
     // Hash password with bcrypt (salt rounds: 10)
     const passwordHash = await bcrypt.hash(dto.password, 12);
 
-    // Create user with PARENT role (raw SQL workaround)
-    let createdUsers: Array<{
-      id: number;
-      email: string;
-      firstName: string | null;
-      lastName: string | null;
-      role: string;
-      isActive: boolean;
-      createdAt: Date;
-    }>;
+    let user;
 
     try {
-      createdUsers = await this.prisma.$queryRaw<
-        Array<{
-          id: number;
-          email: string;
-          firstName: string | null;
-          lastName: string | null;
-          role: string;
-          isActive: boolean;
-          createdAt: Date;
-        }>
-      >`INSERT INTO "User" ("email", "passwordHash", "firstName", "lastName", "role", "isActive", "createdAt", "updatedAt")
-        VALUES (${dto.email}, ${passwordHash}, ${dto.firstName}, ${dto.lastName}, ${"PARENT"}, true, NOW(), NOW())
-        RETURNING "id", "email", "firstName", "lastName", "role", "isActive", "createdAt"`;
-    } catch (error: unknown) {
-      const code =
-        typeof error === "object" && error !== null && "code" in error
-          ? String((error as { code?: unknown }).code)
-          : "";
+      user = await this.prisma.user.create({
+        data: {
+          email: dto.email,
+          passwordHash,
+          firstName: dto.firstName,
+          lastName: dto.lastName,
+          role: "PARENT",
+          isActive: true,
+        },
+      });
+    } catch (error: any) {
+      const code = error?.code ? String(error.code) : "";
 
-      // PostgreSQL unique_violation
-      if (code === "23505") {
+      // Prisma unique_violation or PostgreSQL unique_violation
+      if (code === "P2002" || code === "23505") {
         throw new ConflictException("Email already exists");
       }
 
       throw error;
     }
 
-    const user = createdUsers[0];
+    if (!user) {
+      throw new InternalServerErrorException("Failed to register user");
+    }
 
     // Issue JWT tokens
     const tokens = await this.generateTokens(user.id, user.email, user.role);
@@ -208,24 +195,9 @@ export class AuthService {
     // [C-4] Check rate limiting via Redis
     await this.checkRateLimit(dto.email);
 
-    // Find user by email (raw SQL workaround for Prisma adapter issue on User model)
-    const users = await this.prisma.$queryRaw<
-      Array<{
-        id: number;
-        email: string;
-        passwordHash: string;
-        firstName: string | null;
-        lastName: string | null;
-        role: string;
-        isActive: boolean;
-        createdAt: Date;
-      }>
-    >`SELECT "id", "email", "passwordHash", "firstName", "lastName", "role", "isActive", "createdAt"
-      FROM "User"
-      WHERE "email" = ${dto.email}
-      LIMIT 1`;
-
-    const user = users[0];
+    const user = await this.prisma.user.findUnique({
+      where: { email: dto.email },
+    });
 
     if (!user) {
       await this.recordFailedAttempt(dto.email);
@@ -263,12 +235,13 @@ export class AuthService {
       },
     });
 
-    // Update last login (raw SQL workaround)
-    await this.prisma.$executeRaw`
-      UPDATE "User"
-      SET "lastLoginAt" = NOW(), "updatedAt" = NOW()
-      WHERE "id" = ${user.id}
-    `;
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        lastLoginAt: new Date(),
+        updatedAt: new Date(),
+      },
+    });
 
     // Log audit
     await this.prisma.auditLog.create({
@@ -403,20 +376,21 @@ export class AuthService {
   async forgotPassword(
     dto: ForgotPasswordDto,
   ): Promise<{ message: string; resetToken?: string }> {
-    const users = await this.prisma.$queryRaw<
-      Array<{ id: number; email: string; firstName: string | null }>
-    >`SELECT "id", "email", "firstName" FROM "User" WHERE "email" = ${dto.email} AND "isActive" = true LIMIT 1`;
+    const existingUser = await this.prisma.user.findFirst({
+      where: { email: dto.email, isActive: true },
+      select: { id: true, email: true, firstName: true },
+    });
 
     // Anti-enumeration: always return same message regardless of result
-    if (users.length === 0) {
+    if (!existingUser) {
       return {
         message: "If this email is registered, a reset link has been sent.",
       };
     }
 
-    const userId = users[0].id;
-    const userEmail = users[0].email;
-    const userFirstName = users[0].firstName;
+    const userId = existingUser.id;
+    const userEmail = existingUser.email;
+    const userFirstName = existingUser.firstName;
     const { randomBytes } = await import("crypto");
     const resetToken = randomBytes(32).toString("hex");
 
@@ -492,10 +466,13 @@ export class AuthService {
     const userId = parseInt(userIdStr, 10);
     const passwordHash = await bcrypt.hash(dto.newPassword, 12);
 
-    await this.prisma.$executeRaw`
-      UPDATE "User" SET "passwordHash" = ${passwordHash}, "updatedAt" = NOW()
-      WHERE "id" = ${userId}
-    `;
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        passwordHash,
+        updatedAt: new Date(),
+      },
+    });
 
     // Invalidate token and all sessions
     await redis.del(`pwd_reset:${dto.token}`);
@@ -522,17 +499,18 @@ export class AuthService {
     userId: number,
     dto: ChangePasswordDto,
   ): Promise<{ message: string }> {
-    const users = await this.prisma.$queryRaw<
-      Array<{ passwordHash: string }>
-    >`SELECT "passwordHash" FROM "User" WHERE "id" = ${userId} AND "isActive" = true LIMIT 1`;
+    const user = await this.prisma.user.findFirst({
+      where: { id: userId, isActive: true },
+      select: { passwordHash: true },
+    });
 
-    if (users.length === 0) {
+    if (!user) {
       throw new UnauthorizedException("User not found");
     }
 
     const isValid = await bcrypt.compare(
       dto.currentPassword,
-      users[0].passwordHash,
+      user.passwordHash,
     );
     if (!isValid) {
       throw new BadRequestException("Current password is incorrect");
@@ -540,10 +518,13 @@ export class AuthService {
 
     const newHash = await bcrypt.hash(dto.newPassword, 12);
 
-    await this.prisma.$executeRaw`
-      UPDATE "User" SET "passwordHash" = ${newHash}, "updatedAt" = NOW()
-      WHERE "id" = ${userId}
-    `;
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        passwordHash: newHash,
+        updatedAt: new Date(),
+      },
+    });
 
     await this.prisma.auditLog.create({
       data: {
@@ -666,37 +647,23 @@ export class AuthService {
     const lastName = nameParts.slice(1).join(" ") || null;
 
     // Tìm user theo email
-    const existingUsers = await this.prisma.$queryRaw<
-      Array<{
-        id: number;
-        email: string;
-        firstName: string | null;
-        lastName: string | null;
-        role: string;
-        isActive: boolean;
-        createdAt: Date;
-      }>
-    >`SELECT "id", "email", "firstName", "lastName", "role", "isActive", "createdAt"
-      FROM "User" WHERE "email" = ${email} LIMIT 1`;
-
-    let user = existingUsers[0];
+    let user = await this.prisma.user.findUnique({
+      where: { email },
+    });
 
     if (!user) {
       // Tạo user mới với role PARENT, không có password (OAuth user)
-      const created = await this.prisma.$queryRaw<
-        Array<{
-          id: number;
-          email: string;
-          firstName: string | null;
-          lastName: string | null;
-          role: string;
-          isActive: boolean;
-          createdAt: Date;
-        }>
-      >`INSERT INTO "User" ("email", "passwordHash", "firstName", "lastName", "role", "isActive", "isEmailVerified", "createdAt", "updatedAt")
-        VALUES (${email}, ${"__GOOGLE_OAUTH__"}, ${firstName}, ${lastName}, ${"PARENT"}, true, true, NOW(), NOW())
-        RETURNING "id", "email", "firstName", "lastName", "role", "isActive", "createdAt"`;
-      user = created[0];
+      user = await this.prisma.user.create({
+        data: {
+          email,
+          passwordHash: "__GOOGLE_OAUTH__",
+          firstName,
+          lastName,
+          role: "PARENT",
+          isActive: true,
+          isEmailVerified: true,
+        },
+      });
 
       await this.prisma.auditLog.create({
         data: {

@@ -53,10 +53,16 @@ async function proxyRequest(
         forwardHeaders.set('content-type', 'application/json');
     }
 
-    let body: BodyInit | null = null;
+    let body: any = null;
     const method = request.method.toUpperCase();
     if (!['GET', 'HEAD', 'OPTIONS'].includes(method)) {
-        body = await request.text();
+        const contentType = request.headers.get('content-type') || '';
+        // Forward as stream for binary boundaries safely, else use string buffer for JSON/URL-encoded
+        if (contentType.includes('multipart/form-data')) {
+            body = request.body;
+        } else {
+            body = await request.text();
+        }
     }
 
     try {

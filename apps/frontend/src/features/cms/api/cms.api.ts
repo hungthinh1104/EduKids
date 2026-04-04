@@ -9,6 +9,8 @@ export interface CMSTopic {
   description: string;
   learningLevel?: number; // 1-5
   imageUrl?: string;
+  videoUrl?: string;
+  hasVideo?: boolean;
   status?: 'DRAFT' | 'REVIEW' | 'PUBLISHED' | 'ARCHIVED';
   tags?: string[];
   deletedAt?: string;
@@ -47,6 +49,7 @@ export interface CMSQuiz {
   title: string;
   description: string;
   questionText: string;
+  questionImageUrl?: string;
   options: Array<
     | {
         text: string;
@@ -113,6 +116,8 @@ const normalizeTopic = (value: unknown): CMSTopic => {
     description: typeof record.description === 'string' ? record.description : '',
     learningLevel: typeof record.learningLevel === 'number' ? record.learningLevel : undefined,
     imageUrl: typeof record.imageUrl === 'string' ? record.imageUrl : undefined,
+    videoUrl: typeof record.videoUrl === 'string' ? record.videoUrl : undefined,
+    hasVideo: typeof record.hasVideo === 'boolean' ? record.hasVideo : undefined,
     status: normalizeStatus(record.status),
     tags: Array.isArray(record.tags)
       ? record.tags.filter((tag): tag is string => typeof tag === 'string')
@@ -258,6 +263,7 @@ const toCreateQuizPayload = (data: {
   title: string;
   description: string;
   questionText: string;
+  questionImageUrl?: string;
   options: Array<{
     text: string;
     isCorrect: boolean;
@@ -270,6 +276,7 @@ const toCreateQuizPayload = (data: {
     title: data.title.trim(),
     description: data.description.trim(),
     questionText: data.questionText.trim(),
+    questionImageUrl: typeof data.questionImageUrl === 'string' ? data.questionImageUrl.trim() : undefined,
     options: data.options,
     difficultyLevel: data.difficultyLevel,
     status: data.status,
@@ -282,6 +289,7 @@ const toUpdateQuizPayload = (data: Partial<CMSQuiz>) => {
   if (typeof data.title === 'string') payload.title = data.title.trim();
   if (typeof data.description === 'string') payload.description = data.description.trim();
   if (typeof data.questionText === 'string') payload.questionText = data.questionText.trim();
+  if (typeof data.questionImageUrl === 'string') payload.questionImageUrl = data.questionImageUrl.trim();
 
   const options = toQuizOptionsPayload(data.options, data.correctAnswer);
   if (options) payload.options = options;
@@ -304,6 +312,7 @@ export const createTopic = async (data: {
   description: string;
   learningLevel: number; // 1-5
   imageUrl?: string;
+  videoUrl?: string;
   status?: 'DRAFT' | 'REVIEW' | 'PUBLISHED' | 'ARCHIVED';
   tags?: string[];
 }): Promise<CMSTopic> => {
@@ -509,6 +518,7 @@ export const createQuiz = async (data: {
   title: string;
   description: string;
   questionText: string;
+  questionImageUrl?: string;
   options: Array<{
     text: string;
     isCorrect: boolean;
@@ -525,6 +535,8 @@ export const createQuiz = async (data: {
     description: typeof raw.description === 'string' ? raw.description : data.description,
     questionText:
       typeof raw.questionText === 'string' ? raw.questionText : data.questionText,
+    questionImageUrl:
+      typeof raw.questionImageUrl === 'string' ? raw.questionImageUrl : data.questionImageUrl,
     options: Array.isArray(raw.options) ? raw.options as CMSQuiz['options'] : data.options,
     correctAnswer: typeof raw.correctAnswer === 'string' ? raw.correctAnswer : data.options.find((o) => o.isCorrect)?.text,
     difficultyLevel:
@@ -549,6 +561,7 @@ export const getCMSQuiz = async (id: number): Promise<CMSQuiz> => {
     title: typeof raw.title === 'string' ? raw.title : '',
     description: typeof raw.description === 'string' ? raw.description : '',
     questionText: typeof raw.questionText === 'string' ? raw.questionText : '',
+    questionImageUrl: typeof raw.questionImageUrl === 'string' ? raw.questionImageUrl : undefined,
     options: Array.isArray(raw.options) ? raw.options as CMSQuiz['options'] : [],
     correctAnswer: typeof raw.correctAnswer === 'string' ? raw.correctAnswer : undefined,
     difficultyLevel: typeof raw.difficultyLevel === 'number' ? raw.difficultyLevel : 1,
@@ -603,6 +616,8 @@ export const getTopicQuizzes = async (
           : typeof q.question === 'string'
             ? q.question
             : '',
+      questionImageUrl:
+        typeof q.questionImageUrl === 'string' ? q.questionImageUrl : undefined,
       options,
       correctAnswer: typeof q.correctAnswer === 'string' ? q.correctAnswer : undefined,
       difficultyLevel: typeof q.difficultyLevel === 'number' ? q.difficultyLevel : 1,
@@ -631,6 +646,7 @@ export const updateQuiz = async (
     title: typeof raw.title === 'string' ? raw.title : (typeof data.title === 'string' ? data.title : ''),
     description: typeof raw.description === 'string' ? raw.description : (typeof data.description === 'string' ? data.description : ''),
     questionText: typeof raw.questionText === 'string' ? raw.questionText : (typeof data.questionText === 'string' ? data.questionText : ''),
+    questionImageUrl: typeof raw.questionImageUrl === 'string' ? raw.questionImageUrl : data.questionImageUrl,
     options: Array.isArray(raw.options) ? raw.options as CMSQuiz['options'] : (Array.isArray(data.options) ? data.options : []),
     correctAnswer: typeof raw.correctAnswer === 'string' ? raw.correctAnswer : data.correctAnswer,
     difficultyLevel: typeof raw.difficultyLevel === 'number' ? raw.difficultyLevel : data.difficultyLevel,
@@ -664,6 +680,7 @@ export const publishQuiz = async (id: number): Promise<CMSQuiz> => {
     title: typeof raw.title === 'string' ? raw.title : '',
     description: typeof raw.description === 'string' ? raw.description : '',
     questionText: typeof raw.questionText === 'string' ? raw.questionText : '',
+    questionImageUrl: typeof raw.questionImageUrl === 'string' ? raw.questionImageUrl : undefined,
     options: Array.isArray(raw.options) ? raw.options as CMSQuiz['options'] : [],
     correctAnswer: typeof raw.correctAnswer === 'string' ? raw.correctAnswer : undefined,
     difficultyLevel: typeof raw.difficultyLevel === 'number' ? raw.difficultyLevel : 1,

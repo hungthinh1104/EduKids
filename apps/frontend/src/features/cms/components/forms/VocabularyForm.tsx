@@ -2,15 +2,16 @@ import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { CMSVocabulary } from '@/features/cms/api/cms.api';
-import { useEffect } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import { MediaUploadField } from './MediaUploadField';
+import { deleteMediaFile } from '@/features/media/api/media.api';
 
 const isSupportedAssetUrl = (value: string) => {
   if (!value) return true;
 
   try {
     const url = new URL(value);
-    return ['http:', 'https:', 'data:'].includes(url.protocol);
+    return ['http:', 'https:'].includes(url.protocol);
   } catch {
     return false;
   }
@@ -29,12 +30,39 @@ export type VocabularyFormData = z.infer<typeof vocabularySchema>;
 
 interface VocabularyFormProps {
   initialData?: CMSVocabulary | null;
-  onSubmit: (data: VocabularyFormData) => void;
+  onSubmit: (data: VocabularyFormData) => Promise<void>;
   onCancel: () => void;
   isLoading?: boolean;
 }
 
 export function VocabularyForm({ initialData, onSubmit, onCancel, isLoading }: VocabularyFormProps) {
+  const uploadedMediaIdsRef = useRef<string[]>([]);
+  const fieldMediaIdRef = useRef<{ imageUrl?: string; audioUrl?: string }>({});
+  const didSaveRef = useRef(false);
+
+  const cleanupUnsavedUploads = useCallback(async () => {
+    const ids = [...new Set(uploadedMediaIdsRef.current)];
+    if (ids.length === 0) return;
+
+    await Promise.allSettled(ids.map((id) => deleteMediaFile(id)));
+    uploadedMediaIdsRef.current = [];
+  }, []);
+
+  const trackUploadedMedia = useCallback((field: 'imageUrl' | 'audioUrl', fileId: string) => {
+    const previousId = fieldMediaIdRef.current[field];
+    fieldMediaIdRef.current[field] = fileId;
+
+    if (!uploadedMediaIdsRef.current.includes(fileId)) {
+      uploadedMediaIdsRef.current.push(fileId);
+    }
+
+    if (previousId && previousId !== fileId) {
+      void deleteMediaFile(previousId).finally(() => {
+        uploadedMediaIdsRef.current = uploadedMediaIdsRef.current.filter((id) => id !== previousId);
+      });
+    }
+  }, []);
+
   const {
     register,
     handleSubmit,
@@ -58,6 +86,10 @@ export function VocabularyForm({ initialData, onSubmit, onCancel, isLoading }: V
   const audioUrlValue = useWatch({ control, name: 'audioUrl' });
 
   useEffect(() => {
+    didSaveRef.current = false;
+    uploadedMediaIdsRef.current = [];
+    fieldMediaIdRef.current = {};
+
     if (initialData) {
       reset({
         word: initialData.word,
@@ -79,8 +111,42 @@ export function VocabularyForm({ initialData, onSubmit, onCancel, isLoading }: V
     }
   }, [initialData, reset]);
 
+  useEffect(() => {
+    return () => {
+      if (!didSaveRef.current && uploadedMediaIdsRef.current.length > 0) {
+        void cleanupUnsavedUploads();
+      }
+    };
+  }, [cleanupUnsavedUploads]);
+
+  const handleFormSubmit = async (data: VocabularyFormData) => {
+    await onSubmit(data);
+
+    const keepIds = new Set<string>();
+    if (data.imageUrl && fieldMediaIdRef.current.imageUrl) {
+      keepIds.add(fieldMediaIdRef.current.imageUrl);
+    }
+    if (data.audioUrl && fieldMediaIdRef.current.audioUrl) {
+      keepIds.add(fieldMediaIdRef.current.audioUrl);
+    }
+
+    const orphanIds = uploadedMediaIdsRef.current.filter((id) => !keepIds.has(id));
+    if (orphanIds.length > 0) {
+      await Promise.allSettled(orphanIds.map((id) => deleteMediaFile(id)));
+    }
+
+    didSaveRef.current = true;
+    uploadedMediaIdsRef.current = [];
+    fieldMediaIdRef.current = {};
+  };
+
+  const handleCancel = async () => {
+    await cleanupUnsavedUploads();
+    onCancel();
+  };
+
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+    <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
       <div className="space-y-4">
         {/* Word */}
         <div>
@@ -149,7 +215,10 @@ export function VocabularyForm({ initialData, onSubmit, onCancel, isLoading }: V
               buttonLabel="Tải ảnh lên"
               currentValue={imageUrlValue}
               disabled={isLoading}
-              onUploaded={(url) => setValue('imageUrl', url, { shouldDirty: true, shouldValidate: true })}
+              onUploaded={(url, fileId) => {
+                if (fileId) trackUploadedMedia('imageUrl', fileId);
+                setValue('imageUrl', url, { shouldDirty: true, shouldValidate: true });
+              }}
             />
           </div>
           <div>
@@ -169,26 +238,29 @@ export function VocabularyForm({ initialData, onSubmit, onCancel, isLoading }: V
               buttonLabel="Tải audio lên"
               currentValue={audioUrlValue}
               disabled={isLoading}
-              onUploaded={(url) => setValue('audioUrl', url, { shouldDirty: true, shouldValidate: true })}
+              onUploaded={(url, fileId) => {
+                if (fileId) trackUploadedMedia('audioUrl', fileId);
+                setValue('audioUrl', url, { shouldDirty: true, shouldValidate: true });
+              }}
             />
           </div>
         </div>
       </div>
 
       {/* Actions */}
-      <div className="flex gap-4 pt-6 mt-6 border-t border-border">
+      <div className="mt-6 grid grid-cols-1 gap-3 border-t border-border pt-6 sm:grid-cols-2 sm:gap-4">
         <button
           type="button"
-          onClick={onCancel}
+          onClick={() => void handleCancel()}
           disabled={isLoading}
-          className="flex-1 px-6 py-3.5 bg-muted/10 hover:bg-gray-200 text-heading rounded-xl font-bold transition-all disabled:opacity-50"
+          className="h-12 px-6 bg-muted/10 hover:bg-gray-200 text-heading rounded-xl font-bold transition-all disabled:opacity-50"
         >
           Hủy bỏ
         </button>
         <button
           type="submit"
           disabled={isLoading}
-          className="flex-[2] flex justify-center items-center px-6 py-3.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold shadow-lg transition-all disabled:opacity-70 disabled:cursor-not-allowed"
+          className="flex h-12 items-center justify-center px-6 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold shadow-lg transition-all disabled:opacity-70 disabled:cursor-not-allowed"
         >
           {isLoading ? (
             <div className="w-5 h-5 border-2 border-white/50 border-t-white rounded-full animate-spin"></div>

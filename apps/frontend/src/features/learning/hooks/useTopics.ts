@@ -22,7 +22,7 @@ export interface TopicWithProgress {
     hasVideo: boolean;
 }
 
-// ── Mock topics verified against Prisma schema:
+// ── Topics shape verified against Prisma schema:
 // Topic { id, name, description?, imageUrl?, createdAt }
 // LearningProgress { childId, vocabularyId, masteryLevel, accuracy }
 // ─────────────────────────────────────────────────────────

@@ -150,9 +150,46 @@ export class AdminAnalyticsRepository {
   /**
    * Get quiz details by IDs
    */
-  async getQuizzesByIds(_quizIds: string[]) {
-    // quizStructure model doesn't exist in schema
-    return [];
+  async getQuizzesByIds(quizIds: string[]) {
+    const numIds = quizIds
+      .map((id) => parseInt(id, 10))
+      .filter((id) => Number.isFinite(id));
+
+    if (numIds.length === 0) {
+      return [];
+    }
+
+    const [topicQuizzes, quizQuestions] = await Promise.all([
+      this.prisma.topicQuiz.findMany({
+        where: {
+          id: { in: numIds },
+        },
+        select: {
+          id: true,
+          questionText: true,
+        },
+      }),
+      this.prisma.quizQuestion.findMany({
+        where: {
+          id: { in: numIds },
+        },
+        select: {
+          id: true,
+          question: true,
+        },
+      }),
+    ]);
+
+    return [
+      ...topicQuizzes.map((quiz) => ({
+        id: quiz.id,
+        question: quiz.questionText,
+      })),
+      ...quizQuestions.map((quiz) => ({
+        id: quiz.id,
+        question: quiz.question,
+      })),
+    ];
   }
 
   /**
@@ -301,15 +338,11 @@ export class AdminAnalyticsRepository {
       }),
     ]);
 
-    const topicQuizCount = Array.isArray(totalTopicQuizzes)
-      ? Number(totalTopicQuizzes[0]?.count ?? 0)
-      : 0;
-
     return {
       totalTopics,
       totalVocabularies,
       totalQuizQuestions,
-      totalTopicQuizzes: topicQuizCount,
+      totalTopicQuizzes,
       avgPronunciationScore:
         Math.round((pronunciationStats._avg.accuracyScore ?? 0) * 100) / 100,
       totalPronunciationAttempts: pronunciationStats._count.id,

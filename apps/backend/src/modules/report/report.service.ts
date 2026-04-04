@@ -435,7 +435,7 @@ export class ReportService {
     };
 
     const report: ProgressReportDto = {
-      reportId: Date.now(),
+      reportId: '',
       parentId,
       weekEndingDate: now,
       children: [childSummary],
@@ -446,10 +446,19 @@ export class ReportService {
       deliveryChannel: undefined,
     };
 
-    // Save report to database
-    await this.prisma.progressReport.create({
+    // Save report to database and use DB-generated ID as reportId
+    const savedReport = await this.prisma.progressReport.create({
       data: {
         userId: parentId,
+        content: report as any,
+      },
+    });
+
+    report.reportId = savedReport.id;
+
+    await this.prisma.progressReport.update({
+      where: { id: savedReport.id },
+      data: {
         content: report as any,
       },
     });
@@ -529,11 +538,15 @@ export class ReportService {
       take: safeLimit,
     });
 
-    return reports.map((report, index) => {
+    return reports.map((report) => {
       const content = (report.content as Record<string, any> | null) ?? null;
       return {
         reportId:
-          typeof content?.reportId === 'number' ? content.reportId : index + 1,
+          typeof content?.reportId === 'string'
+            ? content.reportId
+            : typeof content?.reportId === 'number'
+              ? String(content.reportId)
+              : report.id,
         parentId,
         weekEndingDate: content?.weekEndingDate
           ? new Date(content.weekEndingDate)

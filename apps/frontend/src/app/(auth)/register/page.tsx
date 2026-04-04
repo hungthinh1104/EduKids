@@ -11,21 +11,8 @@ import { Heading, Body, Caption } from '@/shared/components/Typography';
 import { Mail, Lock, User as UserIcon, Loader2, AlertCircle } from 'lucide-react';
 import { authApi } from '@/features/auth/api/auth.api';
 import { useAuthStore } from '@/shared/store/auth.store';
-import { motion } from 'framer-motion';
-import MagneticButton from '@/shared/components/landing/MagneticButton';
 import { getDefaultRouteByRole, PARENT_PATHS, CHILD_PATHS, ADMIN_PATHS } from '@/shared/constants/navigation';
 import { colors } from '@/shared/utils/design-tokens';
-
-// Animation Variants
-const staggerContainer = {
-    hidden: { opacity: 1 },
-    visible: { opacity: 1, transition: { staggerChildren: 0.1 } },
-};
-
-const fadeInUp = {
-    hidden: { opacity: 1, y: 20 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: 'easeOut' as const } },
-};
 
 // Strong password regex required by backend
 const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/;
@@ -131,28 +118,23 @@ function RegisterPageContent() {
     };
 
     return (
-        <motion.div
-            initial="hidden"
-            animate="visible"
-            variants={staggerContainer}
-            className="w-full"
-        >
-            <motion.div variants={fadeInUp} className="text-center mb-8">
-                <Heading level={2} className="text-3xl text-heading mb-2">Đăng Ký</Heading>
-                <Body className="text-muted">Tạo tài khoản để bắt đầu hành trình học tập!</Body>
-            </motion.div>
+        <div className="w-full">
+            <div className="text-center mb-8">
+                <Heading level={2} color="primary" className="text-4xl font-extrabold mb-3 tracking-tight drop-shadow-sm">Đăng Ký</Heading>
+                <Body className="text-muted text-lg font-medium">Tạo tài khoản để bắt đầu hành trình học tập! 🌟</Body>
+            </div>
 
             {globalError && (
-                <motion.div variants={fadeInUp} className="mb-6 p-4 rounded-xl bg-secondary-light border border-secondary/20 flex items-start gap-3">
+                <div className="mb-6 p-4 rounded-xl bg-secondary-light border border-secondary/20 flex items-start gap-3">
                     <AlertCircle className="w-5 h-5 text-secondary shrink-0 mt-0.5" />
                     <Caption className="text-secondary-dark">{globalError}</Caption>
-                </motion.div>
+                </div>
             )}
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
 
                 {/* Name Fields Row */}
-                <motion.div variants={fadeInUp} className="grid grid-cols-2 gap-4 group">
+                <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                         <label className="text-sm font-bold text-heading ml-1 block">Họ</label>
                         <div className="relative">
@@ -187,10 +169,10 @@ function RegisterPageContent() {
                             <p className="text-secondary text-xs font-medium ml-1 mt-1">{errors.firstName.message}</p>
                         )}
                     </div>
-                </motion.div>
+                </div>
 
                 {/* Email Field */}
-                <motion.div variants={fadeInUp} className="space-y-2 group">
+                <div className="space-y-2">
                     <label className="text-sm font-bold text-heading ml-1 block">Email</label>
                     <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-muted">
@@ -207,10 +189,10 @@ function RegisterPageContent() {
                     {errors.email && (
                         <p className="text-secondary text-sm font-medium ml-1 mt-1">{errors.email.message}</p>
                     )}
-                </motion.div>
+                </div>
 
                 {/* Password Field */}
-                <motion.div variants={fadeInUp} className="space-y-2 group">
+                <div className="space-y-2">
                     <div className="flex justify-between items-center ml-1">
                         <label className="text-sm font-bold text-heading block">Mật khẩu</label>
                     </div>
@@ -229,10 +211,10 @@ function RegisterPageContent() {
                     {errors.password && (
                         <p className="text-secondary text-xs font-medium ml-1 mt-1 leading-tight">{errors.password.message}</p>
                     )}
-                </motion.div>
+                </div>
 
                 {/* Confirm Password Field */}
-                <motion.div variants={fadeInUp} className="space-y-2 group">
+                <div className="space-y-2">
                     <div className="flex justify-between items-center ml-1">
                         <label className="text-sm font-bold text-heading block">Xác nhận Mật khẩu</label>
                     </div>
@@ -251,38 +233,30 @@ function RegisterPageContent() {
                     {errors.confirmPassword && (
                         <p className="text-secondary text-sm font-medium ml-1 mt-1">{errors.confirmPassword.message}</p>
                     )}
-                </motion.div>
+                </div>
 
                 {/* Terms agreement notice */}
-                <motion.div variants={fadeInUp} className="pt-2 pb-2">
+                <div className="pt-2 pb-2">
                     <Caption className="text-muted text-center text-[13px]">
                         Bằng việc đăng ký, bạn đồng ý với{' '}
                         <Link href="/terms" className="text-primary hover:underline">Điều khoản Dịch vụ</Link> và{' '}
                         <Link href="/privacy" className="text-primary hover:underline">Chính sách Bảo mật</Link> của EduKids.
                     </Caption>
-                </motion.div>
+                </div>
 
                 {/* Submit logic */}
-                <motion.div variants={fadeInUp} className="pt-2">
-                    <button type="submit" className="hidden" /> {/* Hidden submit for Enter key */}
-                    <MagneticButton
-                        className="w-full block"
-                        onClick={handleSubmit(onSubmit)}
+                <div className="pt-2">
+                    <button
+                        type="submit"
+                        disabled={isLoading}
+                        className={`w-full flex items-center justify-center btn-success h-14 text-lg transition-transform duration-200 ${isLoading ? 'opacity-80' : 'hover:scale-[1.02]'}`}
                     >
-                        <div
-                            className={`w-full flex items-center justify-center btn-success h-14 text-lg transition-transform duration-300 ${isLoading ? 'opacity-80 scale-95' : 'hover:scale-105'}`}
-                        >
-                            {isLoading ? (
-                                <Loader2 className="w-6 h-6 animate-spin" />
-                            ) : (
-                                'Tạo tài khoản ⭐'
-                            )}
-                        </div>
-                    </MagneticButton>
-                </motion.div>
+                        {isLoading ? <Loader2 className="w-6 h-6 animate-spin" /> : 'Tạo tài khoản ⭐'}
+                    </button>
+                </div>
             </form>
 
-            <motion.div variants={fadeInUp} className="mt-6">
+            <div className="mt-6">
                 <div className="relative flex items-center py-4">
                     <div className="flex-grow border-t border-border"></div>
                     <span className="shrink-0 px-4 text-muted text-sm font-semibold">Hoặc đăng ký với</span>
@@ -307,17 +281,17 @@ function RegisterPageContent() {
                     </svg>
                     bằng Google
                 </button>
-            </motion.div>
+            </div>
 
-            <motion.div variants={fadeInUp} className="mt-6 text-center">
+            <div className="mt-6 text-center">
                 <p className="text-muted font-medium">
                     Đã có tài khoản?{' '}
                     <Link href="/login" className="text-primary font-bold hover:underline decoration-2 underline-offset-4 transition-all">
                         Đăng nhập ngay
                     </Link>
                 </p>
-            </motion.div>
-        </motion.div>
+            </div>
+        </div>
     );
 }
 

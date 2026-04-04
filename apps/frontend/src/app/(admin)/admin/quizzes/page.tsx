@@ -113,6 +113,7 @@ export default function AdminQuizzesPage() {
     title: string;
     description: string;
     questionText: string;
+    questionImageUrl?: string;
     options: string[];
     correctAnswerIndex: number;
     difficultyLevel: 1 | 2 | 3 | 4 | 5;
@@ -132,6 +133,7 @@ export default function AdminQuizzesPage() {
         title: data.title,
         description: data.description,
         questionText: data.questionText,
+        questionImageUrl: data.questionImageUrl,
         options: optionsPayload,
         difficultyLevel: data.difficultyLevel,
       };

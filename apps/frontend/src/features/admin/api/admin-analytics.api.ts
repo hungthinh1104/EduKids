@@ -1,15 +1,5 @@
 import { apiClient } from '@/shared/services/api.client';
 
-const isNotFoundError = (error: unknown): boolean => {
-  return (
-    typeof error === 'object' &&
-    error !== null &&
-    'response' in error &&
-    typeof (error as { response?: { status?: unknown } }).response?.status === 'number' &&
-    (error as { response?: { status?: number } }).response?.status === 404
-  );
-};
-
 // ==================== ADMIN ANALYTICS API ====================
 // Platform-wide analytics for administrators
 
@@ -49,14 +39,6 @@ export interface DAUMetrics {
 export interface SessionLengthData {
   average: number; // minutes
   median: number;
-  byUserType: {
-    free: number;
-    premium: number;
-  };
-  distribution: Array<{
-    range: string; // "0-5", "5-10", "10-15", etc
-    count: number;
-  }>;
   trend: Array<{
     date: string;
     avgLength: number;
@@ -73,19 +55,19 @@ export interface ContentPopularity {
     rating: number;
   }>;
   vocabularies: Array<{
-    id: number;
+    id: string;
     word: string;
-    topicName: string;
+    topicName?: string;
     learningCount: number;
     masteryRate: number;
   }>;
   quizzes: Array<{
-    id: number;
+    id: string;
     question: string;
-    topicName: string;
+    topicName?: string;
     attempts: number;
     averageScore: number;
-    difficulty: string;
+    difficulty?: string;
   }>;
 }
 
@@ -170,29 +152,13 @@ const secondsToMinutes = (seconds: number): number => Math.round((seconds / 60) 
  * @Roles ADMIN
  */
 export const getAdminDashboard = async (): Promise<AdminDashboardStats> => {
-  const [dashboardResult, dbStatsResult] = await Promise.allSettled([
+  const [dashboardResponse, dbStatsResponse] = await Promise.all([
     apiClient.get('/admin/analytics/dashboard'),
     apiClient.get('/admin/analytics/db-stats'),
   ]);
 
-  if (dashboardResult.status === 'rejected') {
-    throw dashboardResult.reason;
-  }
-
-  const dashboard = dashboardResult.value.data.data as DashboardSummaryDto;
-  const dbStats: AdminDbStats =
-    dbStatsResult.status === 'fulfilled'
-      ? (dbStatsResult.value.data.data as AdminDbStats)
-      : {
-          totalTopics: 0,
-          totalVocabularies: 0,
-          totalQuizQuestions: 0,
-          totalTopicQuizzes: 0,
-          avgPronunciationScore: 0,
-          totalPronunciationAttempts: 0,
-          avgLearningScore: 0,
-          totalLearningRecords: 0,
-        };
+  const dashboard = dashboardResponse.data.data as DashboardSummaryDto;
+  const dbStats = dbStatsResponse.data.data as AdminDbStats;
 
   return {
     totalUsers: dashboard.totalUsers,
@@ -252,33 +218,14 @@ export const getDAUMetrics = async (period: '7d' | '30d' | '90d' = '30d'): Promi
 export const getSessionLengthAnalytics = async (
   period: '7d' | '30d' | '90d' = '30d'
 ): Promise<SessionLengthData> => {
-  let response;
-  try {
-    response = await apiClient.get(
-      `/admin/analytics/session-length?timeRange=${mapPeriodToTimeRange(period)}`
-    );
-  } catch (error) {
-    if (isNotFoundError(error)) {
-      return {
-        average: 0,
-        median: 0,
-        byUserType: { free: 0, premium: 0 },
-        distribution: [],
-        trend: [],
-      };
-    }
-    throw error;
-  }
+  const response = await apiClient.get(
+    `/admin/analytics/session-length?timeRange=${mapPeriodToTimeRange(period)}`
+  );
   const payload = response.data.data as SessionLengthResponseDto;
   const latest = payload.dailyData[payload.dailyData.length - 1];
   return {
     average: secondsToMinutes(payload.overallAverageSeconds),
     median: secondsToMinutes(latest?.medianSeconds ?? payload.overallAverageSeconds),
-    byUserType: {
-      free: 0,
-      premium: 0,
-    },
-    distribution: [],
     trend: payload.dailyData.map((item) => ({
       date: item.date,
       avgLength: secondsToMinutes(item.averageSeconds),
@@ -301,15 +248,7 @@ export const getContentPopularity = async (params?: {
   if (params?.limit !== undefined) queryParams.set('limit', String(params.limit));
   if (params?.contentType) queryParams.set('contentType', params.contentType);
   const query = queryParams.toString();
-  let response;
-  try {
-    response = await apiClient.get(`/admin/analytics/content-popularity?${query}`);
-  } catch (error) {
-    if (isNotFoundError(error)) {
-      return { topics: [], vocabularies: [], quizzes: [] };
-    }
-    throw error;
-  }
+  const response = await apiClient.get(`/admin/analytics/content-popularity?${query}`);
   const payload = response.data.data as ContentPopularityResponseDto;
 
   const mapItem = (item: ContentPopularityResponseDto['topContent'][number]) => ({
@@ -326,21 +265,18 @@ export const getContentPopularity = async (params?: {
     vocabularies: payload.topContent
       .filter((item) => item.contentType === 'VOCABULARY')
       .map((item) => ({
-        id: Number(item.contentId) || 0,
+        id: item.contentId,
         word: item.contentName,
-        topicName: '',
         learningCount: item.uniqueUsers,
         masteryRate: Math.round(item.completionRate ?? 0),
       })),
     quizzes: payload.topContent
       .filter((item) => item.contentType === 'QUIZ')
       .map((item) => ({
-        id: Number(item.contentId) || 0,
+        id: item.contentId,
         question: item.contentName,
-        topicName: '',
         attempts: item.viewCount,
         averageScore: Math.round(item.completionRate ?? 0),
-        difficulty: 'N/A',
       })),
   };
 };

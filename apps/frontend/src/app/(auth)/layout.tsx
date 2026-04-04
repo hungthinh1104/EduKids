@@ -20,10 +20,10 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
             </div>
 
             {/* Left Side: Illustration / Gamification Panel (Hidden on Mobile) */}
-            <div className="hidden lg:flex w-1/2 bg-gradient-candy flex-col justify-center items-center p-12 relative text-white shadow-2xl z-10">
+            <div className="hidden lg:flex w-1/2 bg-primary-light dark:bg-primary-dark flex-col justify-center items-center p-12 relative shadow-2xl z-10">
                 <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
                 <div className="relative z-10 w-full max-w-lg text-center space-y-8 flex flex-col items-center">
-                    <div className="w-48 h-48 bg-card/20 rounded-full flex items-center justify-center backdrop-blur-sm border-4 border-background/30 shadow-2xl animate-bounce-gentle">
+                    <div className="w-48 h-48 bg-white/40 dark:bg-black/20 rounded-full flex items-center justify-center backdrop-blur-sm border-4 border-primary/30 shadow-xl animate-bounce-gentle">
                         <Image
                             src="https://api.dicebear.com/7.x/bottts/svg?seed=edukids-hero"
                             alt="EduKids Mascot"
@@ -33,10 +33,10 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
                             className="drop-shadow-lg"
                         />
                     </div>
-                    <Heading level={2} color="textInverse" className="drop-shadow-md text-5xl">
+                    <Heading level={2} className="text-black drop-shadow-sm text-5xl font-extrabold">
                         Học Tiếng Anh Thật Vui!
                     </Heading>
-                    <Body color="textInverse" className="text-white/90 text-xl font-medium">
+                    <Body className="text-black text-xl font-medium leading-relaxed">
                         Tham gia ngay để nhận điểm thưởng, phiêu lưu vượt ải và mở khóa hàng ngàn từ vựng mới mỗi ngày.
                     </Body>
                 </div>
@@ -44,7 +44,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
                 {/* Return Home Button */}
                 <div className="absolute top-8 left-8 z-10">
                     <Link href="/">
-                        <div className="inline-flex items-center gap-2 text-white/90 hover:text-white font-heading font-bold text-lg transition-colors cursor-pointer bg-card/10 hover:bg-card/20 px-4 py-2 rounded-xl backdrop-blur-sm">
+                        <div className="inline-flex items-center gap-2 text-primary-dark dark:text-primary-light hover:text-primary font-heading font-bold text-lg transition-colors cursor-pointer bg-white/50 dark:bg-black/30 hover:bg-white/80 dark:hover:bg-black/50 px-4 py-2 rounded-xl backdrop-blur-sm shadow-sm">
                             <MoveLeft size={20} /> Quay lại trang chủ
                         </div>
                     </Link>
@@ -64,7 +64,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
                             priority
                             className="bg-card/50 backdrop-blur-md shadow-lg rounded-full p-2 border border-background/40"
                         />
-                        <Link href="/" className="inline-flex items-center gap-2 text-body hover:text-primary transition-colors font-medium bg-card/50 dark:bg-card/50 px-4 py-2 rounded-full backdrop-blur-sm">
+                        <Link href="/" className="inline-flex items-center gap-2 text-primary-dark dark:text-primary-light hover:text-primary font-heading font-bold transition-colors bg-white/50 dark:bg-black/30 hover:bg-white/80 dark:hover:bg-black/50 px-4 py-2 rounded-full backdrop-blur-sm shadow-sm">
                             <MoveLeft size={16} /> Trang chủ
                         </Link>
                     </div>

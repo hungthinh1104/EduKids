@@ -131,24 +131,57 @@ export class AnalyticsRepository {
       return null;
     }
 
-    // Count unique words (from contentId or metadata)
-    // ActivityLog doesn't have contentId field
-    const totalWordsEncountered = vocabActivities.length;
+    const keyOf = (activity: {
+      id?: number;
+      vocabularyId?: number | null;
+      contentId?: string | null;
+    }) => {
+      if (typeof activity.vocabularyId === 'number') {
+        return `v:${activity.vocabularyId}`;
+      }
 
-    // ActivityLog doesn't have score field
-    const masteredActivities = vocabActivities.slice(0, Math.ceil(vocabActivities.length * 0.7));
-    const wordsMastered = masteredActivities.length;
+      if (activity.contentId) {
+        return `c:${activity.contentId}`;
+      }
 
-    // Retention rate
-    const retentionRate = Math.round(
-      (masteredActivities.length / vocabActivities.length) * 100,
-    );
+      return `a:${activity.id ?? 0}`;
+    };
 
-    // Words by level
+    // Aggregate attempts by unique vocabulary/content key
+    const perWord = new Map<string, { total: number; count: number }>();
+    for (const activity of vocabActivities) {
+      const key = keyOf(activity);
+      const score = Number(activity.score ?? 0);
+      const current = perWord.get(key) || { total: 0, count: 0 };
+      current.total += score;
+      current.count += 1;
+      perWord.set(key, current);
+    }
+
+    const totalWordsEncountered = perWord.size;
+
+    const wordsMastered = Array.from(perWord.values()).filter(
+      (entry) => entry.count > 0 && entry.total / entry.count >= 80,
+    ).length;
+
+    const learningCount = Array.from(perWord.values()).filter((entry) => {
+      if (entry.count === 0) return false;
+      const avg = entry.total / entry.count;
+      return avg > 0 && avg < 80;
+    }).length;
+
+    const newCount = Math.max(totalWordsEncountered - wordsMastered - learningCount, 0);
+
+    // Retention rate on unique words
+    const retentionRate =
+      totalWordsEncountered > 0
+        ? Math.round((wordsMastered / totalWordsEncountered) * 100)
+        : 0;
+
     const wordsByLevel = {
       mastered: wordsMastered,
-      learning: Math.round(totalWordsEncountered * 0.3),
-      new: totalWordsEncountered - wordsMastered - Math.round(totalWordsEncountered * 0.3),
+      learning: learningCount,
+      new: newCount,
     };
 
     // Chart data (retention rate over time)
@@ -188,6 +221,9 @@ export class AnalyticsRepository {
       return null;
     }
 
+    const vocabularyWordMap =
+      await this.getVocabularyWordMap(pronunciationActivities);
+
     // Calculate average accuracy (confidence score)
     const totalAccuracy = pronunciationActivities.reduce(
       (sum, a) => sum + Number(a.score || 0),
@@ -205,11 +241,13 @@ export class AnalyticsRepository {
     // Most improved words (compare first vs last attempt)
     const mostImprovedWords = this.calculateMostImprovedWords(
       pronunciationActivities,
+      vocabularyWordMap,
     );
 
     // Words needing practice (low accuracy)
     const wordsNeedingPractice = this.calculateWordsNeedingPractice(
       pronunciationActivities,
+      vocabularyWordMap,
     );
 
     // Chart data (accuracy over time)
@@ -292,6 +330,11 @@ export class AnalyticsRepository {
       where: { id: childId },
       include: {
         badges: {
+          include: {
+            badge: {
+              select: { name: true },
+            },
+          },
           orderBy: {
             earnedAt: 'desc',
           },
@@ -304,19 +347,18 @@ export class AnalyticsRepository {
       return null;
     }
 
-    // Get activities in period for points calculation
+    // Get activities in period for charting
     const activities = await this.getActivitiesInPeriod(childId, period);
-
-    // Calculate points earned in period
-    const pointsInPeriod = activities.reduce(
-      (sum, a) => sum + Number(a.pointsEarned || 0),
-      0,
-    );
 
     // Count purchases
     const purchases = await this.prisma.purchase.count({
       where: { childId },
     });
+
+    const [totalBadges, badgesEarned] = await Promise.all([
+      this.prisma.badge.count(),
+      this.prisma.childBadge.count({ where: { childId } }),
+    ]);
 
     // Calculate level
     const currentLevel = Math.floor(childProfile.totalPoints / 50) + 1;
@@ -327,15 +369,44 @@ export class AnalyticsRepository {
     return {
       totalPoints: childProfile.totalPoints,
       currentLevel,
-      badgesEarned: childProfile.badges.length,
-      totalBadges: 15, // Total badges available (from UC-05)
+      badgesEarned,
+      totalBadges,
       itemsPurchased: purchases,
       chartData,
       recentBadges: childProfile.badges.map((b) => ({
-        name: 'Badge', // badgeType field doesn't exist
+        name: b.badge.name,
         earnedAt: b.earnedAt,
       })),
     };
+  }
+
+  async getTotalBadgesCount(): Promise<number> {
+    return this.prisma.badge.count();
+  }
+
+  private async getVocabularyWordMap(
+    activities: Array<{ vocabularyId?: number | null }>,
+  ): Promise<Map<number, string>> {
+    const vocabularyIds = Array.from(
+      new Set(
+        activities
+          .map((activity) => activity.vocabularyId)
+          .filter((id): id is number => typeof id === 'number'),
+      ),
+    );
+
+    if (vocabularyIds.length === 0) {
+      return new Map<number, string>();
+    }
+
+    const vocabularies = await this.prisma.vocabulary.findMany({
+      where: { id: { in: vocabularyIds } },
+      select: { id: true, word: true },
+    });
+
+    return new Map<number, string>(
+      vocabularies.map((vocabulary) => [vocabulary.id, vocabulary.word]),
+    );
   }
 
   /**
@@ -498,6 +569,7 @@ export class AnalyticsRepository {
    */
   private calculateMostImprovedWords(
     activities: any[],
+    vocabularyWordMap: Map<number, string>,
   ): Array<{ word: string; improvement: number }> {
     const wordProgress = new Map<
       string,
@@ -505,7 +577,12 @@ export class AnalyticsRepository {
     >();
 
     activities.forEach((activity) => {
-      const word = activity.metadata?.word || `Word ${activity.contentId || activity.vocabularyId || activity.id}`;
+      const word =
+        activity.metadata?.word ||
+        (activity.vocabularyId
+          ? vocabularyWordMap.get(activity.vocabularyId) ||
+            `Vocabulary #${activity.vocabularyId}`
+          : `Activity #${activity.id}`);
       const score = Number(activity.score || 0);
 
       if (!wordProgress.has(word)) {
@@ -532,11 +609,17 @@ export class AnalyticsRepository {
    */
   private calculateWordsNeedingPractice(
     activities: any[],
+    vocabularyWordMap: Map<number, string>,
   ): Array<{ word: string; accuracy: number }> {
     const wordAccuracy = new Map<string, { total: number; count: number }>();
 
     activities.forEach((activity) => {
-      const word = activity.metadata?.word || `Word ${activity.contentId || activity.vocabularyId || activity.id}`;
+      const word =
+        activity.metadata?.word ||
+        (activity.vocabularyId
+          ? vocabularyWordMap.get(activity.vocabularyId) ||
+            `Vocabulary #${activity.vocabularyId}`
+          : `Activity #${activity.id}`);
       const score = Number(activity.score || 0);
 
       const data = wordAccuracy.get(word) || { total: 0, count: 0 };

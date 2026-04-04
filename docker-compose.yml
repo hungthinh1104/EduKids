@@ -5,7 +5,7 @@ services:
     container_name: edukids-postgres
     environment:
       POSTGRES_USER: ${DB_USER:-edukids}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-edukids}
       POSTGRES_DB: ${DB_NAME:-edukids_db}
     volumes:
       - postgres_data:/var/lib/postgresql/data
@@ -47,7 +47,7 @@ services:
     environment:
       NODE_ENV: ${NODE_ENV:-production}
       PORT: ${BACKEND_PORT:-3001}
-      DATABASE_URL: postgresql://${DB_USER:-edukids}:${DB_PASSWORD:?DB_PASSWORD is required}@postgres:5432/${DB_NAME:-edukids_db}?sslmode=disable
+      DATABASE_URL: ${DATABASE_URL:-postgresql://${DB_USER:-edukids}:${DB_PASSWORD:-edukids}@postgres:5432/${DB_NAME:-edukids_db}?sslmode=disable}
       REDIS_URL: redis://:${REDIS_PASSWORD:?REDIS_PASSWORD is required}@redis:6379
       REDIS_HOST: redis
       REDIS_PORT: 6379
@@ -59,6 +59,8 @@ services:
       METRICS_TOKEN: ${METRICS_TOKEN:-}
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
       JWT_EXPIRY: ${JWT_EXPIRY:-24h}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
       SMTP_HOST: ${SMTP_HOST:-smtp.gmail.com}
       SMTP_PORT: ${SMTP_PORT:-587}
       SMTP_USER: ${SMTP_USER}

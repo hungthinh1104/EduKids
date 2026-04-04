@@ -28,17 +28,10 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
    */
   async validate(payload: JwtPayload) {
     // Verify user exists and is active
-    const users = await this.prisma.$queryRawUnsafe<
-      Array<{
-        id: number;
-        isActive: boolean;
-      }>
-    >(
-      'SELECT "id", "isActive" FROM "User" WHERE "id" = $1 LIMIT 1',
-      payload.sub,
-    );
-
-    const user = users[0];
+    const user = await this.prisma.user.findUnique({
+      where: { id: payload.sub },
+      select: { id: true, isActive: true },
+    });
 
     if (!user || !user.isActive) {
       throw new UnauthorizedException("Invalid token or user inactive");

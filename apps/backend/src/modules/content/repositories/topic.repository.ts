@@ -122,6 +122,22 @@ export class TopicRepository {
   }
 
   async hasVideoByTopicId(topicId: number): Promise<boolean> {
+    const topicVideo = await this.prisma.topic.findFirst({
+      where: {
+        id: topicId,
+        status: CmsContentStatus.PUBLISHED,
+        deletedAt: null,
+      },
+      select: {
+        hasVideo: true,
+        videoUrl: true,
+      },
+    });
+
+    if (topicVideo?.hasVideo || Boolean(topicVideo?.videoUrl)) {
+      return true;
+    }
+
     const videoMedia = await this.prisma.vocabularyMedia.findFirst({
       where: {
         type: "VIDEO",

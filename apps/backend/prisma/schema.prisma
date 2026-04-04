@@ -165,21 +165,23 @@ enum PronunciationAssessmentMode {
   WORD
   PARAGRAPH
 }
+
 //////////////////////////////////////
 // AUTH
 //////////////////////////////////////
 
 model User {
-  id            Int       @id @default(autoincrement())
-  email         String    @unique
-  passwordHash  String
-  firstName     String?
-  lastName      String?
-  isActive      Boolean   @default(true)
-  lastLoginAt   DateTime?
-  activeChildId Int?
-  role          Role      @default(PARENT)
-  deletedAt     DateTime?
+  id              Int       @id @default(autoincrement())
+  email           String    @unique
+  isEmailVerified Boolean   @default(false)
+  passwordHash    String
+  firstName       String?
+  lastName        String?
+  isActive        Boolean   @default(true)
+  lastLoginAt     DateTime?
+  activeChildId   Int?
+  role            Role      @default(PARENT)
+  deletedAt       DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -267,14 +269,16 @@ model ChildProfile {
 //////////////////////////////////////
 
 model Topic {
-  id          Int       @id @default(autoincrement())
-  name        String    @unique
-  description String?
-  learningLevel Int     @default(1)
-  imageUrl    String?
-  status      CmsContentStatus @default(DRAFT)
-  tags        String[]  @default([])
-  deletedAt   DateTime?
+  id            Int              @id @default(autoincrement())
+  name          String           @unique
+  description   String?
+  learningLevel Int              @default(1)
+  imageUrl      String?
+  videoUrl      String?
+  hasVideo      Boolean          @default(false)
+  status        CmsContentStatus @default(DRAFT)
+  tags          String[]         @default([])
+  deletedAt     DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -284,7 +288,7 @@ model Topic {
 }
 
 model Vocabulary {
-  id              Int       @id @default(autoincrement())
+  id              Int              @id @default(autoincrement())
   topicId         Int
   word            String
   phonetic        String?
@@ -362,18 +366,19 @@ model QuizOption {
 //////////////////////////////////////
 
 model TopicQuiz {
-  id              Int      @id @default(autoincrement())
+  id              Int              @id @default(autoincrement())
   topicId         Int
   title           String
   description     String?
   questionText    String
-  difficultyLevel Int      @default(3)
+  questionImageUrl String?
+  difficultyLevel Int              @default(3)
   status          CmsContentStatus @default(DRAFT)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  topic   Topic            @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  topic   Topic             @relation(fields: [topicId], references: [id], onDelete: Cascade)
   options TopicQuizOption[]
 
   @@index([topicId])
@@ -469,20 +474,20 @@ model PronunciationAttempt {
   childId      Int
   vocabularyId Int
 
-  provider          PronunciationProvider @default(CUSTOM)
-  mode              PronunciationAssessmentMode @default(WORD)
-  referenceText     String?
-  overallScore      Float?
-  accuracyScore     Float?
-  fluencyScore      Float?
-  completenessScore Float?
-  prosodyScore      Float?
-  recognizedText    String?
-  recognizedIpa     String?
-  feedback          String?
+  provider            PronunciationProvider       @default(CUSTOM)
+  mode                PronunciationAssessmentMode @default(WORD)
+  referenceText       String?
+  overallScore        Float?
+  accuracyScore       Float?
+  fluencyScore        Float?
+  completenessScore   Float?
+  prosodyScore        Float?
+  recognizedText      String?
+  recognizedIpa       String?
+  feedback            String?
   recordingDurationMs Int?
-  passed            Boolean?
-  assessment        Json?
+  passed              Boolean?
+  assessment          Json?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -554,7 +559,7 @@ model AvatarItem {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  children ChildAvatarItem[]
+  children  ChildAvatarItem[]
   purchases Purchase[]
 
   @@index([category])
@@ -857,28 +862,28 @@ model Purchase {
 //////////////////////////////////////
 
 model Media {
-  id                String           @id @default(uuid())
-  mediaType         MediaType        @default(IMAGE)
-  context           MediaContext     @default(GENERAL)
-  originalFilename  String?
-  fileSize          Int              @default(0)
-  mimeType          String?
-  status            ProcessingStatus @default(PENDING)
-  rawUrl            String?
-  optimizedUrl      String?
-  thumbnailUrl      String?
+  id                 String           @id @default(uuid())
+  mediaType          MediaType        @default(IMAGE)
+  context            MediaContext     @default(GENERAL)
+  originalFilename   String?
+  fileSize           Int              @default(0)
+  mimeType           String?
+  status             ProcessingStatus @default(PENDING)
+  rawUrl             String?
+  optimizedUrl       String?
+  thumbnailUrl       String?
   cloudinaryPublicId String?
-  description       String?
-  altText           String?
-  uploadedBy        String?
-  uploadedAt        DateTime         @default(now())
-  processedAt       DateTime?
-  errorMessage      String?
-  metadata          Json?
-  url               String?
-  type              String?
-  createdAt         DateTime         @default(now())
-  updatedAt         DateTime         @updatedAt
+  description        String?
+  altText            String?
+  uploadedBy         String?
+  uploadedAt         DateTime         @default(now())
+  processedAt        DateTime?
+  errorMessage       String?
+  metadata           Json?
+  url                String?
+  type               String?
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
 
   @@index([mediaType, context])
   @@index([status])
@@ -886,22 +891,22 @@ model Media {
 }
 
 model Recommendation {
-  id                     Int      @id @default(autoincrement())
-  childId                Int
-  type                   String
-  title                  String
-  description            String?
-  priority               Int      @default(0)
-  status                 String?  @default("PENDING")
-  scoreBreakdown         Json?
-  learningPath           Json?
-  totalEstimatedMinutes  Int      @default(0)
-  expectedOutcome        String?
-  generatedAt            DateTime @default(now())
-  viewedAt               DateTime?
-  appliedAt              DateTime?
-  createdAt              DateTime @default(now())
-  updatedAt              DateTime @updatedAt
+  id                    Int       @id @default(autoincrement())
+  childId               Int
+  type                  String
+  title                 String
+  description           String?
+  priority              Int       @default(0)
+  status                String?   @default("PENDING")
+  scoreBreakdown        Json?
+  learningPath          Json?
+  totalEstimatedMinutes Int       @default(0)
+  expectedOutcome       String?
+  generatedAt           DateTime  @default(now())
+  viewedAt              DateTime?
+  appliedAt             DateTime?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
 
   @@index([childId])
   @@index([status])
@@ -909,20 +914,20 @@ model Recommendation {
 }
 
 model AppliedLearningPath {
-  id                     Int      @id @default(autoincrement())
-  childId                Int
-  recommendationId       Int
-  learningPath           Json
-  totalEstimatedMinutes  Int      @default(0)
-  itemsCompleted         Int      @default(0)
-  totalItems             Int      @default(0)
-  progressPercentage     Int      @default(0)
-  appliedAt              DateTime @default(now())
-  completedAt            DateTime?
-  parentNotes            String?
-  status                 String?  @default("ACTIVE")
-  createdAt              DateTime @default(now())
-  updatedAt              DateTime @updatedAt
+  id                    Int       @id @default(autoincrement())
+  childId               Int
+  recommendationId      Int
+  learningPath          Json
+  totalEstimatedMinutes Int       @default(0)
+  itemsCompleted        Int       @default(0)
+  totalItems            Int       @default(0)
+  progressPercentage    Int       @default(0)
+  appliedAt             DateTime  @default(now())
+  completedAt           DateTime?
+  parentNotes           String?
+  status                String?   @default("ACTIVE")
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
 
   @@index([childId])
   @@index([recommendationId])
@@ -942,18 +947,18 @@ model RecommendationFeedback {
 }
 
 model ReportPreference {
-  id               String   @id @default(uuid())
-  userId           Int      @unique
-  frequency        String   @default("WEEKLY")
-  preferredChannel String   @default("EMAIL")
+  id               String    @id @default(uuid())
+  userId           Int       @unique
+  frequency        String    @default("WEEKLY")
+  preferredChannel String    @default("EMAIL")
   email            String?
   zaloPhoneNumber  String?
-  reportDay        Int      @default(1)
-  reportHour       Int      @default(9)
+  reportDay        Int       @default(1)
+  reportHour       Int       @default(9)
   lastReportSentAt DateTime?
-  enabled          Boolean  @default(true)
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  enabled          Boolean   @default(true)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
 }
 
 model ProgressReport {

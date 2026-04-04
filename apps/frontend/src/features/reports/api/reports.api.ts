@@ -11,7 +11,7 @@ export interface ReportConfig {
 }
 
 export interface GeneratedReport {
-  reportId: number;
+  reportId: string;
   parentId: number;
   weekEndingDate: string;
   children: Array<{
@@ -169,7 +169,7 @@ export const sendReport = async (
   childId: number,
   period: 'daily' | 'weekly' | 'monthly',
   method: 'email' | 'zalo' | 'both' = 'email'
-): Promise<{ success: boolean; message: string; reportId: number; report: GeneratedReport }> => {
+): Promise<{ success: boolean; message: string; reportId: string; report: GeneratedReport }> => {
   void method;
   const range = toBackendRange(period);
   const response = await apiClient.post('/reports/send', {
@@ -177,7 +177,7 @@ export const sendReport = async (
     range,
     schedule: period,
   });
-  return unwrapData<{ success: boolean; message: string; reportId: number; report: GeneratedReport }>(response);
+  return unwrapData<{ success: boolean; message: string; reportId: string; report: GeneratedReport }>(response);
 };
 
 /**
