@@ -27,6 +27,7 @@ RESULTS="$(rg -n --hidden \
   --glob '!**/*.svg' \
   --glob '!**/*.md' \
   --glob '!**/*.spec.ts' \
+  --glob '!**/*.e2e-spec.ts' \
   --glob '!**/*.test.ts' \
   --glob '!**/.env.example' \
   --glob '!**/.env.sample' \
