@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useParams } from 'next/navigation';
 import { X, Heart, Flame, Zap, CheckCircle2, XCircle, ChevronRight, RotateCcw, Star } from 'lucide-react';
 import { Heading, Body, Caption } from '@/shared/components/Typography';
@@ -410,11 +411,13 @@ export default function QuizPage() {
                             <div className="bg-card border-2 border-border rounded-[2rem] p-8 text-center shadow-lg min-h-[220px] flex flex-col items-center justify-center">
                                 {q.questionImage ? (
                                     <div className="mb-5 w-full max-w-[260px] h-[160px] rounded-2xl overflow-hidden border border-border/70 bg-background">
-                                        <img
+                                        <Image
                                             src={q.questionImage}
                                             alt="Quiz question"
                                             className="w-full h-full object-cover"
                                             loading="lazy"
+                                            width={260}
+                                            height={160}
                                         />
                                     </div>
                                 ) : (

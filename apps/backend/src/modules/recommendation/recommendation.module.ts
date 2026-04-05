@@ -1,10 +1,13 @@
 import { Module } from '@nestjs/common';
+import { CacheModule } from '@nestjs/cache-manager';
 import { ScheduleModule } from '@nestjs/schedule';
 import { RecommendationController } from './recommendation.controller';
 import { RecommendationService } from './recommendation.service';
 import { RecommendationRepository } from './recommendation.repository';
 import { RecommendationGeminiApiService } from './recommendation.gemini-api.service';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { RecommendationProjectionService } from './services/recommendation-projection.service';
+import { WeakTopicDetectionService } from './services/weak-topic-detection.service';
 
 /**
  * Recommendation Module
@@ -17,12 +20,20 @@ import { PrismaService } from 'src/prisma/prisma.service';
  * - NFR-01 compliant AI computation
  */
 @Module({
-  imports: [ScheduleModule.forRoot()],
+  imports: [
+    ScheduleModule.forRoot(),
+    CacheModule.register({
+      ttl: 5 * 60 * 1000,
+      max: 1000,
+    }),
+  ],
   controllers: [RecommendationController],
   providers: [
     RecommendationService,
     RecommendationRepository,
     RecommendationGeminiApiService,
+    RecommendationProjectionService,
+    WeakTopicDetectionService,
     PrismaService,
   ],
   exports: [RecommendationService],

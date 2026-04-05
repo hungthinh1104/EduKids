@@ -84,7 +84,8 @@ export class QuizStructureResponseDto {
   questionText: string;
 
   @ApiProperty({
-    example: "https://res.cloudinary.com/edukids/image/upload/v1/quiz/question-cat.jpg",
+    example:
+      "https://res.cloudinary.com/edukids/image/upload/v1/quiz/question-cat.jpg",
     nullable: true,
     required: false,
   })

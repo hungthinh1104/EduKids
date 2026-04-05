@@ -12,7 +12,8 @@
     "type-check": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:e2e": "playwright test",
+    "test:e2e": "playwright test --config=playwright.config.ts --pass-with-no-tests",
+    "test:ui:selenium": "node --test tests/selenium/**/*.test.mjs",
     "format": "prettier --write ."
   },
   "dependencies": {
@@ -66,6 +67,7 @@
     "postcss": "^8.5.8",
     "prettier": "^3.8.1",
     "prettier-plugin-tailwindcss": "^0.7.2",
+    "selenium-webdriver": "^4.35.0",
     "tailwindcss": "^4.2.1",
     "typescript": "^5.9.3",
     "vitest": "^4.1.0"

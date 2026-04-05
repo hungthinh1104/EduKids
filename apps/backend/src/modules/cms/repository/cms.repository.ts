@@ -219,20 +219,20 @@ export class CmsRepository {
       `Creating quiz structure for topic ${dto.topicId}: ${dto.title}`,
     );
     const data: Record<string, unknown> = {
-        topicId: dto.topicId,
-        title: dto.title,
-        description: dto.description ?? null,
-        questionText: dto.questionText,
-        questionImageUrl: dto.questionImageUrl ?? null,
-        difficultyLevel: dto.difficultyLevel,
-        status: dto.status,
-        options: {
-          create: dto.options.map((opt) => ({
-            text: opt.text,
-            isCorrect: opt.isCorrect,
-          })),
-        },
-      };
+      topicId: dto.topicId,
+      title: dto.title,
+      description: dto.description ?? null,
+      questionText: dto.questionText,
+      questionImageUrl: dto.questionImageUrl ?? null,
+      difficultyLevel: dto.difficultyLevel,
+      status: dto.status,
+      options: {
+        create: dto.options.map((opt) => ({
+          text: opt.text,
+          isCorrect: opt.isCorrect,
+        })),
+      },
+    };
 
     return this.prisma.topicQuiz.create({
       data: data as never,

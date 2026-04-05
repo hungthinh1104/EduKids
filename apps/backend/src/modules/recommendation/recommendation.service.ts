@@ -17,6 +17,7 @@ import {
   RecommendationStatisticsDto,
   AppliedLearningPathDto,
 } from './recommendation.dto';
+import { RecommendationProjectionService } from './services/recommendation-projection.service';
 
 export interface RecommendationInsights {
   healthScore: number;
@@ -36,6 +37,7 @@ export class RecommendationService {
   constructor(
     private readonly recommendationRepository: RecommendationRepository,
     private readonly prisma: PrismaService,
+    private readonly recommendationProjectionService: RecommendationProjectionService,
   ) {}
 
   private recordBreadcrumb(
@@ -79,17 +81,36 @@ export class RecommendationService {
     await this.assertChildExists(childId);
     this.recordBreadcrumb('recommendation.get.requested', { childId });
 
+    const cachedProjection =
+      await this.recommendationProjectionService.getRecommendationsProjection(
+        childId,
+      );
+
+    if (cachedProjection) {
+      this.recordBreadcrumb('recommendation.get.cache_hit', {
+        childId,
+        count: cachedProjection.recommendations.length,
+      });
+      return cachedProjection;
+    }
+
     try {
       const recommendations = await this.recommendationRepository.getRecommendations(childId);
+      const projected =
+        await this.recommendationProjectionService.saveRecommendationsProjection(
+          childId,
+          recommendations,
+        );
+
       this.recordBreadcrumb('recommendation.get.completed', {
         childId,
-        count: recommendations.length,
+        count: projected.recommendations.length,
       });
       Sentry.logger.info('Recommendations fetched', {
         childId,
-        count: recommendations.length,
+        count: projected.recommendations.length,
       });
-      return this.toRecommendationsListDto(childId, recommendations);
+      return projected;
     } catch (error) {
       this.logger.error(
         `Failed to get recommendations for child ${childId}`,
@@ -145,6 +166,8 @@ export class RecommendationService {
       pathItemCount: appliedPath.learningPath?.length || 0,
     });
 
+    await this.recommendationProjectionService.invalidate(childId);
+
     return {
       success: true,
       message: 'Successfully applied recommendation',
@@ -176,10 +199,13 @@ export class RecommendationService {
       count: normalizedIds.length,
     });
 
-    return this.recommendationRepository.dismissRecommendations(
+    const result = await this.recommendationRepository.dismissRecommendations(
       childId,
       normalizedIds,
     );
+
+    await this.recommendationProjectionService.invalidate(childId);
+    return result;
   }
 
   @SentryTraced('recommendation.statistics')
@@ -259,6 +285,11 @@ export class RecommendationService {
     // Generate new recommendations using AI
     const recommendations = await this.recommendationRepository.generateRecommendations(childId);
 
+    await this.recommendationProjectionService.saveRecommendationsProjection(
+      childId,
+      recommendations,
+    );
+
     this.recordBreadcrumb('recommendation.regenerate.completed', {
       childId,
       provider: 'default',
@@ -280,6 +311,11 @@ export class RecommendationService {
 
     const recommendations = await this.recommendationRepository.generateRecommendationsWithGemini(
       childId,
+    );
+
+    await this.recommendationProjectionService.saveRecommendationsProjection(
+      childId,
+      recommendations,
     );
 
     this.recordBreadcrumb('recommendation.regenerate.completed', {

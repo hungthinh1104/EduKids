@@ -1,13 +1,13 @@
 import { Test, TestingModule } from "@nestjs/testing";
 import { describe, it, expect, beforeEach, jest } from "@jest/globals";
 import { ConflictException } from "@nestjs/common";
-import { JwtService } from "@nestjs/jwt";
 import { AuthService } from "./auth.service";
 import { PrismaService } from "../../prisma/prisma.service";
-import { MailService } from "../mail/mail.service";
-import { MailTemplateService } from "../mail/mail-template.service";
 import { ChildProfileService } from "../child-profile/child-profile.service";
 import { RegisterDto } from "./dto/register.dto";
+import { AuthRateLimitService } from "./services/auth-rate-limit.service";
+import { AuthTokenService } from "./services/auth-token.service";
+import { AuthPasswordService } from "./services/auth-password.service";
 
 describe("AuthService - register", () => {
   let service: AuthService;
@@ -23,21 +23,26 @@ describe("AuthService - register", () => {
     auditLog: { create: jest.fn() as jest.MockedFunction<any> },
   };
 
-  const jwtServiceMock = {
-    sign: jest.fn() as jest.Mock,
-  };
-
-  const mailServiceMock = {
-    sendMail: jest.fn() as jest.Mock,
-  };
-
-  const mailTemplateServiceMock = {
-    renderResetPasswordEmail: jest.fn() as jest.Mock,
-    renderWeeklyProgressReportEmail: jest.fn() as jest.Mock,
-  };
-
   const childProfileServiceMock = {
     switchProfile: jest.fn() as jest.Mock,
+  };
+
+  const authRateLimitServiceMock = {
+    checkRateLimit: jest.fn() as jest.Mock,
+    recordFailedAttempt: jest.fn() as jest.Mock,
+    resetRateLimit: jest.fn() as jest.Mock,
+  };
+
+  const authTokenServiceMock = {
+    generateTokens: jest.fn() as jest.Mock,
+    createRefreshSession: jest.fn() as jest.Mock,
+    refreshAccessToken: jest.fn() as jest.Mock,
+  };
+
+  const authPasswordServiceMock = {
+    forgotPassword: jest.fn() as jest.Mock,
+    resetPassword: jest.fn() as jest.Mock,
+    changePassword: jest.fn() as jest.Mock,
   };
 
   beforeEach(async () => {
@@ -47,10 +52,10 @@ describe("AuthService - register", () => {
       providers: [
         AuthService,
         { provide: PrismaService, useValue: prismaMock },
-        { provide: JwtService, useValue: jwtServiceMock },
-        { provide: MailService, useValue: mailServiceMock },
-        { provide: MailTemplateService, useValue: mailTemplateServiceMock },
         { provide: ChildProfileService, useValue: childProfileServiceMock },
+        { provide: AuthRateLimitService, useValue: authRateLimitServiceMock },
+        { provide: AuthTokenService, useValue: authTokenServiceMock },
+        { provide: AuthPasswordService, useValue: authPasswordServiceMock },
       ],
     }).compile();
 
@@ -98,11 +103,13 @@ describe("AuthService - register", () => {
     // create returns the new user
     prismaMock.user.create.mockResolvedValueOnce(createdUser);
 
-    jwtServiceMock.sign
-      .mockReturnValueOnce("access-token-123")
-      .mockReturnValueOnce("refresh-token-123");
-
-    prismaMock.session.create.mockResolvedValue({ id: 100 });
+    authTokenServiceMock.generateTokens.mockReturnValue({
+      accessToken: "access-token-123",
+      refreshToken: "refresh-token-123",
+    });
+    authTokenServiceMock.createRefreshSession.mockImplementation(
+      async () => undefined,
+    );
     prismaMock.auditLog.create.mockResolvedValue({ id: 200 });
 
     const result = await service.register(dto);
@@ -131,13 +138,9 @@ describe("AuthService - register", () => {
         }),
       }),
     );
-    expect(prismaMock.session.create).toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: expect.objectContaining({
-          userId: 42,
-          token: "refresh-token-123",
-        }),
-      }),
+    expect(authTokenServiceMock.createRefreshSession).toHaveBeenCalledWith(
+      42,
+      "refresh-token-123",
     );
     expect(prismaMock.auditLog.create).toHaveBeenCalledWith(
       expect.objectContaining({

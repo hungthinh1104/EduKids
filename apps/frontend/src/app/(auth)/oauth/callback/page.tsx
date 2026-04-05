@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, Suspense } from 'react';
+import { useEffect, useMemo, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuthStore } from '@/shared/store/auth.store';
 import { Loader2 } from 'lucide-react';
@@ -11,14 +11,19 @@ function OAuthCallbackContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const setAuth = useAuthStore((state) => state.setAuth);
-    const [error, setError] = useState<string | null>(null);
 
-    useEffect(() => {
+    const parsedResult = useMemo(() => {
         const dataParam = searchParams.get('data');
         if (!dataParam) {
-            setError('Không tìm thấy thông tin đăng nhập.');
-            setTimeout(() => router.push('/login'), 3000);
-            return;
+            return {
+                error: 'Không tìm thấy thông tin đăng nhập.',
+                authData: null as null | {
+                    user: unknown;
+                    accessToken: string;
+                    refreshToken?: string;
+                    role: string;
+                },
+            };
         }
 
         try {
@@ -29,30 +34,42 @@ function OAuthCallbackContent() {
                 bytes[i] = binaryString.charCodeAt(i);
             }
             const jsonStr = new TextDecoder('utf-8').decode(bytes);
-            
             const authData = JSON.parse(jsonStr);
 
             if (authData?.accessToken && authData?.user) {
-                setAuth(authData.user, authData.accessToken, authData.refreshToken, authData.role);
-                // Hard reload to ensure all layouts fetch correct auth state
-                window.location.href = getDefaultRouteByRole(authData.role);
-            } else {
-                setError('Dữ liệu đăng nhập không hợp lệ.');
-                setTimeout(() => router.push('/login'), 3000);
+                return { error: null, authData };
             }
+
+            return { error: 'Dữ liệu đăng nhập không hợp lệ.', authData: null };
         } catch (err) {
             console.error('Failed to parse OAuth data', err);
-            setError('Lỗi khi xử lý thông tin đăng nhập.');
-            setTimeout(() => router.push('/login'), 3000);
+            return { error: 'Lỗi khi xử lý thông tin đăng nhập.', authData: null };
         }
-    }, [searchParams, router, setAuth]);
+    }, [searchParams]);
+
+    useEffect(() => {
+        if (parsedResult.authData) {
+            setAuth(
+                parsedResult.authData.user,
+                parsedResult.authData.accessToken,
+                parsedResult.authData.refreshToken,
+                parsedResult.authData.role,
+            );
+            // Hard reload to ensure all layouts fetch correct auth state
+            window.location.href = getDefaultRouteByRole(parsedResult.authData.role);
+            return;
+        }
+
+        const timeout = setTimeout(() => router.push('/login'), 3000);
+        return () => clearTimeout(timeout);
+    }, [parsedResult, router, setAuth]);
 
     return (
         <div className="w-full h-full flex flex-col items-center justify-center py-12 text-center">
-            {error ? (
+            {parsedResult.error ? (
                 <>
                     <Heading level={3} className="text-secondary mb-4">Đăng nhập thất bại</Heading>
-                    <Body className="text-muted">{error}</Body>
+                    <Body className="text-muted">{parsedResult.error}</Body>
                     <Body className="text-muted mt-2 text-sm">Đang chuyển hướng về trang đăng nhập...</Body>
                 </>
             ) : (

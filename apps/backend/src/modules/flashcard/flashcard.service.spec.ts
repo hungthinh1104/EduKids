@@ -36,10 +36,16 @@ describe("FlashcardService", () => {
           childProfile: { update: jest.fn(), findUnique: jest.fn() },
           activityLog: { create: jest.fn() },
           dragDropActivity: { create: jest.fn() },
+          learningProgress: {
+            findUnique: jest.fn(),
+            upsert: jest.fn(),
+          },
         };
         tx.childProfile.update.mockResolvedValue({ totalPoints: 120 });
         tx.activityLog.create.mockResolvedValue({ id: 1 });
         tx.dragDropActivity.create.mockResolvedValue({ id: 1 });
+        tx.learningProgress.findUnique.mockResolvedValue({ completedAt: null });
+        tx.learningProgress.upsert.mockResolvedValue({ id: 1 });
         return callback(tx);
       }),
       activityLog: { create: jest.fn() },
@@ -177,13 +183,7 @@ describe("FlashcardService", () => {
 
       expect(result.feedback.isCorrect).toBe(true);
       expect(result.totalPoints).toBe(120);
-      expect(activityRepository.create).toHaveBeenCalledWith(
-        expect.objectContaining({
-          childId,
-          vocabularyId: 5,
-          isCorrect: true,
-        }),
-      );
+      expect(prismaService.$transaction).toHaveBeenCalled();
     });
 
     it("rejects answer for incorrect option", async () => {

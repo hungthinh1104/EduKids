@@ -299,12 +299,15 @@ export class FlashcardService {
       };
     } else {
       const correctOption = options.find((o) => o.isCorrect);
+      const resolvedCorrectAnswer =
+        correctOption?.text || vocabulary.translation || vocabulary.word;
       return {
         isCorrect: false,
         message: "Not quite right. Try again!",
         pointsEarned: 0,
+        correctAnswer: resolvedCorrectAnswer,
         audioUrl,
-        hint: `The correct answer is: ${correctOption?.text || vocabulary.translation || vocabulary.word}. Listen to the pronunciation again.`,
+        hint: `The correct answer is: ${resolvedCorrectAnswer}. Listen to the pronunciation again.`,
       };
     }
   }

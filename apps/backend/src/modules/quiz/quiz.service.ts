@@ -2,59 +2,35 @@ import {
   Injectable,
   BadRequestException,
   NotFoundException,
-  Inject,
   Logger,
 } from "@nestjs/common";
 import * as Sentry from "@sentry/nestjs";
 import { SentryTraced } from "@sentry/nestjs";
-import { CACHE_MANAGER } from "@nestjs/cache-manager";
-import { Cache } from "cache-manager";
 import { randomUUID } from "crypto";
 import { QuizRepository } from "./repositories/quiz.repository";
 import { PrismaService } from "../../prisma/prisma.service";
 import { CmsContentStatus, TopicQuiz, TopicQuizOption } from "@prisma/client";
 import {
+  QuizSessionService,
+  QuizSessionState,
+} from "./services/quiz-session.service";
+import { QuizScoringService } from "./services/quiz-scoring.service";
+import { QuizQuestionService } from "./services/quiz-question.service";
+import {
   QuizStartDto,
   QuizDifficulty,
-  QuestionDto,
   QuizAnswerDto,
   QuizAnswerFeedbackDto,
   QuizResultDto,
   QuizSessionDto,
-  QuestionType,
   QuizOptionDto,
 } from "./dto/quiz.dto";
+import { QuizEventPublisherService } from "./services/quiz-event-publisher.service";
 
-interface QuizSession {
-  quizSessionId: string;
-  childId: number;
-  topicId: number;
-  topicName: string;
-  questions: Array<{
-    questionId: number;
-    vocabularyId?: number;
-    promptText: string;
-    word: string;
-    translation: string;
-    imageUrl?: string;
-    correctOptionId: number;
-    options: Array<{ id: number; text: string; imageUrl?: string }>;
-    difficulty: QuizDifficulty;
-    pointsValue: number;
-  }>;
-  currentQuestionIndex: number;
-  answers: Array<{
-    questionId: number;
-    selectedOptionId: number;
-    isCorrect: boolean;
-    pointsEarned: number;
-    timeTakenMs: number;
-  }>;
-  currentScore: number;
+interface QuizSession extends QuizSessionState {
   currentDifficulty: QuizDifficulty;
-  consecutiveCorrect: number;
-  consecutiveIncorrect: number;
   startedAt: Date;
+  completedAt?: Date;
 }
 
 /**
@@ -68,7 +44,10 @@ export class QuizService {
   constructor(
     private readonly quizRepository: QuizRepository,
     private readonly prisma: PrismaService,
-    @Inject(CACHE_MANAGER) private cacheManager: Cache,
+    private readonly quizSessionService: QuizSessionService,
+    private readonly quizScoringService: QuizScoringService,
+    private readonly quizQuestionService: QuizQuestionService,
+    private readonly quizEventPublisher: QuizEventPublisherService,
   ) {}
 
   private recordBreadcrumb(
@@ -179,7 +158,8 @@ export class QuizService {
             correctOptionId,
             options,
             difficulty: initialDifficulty,
-            pointsValue: this.calculatePointsValue(initialDifficulty),
+            pointsValue:
+              this.quizScoringService.calculatePointsValue(initialDifficulty),
           };
         }),
       );
@@ -202,21 +182,17 @@ export class QuizService {
       };
 
       // Store session in cache (1 hour expiry)
-      await this.cacheManager.set(
-        `quiz:session:${quizSessionId}`,
-        session,
-        3600000,
-      );
+      await this.quizSessionService.saveSession(session);
 
       // Return first question
-      const firstQuestion = this.buildQuestionDto(
+      const firstQuestion = this.quizQuestionService.buildQuestionDto(
         questions[0],
         1,
         questions.length,
         initialDifficulty,
       );
       const questionDtos = questions.map((question, questionIndex) =>
-        this.buildQuestionDto(
+        this.quizQuestionService.buildQuestionDto(
           question,
           questionIndex + 1,
           questions.length,
@@ -324,7 +300,9 @@ export class QuizService {
           correctOptionId,
           options,
           difficulty: QuizDifficulty.MEDIUM,
-          pointsValue: 10,
+          pointsValue: this.quizScoringService.calculatePointsValue(
+            QuizDifficulty.MEDIUM,
+          ),
         };
       }),
     );
@@ -345,11 +323,7 @@ export class QuizService {
       startedAt: new Date(),
     };
 
-    await this.cacheManager.set(
-      `quiz:session:${quizSessionId}`,
-      session,
-      3600000,
-    );
+    await this.quizSessionService.saveSession(session);
 
     return {
       quizSessionId,
@@ -360,14 +334,14 @@ export class QuizService {
       startedAt: session.startedAt,
       currentScore: 0,
       questionsAnswered: 0,
-      firstQuestion: this.buildQuestionDto(
+      firstQuestion: this.quizQuestionService.buildQuestionDto(
         questions[0],
         1,
         questions.length,
         QuizDifficulty.MEDIUM,
       ),
       questions: questions.map((question, questionIndex) =>
-        this.buildQuestionDto(
+        this.quizQuestionService.buildQuestionDto(
           question,
           questionIndex + 1,
           questions.length,
@@ -390,11 +364,11 @@ export class QuizService {
     });
 
     const questions = quizzes
-      .map((quiz, index) => this.buildCmsQuestion(quiz, index))
+      .map((quiz, index) =>
+        this.quizQuestionService.buildCmsQuestion(quiz, index),
+      )
       .filter(
-        (
-          question,
-        ): question is NonNullable<ReturnType<typeof this.buildCmsQuestion>> =>
+        (question): question is QuizSession["questions"][number] =>
           question !== null,
       );
 
@@ -420,11 +394,7 @@ export class QuizService {
       startedAt: new Date(),
     };
 
-    await this.cacheManager.set(
-      `quiz:session:${quizSessionId}`,
-      session,
-      3600000,
-    );
+    await this.quizSessionService.saveSession(session);
 
     return {
       quizSessionId,
@@ -435,14 +405,14 @@ export class QuizService {
       startedAt: session.startedAt,
       currentScore: 0,
       questionsAnswered: 0,
-      firstQuestion: this.buildQuestionDto(
+      firstQuestion: this.quizQuestionService.buildQuestionDto(
         questions[0],
         1,
         questions.length,
         questions[0].difficulty,
       ),
       questions: questions.map((question, questionIndex) =>
-        this.buildQuestionDto(
+        this.quizQuestionService.buildQuestionDto(
           question,
           questionIndex + 1,
           questions.length,
@@ -460,128 +430,172 @@ export class QuizService {
     childId: number,
     dto: QuizAnswerDto,
   ): Promise<QuizAnswerFeedbackDto> {
-    const session = await this.cacheManager.get<QuizSession>(
-      `quiz:session:${dto.quizSessionId}`,
+    const session = await this.quizSessionService.getSession(dto.quizSessionId);
+    this.quizSessionService.assertOwnership(session, childId);
+    this.quizSessionService.assertCurrentQuestionOrder(session, dto.questionId);
+
+    const lockAcquired = this.quizSessionService.acquireAnswerLock(
+      dto.quizSessionId,
+      dto.questionId,
     );
 
-    if (!session) {
-      throw new NotFoundException("Quiz session not found or expired");
-    }
-
-    if (session.childId !== childId) {
+    if (!lockAcquired) {
       throw new BadRequestException(
-        "Quiz session does not belong to this child",
+        "Answer for this question is being processed. Please retry shortly.",
       );
     }
 
-    const currentQuestion = session.questions.find(
-      (q) => q.questionId === dto.questionId,
-    );
-    if (!currentQuestion) {
-      throw new BadRequestException("Invalid question ID");
-    }
+    try {
+      const existingAnswer = session.answers.find(
+        (answer) => answer.questionId === dto.questionId,
+      );
+      if (existingAnswer) {
+        const answeredQuestion = session.questions.find(
+          (q) => q.questionId === dto.questionId,
+        );
+        const previousCorrectAnswer = answeredQuestion?.options.find(
+          (o) => o.id === answeredQuestion.correctOptionId,
+        );
 
-    // Check if correct
-    const isCorrect = dto.selectedOptionId === currentQuestion.correctOptionId;
-    const pointsEarned = isCorrect ? currentQuestion.pointsValue : 0;
+        return {
+          isCorrect: existingAnswer.isCorrect,
+          feedbackMessage: existingAnswer.isCorrect
+            ? "Correct! 🎉"
+            : "Not quite! Keep learning! 💪",
+          correctAnswerId: answeredQuestion?.correctOptionId || 0,
+          correctAnswer:
+            previousCorrectAnswer?.text || answeredQuestion?.word || "",
+          pointsEarned: existingAnswer.pointsEarned,
+          currentScore: session.currentScore,
+          questionsAnswered: session.answers.length,
+          totalQuestions: session.questions.length,
+          correctCount: session.answers.filter((a) => a.isCorrect).length,
+          nextDifficulty: session.currentDifficulty,
+        };
+      }
 
-    // Update session
-    session.answers.push({
-      questionId: dto.questionId,
-      selectedOptionId: dto.selectedOptionId,
-      isCorrect,
-      pointsEarned,
-      timeTakenMs: dto.timeTakenMs,
-    });
-    session.currentScore += pointsEarned;
-    session.currentQuestionIndex++;
+      const currentQuestion = session.questions.find(
+        (q) => q.questionId === dto.questionId,
+      );
+      if (!currentQuestion) {
+        throw new BadRequestException("Invalid question ID");
+      }
 
-    // Update streaks for adaptive difficulty
-    if (isCorrect) {
-      session.consecutiveCorrect++;
-      session.consecutiveIncorrect = 0;
-    } else {
-      session.consecutiveIncorrect++;
-      session.consecutiveCorrect = 0;
-    }
+      // Check if correct
+      const isCorrect =
+        dto.selectedOptionId === currentQuestion.correctOptionId;
+      const pointsEarned = isCorrect ? currentQuestion.pointsValue : 0;
 
-    // Calculate next difficulty (adaptive)
-    const performance = await this.quizRepository.analyzeLearnerPerformance(
-      childId,
-      session.topicId,
-    );
-    const nextDifficulty = this.quizRepository.calculateAdaptiveDifficulty(
-      performance,
-      session.currentDifficulty,
-      session.consecutiveCorrect,
-      session.consecutiveIncorrect,
-    );
-    session.currentDifficulty = nextDifficulty;
-
-    // Record attempt in database
-    if (currentQuestion.vocabularyId) {
-      await this.quizRepository.recordQuizAttempt(
-        childId,
-        currentQuestion.vocabularyId,
+      // Update session
+      session.answers.push({
+        questionId: dto.questionId,
+        selectedOptionId: dto.selectedOptionId,
         isCorrect,
         pointsEarned,
-        dto.timeTakenMs,
-        currentQuestion.difficulty,
+        timeTakenMs: dto.timeTakenMs,
+      });
+      session.currentScore += pointsEarned;
+      session.currentQuestionIndex++;
+
+      // Update streaks for adaptive difficulty
+      if (isCorrect) {
+        session.consecutiveCorrect++;
+        session.consecutiveIncorrect = 0;
+      } else {
+        session.consecutiveIncorrect++;
+        session.consecutiveCorrect = 0;
+      }
+
+      // Calculate next difficulty (adaptive)
+      const performance = await this.quizRepository.analyzeLearnerPerformance(
+        childId,
+        session.topicId,
+      );
+      const nextDifficulty = this.quizRepository.calculateAdaptiveDifficulty(
+        performance,
+        session.currentDifficulty,
+        session.consecutiveCorrect,
+        session.consecutiveIncorrect,
+      );
+      session.currentDifficulty = nextDifficulty;
+
+      // Record attempt in database
+      if (currentQuestion.vocabularyId) {
+        await this.quizRepository.recordQuizAttempt(
+          childId,
+          currentQuestion.vocabularyId,
+          isCorrect,
+          pointsEarned,
+          dto.timeTakenMs,
+          currentQuestion.difficulty,
+        );
+
+        // Update learning progress only for vocabulary-backed quiz questions.
+        await this.quizRepository.updateQuizProgress(
+          childId,
+          currentQuestion.vocabularyId,
+          isCorrect,
+        );
+      }
+
+      // Update cache
+      await this.quizSessionService.saveSession(session);
+
+      await this.quizEventPublisher.publishQuizSubmitted({
+        childId,
+        quizSessionId: dto.quizSessionId,
+        topicId: session.topicId,
+        questionId: dto.questionId,
+        selectedOptionId: dto.selectedOptionId,
+        isCorrect,
+        pointsEarned,
+        timeTakenMs: dto.timeTakenMs,
+      });
+
+      const correctAnswer = currentQuestion.options.find(
+        (o) => o.id === currentQuestion.correctOptionId,
       );
 
-      // Update learning progress only for vocabulary-backed quiz questions.
-      await this.quizRepository.updateQuizProgress(
+      this.recordBreadcrumb("quiz.answer.submitted", {
         childId,
-        currentQuestion.vocabularyId,
+        quizSessionId: dto.quizSessionId,
+        questionId: dto.questionId,
         isCorrect,
+        pointsEarned,
+        nextDifficulty,
+        questionsAnswered: session.answers.length,
+      });
+
+      Sentry.logger.info("Quiz answer submitted", {
+        childId,
+        topicId: session.topicId,
+        quizSessionId: dto.quizSessionId,
+        questionId: dto.questionId,
+        isCorrect,
+        pointsEarned,
+        nextDifficulty,
+      });
+
+      return {
+        isCorrect,
+        feedbackMessage: isCorrect
+          ? "Correct! 🎉"
+          : "Not quite! Keep learning! 💪",
+        correctAnswerId: currentQuestion.correctOptionId,
+        correctAnswer: correctAnswer?.text || currentQuestion.word,
+        pointsEarned,
+        currentScore: session.currentScore,
+        questionsAnswered: session.answers.length,
+        totalQuestions: session.questions.length,
+        correctCount: session.answers.filter((a) => a.isCorrect).length,
+        nextDifficulty,
+      };
+    } finally {
+      this.quizSessionService.releaseAnswerLock(
+        dto.quizSessionId,
+        dto.questionId,
       );
     }
-
-    // Update cache
-    await this.cacheManager.set(
-      `quiz:session:${dto.quizSessionId}`,
-      session,
-      3600000,
-    );
-
-    const correctAnswer = currentQuestion.options.find(
-      (o) => o.id === currentQuestion.correctOptionId,
-    );
-
-    this.recordBreadcrumb("quiz.answer.submitted", {
-      childId,
-      quizSessionId: dto.quizSessionId,
-      questionId: dto.questionId,
-      isCorrect,
-      pointsEarned,
-      nextDifficulty,
-      questionsAnswered: session.answers.length,
-    });
-
-    Sentry.logger.info("Quiz answer submitted", {
-      childId,
-      topicId: session.topicId,
-      quizSessionId: dto.quizSessionId,
-      questionId: dto.questionId,
-      isCorrect,
-      pointsEarned,
-      nextDifficulty,
-    });
-
-    return {
-      isCorrect,
-      feedbackMessage: isCorrect
-        ? "Correct! 🎉"
-        : "Not quite! Keep learning! 💪",
-      correctAnswerId: currentQuestion.correctOptionId,
-      correctAnswer: correctAnswer?.text || currentQuestion.word,
-      pointsEarned,
-      currentScore: session.currentScore,
-      questionsAnswered: session.answers.length,
-      totalQuestions: session.questions.length,
-      correctCount: session.answers.filter((a) => a.isCorrect).length,
-      nextDifficulty,
-    };
   }
 
   /**
@@ -592,19 +606,8 @@ export class QuizService {
     childId: number,
     quizSessionId: string,
   ): Promise<QuizResultDto> {
-    const session = await this.cacheManager.get<QuizSession>(
-      `quiz:session:${quizSessionId}`,
-    );
-
-    if (!session) {
-      throw new NotFoundException("Quiz session not found or expired");
-    }
-
-    if (session.childId !== childId) {
-      throw new BadRequestException(
-        "Quiz session does not belong to this child",
-      );
-    }
+    const session = await this.quizSessionService.getSession(quizSessionId);
+    this.quizSessionService.assertOwnership(session, childId);
 
     const totalQuestions = session.questions.length;
     const correctAnswers = session.answers.filter((a) => a.isCorrect).length;
@@ -621,17 +624,35 @@ export class QuizService {
     );
 
     // Calculate stars and rewards
-    const starsEarned = this.calculateStarsFromPercentage(percentageScore);
-    const pointsAwarded = this.calculateQuizRewardPoints(
+    const starsEarned =
+      this.quizScoringService.calculateStarsFromPercentage(percentageScore);
+    const pointsAwarded = this.quizScoringService.calculateQuizRewardPoints(
       percentageScore,
       totalQuestions,
     );
 
-    // Award points to child
-    await this.prisma.childProfile.update({
-      where: { id: childId },
-      data: { totalPoints: { increment: pointsAwarded } },
-    });
+    if (!session.rewardsGranted) {
+      // Award points exactly once per session.
+      await this.prisma.childProfile.update({
+        where: { id: childId },
+        data: { totalPoints: { increment: pointsAwarded } },
+      });
+
+      session.rewardsGranted = true;
+      session.completedAt = new Date();
+
+      await this.quizSessionService.saveSession(session);
+
+      await this.quizEventPublisher.publishQuizCompleted({
+        childId,
+        quizSessionId,
+        topicId: session.topicId,
+        totalQuestions,
+        correctAnswers,
+        accuracy,
+        pointsAwarded,
+      });
+    }
 
     const child = await this.prisma.childProfile.findUnique({
       where: { id: childId },
@@ -642,7 +663,10 @@ export class QuizService {
 
     // Check for badges
     const stats = await this.quizRepository.getQuizStats(childId);
-    const badgeUnlocked = this.checkQuizBadges(stats.totalQuizzes, accuracy);
+    const badgeUnlocked = this.quizScoringService.checkQuizBadges(
+      stats.totalQuizzes,
+      accuracy,
+    );
 
     // Build question breakdown
     const questionBreakdown = session.answers.map((answer) => {
@@ -700,7 +724,8 @@ export class QuizService {
       accuracy,
       totalTimeMs,
       averageTimePerQuestion: Math.round(totalTimeMs / totalQuestions),
-      performanceMessage: this.generatePerformanceMessage(percentageScore),
+      performanceMessage:
+        this.quizScoringService.generatePerformanceMessage(percentageScore),
       starsEarned,
       starEmoji: "⭐".repeat(starsEarned) + "✨".repeat(5 - starsEarned),
       rewardMessage: `+${pointsAwarded} Star Points!`,
@@ -710,121 +735,6 @@ export class QuizService {
       questionBreakdown,
       completedAt: new Date(),
     };
-  }
-
-  private calculatePointsValue(difficulty: QuizDifficulty): number {
-    const pointsMap = {
-      [QuizDifficulty.EASY]: 5,
-      [QuizDifficulty.MEDIUM]: 10,
-      [QuizDifficulty.HARD]: 15,
-    };
-    return pointsMap[difficulty];
-  }
-
-  private calculateStarsFromPercentage(percentage: number): number {
-    if (percentage >= 90) return 5;
-    if (percentage >= 75) return 4;
-    if (percentage >= 60) return 3;
-    if (percentage >= 40) return 2;
-    return 1;
-  }
-
-  private calculateQuizRewardPoints(
-    percentage: number,
-    questionCount: number,
-  ): number {
-    const basePoints = questionCount * 3;
-    const bonusMultiplier = percentage / 100;
-    return Math.round(basePoints * bonusMultiplier);
-  }
-
-  private generatePerformanceMessage(percentage: number): string {
-    if (percentage >= 90) return "Excellent work! You are a quiz champion! 🏆";
-    if (percentage >= 75) return "Great job! You did really well! 🎉";
-    if (percentage >= 60) return "Good effort! Keep practicing! 🌟";
-    if (percentage >= 40) return "Nice try! You are learning! 💪";
-    return "Keep practicing! You will get better! 😊";
-  }
-
-  private checkQuizBadges(
-    totalQuizzes: number,
-    accuracy: number,
-  ): string | undefined {
-    if (totalQuizzes === 10 && accuracy >= 80)
-      return "🏅 Quiz Enthusiast: 10 Quizzes Completed!";
-    if (totalQuizzes === 25 && accuracy >= 85)
-      return "🏆 Quiz Master: 25 Quizzes with Excellence!";
-    if (totalQuizzes === 50) return "👑 Quiz Legend: 50 Quizzes Completed!";
-    return undefined;
-  }
-
-  private buildQuestionDto(
-    question: QuizSession["questions"][number],
-    questionNumber: number,
-    totalQuestions: number,
-    difficulty: QuizDifficulty,
-  ): QuestionDto {
-    return {
-      questionId: question.questionId,
-      questionNumber,
-      totalQuestions,
-      questionType: QuestionType.MULTIPLE_CHOICE,
-      questionText: question.promptText,
-      questionImage: question.imageUrl,
-      options: question.options,
-      difficulty,
-      pointsValue: question.pointsValue,
-      timeLimit: 15,
-    };
-  }
-
-  private buildCmsQuestion(
-    quiz: TopicQuiz & { options: TopicQuizOption[] },
-    index: number,
-  ): QuizSession["questions"][number] | null {
-    const options = [...quiz.options];
-    const correctOption = options.find((option) => option.isCorrect);
-
-    if (!correctOption || options.length < 2) {
-      return null;
-    }
-
-    const shuffledOptions = this.shuffleOptions(
-      options.map((option, optionIndex) => ({
-        id: optionIndex + 1,
-        text: option.text,
-      })),
-    );
-    const correctAnswer = shuffledOptions.find(
-      (option) => option.text === correctOption.text,
-    );
-    const difficulty = this.mapDifficultyLevel(quiz.difficultyLevel);
-
-    if (!correctAnswer) {
-      return null;
-    }
-
-    return {
-      questionId: index + 1,
-      promptText: quiz.questionText,
-      imageUrl: (quiz as TopicQuiz & { questionImageUrl?: string | null }).questionImageUrl ?? undefined,
-      word: correctAnswer.text,
-      translation: quiz.questionText,
-      correctOptionId: correctAnswer.id,
-      options: shuffledOptions,
-      difficulty,
-      pointsValue: this.calculatePointsValue(difficulty),
-    };
-  }
-
-  private mapDifficultyLevel(level: number): QuizDifficulty {
-    if (level >= 4) {
-      return QuizDifficulty.HARD;
-    }
-    if (level <= 2) {
-      return QuizDifficulty.EASY;
-    }
-    return QuizDifficulty.MEDIUM;
   }
 
   private shuffleOptions(

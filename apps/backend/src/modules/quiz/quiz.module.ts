@@ -4,6 +4,10 @@ import { QuizController } from "./quiz.controller";
 import { QuizService } from "./quiz.service";
 import { QuizRepository } from "./repositories/quiz.repository";
 import { PrismaService } from "../../prisma/prisma.service";
+import { QuizSessionService } from "./services/quiz-session.service";
+import { QuizScoringService } from "./services/quiz-scoring.service";
+import { QuizQuestionService } from "./services/quiz-question.service";
+import { QuizEventPublisherService } from "./services/quiz-event-publisher.service";
 
 @Module({
   imports: [
@@ -13,7 +17,15 @@ import { PrismaService } from "../../prisma/prisma.service";
     }),
   ],
   controllers: [QuizController],
-  providers: [QuizService, QuizRepository, PrismaService],
+  providers: [
+    QuizService,
+    QuizRepository,
+    QuizSessionService,
+    QuizScoringService,
+    QuizQuestionService,
+    QuizEventPublisherService,
+    PrismaService,
+  ],
   exports: [QuizService, QuizRepository],
 })
 export class QuizModule {}

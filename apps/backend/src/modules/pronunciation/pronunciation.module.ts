@@ -5,6 +5,9 @@ import { PronunciationService } from './pronunciation.service';
 import { PronunciationRepository } from './repositories/pronunciation.repository';
 import { PronunciationAssessmentService } from './pronunciation-assessment.service';
 import { PrismaModule } from '../../prisma/prisma.module';
+import { PronunciationProviderRegistryService } from './providers/pronunciation-provider-registry.service';
+import { CustomPronunciationProvider } from './providers/custom-pronunciation.provider';
+import { AzureSpeechPronunciationProvider } from './providers/azure-speech-pronunciation.provider';
 
 @Module({
   imports: [
@@ -19,6 +22,9 @@ import { PrismaModule } from '../../prisma/prisma.module';
     PronunciationService,
     PronunciationRepository,
     PronunciationAssessmentService,
+    PronunciationProviderRegistryService,
+    CustomPronunciationProvider,
+    AzureSpeechPronunciationProvider,
   ],
   exports: [PronunciationService, PronunciationRepository],
 })

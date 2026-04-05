@@ -1,4 +1,4 @@
-import { useForm, useFieldArray } from 'react-hook-form';
+import { useForm, useFieldArray, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { CMSQuiz, CMSVocabulary } from '@/features/cms/api/cms.api';
@@ -128,7 +128,7 @@ export function QuizForm({
     register,
     handleSubmit,
     control,
-    watch,
+    getValues,
     setValue,
     formState: { errors },
     reset
@@ -149,9 +149,9 @@ export function QuizForm({
     control,
     name: "options",
   });
-  const correctAnswerIndex = watch('correctAnswerIndex');
-  const optionValues = watch('options');
-  const questionImageUrlValue = watch('questionImageUrl');
+  const correctAnswerIndex = useWatch({ control, name: 'correctAnswerIndex' });
+  const optionValues = useWatch({ control, name: 'options' });
+  const questionImageUrlValue = useWatch({ control, name: 'questionImageUrl' });
 
   useEffect(() => {
     didSaveRef.current = false;
@@ -307,9 +307,9 @@ export function QuizForm({
       : 0;
 
     setValue(`options.${safeIndex}.value`, vocabulary.word, { shouldValidate: true, shouldDirty: true });
-    const titleValue = (watch('title') || '').trim();
-    const questionTextValue = (watch('questionText') || '').trim();
-    const descriptionValue = (watch('description') || '').trim();
+    const titleValue = (getValues('title') || '').trim();
+    const questionTextValue = (getValues('questionText') || '').trim();
+    const descriptionValue = (getValues('description') || '').trim();
 
     if (!titleValue) {
       setValue('title', `${topicName || 'Quiz'} - ${vocabulary.word}`, { shouldValidate: true, shouldDirty: true });
@@ -337,6 +337,7 @@ export function QuizForm({
   };
 
   return (
+    // eslint-disable-next-line react-hooks/refs
     <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
       <div className="space-y-4">
         {/* Title */}

@@ -292,7 +292,9 @@ export class AdminAnalyticsService {
       }
 
       const averageTimeSpent =
-        totalTimeRecords > 0 ? Math.round(totalTimeSpent / totalTimeRecords) : 0;
+        totalTimeRecords > 0
+          ? Math.round(totalTimeSpent / totalTimeRecords)
+          : 0;
 
       // Get completion rate across selected period
       let totalStarted = 0;

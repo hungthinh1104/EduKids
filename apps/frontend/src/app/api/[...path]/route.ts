@@ -53,7 +53,7 @@ async function proxyRequest(
         forwardHeaders.set('content-type', 'application/json');
     }
 
-    let body: any = null;
+    let body: BodyInit | null = null;
     const method = request.method.toUpperCase();
     if (!['GET', 'HEAD', 'OPTIONS'].includes(method)) {
         const contentType = request.headers.get('content-type') || '';

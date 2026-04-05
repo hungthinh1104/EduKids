@@ -19,6 +19,7 @@ import {
 } from './recommendation.gemini';
 import { RecommendationGeminiApiService } from './recommendation.gemini-api.service';
 import { subDays } from 'date-fns';
+import { WeakTopicDetectionService } from './services/weak-topic-detection.service';
 
 /**
  * Repository for AI recommendation generation and management
@@ -29,6 +30,7 @@ export class RecommendationRepository {
   constructor(
     private readonly prisma: PrismaService,
     private readonly geminiApiService: RecommendationGeminiApiService,
+    private readonly weakTopicDetectionService: WeakTopicDetectionService,
   ) {}
 
   private priorityToInt(priority: RecommendationPriority): number {
@@ -264,21 +266,10 @@ export class RecommendationRepository {
         ? Array.from(analysis.topicScores.entries())
         : [];
 
-    const weakTopicIds = topicScoreEntries
-      .filter(([_, scores]) => {
-        if (!scores || scores.length === 0) return false;
-        const avg = scores.reduce((sum, value) => sum + (value || 0), 0) / scores.length;
-        return avg < 70;
-      })
-      .map(([topicId]) => topicId);
-
-    const strongTopicIds = topicScoreEntries
-      .filter(([_, scores]) => {
-        if (!scores || scores.length === 0) return false;
-        const avg = scores.reduce((sum, value) => sum + (value || 0), 0) / scores.length;
-        return avg >= 85;
-      })
-      .map(([topicId]) => topicId);
+    const { weakTopicIds, strongTopicIds } =
+      this.weakTopicDetectionService.detectFromTopicScores(
+        new Map(topicScoreEntries),
+      );
 
     const candidateTopics = await this.prisma.topic.findMany({
       take: 10,

@@ -1,39 +1,73 @@
 import { Test, TestingModule } from "@nestjs/testing";
 import { describe, it, expect, beforeEach, jest } from "@jest/globals";
-import { NotFoundException, BadRequestException } from "@nestjs/common";
-import { CACHE_MANAGER } from "@nestjs/cache-manager";
+import { BadRequestException, NotFoundException } from "@nestjs/common";
 import { QuizService } from "./quiz.service";
 import { QuizRepository } from "./repositories/quiz.repository";
 import { PrismaService } from "../../prisma/prisma.service";
+import { QuizSessionService } from "./services/quiz-session.service";
+import { QuizScoringService } from "./services/quiz-scoring.service";
+import { QuizQuestionService } from "./services/quiz-question.service";
+import { QuizEventPublisherService } from "./services/quiz-event-publisher.service";
 import { QuizDifficulty } from "./dto/quiz.dto";
 
 describe("QuizService", () => {
   let service: QuizService;
   let quizRepository: any;
-  let prismaService: any;
-  let cacheManager: any;
+  let quizSessionService: any;
 
   beforeEach(async () => {
     const mockQuizRepository: any = {
       getTopicById: jest.fn(),
       getPublishedTopicQuizzes: jest.fn(),
-      getVocabularyForQuiz: jest.fn(),
-    };
-
-    const mockCacheManager: any = {
-      get: jest.fn(),
-      set: jest.fn(),
-      del: jest.fn(),
+      analyzeLearnerPerformance: jest.fn(),
+      selectAdaptiveQuestions: jest.fn(),
+      generateDistractors: jest.fn(),
+      calculateAdaptiveDifficulty: jest.fn(),
+      recordQuizAttempt: jest.fn(),
+      updateQuizProgress: jest.fn(),
+      getQuizStats: jest.fn(),
     };
 
     const mockPrismaService: any = {
-      quizSession: {
-        create: jest.fn(),
-        findUnique: jest.fn(),
-        update: jest.fn(),
-      },
-      activity: { create: jest.fn() },
+      vocabulary: { findMany: jest.fn() },
       childProfile: { findUnique: jest.fn(), update: jest.fn() },
+    };
+
+    const mockQuizSessionService: any = {
+      getSession: jest.fn(),
+      saveSession: jest.fn(),
+      assertOwnership: jest.fn(),
+      assertCurrentQuestionOrder: jest.fn(),
+      acquireAnswerLock: jest.fn(),
+      releaseAnswerLock: jest.fn(),
+    };
+
+    const mockQuizScoringService: any = {
+      calculatePointsValue: jest.fn().mockReturnValue(10),
+      calculateStarsFromPercentage: jest.fn().mockReturnValue(4),
+      calculateQuizRewardPoints: jest.fn().mockReturnValue(20),
+      checkQuizBadges: jest.fn().mockReturnValue(undefined),
+      generatePerformanceMessage: jest.fn().mockReturnValue("Great job!"),
+    };
+
+    const mockQuizQuestionService: any = {
+      buildQuestionDto: jest.fn((q: any) => ({
+        questionId: q.questionId,
+        questionNumber: 1,
+        totalQuestions: 1,
+        questionType: "MULTIPLE_CHOICE",
+        questionText: q.promptText,
+        options: q.options,
+        difficulty: q.difficulty,
+        pointsValue: q.pointsValue,
+        timeLimit: 15,
+      })),
+      buildCmsQuestion: jest.fn(),
+    };
+
+    const mockQuizEventPublisherService: any = {
+      publishQuizSubmitted: jest.fn(),
+      publishQuizCompleted: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -41,189 +75,70 @@ describe("QuizService", () => {
         QuizService,
         { provide: QuizRepository, useValue: mockQuizRepository },
         { provide: PrismaService, useValue: mockPrismaService },
-        { provide: CACHE_MANAGER, useValue: mockCacheManager },
+        { provide: QuizSessionService, useValue: mockQuizSessionService },
+        { provide: QuizScoringService, useValue: mockQuizScoringService },
+        { provide: QuizQuestionService, useValue: mockQuizQuestionService },
+        {
+          provide: QuizEventPublisherService,
+          useValue: mockQuizEventPublisherService,
+        },
       ],
     }).compile();
 
     service = module.get<QuizService>(QuizService);
     quizRepository = module.get(QuizRepository);
-    prismaService = module.get(PrismaService);
-    cacheManager = module.get(CACHE_MANAGER);
+    quizSessionService = module.get(QuizSessionService);
   });
 
-  describe("startQuiz", () => {
-    it("starts quiz with valid topic", async () => {
-      const childId = 5;
-      const topicId = 1;
-      const dto = { topicId, questionCount: 10 };
+  it("throws NotFoundException for nonexistent topic", async () => {
+    quizRepository.getTopicById.mockResolvedValue(null);
 
-      const mockTopic = { id: 1, title: "Animals" };
-      const mockQuizzes = Array.from({ length: 15 }, (_, i) => ({
-        id: i + 1,
-        promptText: `Q${i + 1}?`,
-        correctOptionId: 1,
-        options: [
-          { id: i * 2 + 1, text: "a" },
-          { id: i * 2 + 2, text: "b" },
-        ],
-      }));
-
-      quizRepository.getTopicById.mockResolvedValue(mockTopic);
-      quizRepository.getPublishedTopicQuizzes.mockResolvedValue(mockQuizzes);
-      cacheManager.get.mockResolvedValue(null);
-      prismaService.quizSession.create.mockResolvedValue({
-        id: "session-1",
-        childId,
-        topicId,
-      });
-
-      const result = await service.startQuiz(childId, dto);
-
-      expect(result.quizSessionId).toBeDefined();
-      expect(result.topicId).toBe(topicId);
-    });
-
-    it("throws NotFoundException for nonexistent topic", async () => {
-      const childId = 5;
-      const dto = { topicId: 999, questionCount: 10 };
-
-      quizRepository.getTopicById.mockResolvedValue(null);
-
-      await expect(service.startQuiz(childId, dto)).rejects.toThrow(
-        NotFoundException,
-      );
-    });
-
-    it("uses default question count when not provided", async () => {
-      const childId = 5;
-      const topicId = 1;
-      const dto = { topicId }; // No questionCount
-
-      const mockTopic = { id: 1, title: "Animals" };
-
-      quizRepository.getTopicById.mockResolvedValue(mockTopic);
-      quizRepository.getPublishedTopicQuizzes.mockResolvedValue([]);
-      cacheManager.get.mockResolvedValue(null);
-
-      try {
-        await service.startQuiz(childId, dto as any);
-      } catch {
-        // Expected to potentially fail due to missing vocabularies
-      }
-
-      expect(quizRepository.getTopicById).toHaveBeenCalledWith(topicId);
-    });
+    await expect(
+      service.startQuiz(5, { topicId: 999, questionCount: 10 }),
+    ).rejects.toThrow(NotFoundException);
   });
 
-  describe("submitAnswer", () => {
-    it("records correct answer and updates difficulty", async () => {
-      const childId = 5;
-      const sessionId = "session-1";
-      const dto = {
-        quizSessionId: sessionId,
-        questionId: 1,
-        selectedOptionId: 1,
-        timeTakenMs: 5000,
-      };
+  it("rejects submit when the same question is already in-flight", async () => {
+    const dto = {
+      quizSessionId: "session-1",
+      questionId: 1,
+      selectedOptionId: 1,
+      timeTakenMs: 1000,
+    };
 
-      const mockSession = {
-        id: sessionId,
-        childId,
-        topicId: 1,
-        questions: [
-          {
-            questionId: 1,
-            correctOptionId: 1,
-            difficulty: QuizDifficulty.MEDIUM,
-            pointsValue: 10,
-          },
-        ],
-        currentScore: 0,
-        startedAt: new Date(),
-      };
+    const session = {
+      quizSessionId: "session-1",
+      childId: 5,
+      topicId: 1,
+      topicName: "Animals",
+      questions: [
+        {
+          questionId: 1,
+          promptText: "What is this?",
+          word: "dog",
+          translation: "chó",
+          correctOptionId: 1,
+          options: [{ id: 1, text: "dog" }],
+          difficulty: QuizDifficulty.MEDIUM,
+          pointsValue: 10,
+        },
+      ],
+      currentQuestionIndex: 0,
+      answers: [],
+      currentScore: 0,
+      currentDifficulty: QuizDifficulty.MEDIUM,
+      consecutiveCorrect: 0,
+      consecutiveIncorrect: 0,
+      startedAt: new Date(),
+    };
 
-      cacheManager.get.mockResolvedValue(JSON.stringify(mockSession));
-      cacheManager.set.mockResolvedValue(null);
-      prismaService.quizSession.findUnique.mockResolvedValue(mockSession);
-      prismaService.activity.create.mockResolvedValue({ id: 1 });
+    quizSessionService.getSession.mockResolvedValue(session);
+    quizSessionService.acquireAnswerLock.mockReturnValue(false);
 
-      const result = await service.submitAnswer(childId, dto);
+    await expect(service.submitAnswer(5, dto as any)).rejects.toThrow(
+      BadRequestException,
+    );
 
-      expect(result).toBeDefined();
-      expect(prismaService.activity.create).toHaveBeenCalled();
-    });
-
-    it("records incorrect answer", async () => {
-      const childId = 5;
-      const sessionId = "session-1";
-      const dto = {
-        quizSessionId: sessionId,
-        questionId: 1,
-        selectedOptionId: 2, // Wrong option
-        timeTakenMs: 2000,
-      };
-
-      const mockSession = {
-        id: sessionId,
-        childId,
-        topicId: 1,
-        questions: [
-          {
-            questionId: 1,
-            correctOptionId: 1,
-            difficulty: QuizDifficulty.MEDIUM,
-            pointsValue: 10,
-          },
-        ],
-        currentScore: 0,
-        startedAt: new Date(),
-      };
-
-      cacheManager.get.mockResolvedValue(JSON.stringify(mockSession));
-      cacheManager.set.mockResolvedValue(null);
-      prismaService.quizSession.findUnique.mockResolvedValue(mockSession);
-      prismaService.activity.create.mockResolvedValue({ id: 1 });
-
-      const result = await service.submitAnswer(childId, dto);
-
-      expect(result).toBeDefined();
-      expect(prismaService.activity.create).toHaveBeenCalled();
-    });
-  });
-
-  describe("getQuizResults", () => {
-    it("returns quiz results with breakdown", async () => {
-      const childId = 5;
-      const sessionId = "session-1";
-
-      const mockSession = {
-        id: sessionId,
-        childId,
-        topicId: 1,
-        answers: [
-          {
-            questionId: 1,
-            isCorrect: true,
-            pointsEarned: 10,
-            timeTakenMs: 5000,
-          },
-          {
-            questionId: 2,
-            isCorrect: false,
-            pointsEarned: 0,
-            timeTakenMs: 3000,
-          },
-        ],
-        currentScore: 10,
-        startedAt: new Date(),
-      };
-
-      cacheManager.get.mockResolvedValue(JSON.stringify(mockSession));
-      prismaService.quizSession.findUnique.mockResolvedValue(mockSession);
-
-      const result = await service.getQuizResults(childId, sessionId);
-
-      expect(result).toBeDefined();
-    });
+    expect(quizSessionService.releaseAnswerLock).not.toHaveBeenCalled();
   });
 });

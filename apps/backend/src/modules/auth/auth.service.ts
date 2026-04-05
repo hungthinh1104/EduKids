@@ -5,14 +5,9 @@ import {
   ForbiddenException,
   BadRequestException,
   InternalServerErrorException,
-  Logger,
 } from "@nestjs/common";
-import { JwtService } from "@nestjs/jwt";
 import * as bcrypt from "bcryptjs";
-import { createClient, RedisClientType } from "redis";
 import { PrismaService } from "../../prisma/prisma.service";
-import { MailService } from "../mail/mail.service";
-import { MailTemplateService } from "../mail/mail-template.service";
 import { ChildProfileService } from "../child-profile/child-profile.service";
 import { RegisterDto } from "./dto/register.dto";
 import { LoginDto } from "./dto/login.dto";
@@ -22,87 +17,18 @@ import { ChangePasswordDto } from "./dto/change-password.dto";
 import { UpdateProfileDto } from "./dto/update-profile.dto";
 import { AuthResponseDto } from "./dto/auth-response.dto";
 import { ProfileActionResultDto } from "../child-profile/child-profile.dto";
-
-// [C-4] Redis client for rate limiting — persistent across server restarts,
-// works correctly with multiple instances (load balancer).
-const redisLogger = new Logger("AuthRedisClient");
-let redisClient: RedisClientType | null = null;
-const localLoginAttemptStore = new Map<
-  string,
-  { count: number; expiresAt: number }
->();
-
-async function getRedisClient(): Promise<RedisClientType | null> {
-  if (!process.env.REDIS_URL) return null;
-  if (!redisClient) {
-    redisClient = createClient({
-      url: process.env.REDIS_URL,
-    }) as RedisClientType;
-    redisClient.on("error", (err) =>
-      redisLogger.error(
-        "Rate limit client error",
-        err instanceof Error ? err.stack : String(err),
-      ),
-    );
-    await redisClient.connect();
-  }
-  return redisClient;
-}
-
-/** Login attempts before lockout */
-const MAX_LOGIN_ATTEMPTS = 5;
-/** Lockout duration in seconds */
-const LOCKOUT_SECONDS = 5 * 60; // 5 minutes
-
-function normalizeEmailForRateLimit(email: string): string {
-  return email.trim().toLowerCase();
-}
-
-function getLocalLoginAttempts(
-  email: string,
-): { count: number; expiresAt: number } | null {
-  const key = normalizeEmailForRateLimit(email);
-  const entry = localLoginAttemptStore.get(key);
-  if (!entry) return null;
-
-  if (entry.expiresAt <= Date.now()) {
-    localLoginAttemptStore.delete(key);
-    return null;
-  }
-
-  return entry;
-}
-
-function recordLocalFailedAttempt(email: string): void {
-  const key = normalizeEmailForRateLimit(email);
-  const current = getLocalLoginAttempts(key);
-
-  if (!current) {
-    localLoginAttemptStore.set(key, {
-      count: 1,
-      expiresAt: Date.now() + LOCKOUT_SECONDS * 1000,
-    });
-    return;
-  }
-
-  localLoginAttemptStore.set(key, {
-    count: current.count + 1,
-    expiresAt: current.expiresAt,
-  });
-}
-
-function resetLocalFailedAttempts(email: string): void {
-  localLoginAttemptStore.delete(normalizeEmailForRateLimit(email));
-}
+import { AuthRateLimitService } from "./services/auth-rate-limit.service";
+import { AuthTokenService } from "./services/auth-token.service";
+import { AuthPasswordService } from "./services/auth-password.service";
 
 @Injectable()
 export class AuthService {
   constructor(
     private prisma: PrismaService,
-    private jwtService: JwtService,
-    private mailService: MailService,
-    private mailTemplateService: MailTemplateService,
     private childProfileService: ChildProfileService,
+    private authRateLimitService: AuthRateLimitService,
+    private authTokenService: AuthTokenService,
+    private authPasswordService: AuthPasswordService,
   ) {}
 
   /**
@@ -151,16 +77,17 @@ export class AuthService {
     }
 
     // Issue JWT tokens
-    const tokens = await this.generateTokens(user.id, user.email, user.role);
+    const tokens = this.authTokenService.generateTokens(
+      user.id,
+      user.email,
+      user.role,
+    );
 
     // [C-3] Store REFRESH token in session (not access token)
-    await this.prisma.session.create({
-      data: {
-        userId: user.id,
-        token: tokens.refreshToken,
-        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
-      },
-    });
+    await this.authTokenService.createRefreshSession(
+      user.id,
+      tokens.refreshToken,
+    );
 
     // Log audit (use user ID, not email, to avoid PII in logs)
     await this.prisma.auditLog.create({
@@ -193,14 +120,14 @@ export class AuthService {
    */
   async login(dto: LoginDto): Promise<AuthResponseDto> {
     // [C-4] Check rate limiting via Redis
-    await this.checkRateLimit(dto.email);
+    await this.authRateLimitService.checkRateLimit(dto.email);
 
     const user = await this.prisma.user.findUnique({
       where: { email: dto.email },
     });
 
     if (!user) {
-      await this.recordFailedAttempt(dto.email);
+      await this.authRateLimitService.recordFailedAttempt(dto.email);
       throw new UnauthorizedException("Invalid credentials");
     }
 
@@ -211,7 +138,7 @@ export class AuthService {
     );
 
     if (!isPasswordValid) {
-      await this.recordFailedAttempt(dto.email);
+      await this.authRateLimitService.recordFailedAttempt(dto.email);
       throw new UnauthorizedException("Invalid credentials");
     }
 
@@ -221,19 +148,20 @@ export class AuthService {
     }
 
     // Reset login attempts on success
-    await this.resetRateLimit(dto.email);
+    await this.authRateLimitService.resetRateLimit(dto.email);
 
     // Generate tokens
-    const tokens = await this.generateTokens(user.id, user.email, user.role);
+    const tokens = this.authTokenService.generateTokens(
+      user.id,
+      user.email,
+      user.role,
+    );
 
     // [C-3] Store REFRESH token in session, not access token
-    await this.prisma.session.create({
-      data: {
-        userId: user.id,
-        token: tokens.refreshToken,
-        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-      },
-    });
+    await this.authTokenService.createRefreshSession(
+      user.id,
+      tokens.refreshToken,
+    );
 
     await this.prisma.user.update({
       where: { id: user.id },
@@ -335,15 +263,16 @@ export class AuthService {
       throw new UnauthorizedException("User not found or inactive");
     }
 
-    const tokens = await this.generateTokens(user.id, user.email, user.role);
+    const tokens = this.authTokenService.generateTokens(
+      user.id,
+      user.email,
+      user.role,
+    );
 
-    await this.prisma.session.create({
-      data: {
-        userId: user.id,
-        token: tokens.refreshToken,
-        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-      },
-    });
+    await this.authTokenService.createRefreshSession(
+      user.id,
+      tokens.refreshToken,
+    );
 
     await this.prisma.auditLog.create({
       data: {
@@ -376,120 +305,14 @@ export class AuthService {
   async forgotPassword(
     dto: ForgotPasswordDto,
   ): Promise<{ message: string; resetToken?: string }> {
-    const existingUser = await this.prisma.user.findFirst({
-      where: { email: dto.email, isActive: true },
-      select: { id: true, email: true, firstName: true },
-    });
-
-    // Anti-enumeration: always return same message regardless of result
-    if (!existingUser) {
-      return {
-        message: "If this email is registered, a reset link has been sent.",
-      };
-    }
-
-    const userId = existingUser.id;
-    const userEmail = existingUser.email;
-    const userFirstName = existingUser.firstName;
-    const { randomBytes } = await import("crypto");
-    const resetToken = randomBytes(32).toString("hex");
-
-    const redis = await getRedisClient();
-    if (redis) {
-      await redis.set(`pwd_reset:${resetToken}`, userId.toString(), {
-        EX: 15 * 60, // 15 minutes
-      });
-    }
-
-    await this.prisma.auditLog.create({
-      data: {
-        userId,
-        action: "PASSWORD_RESET_REQUESTED",
-        details: `Password reset requested`,
-      },
-    });
-
-    const frontendUrl =
-      process.env.FRONTEND_URL?.trim() ||
-      (process.env.NODE_ENV === "production" ? "" : "http://localhost:3000");
-
-    if (!frontendUrl) {
-      throw new InternalServerErrorException(
-        "FRONTEND_URL is required in production to build password reset links.",
-      );
-    }
-
-    const resetUrl = `${frontendUrl.replace(/\/$/, "")}/reset-password?token=${resetToken}`;
-    const emailTemplate = this.mailTemplateService.renderResetPasswordEmail({
-      firstName: userFirstName,
-      email: userEmail,
-      resetUrl,
-      expiresInMinutes: 15,
-    });
-    await this.mailService.sendMail({
-      to: userEmail,
-      subject: emailTemplate.subject,
-      html: emailTemplate.html,
-      text: emailTemplate.text,
-    });
-
-    const response: { message: string; resetToken?: string } = {
-      message: "If this email is registered, a reset link has been sent.",
-    };
-
-    if (process.env.NODE_ENV !== "production") {
-      response.resetToken = resetToken;
-    }
-
-    return response;
+    return this.authPasswordService.forgotPassword(dto);
   }
 
   /**
    * UC-00: Reset password using Redis-backed token
    */
   async resetPassword(dto: ResetPasswordDto): Promise<{ message: string }> {
-    const redis = await getRedisClient();
-    if (!redis) {
-      throw new BadRequestException(
-        "Password reset service unavailable. Please try again later.",
-      );
-    }
-
-    const rawUserIdStr = await redis.get(`pwd_reset:${dto.token}`);
-    const userIdStr = typeof rawUserIdStr === "string" ? rawUserIdStr : null;
-    if (!userIdStr) {
-      throw new BadRequestException(
-        "Invalid or expired reset link. Please request a new one.",
-      );
-    }
-
-    const userId = parseInt(userIdStr, 10);
-    const passwordHash = await bcrypt.hash(dto.newPassword, 12);
-
-    await this.prisma.user.update({
-      where: { id: userId },
-      data: {
-        passwordHash,
-        updatedAt: new Date(),
-      },
-    });
-
-    // Invalidate token and all sessions
-    await redis.del(`pwd_reset:${dto.token}`);
-    await this.prisma.session.deleteMany({ where: { userId } });
-
-    await this.prisma.auditLog.create({
-      data: {
-        userId,
-        action: "PASSWORD_RESET_COMPLETED",
-        details: `Password reset completed`,
-      },
-    });
-
-    return {
-      message:
-        "Password reset successfully. Please log in with your new password.",
-    };
+    return this.authPasswordService.resetPassword(dto);
   }
 
   /**
@@ -499,42 +322,7 @@ export class AuthService {
     userId: number,
     dto: ChangePasswordDto,
   ): Promise<{ message: string }> {
-    const user = await this.prisma.user.findFirst({
-      where: { id: userId, isActive: true },
-      select: { passwordHash: true },
-    });
-
-    if (!user) {
-      throw new UnauthorizedException("User not found");
-    }
-
-    const isValid = await bcrypt.compare(
-      dto.currentPassword,
-      user.passwordHash,
-    );
-    if (!isValid) {
-      throw new BadRequestException("Current password is incorrect");
-    }
-
-    const newHash = await bcrypt.hash(dto.newPassword, 12);
-
-    await this.prisma.user.update({
-      where: { id: userId },
-      data: {
-        passwordHash: newHash,
-        updatedAt: new Date(),
-      },
-    });
-
-    await this.prisma.auditLog.create({
-      data: {
-        userId,
-        action: "PASSWORD_CHANGED",
-        details: `User changed their password`,
-      },
-    });
-
-    return { message: "Password changed successfully." };
+    return this.authPasswordService.changePassword(userId, dto);
   }
 
   /**
@@ -566,43 +354,7 @@ export class AuthService {
    * Validates the refresh token exists in the DB session — prevents use after logout.
    */
   async refreshToken(refreshToken: string): Promise<{ accessToken: string }> {
-    let payload: { sub: number; email: string; role: string };
-    try {
-      payload = this.jwtService.verify(refreshToken);
-    } catch {
-      throw new UnauthorizedException("Session expired, please log in again");
-    }
-
-    // [C-3] Verify refresh token is still in the DB (not logged out)
-    const session = await this.prisma.session.findFirst({
-      where: {
-        userId: payload.sub,
-        token: refreshToken,
-      },
-    });
-
-    if (!session) {
-      throw new UnauthorizedException(
-        "Session has been revoked. Please log in again.",
-      );
-    }
-
-    if (session.expiresAt < new Date()) {
-      // Clean up expired session
-      await this.prisma.session.delete({ where: { id: session.id } });
-      throw new UnauthorizedException("Session expired, please log in again");
-    }
-
-    const newAccessToken = this.jwtService.sign(
-      {
-        sub: payload.sub,
-        email: payload.email,
-        role: payload.role,
-      },
-      { expiresIn: "15m" },
-    );
-
-    return { accessToken: newAccessToken };
+    return this.authTokenService.refreshAccessToken(refreshToken);
   }
 
   /**
@@ -639,7 +391,7 @@ export class AuthService {
     photo?: string;
     provider: string;
   }): Promise<AuthResponseDto> {
-    const { email, displayName, photo } = googleUser;
+    const { email, displayName } = googleUser;
 
     // Tách displayName thành firstName / lastName
     const nameParts = (displayName ?? "").split(" ");
@@ -676,16 +428,17 @@ export class AuthService {
       throw new ForbiddenException("Account is disabled");
     }
 
-    const tokens = await this.generateTokens(user.id, user.email, user.role);
+    const tokens = this.authTokenService.generateTokens(
+      user.id,
+      user.email,
+      user.role,
+    );
 
     // Lưu refresh token vào session
-    await this.prisma.session.create({
-      data: {
-        userId: user.id,
-        token: tokens.refreshToken,
-        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-      },
-    });
+    await this.authTokenService.createRefreshSession(
+      user.id,
+      tokens.refreshToken,
+    );
 
     await this.prisma.auditLog.create({
       data: {
@@ -717,97 +470,5 @@ export class AuthService {
    */
   async loginWithOAuth(_provider: "facebook", _code: string) {
     throw new BadRequestException("Facebook OAuth not implemented yet");
-  }
-
-  // === Private Helper Methods ===
-
-  /**
-   * Generate JWT access and refresh tokens
-   */
-  private async generateTokens(
-    userId: number,
-    email: string,
-    role: string,
-  ): Promise<{ accessToken: string; refreshToken: string }> {
-    const payload = { sub: userId, email, role };
-
-    const accessToken = this.jwtService.sign(payload, {
-      expiresIn: "15m",
-    });
-
-    const refreshToken = this.jwtService.sign(payload, {
-      expiresIn: "7d",
-    });
-
-    return { accessToken, refreshToken };
-  }
-
-  /**
-   * [C-4 Security Fix] Rate limiting via Redis.
-   * Checks if the email is locked out.
-   */
-  private async checkRateLimit(email: string): Promise<void> {
-    const normalizedEmail = normalizeEmailForRateLimit(email);
-    const redis = await getRedisClient();
-
-    if (!redis) {
-      const localEntry = getLocalLoginAttempts(normalizedEmail);
-      if (!localEntry) return;
-
-      if (localEntry.count >= MAX_LOGIN_ATTEMPTS) {
-        const minutesLeft = Math.ceil(
-          (localEntry.expiresAt - Date.now()) / 60000,
-        );
-        throw new ForbiddenException(
-          `Account temporarily locked. Try again in ${Math.max(1, minutesLeft)} minute(s).`,
-        );
-      }
-
-      return;
-    }
-
-    const key = `login_attempts:${normalizedEmail}`;
-    const attemptsStr = await redis.get(key);
-    if (!attemptsStr) return;
-
-    const attempts = parseInt(attemptsStr as string, 10);
-    if (attempts >= MAX_LOGIN_ATTEMPTS) {
-      const ttl = await redis.ttl(key);
-      const minutesLeft = Math.ceil(ttl / 60);
-      throw new ForbiddenException(
-        `Account temporarily locked. Try again in ${minutesLeft} minute(s).`,
-      );
-    }
-  }
-
-  /**
-   * [C-4 Security Fix] Record a failed login attempt in Redis.
-   */
-  private async recordFailedAttempt(email: string): Promise<void> {
-    const normalizedEmail = normalizeEmailForRateLimit(email);
-    const redis = await getRedisClient();
-    if (!redis) {
-      recordLocalFailedAttempt(normalizedEmail);
-      return;
-    }
-
-    const key = `login_attempts:${normalizedEmail}`;
-    const current = await redis.incr(key);
-    if (current === 1) {
-      // Set expiry only on first attempt (so it resets after LOCKOUT_SECONDS)
-      await redis.expire(key, LOCKOUT_SECONDS);
-    }
-  }
-
-  /**
-   * [C-4 Security Fix] Clear rate limit counter after successful login.
-   */
-  private async resetRateLimit(email: string): Promise<void> {
-    const normalizedEmail = normalizeEmailForRateLimit(email);
-    resetLocalFailedAttempts(normalizedEmail);
-
-    const redis = await getRedisClient();
-    if (!redis) return;
-    await redis.del(`login_attempts:${normalizedEmail}`);
   }
 }

@@ -203,7 +203,7 @@ const nextConfig = {
   // ==========================================
   // Webpack Optimization
   // ==========================================
-  webpack: (config, { isServer }) => {
+  webpack: (config) => {
     config.optimization = {
       ...config.optimization,
       splitChunks: {

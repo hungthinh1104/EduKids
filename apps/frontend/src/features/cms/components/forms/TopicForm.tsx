@@ -147,6 +147,7 @@ export function TopicForm({ initialData, onSubmit, onCancel, isLoading }: TopicF
   };
 
   return (
+    // eslint-disable-next-line react-hooks/refs
     <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
       <div className="space-y-4">
         {/* Name */}

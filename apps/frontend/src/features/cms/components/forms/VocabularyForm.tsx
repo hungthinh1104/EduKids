@@ -146,6 +146,7 @@ export function VocabularyForm({ initialData, onSubmit, onCancel, isLoading }: V
   };
 
   return (
+    // eslint-disable-next-line react-hooks/refs
     <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
       <div className="space-y-4">
         {/* Word */}

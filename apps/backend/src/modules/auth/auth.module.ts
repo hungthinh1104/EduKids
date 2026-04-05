@@ -8,6 +8,9 @@ import { GoogleStrategy } from "./google.strategy";
 import { MailModule } from "../mail/mail.module";
 import { ChildProfileModule } from "../child-profile/child-profile.module";
 import { UserRepository } from "./repositories/user.repository";
+import { AuthRateLimitService } from "./services/auth-rate-limit.service";
+import { AuthTokenService } from "./services/auth-token.service";
+import { AuthPasswordService } from "./services/auth-password.service";
 
 // [C-2 Security Fix] JWT_SECRET must be explicitly set — no insecure fallback.
 if (!process.env.JWT_SECRET) {
@@ -19,7 +22,7 @@ if (!process.env.JWT_SECRET) {
 
 const hasGoogleOAuthConfig = Boolean(
   process.env.GOOGLE_CLIENT_ID?.trim() &&
-    process.env.GOOGLE_CLIENT_SECRET?.trim(),
+  process.env.GOOGLE_CLIENT_SECRET?.trim(),
 );
 
 if (!hasGoogleOAuthConfig) {
@@ -45,6 +48,9 @@ if (!hasGoogleOAuthConfig) {
   controllers: [AuthController],
   providers: [
     AuthService,
+    AuthRateLimitService,
+    AuthTokenService,
+    AuthPasswordService,
     JwtStrategy,
     ...(hasGoogleOAuthConfig ? [GoogleStrategy] : []),
     UserRepository,

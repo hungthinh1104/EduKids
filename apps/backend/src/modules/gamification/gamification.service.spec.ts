@@ -288,10 +288,7 @@ describe("GamificationService", () => {
 
       expect(result).toHaveLength(3);
       expect(result[0].totalPoints).toBe(1000);
-      expect(gamificationRepository.getLeaderboard).toHaveBeenCalledWith(
-        childId,
-        limit,
-      );
+      expect(gamificationRepository.getLeaderboard).toHaveBeenCalledWith(limit);
     });
   });
 });

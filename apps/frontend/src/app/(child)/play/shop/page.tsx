@@ -18,6 +18,7 @@ import { ItemPreviewDrawer } from '@/features/learning/components/shop/ItemPrevi
 export default function ShopPage() {
     const { child, loading: childLoading } = useCurrentChild();
     const childId = child?.id ?? 0;
+    const fallbackAvatarUrl = child?.avatarUrl ?? '';
 
     const [shopItems, setShopItems] = useState<ShopItem[]>([]);
     const [stars, setStars] = useState(0);
@@ -48,7 +49,7 @@ export default function ShopPage() {
 
     useEffect(() => {
         async function fetchShopData() {
-            if (!childId || !child) {
+            if (!childId) {
                 return;
             }
             try {
@@ -62,7 +63,7 @@ export default function ShopPage() {
                 setShopItems(items);
                 setStars(rewards.stars);
                 setCoins(rewards.coins);
-                setPreviewAvatarUrl(customization.avatar || child.avatarUrl);
+                setPreviewAvatarUrl(customization.avatar || fallbackAvatarUrl);
                 setEquippedBySlot({
                     'Mũ': customization.equippedItems.find((item) => item.category === 'Mũ')?.id ?? null,
                     'Áo': customization.equippedItems.find((item) => item.category === 'Áo')?.id ?? null,
@@ -81,7 +82,7 @@ export default function ShopPage() {
             return;
         }
         void fetchShopData();
-    }, [childId]);
+    }, [childId, fallbackAvatarUrl]);
 
     const equippedIds = Object.values(equippedBySlot).filter(Boolean) as number[];
     const filteredItems = shopItems.filter((i) => activeCategory === 'Tất cả' || i.category === activeCategory);

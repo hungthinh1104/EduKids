@@ -55,7 +55,8 @@ export class UpdateQuizStructureDto {
   questionText?: string;
 
   @ApiProperty({
-    example: "https://res.cloudinary.com/edukids/image/upload/v1/quiz/question-cat.jpg",
+    example:
+      "https://res.cloudinary.com/edukids/image/upload/v1/quiz/question-cat.jpg",
     description: "Optional image URL displayed with the quiz question",
     required: false,
   })
