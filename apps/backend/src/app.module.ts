@@ -22,10 +22,15 @@ import { CmsModule } from "./modules/cms/cms.module";
 import { AdminAnalyticsModule } from "./modules/admin-analytics/admin-analytics.module";
 import { UsersModule } from "./modules/users/users.module";
 import { RootController } from "./root.controller";
-
+import { ConfigModule } from '@nestjs/config';
 @Module({
   controllers: [RootController],
   imports: [
+      // 1. Thêm ConfigModule lên đầu danh sách imports
+          ConfigModule.forRoot({
+            isGlobal: true, // Để các module khác đều dùng được mà không cần import lại
+            envFilePath: '.env', // Trỏ trực tiếp vào file .env bạn vừa rename
+          }),
     // Rate limiting configuration
     ThrottlerModule.forRoot([
       {
