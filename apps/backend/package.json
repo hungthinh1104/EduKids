@@ -16,7 +16,8 @@
     "test": "jest",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
-    "prisma:seed": "cross-env DOTENV_CONFIG_PATH=.env.development ts-node prisma/seed.ts"
+    "prisma:seed": "cross-env DOTENV_CONFIG_PATH=.env.development ts-node prisma/seed.ts",
+    "test:e2e": "echo 'No e2e tests yet'"
   },
   "dependencies": {
     "@nestjs-modules/ioredis": "^2.0.2",
