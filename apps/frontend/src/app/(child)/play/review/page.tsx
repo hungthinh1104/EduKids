@@ -217,12 +217,14 @@ export default function ReviewPage() {
                         <div className="mb-6 rounded-[2rem] border border-border bg-card p-5 text-left">
                             <Heading level={4} className="text-heading text-lg mb-3">Gợi ý học tiếp</Heading>
                             <div className="space-y-3">
-                                {suggestedItems.slice(0, 3).map((item) => (
-                                    <div key={item.reviewId} className="rounded-2xl bg-background px-4 py-3 border border-border">
-                                        <div className="font-heading font-black text-heading">{item.word}</div>
-                                        <Caption className="text-caption">{item.translation}</Caption>
-                                    </div>
-                                ))}
+
+                            {suggestedItems.slice(0, 3).map((item, index) => (
+                                <div key={item.reviewId || item.id || `suggested-${index}`}
+                                    className="rounded-2xl bg-background px-4 py-3 border border-border">
+                                    <div className="font-heading font-black text-heading">{item.word}</div>
+                                    <Caption className="text-caption">{item.translation}</Caption>
+                                </div>
+                            ))}
                             </div>
                         </div>
                     ) : null}
