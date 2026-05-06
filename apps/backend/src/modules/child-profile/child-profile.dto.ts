@@ -42,7 +42,7 @@ export class CreateChildProfileDto {
   })
   @IsOptional()
   @IsUrl({}, { message: "Invalid avatar URL format" })
-  avatarUrl?: string;
+  avatar?: string;
 }
 
 /**
@@ -79,7 +79,7 @@ export class UpdateChildProfileDto {
   })
   @IsOptional()
   @IsUrl()
-  avatarUrl?: string;
+  avatar?: string;
 }
 
 /**

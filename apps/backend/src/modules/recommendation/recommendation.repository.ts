@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { CmsContentStatus, Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import {
   RecommendationType,
@@ -16,6 +16,8 @@ import {
   buildGeminiRecommendationPrompt,
   GeminiRecommendationContext,
   normalizeGeminiRecommendationOutput,
+  preComputeDecisions,
+  type PreComputedDecision,
 } from './recommendation.gemini';
 import { RecommendationGeminiApiService } from './recommendation.gemini-api.service';
 import { subDays } from 'date-fns';
@@ -95,164 +97,102 @@ export class RecommendationRepository {
    * @returns List of recommendations
    */
   async generateRecommendations(childId: number): Promise<RecommendationDto[]> {
-    // Fetch child profile with learning history
-    const childProfile = await this.prisma.childProfile.findUnique({
-      where: { id: childId },
-      include: {
-        activities: {
-          where: {
-            createdAt: {
-              gte: subDays(new Date(), 30), // Last 30 days
-            },
-          },
-          orderBy: { createdAt: 'desc' },
-          take: 100,
-        },
-      },
-    });
+    const childProfile = await this.fetchChildProfileWithActivities(childId);
+    if (!childProfile) return [];
 
-    if (!childProfile) {
-      return [];
-    }
-
-    const geminiRecommendations = await this.tryGenerateGeminiRecommendations(
-      childId,
-      childProfile,
-    );
-
+    const geminiRecommendations = await this.tryGenerateGeminiRecommendations(childId, childProfile);
     if (geminiRecommendations.length > 0) {
-      for (const rec of geminiRecommendations) {
-        await this.saveRecommendation(rec);
-      }
-
+      await this.prisma.$transaction(
+        geminiRecommendations.map((rec) => this.prisma.recommendation.create({ data: this.buildRecommendationData(rec) })),
+      );
       return geminiRecommendations;
     }
 
-    const recommendations: RecommendationDto[] = [];
-
-    // Analyze learning patterns
-    const analysis = this.analyzeChildProgress(childProfile);
-
-    // Generate weakness recommendations
-    if (analysis.pronounciationWeakness > 70) {
-      recommendations.push(
-        await this.createRecommendation(
-          childId,
-          RecommendationType.PRONUNCIATION_REFINEMENT,
-          RecommendationPriority.HIGH,
-          analysis.pronounciationWeakness,
-          analysis,
-        ),
-      );
-    }
-
-    // Generate vocabulary gap recommendations
-    if (analysis.vocabularyGap > 65) {
-      recommendations.push(
-        await this.createRecommendation(
-          childId,
-          RecommendationType.VOCABULARY_EXTENSION,
-          RecommendationPriority.MEDIUM,
-          analysis.vocabularyGap,
-          analysis,
-        ),
-      );
-    }
-
-    // Generate advancement recommendations
-    if (analysis.readinessScore > 80) {
-      recommendations.push(
-        await this.createRecommendation(
-          childId,
-          RecommendationType.TOPIC_ADVANCE,
-          RecommendationPriority.MEDIUM,
-          analysis.readinessScore,
-          analysis,
-        ),
-      );
-    }
-
-    // Generate review recommendations
-    if (analysis.reviewNeeded.length > 0) {
-      recommendations.push(
-        await this.createRecommendation(
-          childId,
-          RecommendationType.TOPIC_REVIEW,
-          RecommendationPriority.MEDIUM,
-          75,
-          analysis,
-        ),
-      );
-    }
-
-    // Generate quiz preparation recommendations
-    if (analysis.quizScore < 70) {
-      recommendations.push(
-        await this.createRecommendation(
-          childId,
-          RecommendationType.QUIZ_PREPARATION,
-          RecommendationPriority.HIGH,
-          80,
-          analysis,
-        ),
-      );
-    }
-
-    // Generate consistency recommendations
-    if (analysis.engagementScore < 60) {
-      recommendations.push(
-        await this.createRecommendation(
-          childId,
-          RecommendationType.CONSISTENCY_BOOST,
-          RecommendationPriority.LOW,
-          analysis.engagementScore,
-          analysis,
-        ),
-      );
-    }
-
-    // Save recommendations to database
-    for (const rec of recommendations) {
-      await this.saveRecommendation(rec);
-    }
-
-    return recommendations;
+    return this.generateCodeBasedRecs(childId, childProfile);
   }
 
   async generateRecommendationsWithGemini(childId: number): Promise<RecommendationDto[]> {
-    const childProfile = await this.prisma.childProfile.findUnique({
+    const childProfile = await this.fetchChildProfileWithActivities(childId);
+    if (!childProfile) return [];
+
+    const geminiRecommendations = await this.tryGenerateGeminiRecommendations(childId, childProfile);
+    if (geminiRecommendations.length > 0) {
+      await this.prisma.$transaction(
+        geminiRecommendations.map((rec) => this.prisma.recommendation.create({ data: this.buildRecommendationData(rec) })),
+      );
+      return geminiRecommendations;
+    }
+
+    // Fallback directly to code-based — avoids re-trying Gemini
+    return this.generateCodeBasedRecs(childId, childProfile);
+  }
+
+  private async fetchChildProfileWithActivities(childId: number) {
+    return this.prisma.childProfile.findUnique({
       where: { id: childId },
-      include: {
+      select: {
+        id: true,
+        age: true,
         activities: {
-          where: {
-            createdAt: {
-              gte: subDays(new Date(), 30),
-            },
-          },
+          where: { createdAt: { gte: subDays(new Date(), 30) } },
           orderBy: { createdAt: 'desc' },
           take: 100,
+          select: {
+            activityType: true,
+            score: true,
+            topicId: true,
+            createdAt: true,
+          },
         },
       },
     });
+  }
 
-    if (!childProfile) {
-      return [];
+  private async generateCodeBasedRecs(
+    childId: number,
+    childProfile: { id: number; age?: number | null; activities: any[] },
+  ): Promise<RecommendationDto[]> {
+    const recommendations: RecommendationDto[] = [];
+    const analysis = this.analyzeChildProgress(childProfile);
+
+    if (analysis.pronounciationWeakness > 70) {
+      recommendations.push(
+        await this.createRecommendation(childId, RecommendationType.PRONUNCIATION_REFINEMENT, RecommendationPriority.HIGH, analysis.pronounciationWeakness, analysis),
+      );
+    }
+    if (analysis.vocabularyGap > 65) {
+      recommendations.push(
+        await this.createRecommendation(childId, RecommendationType.VOCABULARY_EXTENSION, RecommendationPriority.MEDIUM, analysis.vocabularyGap, analysis),
+      );
+    }
+    if (analysis.readinessScore > 80) {
+      recommendations.push(
+        await this.createRecommendation(childId, RecommendationType.TOPIC_ADVANCE, RecommendationPriority.MEDIUM, analysis.readinessScore, analysis),
+      );
+    }
+    if (analysis.reviewNeeded.length > 0) {
+      recommendations.push(
+        await this.createRecommendation(childId, RecommendationType.TOPIC_REVIEW, RecommendationPriority.MEDIUM, 75, analysis),
+      );
+    }
+    if (analysis.quizScore < 70) {
+      recommendations.push(
+        await this.createRecommendation(childId, RecommendationType.QUIZ_PREPARATION, RecommendationPriority.HIGH, 80, analysis),
+      );
+    }
+    if (analysis.engagementScore < 60) {
+      recommendations.push(
+        await this.createRecommendation(childId, RecommendationType.CONSISTENCY_BOOST, RecommendationPriority.LOW, analysis.engagementScore, analysis),
+      );
     }
 
-    const geminiRecommendations = await this.tryGenerateGeminiRecommendations(
-      childId,
-      childProfile,
-    );
-
-    if (geminiRecommendations.length === 0) {
-      return this.generateRecommendations(childId);
+    if (recommendations.length > 0) {
+      await this.prisma.$transaction(
+        recommendations.map((rec) => this.prisma.recommendation.create({ data: this.buildRecommendationData(rec) })),
+      );
     }
 
-    for (const rec of geminiRecommendations) {
-      await this.saveRecommendation(rec);
-    }
-
-    return geminiRecommendations;
+    return recommendations;
   }
 
   private async tryGenerateGeminiRecommendations(
@@ -271,10 +211,24 @@ export class RecommendationRepository {
         new Map(topicScoreEntries),
       );
 
-    const candidateTopics = await this.prisma.topic.findMany({
-      take: 10,
-      select: { id: true, name: true },
-    });
+    const recentTopicIds = Array.from(
+      new Set<number>(
+        (childProfile.activities || []).reduce(
+          (topicIds: number[], activity: { topicId?: number | null }) => {
+            if (typeof activity.topicId === 'number' && activity.topicId > 0) {
+              topicIds.push(activity.topicId);
+            }
+            return topicIds;
+          },
+          [],
+        ),
+      ),
+    );
+    const candidateTopics = await this.buildCandidateTopics(
+      weakTopicIds,
+      strongTopicIds,
+      recentTopicIds,
+    );
 
     if (candidateTopics.length === 0) {
       return [];
@@ -334,18 +288,29 @@ export class RecommendationRepository {
         maxMinutesPerPath: 120,
       },
     };
+    const decisions = preComputeDecisions(
+      context.recentMetrics,
+      context.multimodalSignals,
+      context.candidateTopics,
+      context.constraints?.maxRecommendations ?? 3,
+    );
+
+    if (decisions.length === 0) {
+      return [];
+    }
+
+    context.preComputedDecisions = decisions;
 
     const prompt = buildGeminiRecommendationPrompt(context);
     const rawOutput = await this.geminiApiService.generateJson(prompt);
-    if (!rawOutput) {
-      return [];
-    }
 
     const allowedTopicIds = new Set(candidateTopics.map((t) => t.id));
     const normalized = normalizeGeminiRecommendationOutput(rawOutput, {
       maxRecommendations: context.constraints?.maxRecommendations ?? 3,
       maxPathItems: context.constraints?.maxPathItems ?? 3,
       allowedTopicIds: [...allowedTopicIds],
+      decisions,
+      candidateTopics: context.candidateTopics,
     });
 
     const generatedAt = new Date();
@@ -377,10 +342,132 @@ export class RecommendationRepository {
       })
       .filter((item): item is RecommendationDto => !!item);
 
-    return this.enforceGeminiRecommendationQuality(mappedRecommendations, {
+    const qualityChecked = this.enforceGeminiRecommendationQuality(mappedRecommendations, {
       weakTopicIds: context.recentMetrics.weakTopicIds,
       maxMinutesPerPath: context.constraints?.maxMinutesPerPath ?? 120,
     });
+
+    if (qualityChecked.length > 0) {
+      return qualityChecked;
+    }
+
+    return this.buildRecommendationsFromDecisions(
+      childId,
+      decisions,
+      candidateTopics,
+      generatedAt,
+    );
+  }
+
+  private async buildCandidateTopics(
+    weakTopicIds: number[],
+    strongTopicIds: number[],
+    recentTopicIds: number[],
+  ): Promise<Array<{ id: number; name: string; estimatedMinutes: number; difficulty: string }>> {
+    const prioritizedIds = [...new Set([...weakTopicIds, ...recentTopicIds, ...strongTopicIds])];
+    const publishedFilter = {
+      status: CmsContentStatus.PUBLISHED,
+      deletedAt: null,
+      vocabularies: { some: { status: CmsContentStatus.PUBLISHED, deletedAt: null } },
+    };
+
+    const prioritizedTopics = prioritizedIds.length > 0
+      ? await this.prisma.topic.findMany({
+          where: {
+            id: { in: prioritizedIds },
+            ...publishedFilter,
+          },
+          select: { id: true, name: true },
+        })
+      : [];
+
+    const prioritizedMap = new Map(prioritizedTopics.map((topic) => [topic.id, topic]));
+    const orderedPrioritizedTopics = prioritizedIds
+      .map((id) => prioritizedMap.get(id))
+      .filter((topic): topic is { id: number; name: string } => !!topic);
+
+    const remainingNeeded = Math.max(0, 10 - orderedPrioritizedTopics.length);
+    const excludeIds = orderedPrioritizedTopics.map((t) => t.id);
+    const fallbackTopics = remainingNeeded > 0
+      ? await this.prisma.topic.findMany({
+          where: {
+            ...(excludeIds.length > 0 ? { id: { notIn: excludeIds } } : {}),
+            ...publishedFilter,
+          },
+          take: remainingNeeded,
+          select: { id: true, name: true },
+        })
+      : [];
+
+    return [...orderedPrioritizedTopics, ...fallbackTopics]
+      .slice(0, 10)
+      .map((topic) => ({
+        id: topic.id,
+        name: topic.name,
+        estimatedMinutes: 20,
+        difficulty: 'BEGINNER',
+      }));
+  }
+
+  private buildRecommendationsFromDecisions(
+    childId: number,
+    decisions: PreComputedDecision[],
+    candidateTopics: Array<{ id: number; name: string; estimatedMinutes: number; difficulty: string }>,
+    generatedAt: Date,
+  ): RecommendationDto[] {
+    const topicById = new Map(candidateTopics.map((topic) => [topic.id, topic]));
+
+    return decisions
+      .map((decision, index) => {
+        const learningPath = decision.targetTopicIds
+          .map((topicId, pathIndex) => {
+            const topic = topicById.get(topicId);
+            if (!topic) return null;
+
+            return {
+              contentId: topic.id,
+              contentName: topic.name,
+              sequenceOrder: pathIndex + 1,
+              estimatedMinutes: topic.estimatedMinutes,
+              difficultyLevel: topic.difficulty,
+              rationale: decision.englishRationale,
+            };
+          })
+          .filter((item) => item !== null)
+          .slice(0, 3);
+
+        if (learningPath.length === 0) {
+          return null;
+        }
+
+        const priorityScore = this.priorityToInt(decision.priority);
+        const score = priorityScore >= 3 ? 90 : priorityScore === 2 ? 75 : 55;
+
+        return {
+          recommendationId: index + 1,
+          childId,
+          type: decision.type,
+          priority: decision.priority,
+          status: RecommendationStatus.PENDING,
+          title: this.getTitleForType(decision.type),
+          description: decision.englishRationale,
+          scoreBreakdown: {
+            weaknessScore: score,
+            vocabularyGapScore: score,
+            readinessScore: score,
+            engagementScore: score,
+            overallScore: score,
+          },
+          learningPath,
+          totalEstimatedMinutes: learningPath.reduce(
+            (sum, pathItem) => sum + pathItem.estimatedMinutes,
+            0,
+          ),
+          expectedOutcome: this.getExpectedOutcome(decision.type),
+          generatedAt,
+        };
+      })
+      .filter((item) => item !== null);
   }
 
   private enforceGeminiRecommendationQuality(
@@ -534,7 +621,7 @@ export class RecommendationRepository {
     analysis: any,
   ): Promise<RecommendationDto> {
     const scoreBreakdown = this.calculateScoreBreakdown(type, analysis, baseScore);
-    const learningPath = await this.generateLearningPath(childId, type);
+    const learningPath = await this.generateLearningPath(childId, type, analysis);
 
     return {
       recommendationId: 0, // Will be set by DB
@@ -575,35 +662,93 @@ export class RecommendationRepository {
   }
 
   /**
-   * Generate learning path for recommendation
+   * Generate learning path for recommendation.
+   * Prefers type-relevant published topics from analysis; falls back to any published topic.
    */
   private async generateLearningPath(
     childId: number,
     type: RecommendationType,
+    analysis?: any,
   ): Promise<LearningPathItemDto[]> {
-    // Fetch related content topics
+    const publishedFilter = {
+      status: CmsContentStatus.PUBLISHED,
+      deletedAt: null,
+      vocabularies: { some: { status: CmsContentStatus.PUBLISHED, deletedAt: null } },
+    };
+
+    // Determine preferred topic IDs based on recommendation type and child's history
+    let preferredIds: number[] = [];
+
+    if (
+      type === RecommendationType.TOPIC_REVIEW ||
+      type === RecommendationType.WEAKNESS_PRACTICE
+    ) {
+      preferredIds = (analysis?.reviewNeeded ?? []).slice(0, 5);
+    } else if (type === RecommendationType.PRONUNCIATION_REFINEMENT) {
+      const recentPron = await this.prisma.activityLog.findMany({
+        where: {
+          childId,
+          activityType: 'PRONUNCIATION',
+          topicId: { not: null },
+          createdAt: { gte: subDays(new Date(), 30) },
+        },
+        select: { topicId: true, score: true },
+        orderBy: { score: 'asc' },
+        take: 5,
+      });
+      preferredIds = recentPron
+        .map((a) => a.topicId)
+        .filter((id): id is number => id != null);
+    } else if (type === RecommendationType.QUIZ_PREPARATION) {
+      const recentQuiz = await this.prisma.activityLog.findMany({
+        where: {
+          childId,
+          activityType: 'QUIZ',
+          topicId: { not: null },
+          score: { lt: 70 },
+          createdAt: { gte: subDays(new Date(), 30) },
+        },
+        select: { topicId: true },
+        take: 5,
+      });
+      preferredIds = recentQuiz
+        .map((a) => a.topicId)
+        .filter((id): id is number => id != null);
+    }
+
+    // Try preferred topics (only PUBLISHED ones)
+    if (preferredIds.length > 0) {
+      const preferred = await this.prisma.topic.findMany({
+        where: { id: { in: [...new Set(preferredIds)] }, ...publishedFilter },
+        select: { id: true, name: true },
+        take: 3,
+      });
+      if (preferred.length > 0) {
+        return preferred.map((topic, index) => ({
+          contentId: topic.id,
+          contentName: topic.name,
+          sequenceOrder: index + 1,
+          estimatedMinutes: 20 + index * 5,
+          difficultyLevel: this.calculateDifficulty(index),
+          rationale: this.getRationale(type, index),
+        }));
+      }
+    }
+
+    // Fallback: any published topic
     const topics = await this.prisma.topic.findMany({
+      where: publishedFilter,
       take: 5,
     });
 
-    const path: LearningPathItemDto[] = [];
-
-    if (topics.length === 0) {
-      return path;
-    }
-
-    topics.slice(0, 3).forEach((topic, index) => {
-      path.push({
-        contentId: topic.id,
-        contentName: topic.name,
-        sequenceOrder: index + 1,
-        estimatedMinutes: 20 + index * 5,
-        difficultyLevel: this.calculateDifficulty(index),
-        rationale: this.getRationale(type, index),
-      });
-    });
-
-    return path;
+    return topics.slice(0, 3).map((topic, index) => ({
+      contentId: topic.id,
+      contentName: topic.name,
+      sequenceOrder: index + 1,
+      estimatedMinutes: 20 + index * 5,
+      difficultyLevel: this.calculateDifficulty(index),
+      rationale: this.getRationale(type, index),
+    }));
   }
 
   /**
@@ -744,24 +889,22 @@ export class RecommendationRepository {
   }
 
   /**
-   * Save recommendation to database
+   * Build create data object for a recommendation (used with $transaction batching)
    */
-  private async saveRecommendation(recommendation: RecommendationDto) {
-    return this.prisma.recommendation.create({
-      data: {
-        childId: recommendation.childId,
-        type: recommendation.type,
-        priority: this.priorityToInt(recommendation.priority),
-        status: recommendation.status,
-        title: recommendation.title,
-        description: recommendation.description,
-        scoreBreakdown: recommendation.scoreBreakdown as unknown as Prisma.InputJsonValue,
-        learningPath: recommendation.learningPath as unknown as Prisma.InputJsonValue,
-        totalEstimatedMinutes: recommendation.totalEstimatedMinutes,
-        expectedOutcome: recommendation.expectedOutcome,
-        generatedAt: recommendation.generatedAt,
-      },
-    });
+  private buildRecommendationData(recommendation: RecommendationDto) {
+    return {
+      childId: recommendation.childId,
+      type: recommendation.type,
+      priority: this.priorityToInt(recommendation.priority),
+      status: recommendation.status,
+      title: recommendation.title,
+      description: recommendation.description,
+      scoreBreakdown: recommendation.scoreBreakdown as unknown as Prisma.InputJsonValue,
+      learningPath: recommendation.learningPath as unknown as Prisma.InputJsonValue,
+      totalEstimatedMinutes: recommendation.totalEstimatedMinutes,
+      expectedOutcome: recommendation.expectedOutcome,
+      generatedAt: recommendation.generatedAt,
+    };
   }
 
   /**
@@ -769,30 +912,71 @@ export class RecommendationRepository {
    */
   async getRecommendations(childId: number): Promise<RecommendationDto[]> {
     const recs = await this.prisma.recommendation.findMany({
-      where: { childId },
+      where: {
+        childId,
+        status: {
+          in: [RecommendationStatus.PENDING, RecommendationStatus.VIEWED],
+        },
+      },
       orderBy: [
-        { priority: 'asc' }, // CRITICAL first, then HIGH, MEDIUM, LOW
+        { priority: 'desc' }, // CRITICAL(3) first, then HIGH(2), MEDIUM(1), LOW(0)
         { generatedAt: 'desc' },
       ],
       take: 10,
     });
 
-    return recs.map((rec) => ({
-      recommendationId: rec.id,
-      childId: rec.childId,
-      type: rec.type as RecommendationType,
-      priority: this.intToPriority(rec.priority),
-      status: (rec.status as RecommendationStatus) || RecommendationStatus.PENDING,
-      title: rec.title,
-      description: rec.description || '',
-      scoreBreakdown: this.parseScoreBreakdown(rec.scoreBreakdown),
+    // Collect all contentIds referenced across every recommendation
+    const parsedPaths = recs.map((rec) => ({
+      rec,
       learningPath: this.parseLearningPath(rec.learningPath),
-      totalEstimatedMinutes: rec.totalEstimatedMinutes,
-      expectedOutcome: rec.expectedOutcome || undefined,
-      generatedAt: rec.generatedAt,
-      viewedAt: rec.viewedAt || undefined,
-      appliedAt: rec.appliedAt || undefined,
     }));
+
+    const allContentIds = [
+      ...new Set(parsedPaths.flatMap(({ learningPath }) => learningPath.map((item) => item.contentId))),
+    ];
+
+    // Single batch query — verify which topics are still PUBLISHED with real content
+    const liveTopics = allContentIds.length > 0
+      ? await this.prisma.topic.findMany({
+          where: {
+            id: { in: allContentIds },
+            status: CmsContentStatus.PUBLISHED,
+            deletedAt: null,
+            vocabularies: { some: { status: CmsContentStatus.PUBLISHED, deletedAt: null } },
+          },
+          select: { id: true },
+        })
+      : [];
+
+    const liveIds = new Set(liveTopics.map((t) => t.id));
+
+    return parsedPaths
+      .map(({ rec, learningPath }) => {
+        // Strip dead topics from path
+        const livePath = learningPath.filter((item) => liveIds.has(item.contentId));
+        if (livePath.length === 0) return null;
+
+        // Re-sequence after stripping
+        const resequenced = livePath.map((item, idx) => ({ ...item, sequenceOrder: idx + 1 }));
+
+        return {
+          recommendationId: rec.id,
+          childId: rec.childId,
+          type: rec.type as RecommendationType,
+          priority: this.intToPriority(rec.priority),
+          status: (rec.status as RecommendationStatus) || RecommendationStatus.PENDING,
+          title: rec.title,
+          description: rec.description || '',
+          scoreBreakdown: this.parseScoreBreakdown(rec.scoreBreakdown),
+          learningPath: resequenced,
+          totalEstimatedMinutes: resequenced.reduce((s, i) => s + i.estimatedMinutes, 0),
+          expectedOutcome: rec.expectedOutcome || undefined,
+          generatedAt: rec.generatedAt,
+          viewedAt: rec.viewedAt || undefined,
+          appliedAt: rec.appliedAt || undefined,
+        };
+      })
+      .filter((rec): rec is NonNullable<typeof rec> => rec !== null);
   }
 
   /**
@@ -812,7 +996,30 @@ export class RecommendationRepository {
       throw new Error('Recommendation not found');
     }
 
-    const learningPath = this.parseLearningPath(rec.learningPath);
+    const rawPath = this.parseLearningPath(rec.learningPath);
+
+    // Strip any dead topics so the applied path only contains playable content
+    const contentIds = rawPath.map((item) => item.contentId);
+    const liveTopics = contentIds.length > 0
+      ? await this.prisma.topic.findMany({
+          where: {
+            id: { in: contentIds },
+            status: CmsContentStatus.PUBLISHED,
+            deletedAt: null,
+            vocabularies: { some: { status: CmsContentStatus.PUBLISHED, deletedAt: null } },
+          },
+          select: { id: true },
+        })
+      : [];
+
+    const liveIds = new Set(liveTopics.map((t) => t.id));
+    const learningPath = rawPath
+      .filter((item) => liveIds.has(item.contentId))
+      .map((item, idx) => ({ ...item, sequenceOrder: idx + 1 }));
+
+    if (learningPath.length === 0) {
+      throw new Error('No playable topics remain in this recommendation');
+    }
 
     // Create applied path record
     const appliedPath = await this.prisma.appliedLearningPath.create({
@@ -820,7 +1027,7 @@ export class RecommendationRepository {
         childId,
         recommendationId,
         learningPath: learningPath as unknown as Prisma.InputJsonValue,
-        totalEstimatedMinutes: rec.totalEstimatedMinutes,
+        totalEstimatedMinutes: learningPath.reduce((s, i) => s + i.estimatedMinutes, 0),
         itemsCompleted: 0,
         totalItems: learningPath.length,
         progressPercentage: 0,
@@ -910,40 +1117,56 @@ export class RecommendationRepository {
    * Get recommendation statistics
    */
   async getStatistics(childId: number): Promise<RecommendationStatisticsDto> {
-    const all = await this.prisma.recommendation.findMany({
-      where: { childId },
-    });
-    const applied = all.filter(
-      (r) => r.status === RecommendationStatus.APPLIED,
-    );
-    const completed = all.filter(
-      (r) => r.status === RecommendationStatus.COMPLETED,
-    );
-    const helpful = await this.prisma.recommendationFeedback.findMany({
-      where: {
-        childId,
-        isHelpful: true,
-      },
-    });
+    const [all, allFeedback, activePaths, completedPaths] = await this.prisma.$transaction([
+      this.prisma.recommendation.findMany({ where: { childId } }),
+      this.prisma.recommendationFeedback.findMany({
+        where: { childId },
+        select: { isHelpful: true, rating: true },
+      }),
+      this.prisma.appliedLearningPath.findMany({
+        where: { childId, completedAt: null },
+        select: { id: true },
+      }),
+      this.prisma.appliedLearningPath.findMany({
+        where: { childId, completedAt: { not: null } },
+        select: { appliedAt: true, completedAt: true },
+      }),
+    ]);
 
-    const activePaths = await this.prisma.appliedLearningPath.findMany({
-      where: {
-        childId,
-        completedAt: null,
-      },
-    });
+    const applied = all.filter((r) => r.status === RecommendationStatus.APPLIED);
+    const completed = all.filter((r) => r.status === RecommendationStatus.COMPLETED);
+    const helpfulCount = allFeedback.filter((f) => f.isHelpful).length;
+
+    const ratedFeedback = allFeedback.filter((f) => f.rating != null);
+    const averageRating =
+      ratedFeedback.length > 0
+        ? Math.round(
+            (ratedFeedback.reduce((sum, f) => sum + (f.rating ?? 0), 0) / ratedFeedback.length) * 10,
+          ) / 10
+        : 0;
+
+    const averageCompletionDays =
+      completedPaths.length > 0
+        ? Math.round(
+            completedPaths.reduce((sum, p) => {
+              const days =
+                (p.completedAt!.getTime() - p.appliedAt.getTime()) / (1000 * 60 * 60 * 24);
+              return sum + days;
+            }, 0) / completedPaths.length,
+          )
+        : 0;
 
     return {
       childId,
       totalRecommendations: all.length,
       appliedCount: applied.length,
-      appliedPercentage: all.length > 0 ? (applied.length / all.length) * 100 : 0,
+      appliedPercentage: all.length > 0 ? Math.round((applied.length / all.length) * 100) : 0,
       completedCount: completed.length,
-      averageRating: 4.0, // Placeholder
-      helpfulCount: helpful.length,
+      averageRating,
+      helpfulCount,
       activePathsCount: activePaths.length,
       mostCommonType: this.getMostCommonType(all),
-      averageCompletionDays: 3,
+      averageCompletionDays,
     };
   }
 

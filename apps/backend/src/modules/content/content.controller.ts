@@ -19,6 +19,7 @@ import {
   ApiQuery,
 } from "@nestjs/swagger";
 import { ContentService } from "./content.service";
+import { RedisAnalyticsService } from "../admin-analytics/service/redis-analytics.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { RolesGuard } from "../../common/guards/roles.guard";
 import { Roles } from "../../common/decorators/roles.decorator";
@@ -35,7 +36,10 @@ import { VocabularyDto } from "./dto/vocabulary.dto";
 @Controller("content")
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class ContentController {
-  constructor(private readonly contentService: ContentService) {}
+  constructor(
+    private readonly contentService: ContentService,
+    private readonly redisAnalytics: RedisAnalyticsService,
+  ) {}
 
   /**
    * UC-01: Get all vocabulary topics (with pagination)
@@ -125,7 +129,9 @@ export class ContentController {
     }
 
     try {
-      return await this.contentService.getTopicById(topicId, childId);
+      const result = await this.contentService.getTopicById(topicId, childId);
+      void this.redisAnalytics.trackContentView(String(topicId), 'TOPIC', String(req.user.userId)).catch(() => {});
+      return result;
     } catch (error) {
       // UC-01 Exception: Media loading fails
       if (
@@ -174,8 +180,11 @@ export class ContentController {
   })
   async getVocabularyById(
     @Param("id", ParseIntPipe) vocabularyId: number,
+    @Request() req,
   ): Promise<VocabularyDto> {
-    return await this.contentService.getVocabularyById(vocabularyId);
+    const result = await this.contentService.getVocabularyById(vocabularyId);
+    void this.redisAnalytics.trackContentView(String(vocabularyId), 'VOCABULARY', String(req.user?.userId)).catch(() => {});
+    return result;
   }
 
   // @ApiOperation({ summary: 'Create new vocabulary (Admin only)' })

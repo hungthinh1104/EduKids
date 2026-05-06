@@ -5,7 +5,6 @@ import {
   UseGuards,
   Request,
   UnauthorizedException,
-  NotFoundException,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -19,7 +18,6 @@ import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { AnalyticsService } from './analytics.service';
-import { ChildProfileRepository } from '../child-profile/child-profile.repository';
 import {
   AnalyticsQueryDto,
   AnalyticsOverviewDto,
@@ -43,7 +41,6 @@ import {
 export class AnalyticsController {
   constructor(
     private readonly analyticsService: AnalyticsService,
-    private readonly childProfileRepository: ChildProfileRepository,
   ) {}
 
   private getParentId(req: any): number {
@@ -113,7 +110,7 @@ export class AnalyticsController {
     @Request() req: any,
   ): Promise<AnalyticsOverviewDto | NoDataResponseDto> {
     const parentId = this.getParentId(req);
-    const childId = query.childId || (await this.getActiveChildId(parentId));
+    const childId = query.childId || (await this.analyticsService.resolveChildId(parentId));
     const period = query.period || AnalyticsPeriod.WEEK;
 
     return this.analyticsService.getAnalyticsOverview(
@@ -159,7 +156,7 @@ export class AnalyticsController {
     @Request() req: any,
   ): Promise<LearningTimeDto | NoDataResponseDto> {
     const parentId = this.getParentId(req);
-    const childId = query.childId || (await this.getActiveChildId(parentId));
+    const childId = query.childId || (await this.analyticsService.resolveChildId(parentId));
     const period = query.period || AnalyticsPeriod.WEEK;
 
     return this.analyticsService.getLearningTime(childId, parentId, period);
@@ -201,7 +198,7 @@ export class AnalyticsController {
     @Request() req: any,
   ): Promise<VocabularyRetentionDto | NoDataResponseDto> {
     const parentId = this.getParentId(req);
-    const childId = query.childId || (await this.getActiveChildId(parentId));
+    const childId = query.childId || (await this.analyticsService.resolveChildId(parentId));
     const period = query.period || AnalyticsPeriod.WEEK;
 
     return this.analyticsService.getVocabularyRetention(
@@ -247,7 +244,7 @@ export class AnalyticsController {
     @Request() req: any,
   ): Promise<PronunciationAccuracyDto | NoDataResponseDto> {
     const parentId = this.getParentId(req);
-    const childId = query.childId || (await this.getActiveChildId(parentId));
+    const childId = query.childId || (await this.analyticsService.resolveChildId(parentId));
     const period = query.period || AnalyticsPeriod.WEEK;
 
     return this.analyticsService.getPronunciationAccuracy(
@@ -293,7 +290,7 @@ export class AnalyticsController {
     @Request() req: any,
   ): Promise<QuizPerformanceDto | NoDataResponseDto> {
     const parentId = this.getParentId(req);
-    const childId = query.childId || (await this.getActiveChildId(parentId));
+    const childId = query.childId || (await this.analyticsService.resolveChildId(parentId));
     const period = query.period || AnalyticsPeriod.WEEK;
 
     return this.analyticsService.getQuizPerformance(childId, parentId, period);
@@ -335,7 +332,7 @@ export class AnalyticsController {
     @Request() req: any,
   ): Promise<GamificationProgressDto | NoDataResponseDto> {
     const parentId = this.getParentId(req);
-    const childId = query.childId || (await this.getActiveChildId(parentId));
+    const childId = query.childId || (await this.analyticsService.resolveChildId(parentId));
     const period = query.period || AnalyticsPeriod.WEEK;
 
     return this.analyticsService.getGamificationProgress(
@@ -345,24 +342,4 @@ export class AnalyticsController {
     );
   }
 
-  /**
-   * Get active child ID from parent's account
-   * Helper method to use active profile when childId not provided
-   */
-  private async getActiveChildId(parentId: number): Promise<number> {
-    const activeProfile = await this.childProfileRepository.getActiveProfile(
-      parentId,
-    );
-    if (activeProfile?.id) {
-      return activeProfile.id;
-    }
-
-    const profiles =
-      await this.childProfileRepository.getAllProfilesForParent(parentId);
-    if (profiles.length > 0) {
-      return profiles[0].id;
-    }
-
-    throw new NotFoundException('No child profile found for this parent');
-  }
 }

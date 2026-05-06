@@ -71,8 +71,8 @@ export class MediaRepository {
       thumbnailUrl?: string;
       cloudinaryPublicId?: string;
       metadata?: Record<string, any>;
-      errorMessage?: string;
-      processedAt?: Date;
+      errorMessage?: string | null;
+      processedAt?: Date | null;
     },
   ) {
     return this.prisma.media.update({

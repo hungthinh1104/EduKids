@@ -14,6 +14,7 @@ import {
   FeedbackDto,
 } from "./dto/flashcard.dto";
 import { DragDropActivityResponseDto } from "./dto/flashcard.dto";
+import { GamificationService } from "../gamification/gamification.service";
 
 @Injectable()
 export class FlashcardService {
@@ -22,15 +23,15 @@ export class FlashcardService {
     process.env.CLOUDINARY_BASE_URL || "https://res.cloudinary.com/edukids";
   private readonly PLACEHOLDER_IMAGE = `${this.CDN_BASE_URL}/image/placeholder.png`;
 
-  // Star points calculation
   private readonly CORRECT_ANSWER_BASE_POINTS = 10;
-  private readonly SPEED_BONUS_THRESHOLD_MS = 5000; // 5 seconds
+  private readonly SPEED_BONUS_THRESHOLD_MS = 5000;
 
   constructor(
     private flashcardRepository: FlashcardRepository,
     private activityRepository: FlashcardActivityRepository,
     private learningProgressRepository: LearningProgressRepository,
     private prisma: PrismaService,
+    private readonly gamificationService: GamificationService,
   ) {}
 
   /**
@@ -225,6 +226,8 @@ export class FlashcardService {
 
         return { activity, updatedChild };
       });
+
+      void this.gamificationService.checkAndAwardBadges(childId).catch(() => {});
 
       const audioPlaybackFailed = !vocabulary.media?.some(
         (media) => media.type === "AUDIO",

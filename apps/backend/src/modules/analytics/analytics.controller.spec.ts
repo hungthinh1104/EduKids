@@ -10,6 +10,7 @@ describe("AnalyticsController", () => {
   let controller: AnalyticsController;
 
   const analyticsServiceMock = {
+    resolveChildId: jest.fn() as jest.Mock,
     getAnalyticsOverview: jest.fn() as jest.Mock,
     getLearningTime: jest.fn() as jest.Mock,
     getVocabularyRetention: jest.fn() as jest.Mock,
@@ -55,12 +56,12 @@ describe("AnalyticsController", () => {
   });
 
   it("getLearningTime uses active profile when childId missing", async () => {
-    (childProfileRepoMock.getActiveProfile as any).mockResolvedValue({ id: 22 });
+    (analyticsServiceMock.resolveChildId as any).mockResolvedValue(22);
     (analyticsServiceMock.getLearningTime as any).mockResolvedValue({ hasData: false });
 
     await controller.getLearningTime({} as any, { user: { userId: 8 } } as any);
 
-    expect(childProfileRepoMock.getActiveProfile).toHaveBeenCalledWith(8);
+    expect(analyticsServiceMock.resolveChildId).toHaveBeenCalledWith(8);
     expect(analyticsServiceMock.getLearningTime).toHaveBeenCalledWith(
       22,
       8,
@@ -69,13 +70,12 @@ describe("AnalyticsController", () => {
   });
 
   it("falls back to first profile when no active profile", async () => {
-    (childProfileRepoMock.getActiveProfile as any).mockResolvedValue(null);
-    (childProfileRepoMock.getAllProfilesForParent as any).mockResolvedValue([{ id: 31 }]);
+    (analyticsServiceMock.resolveChildId as any).mockResolvedValue(31);
     (analyticsServiceMock.getQuizPerformance as any).mockResolvedValue({ hasData: false });
 
     await controller.getQuizPerformance({} as any, { user: { userId: 5 } } as any);
 
-    expect(childProfileRepoMock.getAllProfilesForParent).toHaveBeenCalledWith(5);
+    expect(analyticsServiceMock.resolveChildId).toHaveBeenCalledWith(5);
     expect(analyticsServiceMock.getQuizPerformance).toHaveBeenCalledWith(
       31,
       5,
@@ -84,8 +84,7 @@ describe("AnalyticsController", () => {
   });
 
   it("throws NotFoundException when parent has no profiles", async () => {
-    (childProfileRepoMock.getActiveProfile as any).mockResolvedValue(null);
-    (childProfileRepoMock.getAllProfilesForParent as any).mockResolvedValue([]);
+    (analyticsServiceMock.resolveChildId as any).mockRejectedValue(new NotFoundException());
 
     await expect(
       controller.getVocabularyRetention({} as any, { user: { userId: 1 } } as any),

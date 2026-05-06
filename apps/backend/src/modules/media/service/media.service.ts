@@ -207,7 +207,7 @@ export class MediaService {
         } else {
           try {
             await this.mediaRepository.updateMediaStatus(media.id, ProcessingStatus.PENDING, {
-              processedAt: undefined,
+              processedAt: null,
             });
 
             await this.mediaQueue.add(
@@ -318,9 +318,11 @@ export class MediaService {
       throw new BadRequestException('Chỉ có thể retry media ở trạng thái FAILED');
     }
 
-    await this.mediaRepository.updateMediaStatus(id, ProcessingStatus.PROCESSING, {
-      errorMessage: undefined,
-      processedAt: undefined,
+    // The file is already on Cloudinary (upload succeeded before post-processing failed).
+    // Reset to COMPLETED and clear the error so the URL remains usable.
+    await this.mediaRepository.updateMediaStatus(id, ProcessingStatus.COMPLETED, {
+      errorMessage: null,
+      processedAt: new Date(),
     });
   }
 

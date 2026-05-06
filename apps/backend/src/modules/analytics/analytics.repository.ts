@@ -60,6 +60,17 @@ export class AnalyticsRepository {
           lte: endDate,
         },
       },
+      select: {
+        id: true,
+        activityType: true,
+        durationSec: true,
+        score: true,
+        vocabularyId: true,
+        contentId: true,
+        createdAt: true,
+        metadata: true,
+        pointsEarned: true,
+      },
       orderBy: {
         createdAt: 'asc',
       },

@@ -21,6 +21,7 @@ import { Roles } from "../../common/decorators/roles.decorator";
 import { CurrentUser } from "../../common/decorators/current-user.decorator";
 import { User } from "@prisma/client";
 import { QuizService } from "./quiz.service";
+import { RedisAnalyticsService } from "../admin-analytics/service/redis-analytics.service";
 import {
   QuizStartDto,
   QuizAnswerDto,
@@ -34,7 +35,10 @@ import {
 @Controller("quiz")
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class QuizController {
-  constructor(private readonly quizService: QuizService) {}
+  constructor(
+    private readonly quizService: QuizService,
+    private readonly redisAnalytics: RedisAnalyticsService,
+  ) {}
 
   /**
    * UC-04 Main Endpoint: Start adaptive quiz session
@@ -85,7 +89,9 @@ export class QuizController {
       );
     }
 
-    return this.quizService.startQuiz(user.childId, dto);
+    const session = await this.quizService.startQuiz(user.childId, dto);
+    void this.redisAnalytics.trackContentView(String(dto.topicId), 'QUIZ', String(user.id)).catch(() => {});
+    return session;
   }
 
   /**

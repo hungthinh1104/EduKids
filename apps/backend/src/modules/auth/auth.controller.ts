@@ -11,6 +11,7 @@ import {
   HttpStatus,
   NotImplementedException,
 } from "@nestjs/common";
+import type { Response } from "express";
 import {
   ApiTags,
   ApiOperation,
@@ -117,9 +118,18 @@ export class AuthController {
   @Throttle(20, 60) // 20 refresh attempts per 60 seconds
   @Post("refresh")
   async refresh(
+    @Req() req,
     @Body() dto: RefreshTokenDto,
   ): Promise<{ accessToken: string }> {
-    return this.authService.refreshToken(dto.refreshToken);
+    const cookieHeader =
+      typeof req.headers?.cookie === "string" ? req.headers.cookie : "";
+    const cookieToken = cookieHeader
+      .split(";")
+      .map((part) => part.trim())
+      .find((part) => part.startsWith("refreshToken="))
+      ?.slice("refreshToken=".length);
+    const refreshToken = dto.refreshToken || cookieToken;
+    return this.authService.refreshToken(refreshToken || "");
   }
 
   /**
@@ -313,18 +323,16 @@ export class AuthController {
   })
   @Get("google/callback")
   @UseGuards(AuthGuard("google"))
-  async googleCallback(@Req() req, @Res() res: any) {
+  async googleCallback(@Req() req, @Res() res: Response) {
     const authData = await this.authService.handleGoogleOAuth(req.user);
-
-    // Convert auth data to base64 string
-    const tokenStr = Buffer.from(JSON.stringify(authData)).toString("base64");
 
     // Get frontend URL from env or fallback to localhost
     const frontendUrl =
       process.env.FRONTEND_URL?.replace(/\/$/, "") || "http://localhost:3000";
 
-    // Redirect browser back to frontend to process the tokens
-    return res.redirect(`${frontendUrl}/oauth/callback?data=${tokenStr}`);
+    return res.redirect(
+      `${frontendUrl}/oauth/callback#token=${encodeURIComponent(authData.accessToken)}&refresh=${encodeURIComponent(authData.refreshToken)}`,
+    );
   }
 
   /**

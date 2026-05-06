@@ -71,12 +71,15 @@ export class ProgressSyncService {
 
       // 3. Check for conflicts
       if (currentState && currentState.timestamp) {
+        const serverUpdate: ProgressUpdateDto = {
+          ...update,
+          timestamp: currentState.timestamp,
+        };
         const conflictResolution = this.conflictResolution.resolveWithClockSkew(
-          {
-            ...update,
-            timestamp: currentState.timestamp,
-          } as ProgressUpdateDto,
+          serverUpdate,
           update,
+          5000,
+          currentState.timestamp,
         );
 
         if (conflictResolution.winner === "SERVER") {

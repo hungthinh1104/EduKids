@@ -26,6 +26,7 @@ import {
   QuizOptionDto,
 } from "./dto/quiz.dto";
 import { QuizEventPublisherService } from "./services/quiz-event-publisher.service";
+import { GamificationService } from "../gamification/gamification.service";
 
 interface QuizSession extends QuizSessionState {
   currentDifficulty: QuizDifficulty;
@@ -48,6 +49,7 @@ export class QuizService {
     private readonly quizScoringService: QuizScoringService,
     private readonly quizQuestionService: QuizQuestionService,
     private readonly quizEventPublisher: QuizEventPublisherService,
+    private readonly gamificationService: GamificationService,
   ) {}
 
   private recordBreadcrumb(
@@ -120,49 +122,49 @@ export class QuizService {
         );
       }
 
+      const distractorsByVocabulary =
+        await this.quizRepository.generateDistractorsBatch(
+          selectedVocabulary.map((vocab) => vocab.id),
+          dto.topicId,
+          3,
+        );
+
       // Generate questions with options
-      const questions = await Promise.all(
-        selectedVocabulary.map(async (vocab, index) => {
-          const distractors = await this.quizRepository.generateDistractors(
-            vocab.id,
-            dto.topicId,
-            3,
-          );
-
-          const correctOptionId = Math.floor(Math.random() * 4) + 1;
-          const options: QuizOptionDto[] = [];
-          for (let i = 1; i <= 4; i++) {
-            if (i === correctOptionId) {
-              options.push({
-                id: i,
-                text: vocab.word,
-                imageUrl: undefined,
-              });
-            } else {
-              const distractor = distractors.shift();
-              options.push({
-                id: i,
-                text: distractor?.word || "Unknown",
-                imageUrl: undefined,
-              });
-            }
+      const questions = selectedVocabulary.map((vocab, index) => {
+        const distractors = [...(distractorsByVocabulary.get(vocab.id) || [])];
+        const correctOptionId = Math.floor(Math.random() * 4) + 1;
+        const options: QuizOptionDto[] = [];
+        for (let i = 1; i <= 4; i++) {
+          if (i === correctOptionId) {
+            options.push({
+              id: i,
+              text: vocab.word,
+              imageUrl: undefined,
+            });
+          } else {
+            const distractor = distractors.shift();
+            options.push({
+              id: i,
+              text: distractor?.word || "Unknown",
+              imageUrl: undefined,
+            });
           }
+        }
 
-          return {
-            questionId: index + 1,
-            vocabularyId: vocab.id,
-            promptText: "What is this in English?",
-            word: vocab.word,
-            translation: vocab.translation,
-            imageUrl: undefined,
-            correctOptionId,
-            options,
-            difficulty: initialDifficulty,
-            pointsValue:
-              this.quizScoringService.calculatePointsValue(initialDifficulty),
-          };
-        }),
-      );
+        return {
+          questionId: index + 1,
+          vocabularyId: vocab.id,
+          promptText: "What is this in English?",
+          word: vocab.word,
+          translation: vocab.translation,
+          imageUrl: undefined,
+          correctOptionId,
+          options,
+          difficulty: initialDifficulty,
+          pointsValue:
+            this.quizScoringService.calculatePointsValue(initialDifficulty),
+        };
+      });
 
       // Create quiz session
       const quizSessionId = randomUUID();
@@ -263,49 +265,49 @@ export class QuizService {
       );
     }
 
-    const questions = await Promise.all(
-      allVocabulary.map(async (vocab, index) => {
-        const distractors = await this.quizRepository.generateDistractors(
-          vocab.id,
-          dto.topicId,
-          3,
-        );
-        const correctOptionId = Math.floor(Math.random() * 4) + 1;
-        const options: QuizOptionDto[] = [];
+    const distractorsByVocabulary =
+      await this.quizRepository.generateDistractorsBatch(
+        allVocabulary.map((vocab) => vocab.id),
+        dto.topicId,
+        3,
+      );
+    const questions = allVocabulary.map((vocab, index) => {
+      const distractors = [...(distractorsByVocabulary.get(vocab.id) || [])];
+      const correctOptionId = Math.floor(Math.random() * 4) + 1;
+      const options: QuizOptionDto[] = [];
 
-        for (let i = 1; i <= 4; i++) {
-          if (i === correctOptionId) {
-            options.push({
-              id: i,
-              text: vocab.word,
-              imageUrl: vocab.media?.[0]?.url,
-            });
-          } else {
-            const distractor = distractors.shift();
-            options.push({
-              id: i,
-              text: distractor?.word || "Unknown",
-              imageUrl: undefined,
-            });
-          }
+      for (let i = 1; i <= 4; i++) {
+        if (i === correctOptionId) {
+          options.push({
+            id: i,
+            text: vocab.word,
+            imageUrl: vocab.media?.[0]?.url,
+          });
+        } else {
+          const distractor = distractors.shift();
+          options.push({
+            id: i,
+            text: distractor?.word || "Unknown",
+            imageUrl: undefined,
+          });
         }
+      }
 
-        return {
-          questionId: index + 1,
-          vocabularyId: vocab.id,
-          promptText: "What is this in English?",
-          word: vocab.word,
-          translation: vocab.translation,
-          imageUrl: vocab.media?.[0]?.url,
-          correctOptionId,
-          options,
-          difficulty: QuizDifficulty.MEDIUM,
-          pointsValue: this.quizScoringService.calculatePointsValue(
-            QuizDifficulty.MEDIUM,
-          ),
-        };
-      }),
-    );
+      return {
+        questionId: index + 1,
+        vocabularyId: vocab.id,
+        promptText: "What is this in English?",
+        word: vocab.word,
+        translation: vocab.translation,
+        imageUrl: vocab.media?.[0]?.url,
+        correctOptionId,
+        options,
+        difficulty: QuizDifficulty.MEDIUM,
+        pointsValue: this.quizScoringService.calculatePointsValue(
+          QuizDifficulty.MEDIUM,
+        ),
+      };
+    });
 
     const quizSessionId = randomUUID();
     const session: QuizSession = {
@@ -612,7 +614,7 @@ export class QuizService {
     const totalQuestions = session.questions.length;
     const correctAnswers = session.answers.filter((a) => a.isCorrect).length;
     const incorrectAnswers = totalQuestions - correctAnswers;
-    const accuracy = Math.round((correctAnswers / totalQuestions) * 100);
+    const accuracy = totalQuestions > 0 ? Math.round((correctAnswers / totalQuestions) * 100) : 0;
     const percentageScore = accuracy;
     const maxScore = session.questions.reduce(
       (sum, q) => sum + q.pointsValue,
@@ -632,26 +634,47 @@ export class QuizService {
     );
 
     if (!session.rewardsGranted) {
-      // Award points exactly once per session.
-      await this.prisma.childProfile.update({
-        where: { id: childId },
-        data: { totalPoints: { increment: pointsAwarded } },
-      });
+      const rewardLockAcquired =
+        this.quizSessionService.acquireRewardGrantLock(quizSessionId);
 
-      session.rewardsGranted = true;
-      session.completedAt = new Date();
+      if (rewardLockAcquired) {
+        try {
+          const latestSession =
+            await this.quizSessionService.getSession(quizSessionId);
 
-      await this.quizSessionService.saveSession(session);
+          if (!latestSession.rewardsGranted) {
+            await this.prisma.$transaction(async (tx) => {
+              await tx.childProfile.update({
+                where: { id: childId },
+                data: { totalPoints: { increment: pointsAwarded } },
+              });
+            });
 
-      await this.quizEventPublisher.publishQuizCompleted({
-        childId,
-        quizSessionId,
-        topicId: session.topicId,
-        totalQuestions,
-        correctAnswers,
-        accuracy,
-        pointsAwarded,
-      });
+            latestSession.rewardsGranted = true;
+            latestSession.completedAt = new Date();
+            Object.assign(session, latestSession);
+
+            await this.quizSessionService.saveSession(latestSession);
+
+            await this.quizEventPublisher.publishQuizCompleted({
+              childId,
+              quizSessionId,
+              topicId: session.topicId,
+              totalQuestions,
+              correctAnswers,
+              accuracy,
+              pointsAwarded,
+            });
+
+            void this.gamificationService.checkAndAwardBadges(childId).catch(() => {});
+          }
+        } finally {
+          this.quizSessionService.releaseRewardGrantLock(quizSessionId);
+        }
+      } else {
+        const latestSession = await this.quizSessionService.getSession(quizSessionId);
+        Object.assign(session, latestSession);
+      }
     }
 
     const child = await this.prisma.childProfile.findUnique({
@@ -723,7 +746,7 @@ export class QuizService {
       incorrectAnswers,
       accuracy,
       totalTimeMs,
-      averageTimePerQuestion: Math.round(totalTimeMs / totalQuestions),
+      averageTimePerQuestion: totalQuestions > 0 ? Math.round(totalTimeMs / totalQuestions) : 0,
       performanceMessage:
         this.quizScoringService.generatePerformanceMessage(percentageScore),
       starsEarned,

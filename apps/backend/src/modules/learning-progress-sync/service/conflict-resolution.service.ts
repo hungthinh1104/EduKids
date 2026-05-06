@@ -20,17 +20,21 @@ export class ConflictResolutionService {
   resolveLastWriteWins(
     serverUpdate: ProgressUpdateDto,
     clientUpdate: ProgressUpdateDto,
+    serverDbTimestamp?: number,
   ): {
     winner: "SERVER" | "CLIENT";
     conflict: ConflictDto;
     shouldApply: boolean;
   } {
-    const serverTimestamp = serverUpdate.timestamp || 0;
     const clientTimestamp = clientUpdate.timestamp || 0;
 
-    // Use client timestamp if server timestamp is not reliable
+    // Prefer the authoritative DB timestamp; fall back to DTO only as last resort
     const serverTime =
-      serverTimestamp > 0 ? serverTimestamp : Date.now() - 10000;
+      serverDbTimestamp && serverDbTimestamp > 0
+        ? serverDbTimestamp
+        : serverUpdate.timestamp && serverUpdate.timestamp > 0
+          ? serverUpdate.timestamp
+          : Date.now() - 10000;
     const clientTime = clientTimestamp > 0 ? clientTimestamp : Date.now();
 
     const winner = clientTime > serverTime ? "CLIENT" : "SERVER";
@@ -72,13 +76,14 @@ export class ConflictResolutionService {
     serverUpdate: ProgressUpdateDto,
     clientUpdate: ProgressUpdateDto,
     maxClockSkew: number = 5000, // 5 seconds default
+    serverDbTimestamp?: number,
   ): {
     winner: "SERVER" | "CLIENT" | "MERGE";
     conflict: ConflictDto;
     shouldApply: boolean;
   } {
-    const serverTime = serverUpdate.timestamp || Date.now();
-    const clientTime = clientUpdate.timestamp || Date.now();
+    const serverTime = serverDbTimestamp ?? serverUpdate.timestamp ?? Date.now();
+    const clientTime = clientUpdate.timestamp ?? Date.now();
     const timeDiff = Math.abs(clientTime - serverTime);
 
     // If times are very close, attempt merge
@@ -87,7 +92,7 @@ export class ConflictResolutionService {
     }
 
     // Otherwise use last-write-wins
-    return this.resolveLastWriteWins(serverUpdate, clientUpdate);
+    return this.resolveLastWriteWins(serverUpdate, clientUpdate, serverDbTimestamp);
   }
 
   /**

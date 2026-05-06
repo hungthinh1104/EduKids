@@ -2,6 +2,7 @@ import { Injectable, UnauthorizedException } from "@nestjs/common";
 import { PassportStrategy } from "@nestjs/passport";
 import { ExtractJwt, Strategy } from "passport-jwt";
 import { PrismaService } from "../../prisma/prisma.service";
+import { RedisAnalyticsService } from "../admin-analytics/service/redis-analytics.service";
 
 interface JwtPayload {
   sub: number; // userId
@@ -12,7 +13,10 @@ interface JwtPayload {
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
-  constructor(private prisma: PrismaService) {
+  constructor(
+    private prisma: PrismaService,
+    private redisAnalytics: RedisAnalyticsService,
+  ) {
     // [C-2 Security Fix] JWT_SECRET is validated at module load time in auth.module.ts.
     // By this point, process.env.JWT_SECRET is guaranteed to exist.
     super({
@@ -36,6 +40,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     if (!user || !user.isActive) {
       throw new UnauthorizedException("Invalid token or user inactive");
     }
+
+    // Track DAU — fire-and-forget, Redis SADD deduplicates per day automatically
+    void this.redisAnalytics.trackUserActivity(String(payload.sub)).catch(() => {});
 
     // Return user data attached to request.user
     return {

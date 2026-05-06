@@ -12,6 +12,7 @@ import {
   PronunciationAssessmentMode,
   PronunciationWordErrorType,
 } from './dto/pronunciation-assessment.dto';
+import { GamificationService } from '../gamification/gamification.service';
 
 @Injectable()
 export class PronunciationService {
@@ -22,6 +23,7 @@ export class PronunciationService {
     private readonly pronunciationAssessmentService: PronunciationAssessmentService,
     private readonly prisma: PrismaService,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
+    private readonly gamificationService: GamificationService,
   ) {}
 
   private recordBreadcrumb(
@@ -126,13 +128,7 @@ export class PronunciationService {
     );
 
     const rewardInfo = await this.checkRewardTriggers(childId, vocabularyId, starRating);
-
-    const child = await this.prisma.childProfile.findUnique({
-      where: { id: childId },
-      select: { totalPoints: true },
-    });
-
-    const currentLevel = this.calculateLevel(child?.totalPoints || 0);
+    const currentLevel = this.calculateLevel(rewardInfo.totalPoints);
     const nativePronunciationAudio =
       vocabulary.media && vocabulary.media.length > 0
         ? vocabulary.media[0].url
@@ -171,7 +167,7 @@ export class PronunciationService {
       rating,
       nativePronunciationAudio,
       detailedFeedback: this.generateDetailedFeedback(assessment, vocabulary.word),
-      totalPoints: child?.totalPoints || 0,
+      totalPoints: rewardInfo.totalPoints,
       currentLevel,
       badgeUnlocked: rewardInfo.badgeUnlocked,
       attemptedAt: activity.createdAt,
@@ -298,7 +294,7 @@ export class PronunciationService {
     childId: number,
     vocabularyId: number,
     starRating: number,
-  ): Promise<{ badgeUnlocked?: string; pointsAwarded: number }> {
+  ): Promise<{ badgeUnlocked?: string; pointsAwarded: number; totalPoints: number }> {
     let pointsAwarded = 0;
     let badgeUnlocked: string | undefined;
 
@@ -312,15 +308,28 @@ export class PronunciationService {
 
     pointsAwarded = pointsByRating[starRating];
 
+    let totalPoints = 0;
+
     if (pointsAwarded > 0) {
-      await this.prisma.childProfile.update({
+      const updatedChild = await this.prisma.childProfile.update({
         where: { id: childId },
         data: {
           totalPoints: {
             increment: pointsAwarded,
           },
         },
+        select: {
+          totalPoints: true,
+        },
       });
+
+      totalPoints = updatedChild.totalPoints;
+    } else {
+      const child = await this.prisma.childProfile.findUnique({
+        where: { id: childId },
+        select: { totalPoints: true },
+      });
+      totalPoints = child?.totalPoints || 0;
     }
 
     const stats = await this.pronunciationRepository.getPronunciationStats(childId, vocabularyId);
@@ -328,7 +337,9 @@ export class PronunciationService {
       badgeUnlocked = `🏅 Pronunciation Master: ${stats.perfectStreak} Perfect Attempts!`;
     }
 
-    return { badgeUnlocked, pointsAwarded };
+    void this.gamificationService.checkAndAwardBadges(childId).catch(() => {});
+
+    return { badgeUnlocked, pointsAwarded, totalPoints };
   }
 
   private calculateLevel(totalPoints: number): number {

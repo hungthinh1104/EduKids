@@ -4,22 +4,20 @@ import { Strategy, VerifyCallback } from "passport-google-oauth20";
 
 /**
  * Tự động tạo callback URL từ PUBLIC_API_BASE_URL.
- * Không cần thay GOOGLE_REDIRECT_URI mỗi lần redeploy.
  *
  * Ví dụ:
  *   PUBLIC_API_BASE_URL = https://edukids-api.azurewebsites.net/api
- *   → callbackURL        = https://edukids-api.azurewebsites.net/auth/google/callback
+ *   → callbackURL        = https://edukids-api.azurewebsites.net/api/auth/google/callback
  */
 function buildCallbackUrl(): string {
   const base = process.env.PUBLIC_API_BASE_URL?.trim();
   if (base) {
-    // Bỏ phần /api ở cuối (nếu có) để lấy origin của backend
-    const origin = base.replace(/\/api\/?$/, "");
-    return `${origin}/auth/google/callback`;
+    const apiBase = base.replace(/\/+$/, "");
+    return `${apiBase}/auth/google/callback`;
   }
   // Fallback khi dev local
   const port = process.env.PORT ?? process.env.BACKEND_PORT ?? "3001";
-  return `http://localhost:${port}/auth/google/callback`;
+  return `http://localhost:${port}/api/auth/google/callback`;
 }
 
 @Injectable()

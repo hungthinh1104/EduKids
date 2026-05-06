@@ -26,7 +26,7 @@ export class ChildProfileRepository {
         parentId,
         nickname: dto.nickname,
         age: dto.age,
-        avatar: dto.avatarUrl ?? this.getDefaultAvatarUrl(dto.age),
+        avatar: dto.avatar ?? this.getDefaultAvatarUrl(dto.age),
         totalPoints: 0,
         streakCount: 0,
         lastLearnDate: new Date(),
@@ -91,20 +91,23 @@ export class ChildProfileRepository {
    */
   async updateProfile(
     childId: number,
-    parentId: number,
+    _parentId: number,
     dto: UpdateChildProfileDto,
   ) {
     // Build update data object
-    const updateData: Prisma.ChildProfileUpdateManyMutationInput = {};
+    const updateData: Prisma.ChildProfileUpdateInput = {};
     if (dto.nickname !== undefined) updateData.nickname = dto.nickname;
     if (dto.age !== undefined) updateData.age = dto.age;
+    if (dto.avatar !== undefined) updateData.avatar = dto.avatar;
 
-    return this.prisma.childProfile.updateMany({
+    return this.prisma.childProfile.update({
       where: {
         id: childId,
-        parentId, // Ensure parent owns this profile
       },
       data: updateData,
+      include: {
+        badges: true,
+      },
     });
   }
 

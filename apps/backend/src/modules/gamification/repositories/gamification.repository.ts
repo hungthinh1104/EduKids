@@ -1,4 +1,5 @@
-import { Injectable } from "@nestjs/common";
+import { BadRequestException, Injectable } from "@nestjs/common";
+import { Prisma } from "@prisma/client";
 import { PrismaService } from "../../../prisma/prisma.service";
 import { BadgeCategory, ShopItemCategory } from "../dto/gamification.dto";
 import {
@@ -59,13 +60,21 @@ export class GamificationRepository {
         icon: "🏅",
         checkCondition: async (childId) => {
           const count = await this.prisma.activityLog.count({
-            where: { childId },
+            where: {
+              childId,
+              activityType: "PRONUNCIATION",
+              score: { gte: 80 },
+            },
           });
           return count >= 10;
         },
         getProgress: async (childId) => {
           const current = await this.prisma.activityLog.count({
-            where: { childId },
+            where: {
+              childId,
+              activityType: "PRONUNCIATION",
+              score: { gte: 80 },
+            },
           });
           return { current: Math.min(current, 10), required: 10 };
         },
@@ -77,16 +86,24 @@ export class GamificationRepository {
         category: BadgeCategory.QUIZ,
         icon: "🏆",
         checkCondition: async (childId) => {
-          const activities = await this.prisma.activityLog.findMany({
-            where: { childId },
+          const count = await this.prisma.activityLog.count({
+            where: {
+              childId,
+              activityType: "QUIZ",
+              score: { gte: 80 },
+            },
           });
-          return activities.length >= 10;
+          return count >= 10;
         },
         getProgress: async (childId) => {
-          const activities = await this.prisma.activityLog.findMany({
-            where: { childId },
+          const current = await this.prisma.activityLog.count({
+            where: {
+              childId,
+              activityType: "QUIZ",
+              score: { gte: 80 },
+            },
           });
-          return { current: Math.min(activities.length, 10), required: 10 };
+          return { current: Math.min(current, 10), required: 10 };
         },
       },
       {
@@ -97,13 +114,19 @@ export class GamificationRepository {
         icon: "💎",
         checkCondition: async (childId) => {
           const count = await this.prisma.activityLog.count({
-            where: { childId },
+            where: {
+              childId,
+              activityType: "FLASHCARD",
+            },
           });
           return count >= 25;
         },
         getProgress: async (childId) => {
           const current = await this.prisma.activityLog.count({
-            where: { childId },
+            where: {
+              childId,
+              activityType: "FLASHCARD",
+            },
           });
           return { current: Math.min(current, 25), required: 25 };
         },
@@ -367,9 +390,15 @@ export class GamificationRepository {
 
         return purchase;
       });
-    } catch {
-      // Covers race collisions on unique(childId, itemId) and returns safe failure
-      return null;
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === "P2002"
+      ) {
+        throw new BadRequestException("You already own this item!");
+      }
+
+      throw error;
     }
   }
 

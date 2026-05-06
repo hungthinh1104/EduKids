@@ -54,12 +54,12 @@ export class RecommendationService {
   }
 
   private async assertChildExists(childId: number): Promise<void> {
-    const child = await this.prisma.childProfile.findFirst({
-      where: { id: childId, deletedAt: null },
-      select: { id: true },
+    const child = await this.prisma.childProfile.findUnique({
+      where: { id: childId },
+      select: { id: true, deletedAt: true },
     });
 
-    if (!child) {
+    if (!child || child.deletedAt) {
       throw new NotFoundException('Child profile not found');
     }
   }
@@ -72,6 +72,10 @@ export class RecommendationService {
       childId,
       recommendations,
       hasRecommendations: recommendations.length > 0,
+      noRecommendationMessage:
+        recommendations.length === 0
+          ? 'Bé chưa có đủ dữ liệu học. Hãy hoàn thành thêm bài học để nhận gợi ý!'
+          : undefined,
       generatedAt: new Date(),
     };
   }
@@ -95,7 +99,13 @@ export class RecommendationService {
     }
 
     try {
-      const recommendations = await this.recommendationRepository.getRecommendations(childId);
+      let recommendations = await this.recommendationRepository.getRecommendations(childId);
+
+      if (recommendations.length === 0) {
+        this.recordBreadcrumb('recommendation.get.auto_generate', { childId });
+        recommendations = await this.recommendationRepository.generateRecommendations(childId);
+      }
+
       const projected =
         await this.recommendationProjectionService.saveRecommendationsProjection(
           childId,
@@ -309,9 +319,26 @@ export class RecommendationService {
       provider: 'gemini',
     });
 
-    const recommendations = await this.recommendationRepository.generateRecommendationsWithGemini(
-      childId,
-    );
+    let recommendations: RecommendationDto[];
+    let provider = 'gemini';
+
+    try {
+      recommendations = await this.recommendationRepository.generateRecommendationsWithGemini(
+        childId,
+      );
+    } catch (error) {
+      this.logger.warn(
+        `Gemini recommendation failed for child ${childId}, falling back to code-based: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      );
+      Sentry.captureMessage('Gemini recommendation failed, using code-based fallback', {
+        level: 'warning',
+        extra: { childId },
+      });
+      recommendations = await this.recommendationRepository.generateRecommendations(childId);
+      provider = 'code-fallback';
+    }
 
     await this.recommendationProjectionService.saveRecommendationsProjection(
       childId,
@@ -320,12 +347,13 @@ export class RecommendationService {
 
     this.recordBreadcrumb('recommendation.regenerate.completed', {
       childId,
-      provider: 'gemini',
+      provider,
       count: recommendations.length,
     });
-    Sentry.logger.info('Recommendations regenerated with Gemini', {
+    Sentry.logger.info('Recommendations regenerated', {
       childId,
       count: recommendations.length,
+      provider,
     });
 
     return this.toRecommendationsListDto(childId, recommendations);

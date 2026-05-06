@@ -26,6 +26,16 @@ export class ReportService {
     private readonly mailTemplateService: MailTemplateService,
   ) {}
 
+  async assertChildOwnership(childId: number, parentId: number): Promise<void> {
+    const child = await this.prisma.childProfile.findFirst({
+      where: { id: childId, parentId, deletedAt: null },
+      select: { id: true },
+    });
+    if (!child) {
+      throw new NotFoundException('Child profile not found');
+    }
+  }
+
   private toDateRangeStart(range: ReportRange, now: Date): Date | null {
     const start = new Date(now);
     if (range === ReportRange.WEEK) {

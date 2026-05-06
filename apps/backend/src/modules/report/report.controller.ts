@@ -10,7 +10,6 @@ import {
   UseGuards,
   HttpCode,
   BadRequestException,
-  NotFoundException,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -38,7 +37,6 @@ import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
-import { PrismaService } from '../../prisma/prisma.service';
 
 /**
  * Report Controller
@@ -52,26 +50,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 export class ReportController {
   constructor(
     private readonly reportService: ReportService,
-    private readonly prisma: PrismaService,
   ) {}
-
-  private async assertChildOwnership(
-    childId: number,
-    parentId: number,
-  ): Promise<void> {
-    const childProfile = await this.prisma.childProfile.findFirst({
-      where: {
-        id: childId,
-        parentId,
-        deletedAt: null,
-      },
-      select: { id: true },
-    });
-
-    if (!childProfile) {
-      throw new NotFoundException('Child profile not found');
-    }
-  }
 
   @Post('generate')
   @Roles('PARENT')
@@ -86,7 +65,7 @@ export class ReportController {
     @CurrentUser('id') parentId: number,
     @Body() dto: GenerateReportDto,
   ): Promise<ProgressReportDto> {
-    await this.assertChildOwnership(dto.childId, parentId);
+    await this.reportService.assertChildOwnership(dto.childId, parentId);
     return this.reportService.generateReport(
       parentId,
       dto.childId,
@@ -107,7 +86,7 @@ export class ReportController {
     @CurrentUser('id') parentId: number,
     @Body() dto: SendReportDto,
   ): Promise<ReportSendResultDto> {
-    await this.assertChildOwnership(dto.childId, parentId);
+    await this.reportService.assertChildOwnership(dto.childId, parentId);
     return this.reportService.sendReport(
       parentId,
       dto.childId,

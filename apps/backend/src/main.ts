@@ -48,6 +48,18 @@ function validateCriticalEnv(logger: Logger) {
     );
   }
 
+  const requiredCorsEnv = ["CORS_ORIGIN", "FRONTEND_URL"];
+  const missingCorsEnv = requiredCorsEnv.filter((key) => {
+    const value = process.env[key] || "";
+    return isPlaceholder(value);
+  });
+
+  if (missingCorsEnv.length > 0) {
+    throw new Error(
+      `Missing required production CORS environment variables: ${missingCorsEnv.join(", ")}.`,
+    );
+  }
+
   logger.log("Production environment validation passed");
 }
 
@@ -235,17 +247,13 @@ async function bootstrap() {
 
   if (exactAllowedOrigins.size === 0 && wildcardAllowedOrigins.length === 0) {
     if (isProduction) {
-      logger.warn(
-        "No CORS origins configured in production. Falling back to allow all origins.\n" +
-          "Set CORS_ORIGIN or FRONTEND_URL in the environment to lock this down.",
+      throw new Error(
+        "Fatal: production CORS configuration is missing. Set both CORS_ORIGIN and FRONTEND_URL.",
       );
-      // Allow the browser origin (reflect) — effectively permissive
-      corsOriginOption = true;
-    } else {
-      // Development default already includes localhost entries
-      corsOriginOption = (origin: string, callback: Function) =>
-        callback(null, true);
     }
+
+    corsOriginOption = (origin: string, callback: Function) =>
+      callback(null, true);
   } else {
     // Use strict matching when configured
     corsOriginOption = (origin: any, callback: any) => {

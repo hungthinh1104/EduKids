@@ -279,6 +279,28 @@ export class AnalyticsService {
   }
 
   /**
+   * Resolve the child ID from query param or fall back to the parent's active/first profile.
+   * Centralises the lookup so controllers stay free of repository dependencies.
+   */
+  async resolveChildId(parentId: number, queryChildId?: number): Promise<number> {
+    if (queryChildId) {
+      return queryChildId;
+    }
+
+    const activeProfile = await this.childProfileRepository.getActiveProfile(parentId);
+    if (activeProfile?.id) {
+      return activeProfile.id;
+    }
+
+    const profiles = await this.childProfileRepository.getAllProfilesForParent(parentId);
+    if (profiles.length > 0) {
+      return profiles[0].id;
+    }
+
+    throw new NotFoundException('No child profile found for this parent');
+  }
+
+  /**
    * Invalidate analytics cache for child
    * Called when new activity is recorded
    * @param childId - Child profile ID

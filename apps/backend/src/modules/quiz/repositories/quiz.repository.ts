@@ -223,6 +223,36 @@ export class QuizRepository {
     });
   }
 
+  async generateDistractorsBatch(
+    vocabularyIds: number[],
+    topicId: number,
+    count: number = 3,
+  ): Promise<Map<number, Vocabulary[]>> {
+    const uniqueVocabularyIds = Array.from(new Set(vocabularyIds));
+    const vocabularies = await this.prisma.vocabulary.findMany({
+      where: {
+        topicId,
+        status: CmsContentStatus.PUBLISHED,
+        deletedAt: null,
+        topic: {
+          status: CmsContentStatus.PUBLISHED,
+          deletedAt: null,
+        },
+      },
+      orderBy: { id: "asc" },
+    });
+
+    return new Map(
+      uniqueVocabularyIds.map((vocabularyId) => [
+        vocabularyId,
+        vocabularies
+          .filter((vocabulary) => vocabulary.id !== vocabularyId)
+          .sort(() => Math.random() - 0.5)
+          .slice(0, count),
+      ]),
+    );
+  }
+
   async getTopicById(topicId: number) {
     return this.prisma.topic.findFirst({
       where: {

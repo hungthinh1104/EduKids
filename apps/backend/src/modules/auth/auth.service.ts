@@ -20,6 +20,7 @@ import { ProfileActionResultDto } from "../child-profile/child-profile.dto";
 import { AuthRateLimitService } from "./services/auth-rate-limit.service";
 import { AuthTokenService } from "./services/auth-token.service";
 import { AuthPasswordService } from "./services/auth-password.service";
+import { RedisAnalyticsService } from "../admin-analytics/service/redis-analytics.service";
 
 @Injectable()
 export class AuthService {
@@ -29,6 +30,7 @@ export class AuthService {
     private authRateLimitService: AuthRateLimitService,
     private authTokenService: AuthTokenService,
     private authPasswordService: AuthPasswordService,
+    private redisAnalytics: RedisAnalyticsService,
   ) {}
 
   /**
@@ -124,6 +126,16 @@ export class AuthService {
 
     const user = await this.prisma.user.findUnique({
       where: { email: dto.email },
+      select: {
+        id: true,
+        email: true,
+        passwordHash: true,
+        role: true,
+        isActive: true,
+        firstName: true,
+        lastName: true,
+        createdAt: true,
+      },
     });
 
     if (!user) {
@@ -179,6 +191,8 @@ export class AuthService {
         details: `User logged in (ID: ${user.id})`,
       },
     });
+
+    void this.redisAnalytics.trackSessionStart(String(user.id), tokens.accessToken).catch(() => {});
 
     return {
       accessToken: tokens.accessToken,
@@ -238,6 +252,8 @@ export class AuthService {
         details: "User logged out",
       },
     });
+
+    void this.redisAnalytics.trackSessionEnd(token).catch(() => {});
 
     return { message: "Logged out successfully" };
   }
@@ -399,32 +415,24 @@ export class AuthService {
     const lastName = nameParts.slice(1).join(" ") || null;
 
     // Tìm user theo email
-    let user = await this.prisma.user.findUnique({
+    const user = await this.prisma.user.upsert({
       where: { email },
+      update: {
+        firstName: firstName ?? undefined,
+        lastName: lastName ?? undefined,
+      },
+      create: {
+        email,
+        passwordHash: "__GOOGLE_OAUTH__",
+        firstName,
+        lastName,
+        role: "PARENT",
+        isActive: true,
+        isEmailVerified: true,
+      },
     });
 
-    if (!user) {
-      // Tạo user mới với role PARENT, không có password (OAuth user)
-      user = await this.prisma.user.create({
-        data: {
-          email,
-          passwordHash: "__GOOGLE_OAUTH__",
-          firstName,
-          lastName,
-          role: "PARENT",
-          isActive: true,
-          isEmailVerified: true,
-        },
-      });
-
-      await this.prisma.auditLog.create({
-        data: {
-          userId: user.id,
-          action: "USER_REGISTERED",
-          details: `User registered via Google OAuth (ID: ${user.id})`,
-        },
-      });
-    } else if (!user.isActive) {
+    if (!user.isActive) {
       throw new ForbiddenException("Account is disabled");
     }
 
@@ -448,6 +456,8 @@ export class AuthService {
       },
     });
 
+    void this.redisAnalytics.trackSessionStart(String(user.id), tokens.accessToken).catch(() => {});
+
     return {
       accessToken: tokens.accessToken,
       refreshToken: tokens.refreshToken,
@@ -458,16 +468,12 @@ export class AuthService {
         firstName: user.firstName,
         lastName: user.lastName,
         isActive: user.isActive,
-        isEmailVerified: true, // Google đã verify email
+        isEmailVerified: true,
         createdAt: user.createdAt,
       },
     };
   }
 
-  /**
-   * OAuth placeholder (Facebook)
-   * TODO: Implement Facebook OAuth flow
-   */
   async loginWithOAuth(_provider: "facebook", _code: string) {
     throw new BadRequestException("Facebook OAuth not implemented yet");
   }

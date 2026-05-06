@@ -47,6 +47,7 @@ export class QuizSessionService {
   private readonly SESSION_TTL_MS = 60 * 60 * 1000;
   private readonly SESSION_STALE_GRACE_MS = 5 * 60 * 1000;
   private readonly inFlightAnswerLocks = new Set<string>();
+  private readonly inFlightRewardLocks = new Set<string>();
 
   constructor(@Inject(CACHE_MANAGER) private readonly cacheManager: Cache) {}
 
@@ -84,6 +85,19 @@ export class QuizSessionService {
   releaseAnswerLock(quizSessionId: string, questionId: number): void {
     const key = `${quizSessionId}:${questionId}`;
     this.inFlightAnswerLocks.delete(key);
+  }
+
+  acquireRewardGrantLock(quizSessionId: string): boolean {
+    if (this.inFlightRewardLocks.has(quizSessionId)) {
+      return false;
+    }
+
+    this.inFlightRewardLocks.add(quizSessionId);
+    return true;
+  }
+
+  releaseRewardGrantLock(quizSessionId: string): void {
+    this.inFlightRewardLocks.delete(quizSessionId);
   }
 
   assertOwnership(session: QuizSessionState, childId: number): void {

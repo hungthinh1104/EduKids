@@ -8,12 +8,14 @@ import { QuizSessionService } from "./services/quiz-session.service";
 import { QuizScoringService } from "./services/quiz-scoring.service";
 import { QuizQuestionService } from "./services/quiz-question.service";
 import { QuizEventPublisherService } from "./services/quiz-event-publisher.service";
+import { GamificationModule } from "../gamification/gamification.module";
 
 @Module({
   imports: [
+    GamificationModule,
     CacheModule.register({
-      ttl: 3600000, // 1 hour in milliseconds
-      max: 200, // Max 200 quiz sessions in cache
+      ttl: 3600000,
+      max: 200,
     }),
   ],
   controllers: [QuizController],

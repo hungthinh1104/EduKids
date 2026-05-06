@@ -13,6 +13,7 @@ describe("ReportController", () => {
   let controller: ReportController;
 
   const reportServiceMock = {
+    assertChildOwnership: jest.fn() as jest.Mock,
     generateReport: jest.fn() as jest.Mock,
     sendReport: jest.fn() as jest.Mock,
     subscribeToReports: jest.fn() as jest.Mock,
@@ -47,17 +48,18 @@ describe("ReportController", () => {
   it("generateReport checks ownership then delegates with default range", async () => {
     const dto = { childId: 5 };
     const expected = { id: "r1" };
-    (prismaMock.childProfile.findFirst as any).mockResolvedValue({ id: 5 });
+    (reportServiceMock.assertChildOwnership as any).mockResolvedValue(undefined);
     (reportServiceMock.generateReport as any).mockResolvedValue(expected);
 
     const result = await controller.generateReport(10, dto as any);
 
+    expect(reportServiceMock.assertChildOwnership).toHaveBeenCalledWith(5, 10);
     expect(reportServiceMock.generateReport).toHaveBeenCalledWith(10, 5, ReportRange.WEEK);
     expect(result).toEqual(expected);
   });
 
   it("generateReport throws NotFoundException when child not owned", async () => {
-    (prismaMock.childProfile.findFirst as any).mockResolvedValue(null);
+    (reportServiceMock.assertChildOwnership as any).mockRejectedValue(new NotFoundException());
 
     await expect(controller.generateReport(10, { childId: 9 } as any)).rejects.toThrow(
       NotFoundException,

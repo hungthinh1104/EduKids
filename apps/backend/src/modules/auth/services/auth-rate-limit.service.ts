@@ -99,7 +99,7 @@ export class AuthRateLimitService {
     const attempts = parseInt(attemptsStr as string, 10);
     if (attempts >= MAX_LOGIN_ATTEMPTS) {
       const ttl = await redis.ttl(key);
-      const minutesLeft = Math.ceil(ttl / 60);
+      const minutesLeft = ttl > 0 ? Math.ceil(ttl / 60) : 15;
       throw new ForbiddenException(
         `Account temporarily locked. Try again in ${minutesLeft} minute(s).`,
       );

@@ -21,6 +21,7 @@ import { ChildProfileModule } from "./modules/child-profile/child-profile.module
 import { CmsModule } from "./modules/cms/cms.module";
 import { AdminAnalyticsModule } from "./modules/admin-analytics/admin-analytics.module";
 import { UsersModule } from "./modules/users/users.module";
+import { AvatarCustomizationModule } from "./modules/avatar-customization/avatar-customization.module";
 import { RootController } from "./root.controller";
 import { ConfigModule } from '@nestjs/config';
 @Module({
@@ -57,6 +58,7 @@ import { ConfigModule } from '@nestjs/config';
     CmsModule,
     AdminAnalyticsModule,
     UsersModule,
+    AvatarCustomizationModule,
   ],
   providers: [
     {

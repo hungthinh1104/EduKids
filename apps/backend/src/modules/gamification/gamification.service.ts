@@ -120,10 +120,6 @@ export class GamificationService {
       throw new NotFoundException(`Shop item ${dto.itemId} not found`);
     }
 
-    if (item.isPurchased) {
-      throw new BadRequestException("You already own this item!");
-    }
-
     const purchase = await this.gamificationRepository.purchaseItem(
       childId,
       dto.itemId,

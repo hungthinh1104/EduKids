@@ -106,7 +106,7 @@ export class ChildProfileService {
 
   /**
    * Update child profile details
-   * Allows updating nickname, age, avatarUrl
+   * Allows updating nickname, age, avatar
    * @param childId - Child profile ID
    * @param parentId - Parent user ID
    * @param dto - Updated profile data
@@ -129,12 +129,10 @@ export class ChildProfileService {
     }
 
     // Update profile
-    await this.repository.updateProfile(childId, parentId, dto);
-
-    // Fetch updated profile
-    const updatedProfile = await this.repository.getProfileById(
+    const updatedProfile = await this.repository.updateProfile(
       childId,
       parentId,
+      dto,
     );
     const activeProfile = await this.repository.getActiveProfile(parentId);
 
@@ -142,8 +140,8 @@ export class ChildProfileService {
       success: true,
       message: "Profile updated successfully! ✅",
       profile: this.mapToProfileDto(
-        updatedProfile!,
-        updatedProfile!.id === activeProfile?.id,
+        updatedProfile,
+        updatedProfile.id === activeProfile?.id,
       ),
     };
   }

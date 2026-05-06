@@ -5,6 +5,7 @@ import {
 } from "@nestjs/common";
 import { AvatarRepository } from "../repository/avatar.repository";
 import { AvatarCacheService } from "./avatar-cache.service";
+import { PrismaService } from "../../../prisma/prisma.service";
 import {
   AvatarConfigDto,
   AvatarLayer,
@@ -21,7 +22,21 @@ export class AvatarCustomizationService {
   constructor(
     private avatarRepository: AvatarRepository,
     private cacheService: AvatarCacheService,
+    private prisma: PrismaService,
   ) {}
+
+  private buildPreviewUrl(childId: number): string {
+    const apiBase = (process.env.PUBLIC_API_BASE_URL || 'http://localhost:3001/api').replace(/\/+$/, '');
+    return `${apiBase}/gamification/avatar/preview`;
+  }
+
+  private async syncChildProfileAvatar(childId: number): Promise<void> {
+    const previewUrl = this.buildPreviewUrl(childId);
+    await this.prisma.childProfile.update({
+      where: { id: childId },
+      data: { avatar: previewUrl },
+    }).catch(() => {});
+  }
 
   /**
    * Apply item to avatar
@@ -71,6 +86,9 @@ export class AvatarCustomizationService {
     // Invalidate cache
     await this.cacheService.invalidateCache(childId);
 
+    // Sync avatar URL to ChildProfile so parent dashboard reflects latest avatar
+    void this.syncChildProfileAvatar(childId);
+
     // Log activity for analytics
     await this.avatarRepository.logAvatarActivity(
       childId,
@@ -100,6 +118,7 @@ export class AvatarCustomizationService {
     // Save immediately
     await this.avatarRepository.updateAvatarConfig(childId, configData);
     await this.cacheService.invalidateCache(childId);
+    void this.syncChildProfileAvatar(childId);
 
     // Log activity
     await this.avatarRepository.logAvatarActivity(childId, "item_removed");
@@ -194,6 +213,7 @@ export class AvatarCustomizationService {
   async resetAvatar(childId: number) {
     await this.avatarRepository.resetAvatarToDefault(childId);
     await this.cacheService.invalidateCache(childId);
+    void this.syncChildProfileAvatar(childId);
 
     const defaultConfig = await this.initializeDefaultAvatar(childId);
     await this.avatarRepository.logAvatarActivity(childId, "avatar_changed");
@@ -250,7 +270,7 @@ export class AvatarCustomizationService {
     return {
       childId,
       layers: configData.layers || [],
-      previewUrl: `/avatar/${childId}/preview`,
+      previewUrl: this.buildPreviewUrl(childId),
       updatedAt: new Date().toISOString(),
     };
   }
@@ -269,7 +289,7 @@ export class AvatarCustomizationService {
           assetUrl: buildAvatarLayerAssetUrl(DEFAULT_AVATAR_ITEMS[0]),
         },
       ],
-      previewUrl: `/avatar/${childId}/preview`,
+      previewUrl: this.buildPreviewUrl(childId),
       updatedAt: new Date().toISOString(),
     };
   }

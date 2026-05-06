@@ -40,7 +40,8 @@ export const CLOUDINARY_OPTIONS = {
         quality: 80,
       },
     ],
-    eager_async: true,
+    // eager_async omitted intentionally: synchronous eager ensures thumbnailUrl
+    // is available in the upload response without needing a webhook
   },
   AUDIO: {
     folder: 'edukids/audio',
@@ -69,7 +70,8 @@ export const CLOUDINARY_OPTIONS = {
         start_offset: '1',
       },
     ],
-    eager_async: true,
+    // eager_async omitted intentionally: synchronous eager ensures thumbnailUrl
+    // is available in the upload response without needing a webhook
   },
 };
 
