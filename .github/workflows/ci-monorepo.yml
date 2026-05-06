@@ -74,14 +74,20 @@ jobs:
       - name: Unit tests
         run: npm test
 
+      - name: Build
+        run: npm run build
+        env:
+          NEXT_PUBLIC_API_URL: http://localhost:3001/api
+          NEXT_PUBLIC_WS_URL: ws://localhost:3001
+          NEXT_PUBLIC_BASE_URL: http://localhost:3000
+
       - name: Install Playwright browser
         run: npx playwright install --with-deps chromium
 
       - name: Playwright critical e2e
         run: npm run test:e2e
-
-      - name: Build
-        run: npm run build
+        env:
+          NEXT_PUBLIC_API_URL: http://localhost:3001/api
 
       - name: Security audit (high+)
         run: npm audit --audit-level=high
