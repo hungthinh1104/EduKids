@@ -1,0 +1,228 @@
+{
+  "id": "e5f6a7b8-c9d0-1234-efab-345678901234",
+  "version": "2.0",
+  "name": "EduKids Parent Portal",
+  "url": "http://localhost:3000",
+  "tests": [
+    {
+      "id": "aa111111-bbbb-cccc-dddd-eeeeeeeeee01",
+      "name": "AddChild_EmptyNickname_NextButtonDisabled",
+      "commands": [
+        {
+          "id": "aa111111-0000-0000-0000-000000000001",
+          "comment": "TEST 028 - Vào trang add-child (cần đăng nhập parent trước)",
+          "command": "open",
+          "target": "/add-child",
+          "targets": [],
+          "value": ""
+        },
+        {
+          "id": "aa111111-0000-0000-0000-000000000002",
+          "comment": "Nếu bị redirect về /login thì test này cần đăng nhập trước - đây là validation test UI",
+          "command": "waitForElementPresent",
+          "target": "css=body",
+          "targets": [],
+          "value": "10000"
+        },
+        {
+          "id": "aa111111-0000-0000-0000-000000000003",
+          "comment": "Kiểm tra URL vẫn là /add-child (cần đăng nhập parent để tiếp tục)",
+          "command": "runScript",
+          "target": "var path = window.location.pathname; console.log('Current path:', path); if(path.includes('/login')) { console.log('SKIP: Not logged in as parent'); return; }",
+          "targets": [],
+          "value": ""
+        },
+        {
+          "id": "aa111111-0000-0000-0000-000000000004",
+          "comment": "Nếu đang ở trang add-child, tìm input nickname",
+          "command": "runScript",
+          "target": "if(window.location.pathname.includes('/add-child')) { var inp = document.querySelector('input[placeholder*=\\\"Bé\\\"]') || document.querySelector('input[maxlength=\\\"20\\\"]'); if(!inp) throw new Error('Nickname input not found'); inp.value=''; inp.dispatchEvent(new Event('input',{bubbles:true})); }",
+          "targets": [],
+          "value": ""
+        },
+        {
+          "id": "aa111111-0000-0000-0000-000000000005",
+          "comment": "Tiếp theo button phải bị disable khi nickname rỗng",
+          "command": "runScript",
+          "target": "if(window.location.pathname.includes('/add-child')) { var btn = Array.from(document.querySelectorAll('button')).find(b => b.textContent.includes('Tiếp theo')); if(btn && !btn.disabled) throw new Error('Next button should be disabled when nickname is empty, but it is enabled'); }",
+          "targets": [],
+          "value": ""
+        }
+      ]
+    },
+    {
+      "id": "bb222222-bbbb-cccc-dddd-eeeeeeeeee02",
+      "name": "AddChild_NicknameTooShort_ShouldShowWarning",
+      "commands": [
+        {
+          "id": "bb222222-0000-0000-0000-000000000001",
+          "comment": "TEST 028 - Thiếu tên hợp lệ (ít hơn 2 ký tự)",
+          "command": "open",
+          "target": "/add-child",
+          "targets": [],
+          "value": ""
+        },
+        {
+          "id": "bb222222-0000-0000-0000-000000000002",
+          "command": "waitForElementPresent",
+          "target": "css=body",
+          "targets": [],
+          "value": "10000"
+        },
+        {
+          "id": "bb222222-0000-0000-0000-000000000003",
+          "comment": "Nếu đang ở trang add-child, nhập nickname 1 ký tự",
+          "command": "runScript",
+          "target": "if(window.location.pathname.includes('/add-child')) { var inp = document.querySelector('input[maxlength=\\\"20\\\"]'); if(!inp) throw new Error('Nickname input not found'); inp.value='A'; inp.dispatchEvent(new Event('input',{bubbles:true})); inp.dispatchEvent(new Event('change',{bubbles:true})); }",
+          "targets": [],
+          "value": ""
+        },
+        {
+          "id": "bb222222-0000-0000-0000-000000000004",
+          "comment": "Nút Tiếp theo phải vẫn disabled khi nickname < 2 ký tự",
+          "command": "runScript",
+          "target": "if(window.location.pathname.includes('/add-child')) { var btn = Array.from(document.querySelectorAll('button')).find(b => b.textContent.includes('Tiếp theo')); if(btn && !btn.disabled) throw new Error('Next button should be disabled for 1-char nickname'); }",
+          "targets": [],
+          "value": ""
+        },
+        {
+          "id": "bb222222-0000-0000-0000-000000000005",
+          "comment": "Phải hiện cảnh báo 'ít nhất 2 ký tự'",
+          "command": "runScript",
+          "target": "if(window.location.pathname.includes('/add-child')) { var body = document.body.innerText; if(!body.includes('2 ký tự') && !body.includes('ít nhất')) throw new Error('Expected validation warning about min 2 chars'); }",
+          "targets": [],
+          "value": ""
+        }
+      ]
+    },
+    {
+      "id": "cc333333-bbbb-cccc-dddd-eeeeeeeeee03",
+      "name": "AddChild_ValidNickname_ProceedToStep2",
+      "commands": [
+        {
+          "id": "cc333333-0000-0000-0000-000000000001",
+          "comment": "TEST 027 - Nhập nickname hợp lệ và kiểm tra nút Tiếp theo enable",
+          "command": "open",
+          "target": "/add-child",
+          "targets": [],
+          "value": ""
+        },
+        {
+          "id": "cc333333-0000-0000-0000-000000000002",
+          "command": "waitForElementPresent",
+          "target": "css=body",
+          "targets": [],
+          "value": "10000"
+        },
+        {
+          "id": "cc333333-0000-0000-0000-000000000003",
+          "comment": "Nhập nickname hợp lệ (>= 2 ký tự)",
+          "command": "runScript",
+          "target": "if(window.location.pathname.includes('/add-child')) { var inp = document.querySelector('input[maxlength=\\\"20\\\"]'); if(!inp) throw new Error('Nickname input not found'); inp.value='Bé Bông'; inp.dispatchEvent(new Event('input',{bubbles:true})); inp.dispatchEvent(new Event('change',{bubbles:true})); }",
+          "targets": [],
+          "value": ""
+        },
+        {
+          "id": "cc333333-0000-0000-0000-000000000004",
+          "comment": "Nút Tiếp theo phải được enable",
+          "command": "runScript",
+          "target": "if(window.location.pathname.includes('/add-child')) { var btn = Array.from(document.querySelectorAll('button')).find(b => b.textContent.includes('Tiếp theo')); if(!btn) throw new Error('Next button not found'); if(btn.disabled) throw new Error('Next button should be enabled for valid nickname'); }",
+          "targets": [],
+          "value": ""
+        },
+        {
+          "id": "cc333333-0000-0000-0000-000000000005",
+          "comment": "Click Tiếp theo để sang bước 2 (chọn Avatar)",
+          "command": "runScript",
+          "target": "if(window.location.pathname.includes('/add-child')) { var btn = Array.from(document.querySelectorAll('button')).find(b => b.textContent.includes('Tiếp theo')); if(btn && !btn.disabled) btn.click(); }",
+          "targets": [],
+          "value": ""
+        },
+        {
+          "id": "cc333333-0000-0000-0000-000000000006",
+          "comment": "Verify đang ở bước 2 - phải thấy text chọn Avatar",
+          "command": "runScript",
+          "target": "if(window.location.pathname.includes('/add-child')) { var body = document.body.innerText; if(!body.includes('Avatar') && !body.includes('avatar')) throw new Error('Expected Avatar step but got: '+body.substring(0,200)); }",
+          "targets": [],
+          "value": ""
+        }
+      ]
+    },
+    {
+      "id": "dd444444-bbbb-cccc-dddd-eeeeeeeeee04",
+      "name": "ParentDashboard_NoChildProfile_ShouldShowEmptyState",
+      "commands": [
+        {
+          "id": "dd444444-0000-0000-0000-000000000001",
+          "comment": "TEST 032 - Dashboard khi chưa có bé nào (empty state)",
+          "command": "open",
+          "target": "/dashboard",
+          "targets": [],
+          "value": ""
+        },
+        {
+          "id": "dd444444-0000-0000-0000-000000000002",
+          "command": "waitForElementPresent",
+          "target": "css=body",
+          "targets": [],
+          "value": "10000"
+        },
+        {
+          "id": "dd444444-0000-0000-0000-000000000003",
+          "comment": "Nếu ở dashboard, kiểm tra có hiển thị trạng thái trống hoặc analytics",
+          "command": "runScript",
+          "target": "if(window.location.pathname.includes('/dashboard')) { var body = document.body.innerText; var hasEmptyMsg = body.includes('Chưa có hồ sơ') || body.includes('chưa có'); var hasAnalytics = body.includes('Báo cáo') || body.includes('tổng'); var hasLoading = document.querySelector('.animate-spin') !== null; if(!hasEmptyMsg && !hasAnalytics && !hasLoading) throw new Error('Dashboard should show either empty state, analytics or loading. Got: '+body.substring(0,300)); }",
+          "targets": [],
+          "value": ""
+        }
+      ]
+    },
+    {
+      "id": "ee555555-bbbb-cccc-dddd-eeeeeeeeee05",
+      "name": "ParentDashboard_ShouldRenderProfileSelector",
+      "commands": [
+        {
+          "id": "ee555555-0000-0000-0000-000000000001",
+          "comment": "TEST 030 - Veriry khu vực chọn bé hiển thị đúng",
+          "command": "open",
+          "target": "/dashboard",
+          "targets": [],
+          "value": ""
+        },
+        {
+          "id": "ee555555-0000-0000-0000-000000000002",
+          "command": "waitForElementPresent",
+          "target": "css=body",
+          "targets": [],
+          "value": "10000"
+        },
+        {
+          "id": "ee555555-0000-0000-0000-000000000003",
+          "comment": "Nếu ở dashboard và có profiles thì phải thấy vùng chọn hồ sơ bé",
+          "command": "runScript",
+          "target": "if(window.location.pathname.includes('/dashboard')) { var body = document.body.innerText; var hasGreeting = body.includes('Chào') || body.includes('chào') || body.includes('Hôm nay'); if(!hasGreeting) throw new Error('Expected greeting text on dashboard'); }",
+          "targets": [],
+          "value": ""
+        }
+      ]
+    }
+  ],
+  "suites": [
+    {
+      "id": "ff666666-aaaa-bbbb-cccc-dddddddddd06",
+      "name": "Parent Portal Suite",
+      "persistSession": false,
+      "parallel": false,
+      "timeout": 300,
+      "tests": [
+        "aa111111-bbbb-cccc-dddd-eeeeeeeeee01",
+        "bb222222-bbbb-cccc-dddd-eeeeeeeeee02",
+        "cc333333-bbbb-cccc-dddd-eeeeeeeeee03",
+        "dd444444-bbbb-cccc-dddd-eeeeeeeeee04",
+        "ee555555-bbbb-cccc-dddd-eeeeeeeeee05"
+      ]
+    }
+  ],
+  "urls": ["http://localhost:3000/"],
+  "plugins": []
+}

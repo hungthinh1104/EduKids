@@ -1,0 +1,89 @@
+{
+  "id": "f03814db-1fc2-43e7-8f7b-3d6f04bf5c9c",
+  "version": "2.0",
+  "name": "EduKids Public and Guard",
+  "url": "http://localhost:3000",
+  "tests": [
+    {
+      "id": "4a664938-95bd-499f-af72-2f4f0d670442",
+      "name": "Landing_LoginCTA_ShouldNavigate",
+      "commands": [
+        { "id": "aef83976-3f9b-48fa-92f5-80f3f6a657ef", "comment": "", "command": "open", "target": "/", "targets": [], "value": "" },
+        { "id": "b8d8f95a-c85d-4f22-a6ef-3555f2f7d88c", "comment": "", "command": "waitForElementVisible", "target": "css=a[href='/login']", "targets": [], "value": "10000" },
+        { "id": "a7d7028c-9641-4ab4-b047-4d612ea9f8ef", "comment": "", "command": "click", "target": "css=a[href='/login']", "targets": [["css=a[href='/login']", "css:finder"]], "value": "" },
+        { "id": "8c98f9e9-22d5-4446-9b1f-289d7eeb7d57", "comment": "", "command": "runScript", "target": "if(!window.location.pathname.includes('/login')) throw new Error('Expected /login, got '+window.location.href);", "targets": [], "value": "" }
+      ]
+    },
+    {
+      "id": "27630a51-ef96-4527-ab82-98418d233686",
+      "name": "Landing_RegisterCTA_ShouldNavigate",
+      "commands": [
+        { "id": "045d5b30-cfe5-4fc6-b9ab-03f0df89bd17", "comment": "", "command": "open", "target": "/", "targets": [], "value": "" },
+        { "id": "6f26d4de-8917-4ba7-b405-dab92766b669", "comment": "", "command": "waitForElementVisible", "target": "css=a[href='/register']", "targets": [], "value": "10000" },
+        { "id": "c6c703f8-5a0d-4eff-882f-08446ef5d900", "comment": "", "command": "click", "target": "css=a[href='/register']", "targets": [["css=a[href='/register']", "css:finder"]], "value": "" },
+        { "id": "66395f38-d91c-4bda-b2a8-633c66d53a12", "comment": "", "command": "runScript", "target": "if(!window.location.pathname.includes('/register')) throw new Error('Expected /register, got '+window.location.href);", "targets": [], "value": "" }
+      ]
+    },
+    {
+      "id": "f8aef3f8-3f8d-4f50-a2c8-f843fdf5dd95",
+      "name": "Public_ContactPage_ShouldLoad",
+      "commands": [
+        { "id": "04eb8f7a-68a6-4777-a40d-bd8cb4f64cde", "comment": "", "command": "open", "target": "/contact", "targets": [], "value": "" },
+        { "id": "f1d367fa-cb92-4a57-bec5-50017f5f8ad3", "comment": "", "command": "waitForElementPresent", "target": "css=body", "targets": [], "value": "10000" },
+        { "id": "9447f58d-ae98-4a0f-8577-5ccf7ad6210d", "comment": "", "command": "runScript", "target": "if(!window.location.pathname.includes('/contact')) throw new Error('Expected /contact, got '+window.location.href);", "targets": [], "value": "" }
+      ]
+    },
+    {
+      "id": "2b0054f2-52a1-4e5d-b8c8-85ba6ff6cb6b",
+      "name": "Guard_Dashboard_Unauth_ShouldRedirectLogin",
+      "commands": [
+        { "id": "4b9c6b89-fdf6-4628-b850-7c75932dc06b", "comment": "", "command": "open", "target": "/", "targets": [], "value": "" },
+        { "id": "b5639d8b-ff95-4b6b-bf2d-c7674485f7a3", "comment": "", "command": "runScript", "target": "document.cookie.split(';').forEach(function(c){document.cookie=c.replace(/^ +/,'').replace(/=.*/, '=;expires='+new Date(0).toUTCString()+';path=/');}); localStorage.clear(); sessionStorage.clear();", "targets": [], "value": "" },
+        { "id": "953f949f-8f8e-43a8-8e17-73f2fe9a01bc", "comment": "", "command": "open", "target": "/dashboard", "targets": [], "value": "" },
+        { "id": "8d6e84fc-d179-4779-bb47-d734307d1746", "comment": "", "command": "waitForElementPresent", "target": "css=body", "targets": [], "value": "10000" },
+        { "id": "8fce7f0d-9f5b-4153-984f-24ec7701a39d", "comment": "", "command": "runScript", "target": "if(!window.location.pathname.includes('/login')) throw new Error('Expected /login redirect, got '+window.location.href);", "targets": [], "value": "" }
+      ]
+    },
+    {
+      "id": "b5509dbb-48f7-40b4-bdbe-94d77860132d",
+      "name": "Guard_Admin_Unauth_ShouldRedirectLogin",
+      "commands": [
+        { "id": "ff055aa4-9759-40cb-bf44-6f181f4d2a79", "comment": "", "command": "open", "target": "/", "targets": [], "value": "" },
+        { "id": "3f303f49-cf3a-4f44-b490-fcd173c279fd", "comment": "", "command": "runScript", "target": "document.cookie.split(';').forEach(function(c){document.cookie=c.replace(/^ +/,'').replace(/=.*/, '=;expires='+new Date(0).toUTCString()+';path=/');}); localStorage.clear(); sessionStorage.clear();", "targets": [], "value": "" },
+        { "id": "2a3461ab-aa0a-482a-a477-15bb0de0d06d", "comment": "", "command": "open", "target": "/admin", "targets": [], "value": "" },
+        { "id": "54da9947-1684-4429-b8ff-fd3ea5266bab", "comment": "", "command": "waitForElementPresent", "target": "css=body", "targets": [], "value": "10000" },
+        { "id": "711fca2c-4881-4d8e-a34d-a4f1fcf69b88", "comment": "", "command": "runScript", "target": "if(!window.location.pathname.includes('/login')) throw new Error('Expected /login redirect, got '+window.location.href);", "targets": [], "value": "" }
+      ]
+    },
+    {
+      "id": "4452a67d-c4c6-4429-85bc-b8e2c3f07e8b",
+      "name": "Guard_Play_Unauth_ShouldRedirectLogin",
+      "commands": [
+        { "id": "3de82b9b-e4d6-466e-9a03-18f62f7f0de4", "comment": "", "command": "open", "target": "/", "targets": [], "value": "" },
+        { "id": "46dc2e13-2f0e-42e0-8f68-6f4f4fd09ef1", "comment": "", "command": "runScript", "target": "document.cookie.split(';').forEach(function(c){document.cookie=c.replace(/^ +/,'').replace(/=.*/, '=;expires='+new Date(0).toUTCString()+';path=/');}); localStorage.clear(); sessionStorage.clear();", "targets": [], "value": "" },
+        { "id": "be42a3ef-0b26-4f57-a455-afdbfe82c845", "comment": "", "command": "open", "target": "/play", "targets": [], "value": "" },
+        { "id": "b4f8f022-b747-4b83-8094-9ab252d85165", "comment": "", "command": "waitForElementPresent", "target": "css=body", "targets": [], "value": "10000" },
+        { "id": "e85e6fae-8232-4a87-ae6d-c4a8f4ff4027", "comment": "", "command": "runScript", "target": "if(!window.location.pathname.includes('/login')) throw new Error('Expected /login redirect, got '+window.location.href);", "targets": [], "value": "" }
+      ]
+    }
+  ],
+  "suites": [
+    {
+      "id": "8f3d71ee-44ff-4ac9-9578-f8f5fef72526",
+      "name": "Public and Guard Suite",
+      "persistSession": false,
+      "parallel": false,
+      "timeout": 300,
+      "tests": [
+        "4a664938-95bd-499f-af72-2f4f0d670442",
+        "27630a51-ef96-4527-ab82-98418d233686",
+        "f8aef3f8-3f8d-4f50-a2c8-f843fdf5dd95",
+        "2b0054f2-52a1-4e5d-b8c8-85ba6ff6cb6b",
+        "b5509dbb-48f7-40b4-bdbe-94d77860132d",
+        "4452a67d-c4c6-4429-85bc-b8e2c3f07e8b"
+      ]
+    }
+  ],
+  "urls": ["http://localhost:3000/"],
+  "plugins": []
+}

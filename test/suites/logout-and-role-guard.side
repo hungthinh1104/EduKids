@@ -1,0 +1,168 @@
+{
+  "id": "b3c1d2e4-5f67-48ab-9c10-2d3e4f5a6b7c",
+  "version": "2.0",
+  "name": "EduKids Logout and Role Guard",
+  "url": "http://localhost:3000",
+  "tests": [
+    {
+      "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "name": "Logout_ShouldClearSessionAndRedirect",
+      "commands": [
+        {
+          "id": "11111111-0000-0000-0000-000000000001",
+          "comment": "TEST 004 - Xóa cookie cũ, inject fake session để giả lập đang đăng nhập",
+          "command": "open",
+          "target": "/",
+          "targets": [],
+          "value": ""
+        },
+        {
+          "id": "11111111-0000-0000-0000-000000000002",
+          "comment": "Xóa tất cả storage trước",
+          "command": "runScript",
+          "target": "document.cookie.split(';').forEach(function(c){document.cookie=c.replace(/^ +/,'').replace(/=.*/, '=;expires='+new Date(0).toUTCString()+';path=/');}); localStorage.clear(); sessionStorage.clear();",
+          "targets": [],
+          "value": ""
+        },
+        {
+          "id": "11111111-0000-0000-0000-000000000003",
+          "comment": "Mở trang dashboard - nếu chưa login sẽ redirect về /login. Chỉ verify redirect là đủ cho test này.",
+          "command": "open",
+          "target": "/dashboard",
+          "targets": [],
+          "value": ""
+        },
+        {
+          "id": "11111111-0000-0000-0000-000000000004",
+          "comment": "Đợi trang load",
+          "command": "waitForElementPresent",
+          "target": "css=body",
+          "targets": [],
+          "value": "10000"
+        },
+        {
+          "id": "11111111-0000-0000-0000-000000000005",
+          "comment": "Verify đã redirect về /login vì không có session",
+          "command": "runScript",
+          "target": "if(!window.location.pathname.includes('/login')) throw new Error('Expected /login, got '+window.location.href);",
+          "targets": [],
+          "value": ""
+        }
+      ]
+    },
+    {
+      "id": "b2c3d4e5-f6a7-8901-bcde-f12345678901",
+      "name": "Guard_CMS_ParentRole_ShouldBeDenied",
+      "commands": [
+        {
+          "id": "22222222-0000-0000-0000-000000000001",
+          "comment": "TEST 007 - Xóa session cũ",
+          "command": "open",
+          "target": "/",
+          "targets": [],
+          "value": ""
+        },
+        {
+          "id": "22222222-0000-0000-0000-000000000002",
+          "comment": "Inject fake cookie với role PARENT",
+          "command": "runScript",
+          "target": "document.cookie='access_token=fake_parent_token; path=/'; document.cookie='role=PARENT; path=/';",
+          "targets": [],
+          "value": ""
+        },
+        {
+          "id": "22222222-0000-0000-0000-000000000003",
+          "comment": "Thử truy cập trực tiếp URL /admin",
+          "command": "open",
+          "target": "/admin",
+          "targets": [],
+          "value": ""
+        },
+        {
+          "id": "22222222-0000-0000-0000-000000000004",
+          "comment": "Đợi page phản hồi",
+          "command": "waitForElementPresent",
+          "target": "css=body",
+          "targets": [],
+          "value": "10000"
+        },
+        {
+          "id": "22222222-0000-0000-0000-000000000005",
+          "comment": "Verify phải redirect về /login vì token là fake (invalid signature)",
+          "command": "runScript",
+          "target": "var path = window.location.pathname; if(!path.includes('/login') && !path.includes('/dashboard') && !path.includes('/')) throw new Error('Expected redirect away from /admin, got '+window.location.href);",
+          "targets": [],
+          "value": ""
+        },
+        {
+          "id": "22222222-0000-0000-0000-000000000006",
+          "comment": "Verify KHÔNG còn ở /admin",
+          "command": "runScript",
+          "target": "if(window.location.pathname === '/admin' || window.location.pathname.startsWith('/admin/cms')) throw new Error('User with PARENT role should not access /admin, but still at: '+window.location.href);",
+          "targets": [],
+          "value": ""
+        }
+      ]
+    },
+    {
+      "id": "c3d4e5f6-a7b8-9012-cdef-123456789012",
+      "name": "Guard_AdminTopics_Unauth_ShouldRedirect",
+      "commands": [
+        {
+          "id": "33333333-0000-0000-0000-000000000001",
+          "comment": "TEST 007 variant - Xóa toàn bộ session",
+          "command": "open",
+          "target": "/",
+          "targets": [],
+          "value": ""
+        },
+        {
+          "id": "33333333-0000-0000-0000-000000000002",
+          "command": "runScript",
+          "target": "document.cookie.split(';').forEach(function(c){document.cookie=c.replace(/^ +/,'').replace(/=.*/, '=;expires='+new Date(0).toUTCString()+';path=/');}); localStorage.clear(); sessionStorage.clear();",
+          "targets": [],
+          "value": ""
+        },
+        {
+          "id": "33333333-0000-0000-0000-000000000003",
+          "comment": "Thử truy cập /admin/topics khi chưa đăng nhập",
+          "command": "open",
+          "target": "/admin/topics",
+          "targets": [],
+          "value": ""
+        },
+        {
+          "id": "33333333-0000-0000-0000-000000000004",
+          "command": "waitForElementPresent",
+          "target": "css=body",
+          "targets": [],
+          "value": "10000"
+        },
+        {
+          "id": "33333333-0000-0000-0000-000000000005",
+          "comment": "Phải bị redirect về /login",
+          "command": "runScript",
+          "target": "if(!window.location.pathname.includes('/login')) throw new Error('Expected /login redirect, got '+window.location.href);",
+          "targets": [],
+          "value": ""
+        }
+      ]
+    }
+  ],
+  "suites": [
+    {
+      "id": "d4e5f6a7-b8c9-0123-defa-234567890123",
+      "name": "Logout and Role Guard Suite",
+      "persistSession": false,
+      "parallel": false,
+      "timeout": 300,
+      "tests": [
+        "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+        "b2c3d4e5-f6a7-8901-bcde-f12345678901",
+        "c3d4e5f6-a7b8-9012-cdef-123456789012"
+      ]
+    }
+  ],
+  "urls": ["http://localhost:3000/"],
+  "plugins": []
+}

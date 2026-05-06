@@ -1,0 +1,323 @@
+{
+  "id": "fc1a2b3c-4d5e-6f78-90ab-cdef12345678",
+  "version": "2.0",
+  "name": "EduKids Learning and Gamification",
+  "url": "http://localhost:3000",
+  "tests": [
+    {
+      "id": "learn0001-aaaa-bbbb-cccc-dddddddddd01",
+      "name": "Play_Unauth_ShouldRedirectToLogin",
+      "commands": [
+        {
+          "id": "learn1111-0000-0000-0000-000000000001",
+          "comment": "TEST 009 - Trang /play khi chưa đăng nhập phải redirect",
+          "command": "open",
+          "target": "/",
+          "targets": [],
+          "value": ""
+        },
+        {
+          "id": "learn1111-0000-0000-0000-000000000002",
+          "command": "runScript",
+          "target": "document.cookie.split(';').forEach(function(c){document.cookie=c.replace(/^ +/,'').replace(/=.*/, '=;expires='+new Date(0).toUTCString()+';path=/');}); localStorage.clear(); sessionStorage.clear();",
+          "targets": [],
+          "value": ""
+        },
+        {
+          "id": "learn1111-0000-0000-0000-000000000003",
+          "command": "open",
+          "target": "/play",
+          "targets": [],
+          "value": ""
+        },
+        {
+          "id": "learn1111-0000-0000-0000-000000000004",
+          "command": "waitForElementPresent",
+          "target": "css=body",
+          "targets": [],
+          "value": "10000"
+        },
+        {
+          "id": "learn1111-0000-0000-0000-000000000005",
+          "comment": "Phải bị redirect về /login",
+          "command": "runScript",
+          "target": "if(!window.location.pathname.includes('/login')) throw new Error('Expected /login redirect for unauthenticated /play, got '+window.location.href);",
+          "targets": [],
+          "value": ""
+        }
+      ]
+    },
+    {
+      "id": "learn0002-aaaa-bbbb-cccc-dddddddddd02",
+      "name": "Play_Topic_Unauth_ShouldRedirectToLogin",
+      "commands": [
+        {
+          "id": "learn2222-0000-0000-0000-000000000001",
+          "comment": "TEST 009 - Trang topic play khi chưa đăng nhập",
+          "command": "open",
+          "target": "/",
+          "targets": [],
+          "value": ""
+        },
+        {
+          "id": "learn2222-0000-0000-0000-000000000002",
+          "command": "runScript",
+          "target": "document.cookie.split(';').forEach(function(c){document.cookie=c.replace(/^ +/,'').replace(/=.*/, '=;expires='+new Date(0).toUTCString()+';path=/');}); localStorage.clear(); sessionStorage.clear();",
+          "targets": [],
+          "value": ""
+        },
+        {
+          "id": "learn2222-0000-0000-0000-000000000003",
+          "command": "open",
+          "target": "/play/topic/1",
+          "targets": [],
+          "value": ""
+        },
+        {
+          "id": "learn2222-0000-0000-0000-000000000004",
+          "command": "waitForElementPresent",
+          "target": "css=body",
+          "targets": [],
+          "value": "10000"
+        },
+        {
+          "id": "learn2222-0000-0000-0000-000000000005",
+          "command": "runScript",
+          "target": "if(!window.location.pathname.includes('/login')) throw new Error('Topic detail should redirect unauthenticated users to /login, got '+window.location.href);",
+          "targets": [],
+          "value": ""
+        }
+      ]
+    },
+    {
+      "id": "learn0003-aaaa-bbbb-cccc-dddddddddd03",
+      "name": "Play_Shop_Unauth_ShouldRedirectToLogin",
+      "commands": [
+        {
+          "id": "learn3333-0000-0000-0000-000000000001",
+          "comment": "TEST 022/023 - Trang shop khi chưa đăng nhập",
+          "command": "open",
+          "target": "/",
+          "targets": [],
+          "value": ""
+        },
+        {
+          "id": "learn3333-0000-0000-0000-000000000002",
+          "command": "runScript",
+          "target": "document.cookie.split(';').forEach(function(c){document.cookie=c.replace(/^ +/,'').replace(/=.*/, '=;expires='+new Date(0).toUTCString()+';path=/');}); localStorage.clear(); sessionStorage.clear();",
+          "targets": [],
+          "value": ""
+        },
+        {
+          "id": "learn3333-0000-0000-0000-000000000003",
+          "command": "open",
+          "target": "/play/shop",
+          "targets": [],
+          "value": ""
+        },
+        {
+          "id": "learn3333-0000-0000-0000-000000000004",
+          "command": "waitForElementPresent",
+          "target": "css=body",
+          "targets": [],
+          "value": "10000"
+        },
+        {
+          "id": "learn3333-0000-0000-0000-000000000005",
+          "command": "runScript",
+          "target": "if(!window.location.pathname.includes('/login')) throw new Error('Shop should redirect unauthenticated users to /login, got '+window.location.href);",
+          "targets": [],
+          "value": ""
+        }
+      ]
+    },
+    {
+      "id": "learn0004-aaaa-bbbb-cccc-dddddddddd04",
+      "name": "Play_Achievements_Unauth_ShouldRedirectToLogin",
+      "commands": [
+        {
+          "id": "learn4444-0000-0000-0000-000000000001",
+          "comment": "TEST 022 variant - Trang achievements khi chưa đăng nhập",
+          "command": "open",
+          "target": "/",
+          "targets": [],
+          "value": ""
+        },
+        {
+          "id": "learn4444-0000-0000-0000-000000000002",
+          "command": "runScript",
+          "target": "document.cookie.split(';').forEach(function(c){document.cookie=c.replace(/^ +/,'').replace(/=.*/, '=;expires='+new Date(0).toUTCString()+';path=/');}); localStorage.clear(); sessionStorage.clear();",
+          "targets": [],
+          "value": ""
+        },
+        {
+          "id": "learn4444-0000-0000-0000-000000000003",
+          "command": "open",
+          "target": "/play/achievements",
+          "targets": [],
+          "value": ""
+        },
+        {
+          "id": "learn4444-0000-0000-0000-000000000004",
+          "command": "waitForElementPresent",
+          "target": "css=body",
+          "targets": [],
+          "value": "10000"
+        },
+        {
+          "id": "learn4444-0000-0000-0000-000000000005",
+          "command": "runScript",
+          "target": "if(!window.location.pathname.includes('/login')) throw new Error('Achievements should redirect unauthenticated users to /login, got '+window.location.href);",
+          "targets": [],
+          "value": ""
+        }
+      ]
+    },
+    {
+      "id": "learn0005-aaaa-bbbb-cccc-dddddddddd05",
+      "name": "Play_Leaderboard_Unauth_ShouldRedirectToLogin",
+      "commands": [
+        {
+          "id": "learn5555-0000-0000-0000-000000000001",
+          "comment": "Leaderboard (gamification) - chưa đăng nhập phải redirect",
+          "command": "open",
+          "target": "/",
+          "targets": [],
+          "value": ""
+        },
+        {
+          "id": "learn5555-0000-0000-0000-000000000002",
+          "command": "runScript",
+          "target": "document.cookie.split(';').forEach(function(c){document.cookie=c.replace(/^ +/,'').replace(/=.*/, '=;expires='+new Date(0).toUTCString()+';path=/');}); localStorage.clear(); sessionStorage.clear();",
+          "targets": [],
+          "value": ""
+        },
+        {
+          "id": "learn5555-0000-0000-0000-000000000003",
+          "command": "open",
+          "target": "/play/leaderboard",
+          "targets": [],
+          "value": ""
+        },
+        {
+          "id": "learn5555-0000-0000-0000-000000000004",
+          "command": "waitForElementPresent",
+          "target": "css=body",
+          "targets": [],
+          "value": "10000"
+        },
+        {
+          "id": "learn5555-0000-0000-0000-000000000005",
+          "command": "runScript",
+          "target": "if(!window.location.pathname.includes('/login')) throw new Error('Leaderboard should redirect unauthenticated users to /login, got '+window.location.href);",
+          "targets": [],
+          "value": ""
+        }
+      ]
+    },
+    {
+      "id": "learn0006-aaaa-bbbb-cccc-dddddddddd06",
+      "name": "Play_Review_Unauth_ShouldRedirectToLogin",
+      "commands": [
+        {
+          "id": "learn6666-0000-0000-0000-000000000001",
+          "comment": "TEST 020/021 - Review/Spaced Repetition page khi chưa đăng nhập",
+          "command": "open",
+          "target": "/",
+          "targets": [],
+          "value": ""
+        },
+        {
+          "id": "learn6666-0000-0000-0000-000000000002",
+          "command": "runScript",
+          "target": "document.cookie.split(';').forEach(function(c){document.cookie=c.replace(/^ +/,'').replace(/=.*/, '=;expires='+new Date(0).toUTCString()+';path=/');}); localStorage.clear(); sessionStorage.clear();",
+          "targets": [],
+          "value": ""
+        },
+        {
+          "id": "learn6666-0000-0000-0000-000000000003",
+          "command": "open",
+          "target": "/play/review",
+          "targets": [],
+          "value": ""
+        },
+        {
+          "id": "learn6666-0000-0000-0000-000000000004",
+          "command": "waitForElementPresent",
+          "target": "css=body",
+          "targets": [],
+          "value": "10000"
+        },
+        {
+          "id": "learn6666-0000-0000-0000-000000000005",
+          "command": "runScript",
+          "target": "if(!window.location.pathname.includes('/login')) throw new Error('Review page should redirect unauthenticated users to /login, got '+window.location.href);",
+          "targets": [],
+          "value": ""
+        }
+      ]
+    },
+    {
+      "id": "learn0007-aaaa-bbbb-cccc-dddddddddd07",
+      "name": "Play_Pronunciation_Unauth_ShouldRedirectToLogin",
+      "commands": [
+        {
+          "id": "learn7777-0000-0000-0000-000000000001",
+          "comment": "TEST 014/015 - Pronunciation page khi chưa đăng nhập",
+          "command": "open",
+          "target": "/",
+          "targets": [],
+          "value": ""
+        },
+        {
+          "id": "learn7777-0000-0000-0000-000000000002",
+          "command": "runScript",
+          "target": "document.cookie.split(';').forEach(function(c){document.cookie=c.replace(/^ +/,'').replace(/=.*/, '=;expires='+new Date(0).toUTCString()+';path=/');}); localStorage.clear(); sessionStorage.clear();",
+          "targets": [],
+          "value": ""
+        },
+        {
+          "id": "learn7777-0000-0000-0000-000000000003",
+          "command": "open",
+          "target": "/play/pronunciation",
+          "targets": [],
+          "value": ""
+        },
+        {
+          "id": "learn7777-0000-0000-0000-000000000004",
+          "command": "waitForElementPresent",
+          "target": "css=body",
+          "targets": [],
+          "value": "10000"
+        },
+        {
+          "id": "learn7777-0000-0000-0000-000000000005",
+          "command": "runScript",
+          "target": "if(!window.location.pathname.includes('/login')) throw new Error('Pronunciation page should redirect unauthenticated users to /login, got '+window.location.href);",
+          "targets": [],
+          "value": ""
+        }
+      ]
+    }
+  ],
+  "suites": [
+    {
+      "id": "learnSuite-aaaa-bbbb-cccc-ddddddddddddd",
+      "name": "Learning and Gamification Suite",
+      "persistSession": false,
+      "parallel": false,
+      "timeout": 300,
+      "tests": [
+        "learn0001-aaaa-bbbb-cccc-dddddddddd01",
+        "learn0002-aaaa-bbbb-cccc-dddddddddd02",
+        "learn0003-aaaa-bbbb-cccc-dddddddddd03",
+        "learn0004-aaaa-bbbb-cccc-dddddddddd04",
+        "learn0005-aaaa-bbbb-cccc-dddddddddd05",
+        "learn0006-aaaa-bbbb-cccc-dddddddddd06",
+        "learn0007-aaaa-bbbb-cccc-dddddddddd07"
+      ]
+    }
+  ],
+  "urls": ["http://localhost:3000/"],
+  "plugins": []
+}

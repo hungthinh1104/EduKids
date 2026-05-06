@@ -2,7 +2,6 @@
 
 ## Tooling note
 - Current repo already has `Playwright` wired (`test:e2e`).
-- Selenium is possible and now scaffolded with `test:ui:selenium` for smoke checks.
 
 ## How many UI tests are needed?
 
@@ -34,22 +33,13 @@ Recommended baseline by phase:
 
 ## Minimum gate for CI right now
 - Run all unit tests
-- Run Selenium smoke suite (3 tests currently scaffolded)
 - Run Playwright critical suite when available
-
-## Selenium suite currently scaffolded
-- [tests/selenium/smoke.ui.test.mjs](tests/selenium/smoke.ui.test.mjs)
-  - Landing smoke
-  - Login smoke
-  - Register smoke
 
 ## Run commands
 - Frontend dev server (separate terminal):
   - `npm run dev`
-- Selenium smoke tests:
-  - `npm run test:ui:selenium`
+- Playwright critical tests:
+  - `npm run test:e2e`
 
 ## Notes
-- Set `UI_BASE_URL` for non-local URL:
-  - `UI_BASE_URL=http://localhost:3000 npm run test:ui:selenium`
 - For stable selectors long-term, add `data-testid` to critical UI controls.

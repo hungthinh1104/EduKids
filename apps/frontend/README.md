@@ -1,241 +1,85 @@
 # EduKids Frontend
 
-Production-grade Next.js frontend with **production-ready design system** optimized for children's learning.
+Next.js frontend for EduKids. This app contains the public marketing pages, auth flows, parent portal, child play flows, and admin screens.
 
-## 📋 Quick Start
+## Current stack
 
-### Install Dependencies
+- Next.js 16
+- React 19
+- TypeScript
+- Tailwind CSS
+- Zustand
+- Axios
+- Vitest + Playwright
+
+## Run locally
 
 ```bash
 cd apps/frontend
 npm install
-```
-
-### Development
-
-```bash
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser.
+Default URL: `http://localhost:3000`
 
-### Build
+## Important scripts
 
 ```bash
+npm run dev
 npm run build
-npm start
+npm run start
+npm run lint
+npm run type-check
+npm run test
+npm run test:e2e
+npm run format
 ```
 
-## 🎨 Design System
+## Environment
 
-### Features
-
-✅ **Production-Grade Typography**
-- Scale: 1.25 ratio (Major Third) - optimized for UI
-- Fonts: Baloo 2 (headings) + Lexend (body)
-- Line Height: 1.65 default (child-friendly)
-- Letter Spacing: 0.02em for readability
-
-✅ **Color Psychology**
-- Blue (trust, focus, learning)
-- Green (growth, achievement, success)
-- Orange (energy, fun, engagement)
-- Purple (creativity, imagination, joy)
-
-✅ **Semantic Tokens**
-- Typography tokens (display, title, heading, body, caption)
-- Color tokens (primary, secondary, accent, semantic)
-- Spacing tokens (8-point grid)
-- Shadow tokens (depth levels)
-- Transition tokens (smooth motion)
-
-✅ **Reusable Components**
-- Display, Title, Heading typography components
-- Body, Caption, Label, Button text components
-- Semantic HTML structure
-- Accessibility-first design
-
-✅ **Accessibility (WCAG 2.1 AA)**
-- Contrast ratio: 4.5:1+ (normal text)
-- Focus indicators: visible blue ring
-- Keyboard navigation: fully supported
-- Screen reader: semantic HTML
-
-### Using the Design System
-
-```typescript
-import { Display, Title, Heading, Body, Caption } from '@/shared/components/Typography'
-import { semanticColors } from '@/shared/utils/design-tokens'
-
-// Typography
-<Display>Hero Title</Display>
-<Title>Page Title</Title>
-<Heading level={2}>Section Title</Heading>
-<Body>Body text with generous line height</Body>
-<Caption>Helper text, hints, labels</Caption>
-
-// Colors
-<div style={{ color: semanticColors.primary }}>
-  Primary color
-</div>
-
-// Tailwind utilities
-<div className="text-display font-heading text-blue-600">
-  Hero text
-</div>
-```
-
-### Design System Documentation
-
-See [DESIGN-SYSTEM.md](./DESIGN-SYSTEM.md) for:
-- Complete typography scale
-- Color palette with psychology
-- Spacing and grid system
-- Component best practices
-- Accessibility guidelines
-- Implementation checklist
-
-## 📁 Project Structure
-
-```
-src/
-├── app/                      # Next.js app directory
-│   ├── layout.tsx           # Root layout with font loading
-│   ├── page.tsx             # Home page example
-│   └── globals.css          # Global styles + design tokens
-│
-├── features/                # Feature modules
-│   ├── auth/                # Authentication
-│   ├── dashboard/           # Learning dashboard
-│   ├── gamification/        # Badges, rewards, levels
-│   ├── learning/            # Learning features
-│   └── profile/             # User profiles
-│
-└── shared/                  # Shared code
-    ├── components/          # Reusable components
-    │   └── Typography.tsx   # Typography component system
-    ├── hooks/               # Custom React hooks
-    ├── services/            # API services
-    └── utils/               # Utility functions
-        └── design-tokens.ts # Design system tokens
-```
-
-## 🔧 Configuration Files
-
-- **tailwind.config.ts** - Tailwind CSS configuration with design tokens
-- **next.config.ts** - Next.js configuration with optimization
-- **postcss.config.mjs** - PostCSS configuration
-- **tsconfig.json** - TypeScript configuration
-- **package.json** - Dependencies and scripts
-
-## 📦 Dependencies
-
-### Core
-- **next**: ^14.1.0 - React framework
-- **react**: ^18.2.0 - UI library
-- **react-dom**: ^18.2.0 - DOM rendering
-
-### UI & Styling
-- **tailwindcss**: ^3.4.1 - Utility CSS
-- **lucide-react**: ^0.312.0 - Icons
-- **clsx**: ^2.1.0 - Conditional classNames
-- **tailwind-merge**: ^2.2.0 - Merge Tailwind classes
-
-### State Management
-- **zustand**: ^4.5.0 - Lightweight state management
-
-### Utilities
-- **axios**: ^1.6.5 - HTTP client
-- **date-fns**: ^3.2.0 - Date utilities
-- **zod**: ^3.22.4 - Schema validation
-- **next-themes**: ^0.2.1 - Theme switching
-
-### Development
-- **typescript**: ^5.3.3
-- **eslint**: ^8.56.0
-- **prettier**: ^3.2.4
-- **@tailwindcss/eslint-plugin**: Built-in
-
-## 🚀 Scripts
+The app reads:
 
 ```bash
-# Development
-npm run dev              # Start dev server
-npm run build            # Production build
-npm start                # Start production server
-
-# Code Quality
-npm run lint             # ESLint check and fix
-npm run type-check       # TypeScript check
-npm run format           # Prettier format
-
-# Testing
-npm test                 # Jest tests
-npm run test:watch       # Watch mode
-npm run test:e2e         # Playwright E2E tests
-```
-
-## 🌐 Environment Variables
-
-```bash
-# .env.local
 NEXT_PUBLIC_API_URL=http://localhost:3001/api
+NEXT_PUBLIC_WS_URL=ws://localhost:3001
 ```
 
-## 📚 Learn More
+When running in a production browser context, the API client prefers same-origin `/api` to avoid CORS issues. In local development it calls `NEXT_PUBLIC_API_URL` directly.
 
-- [Next.js Documentation](https://nextjs.org/docs)
-- [React Documentation](https://react.dev)
-- [Tailwind CSS Documentation](https://tailwindcss.com/docs)
-- [Design System Guide](./DESIGN-SYSTEM.md)
+Relevant files:
 
-## ✨ Features
+- [src/shared/services/api.client.ts](./src/shared/services/api.client.ts)
+- [src/proxy.ts](./src/proxy.ts)
+- [.env.development](./.env.development)
 
-- ✅ Server-side rendering (SSR)
-- ✅ Static site generation (SSG)
-- ✅ Image optimization
-- ✅ Font optimization (next/font/google)
-- ✅ API routes
-- ✅ TypeScript support
-- ✅ ESLint & Prettier
-- ✅ Dark mode ready
-- ✅ Mobile-first responsive design
-- ✅ PWA support
+## Route model
 
-## 🔐 Security
+- Public: `/`, `/faq`, `/contact`, `/privacy`, `/terms`
+- Auth: `/login`, `/register`, `/forgot-password`, `/reset-password`
+- Parent: `/dashboard`, `/analytics`, `/reports`, `/settings`, `/recommendations`, `/onboarding`
+- Child: `/play`
+- Admin: `/admin`
 
-- CSRF protection with Next.js built-in
-- XSS protection via React's auto-escaping
-- Content Security Policy headers
-- Secure headers configuration
-- Input validation with Zod
+Access control is enforced in [src/proxy.ts](./src/proxy.ts).
 
-## 📊 Performance
+## Code layout
 
-- Code splitting by route
-- Bundle optimization
-- Image lazy loading
-- Font preloading
-- Critical CSS inlining
-- Gzip compression
+```text
+src/
+├── app/         # App Router pages/layouts
+├── components/  # shared UI building blocks
+├── features/    # feature-oriented modules
+├── shared/      # cross-cutting utilities, store, services
+└── providers/   # app-level providers
+```
 
-## 🎯 Next Steps
+## Design and testing references
 
-1. ✅ Design system setup
-2. ⏳ Component library development
-3. ⏳ Feature module implementation
-4. ⏳ API integration
-5. ⏳ Testing setup
-6. ⏳ Deployment configuration
+- [DESIGN-SYSTEM.md](./DESIGN-SYSTEM.md)
+- [UI_TEST_PLAN.md](./UI_TEST_PLAN.md)
 
-## 📝 Notes
+## Notes for coding agents
 
-- Design system uses **1.25 font scale** (Major Third) optimized for UI products
-- Typography defaults to **1.65 line-height** for children's comfort
-- Colors chosen with **psychology for children** in mind
-- All components follow **WCAG 2.1 AA accessibility** standards
-
-## License
-
-Proprietary - EduKids © 2026
-
+- Do not assume older version numbers from legacy docs; `package.json` is the source of truth.
+- There are existing auth-cookie and role-based redirect conventions in `src/proxy.ts`; preserve them when editing route flows.
+- Frontend work often depends on backend response envelopes from the NestJS `ResponseInterceptor`, so verify payload shape before refactoring API calls.

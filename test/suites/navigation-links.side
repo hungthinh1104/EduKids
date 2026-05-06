@@ -1,0 +1,76 @@
+{
+  "id": "f74ec5f8-9ca4-495f-95f8-48426f3f65b1",
+  "version": "2.0",
+  "name": "EduKids Navigation Links",
+  "url": "http://localhost:3000",
+  "tests": [
+    {
+      "id": "de47d78b-11ca-4ea0-9b3c-b5a94cc44814",
+      "name": "ForgotPassword_LinkFromLogin_ShouldNavigate",
+      "commands": [
+        { "id": "e8a0b5dc-f9db-40f4-b6c1-8b2dae601b28", "comment": "", "command": "open", "target": "/login", "targets": [], "value": "" },
+        { "id": "13c46a6b-a00a-430f-8df8-152de68a2a58", "comment": "", "command": "waitForElementVisible", "target": "css=a[href='/forgot-password']", "targets": [], "value": "10000" },
+        { "id": "44972e74-660a-45f1-b743-c61ad6f0836b", "comment": "", "command": "click", "target": "css=a[href='/forgot-password']", "targets": [["css=a[href='/forgot-password']", "css:finder"]], "value": "" },
+        { "id": "2d69c88e-c194-4914-bca6-1d0f8172db90", "comment": "", "command": "runScript", "target": "if(!window.location.pathname.includes('/forgot-password')) throw new Error('Expected /forgot-password, got '+window.location.href);", "targets": [], "value": "" }
+      ]
+    },
+    {
+      "id": "75a64d2d-73f0-49a6-8d8a-f876f07c3a84",
+      "name": "ForgotPassword_BackToLogin_Link_ShouldNavigate",
+      "commands": [
+        { "id": "bec279f3-7f13-4c07-a395-f518f9ee3f37", "comment": "", "command": "open", "target": "/forgot-password", "targets": [], "value": "" },
+        { "id": "c995ece4-3732-4fa1-9592-7e38d4b656f3", "comment": "", "command": "waitForElementVisible", "target": "css=a[href='/login']", "targets": [], "value": "10000" },
+        { "id": "1ef7e0b8-d17e-42c8-b0d3-f76022112365", "comment": "", "command": "click", "target": "css=a[href='/login']", "targets": [["css=a[href='/login']", "css:finder"]], "value": "" },
+        { "id": "cc2209fa-f7f8-4fb3-a6fd-cb6109a46f86", "comment": "", "command": "runScript", "target": "if(!window.location.pathname.includes('/login')) throw new Error('Expected /login, got '+window.location.href);", "targets": [], "value": "" }
+      ]
+    },
+    {
+      "id": "88d946a8-7305-4305-b3bb-bce424f7fd13",
+      "name": "Register_BackToLogin_Link_ShouldNavigate",
+      "commands": [
+        { "id": "95f03e78-9577-4ca5-95e5-57a60e5e1d93", "comment": "", "command": "open", "target": "/register", "targets": [], "value": "" },
+        { "id": "e7b4ec76-ae6a-4ffa-90e1-ec1f9708e510", "comment": "", "command": "waitForElementVisible", "target": "css=a[href='/login']", "targets": [], "value": "10000" },
+        { "id": "eaa58e33-6cd6-4caf-a7b7-17118a325c4f", "comment": "", "command": "click", "target": "css=a[href='/login']", "targets": [["css=a[href='/login']", "css:finder"]], "value": "" },
+        { "id": "7d2003db-b01e-4369-b9f3-eaf291d5bf79", "comment": "", "command": "runScript", "target": "if(!window.location.pathname.includes('/login')) throw new Error('Expected /login, got '+window.location.href);", "targets": [], "value": "" }
+      ]
+    },
+    {
+      "id": "0f1523eb-cf49-4f99-b389-b10e7f5e4ab7",
+      "name": "Register_TermsLink_ShouldNavigate",
+      "commands": [
+        { "id": "7f6aa733-0f79-485d-b72f-7744540ece6c", "comment": "", "command": "open", "target": "/register", "targets": [], "value": "" },
+        { "id": "5313d8eb-8d71-4fe2-900b-d3d5fb20a63d", "comment": "", "command": "waitForElementVisible", "target": "css=a[href='/terms']", "targets": [], "value": "10000" },
+        { "id": "2a0f67c7-0edf-4aab-9a89-c0d3bd0f9b94", "comment": "", "command": "click", "target": "css=a[href='/terms']", "targets": [["css=a[href='/terms']", "css:finder"]], "value": "" },
+        { "id": "191fed45-9f39-4bb6-9f80-00635f1f9f20", "comment": "", "command": "runScript", "target": "if(!window.location.pathname.includes('/terms')) throw new Error('Expected /terms, got '+window.location.href);", "targets": [], "value": "" }
+      ]
+    },
+    {
+      "id": "eff97744-b7e8-418a-8523-65f9365f9c09",
+      "name": "Register_PrivacyLink_ShouldNavigate",
+      "commands": [
+        { "id": "57d79bbf-ab6d-4a6e-a77b-15ca3808dd9f", "comment": "", "command": "open", "target": "/register", "targets": [], "value": "" },
+        { "id": "da80b6df-58a0-4535-85ce-da0ccef858c6", "comment": "", "command": "waitForElementVisible", "target": "css=a[href='/privacy']", "targets": [], "value": "10000" },
+        { "id": "a6ed5de5-cc80-4280-a461-5c04ead12389", "comment": "", "command": "click", "target": "css=a[href='/privacy']", "targets": [["css=a[href='/privacy']", "css:finder"]], "value": "" },
+        { "id": "63e8b551-eeb8-4bdd-9c43-323d860737fd", "comment": "", "command": "runScript", "target": "if(!window.location.pathname.includes('/privacy')) throw new Error('Expected /privacy, got '+window.location.href);", "targets": [], "value": "" }
+      ]
+    }
+  ],
+  "suites": [
+    {
+      "id": "63a4f0fd-1f1a-4a93-b9e7-4de5aa4a61a1",
+      "name": "Navigation Links Suite",
+      "persistSession": false,
+      "parallel": false,
+      "timeout": 300,
+      "tests": [
+        "de47d78b-11ca-4ea0-9b3c-b5a94cc44814",
+        "75a64d2d-73f0-49a6-8d8a-f876f07c3a84",
+        "88d946a8-7305-4305-b3bb-bce424f7fd13",
+        "0f1523eb-cf49-4f99-b389-b10e7f5e4ab7",
+        "eff97744-b7e8-418a-8523-65f9365f9c09"
+      ]
+    }
+  ],
+  "urls": ["http://localhost:3000/"],
+  "plugins": []
+}

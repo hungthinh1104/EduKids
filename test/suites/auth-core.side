@@ -1,0 +1,93 @@
+{
+  "id": "f0a2f2e1-4f8e-48ad-8c45-1c3b8aa2db10",
+  "version": "2.0",
+  "name": "EduKids Auth Core",
+  "url": "http://localhost:3000",
+  "tests": [
+    {
+      "id": "7ab74611-8049-4dfd-abd6-1d97187ee38f",
+      "name": "Login_InvalidPassword_ShouldStayOnLogin",
+      "commands": [
+        { "id": "c42a5d57-1a4f-4b43-acf0-b0d83d4be11e", "comment": "", "command": "open", "target": "/login", "targets": [], "value": "" },
+        { "id": "e3550552-4d1a-4a4f-8470-1be2505a8db6", "comment": "", "command": "waitForElementVisible", "target": "css=input[name='email']", "targets": [], "value": "10000" },
+        { "id": "dbfc93fd-1b25-4063-90f9-f09f6f272fb7", "comment": "", "command": "waitForElementVisible", "target": "css=input[name='password']", "targets": [], "value": "10000" },
+        { "id": "f62dcd6f-cebf-4c88-ad40-b4f7dbf88179", "comment": "", "command": "runScript", "target": "var e=document.querySelector(\"input[name='email']\"); if(!e) throw new Error('missing email'); e.value='wrong-user@example.com'; e.dispatchEvent(new Event('input',{bubbles:true})); e.dispatchEvent(new Event('change',{bubbles:true}));", "targets": [], "value": "" },
+        { "id": "ecfa9937-befe-46fd-b00e-a3761f36f9be", "comment": "", "command": "runScript", "target": "var p=document.querySelector(\"input[name='password']\"); if(!p) throw new Error('missing password'); p.value='WrongPass123!'; p.dispatchEvent(new Event('input',{bubbles:true})); p.dispatchEvent(new Event('change',{bubbles:true}));", "targets": [], "value": "" },
+        { "id": "f4a58b4f-1519-4b8a-a809-9465af9a7ea3", "comment": "", "command": "click", "target": "css=.btn-primary", "targets": [["css=.btn-primary", "css:finder"], ["xpath=//button[contains(.,'Khởi hành ngay!')]", "xpath:innerText"]], "value": "" },
+        { "id": "d7f10f86-6bcb-4290-a9ca-5f1686d038a8", "comment": "", "command": "runScript", "target": "if(!window.location.pathname.includes('/login')) throw new Error('Expected /login, got '+window.location.href);", "targets": [], "value": "" }
+      ]
+    },
+    {
+      "id": "ef66f687-f9f7-42d8-bdcc-a03b66353f0f",
+      "name": "Login_WithFakeCookie_ShouldStayLogin",
+      "commands": [
+        { "id": "272dacf7-44f8-45be-9f81-d7cadce44b42", "comment": "", "command": "open", "target": "/", "targets": [], "value": "" },
+        { "id": "f7ff58bf-421a-40f7-82c6-f550df8397f9", "comment": "", "command": "runScript", "target": "document.cookie='access_token=fake_access_token; path=/'; document.cookie='role=PARENT; path=/';", "targets": [], "value": "" },
+        { "id": "fec7ef72-d8da-4640-8ee0-e78c4ec278e5", "comment": "", "command": "open", "target": "/login", "targets": [], "value": "" },
+        { "id": "7671d3aa-ffeb-4a96-a5e6-2f4e81f88469", "comment": "", "command": "waitForElementPresent", "target": "css=body", "targets": [], "value": "10000" },
+        { "id": "8ee5f8d0-f897-4f2a-8787-062721f7f95d", "comment": "", "command": "runScript", "target": "if(!window.location.pathname.includes('/login')) throw new Error('Expected /login with fake cookie, got '+window.location.href);", "targets": [], "value": "" },
+        { "id": "14dfe0cf-5d47-445f-b6fa-6f0ad2c872cc", "comment": "", "command": "waitForElementVisible", "target": "css=input[name='email']", "targets": [], "value": "10000" }
+      ]
+    },
+    {
+      "id": "fbd8d652-c4b2-41d3-aec2-87b4457fbbab",
+      "name": "Login_EmptyEmail_ShouldStayOnLogin",
+      "commands": [
+        { "id": "6125680b-8f2e-41c9-8cdc-f44a4457ed18", "comment": "", "command": "open", "target": "/login", "targets": [], "value": "" },
+        { "id": "1f65bf95-c9e4-4f83-a789-1307f78ef8b3", "comment": "", "command": "waitForElementVisible", "target": "css=input[name='password']", "targets": [], "value": "10000" },
+        { "id": "3cdc2779-14f4-4c71-a07b-a5f099a40caf", "comment": "", "command": "runScript", "target": "var p=document.querySelector(\"input[name='password']\"); if(!p) throw new Error('missing password'); p.value='AnyPass123!'; p.dispatchEvent(new Event('input',{bubbles:true})); p.dispatchEvent(new Event('change',{bubbles:true}));", "targets": [], "value": "" },
+        { "id": "1ef75eec-8fc7-44ea-a7dc-03b4558e2be5", "comment": "", "command": "click", "target": "css=.btn-primary", "targets": [["css=.btn-primary", "css:finder"], ["xpath=//button[contains(.,'Khởi hành ngay!')]", "xpath:innerText"]], "value": "" },
+        { "id": "17c03cd9-0a1c-4f1a-bf38-cd28f73dc251", "comment": "", "command": "runScript", "target": "if(!window.location.pathname.includes('/login')) throw new Error('Expected /login, got '+window.location.href);", "targets": [], "value": "" }
+      ]
+    },
+    {
+      "id": "a72a99a7-5bf8-4d75-a753-3194f47185e7",
+      "name": "Register_MismatchPassword_ShouldStayOnRegister",
+      "commands": [
+        { "id": "ec1d4154-2650-48cd-9166-c1d5bf7e4f11", "comment": "", "command": "open", "target": "/register", "targets": [], "value": "" },
+        { "id": "e4f7bd46-9047-4336-b6c6-6029aebdb174", "comment": "", "command": "waitForElementVisible", "target": "css=input[name='email']", "targets": [], "value": "10000" },
+        { "id": "4dbecf03-4269-4e8c-a70b-88ebfd98d11a", "comment": "", "command": "runScript", "target": "var set=function(sel,val){var el=document.querySelector(sel); if(!el) throw new Error('missing '+sel); el.value=val; el.dispatchEvent(new Event('input',{bubbles:true})); el.dispatchEvent(new Event('change',{bubbles:true}));}; set(\"input[name='lastName']\",'Nguyen'); set(\"input[name='firstName']\",'An'); set(\"input[name='email']\",'new-parent@example.com'); set(\"input[name='password']\",'StrongPass123!'); set(\"input[name='confirmPassword']\",'StrongPass999!');", "targets": [], "value": "" },
+        { "id": "e6c3a701-bf59-4f8e-8df8-c8d5571be2c1", "comment": "", "command": "click", "target": "xpath=//button[contains(.,'Tạo tài khoản')]", "targets": [["xpath=//button[contains(.,'Tạo tài khoản')]", "xpath:innerText"]], "value": "" },
+        { "id": "f548724f-61c9-495f-a239-c2f1d32fdd39", "comment": "", "command": "runScript", "target": "if(!window.location.pathname.includes('/register')) throw new Error('Expected /register, got '+window.location.href);", "targets": [], "value": "" }
+      ]
+    },
+    {
+      "id": "9f8cfcc2-c3ca-4052-b86d-bb3fcb45e3cc",
+      "name": "ForgotPassword_EmptyEmail_ShouldStayOnPage",
+      "commands": [
+        { "id": "58dc0367-2ee8-4f8b-aafd-78f0f42e82db", "comment": "", "command": "open", "target": "/forgot-password", "targets": [], "value": "" },
+        { "id": "d69b5d1f-dd86-4cec-a6f5-8f27a1619042", "comment": "", "command": "waitForElementVisible", "target": "css=input[type='email']", "targets": [], "value": "10000" },
+        { "id": "bce0ff1f-e6f0-4bd7-bd0b-a8c0d09f3d7d", "comment": "", "command": "click", "target": "xpath=//button[contains(.,'Gửi link đặt lại')]", "targets": [["xpath=//button[contains(.,'Gửi link đặt lại')]", "xpath:innerText"]], "value": "" },
+        { "id": "9ae818f1-32a8-4ce4-bf68-419ba3f1df1f", "comment": "", "command": "runScript", "target": "if(!window.location.pathname.includes('/forgot-password')) throw new Error('Expected /forgot-password, got '+window.location.href);", "targets": [], "value": "" }
+      ]
+    },
+    {
+      "id": "3ec21eb5-0748-42d8-b691-1f7f3eef289a",
+      "name": "ResetPassword_MissingToken_ShouldShowInvalidLink",
+      "commands": [
+        { "id": "7e3bdca9-f49e-4738-b253-8b7dfa603053", "comment": "", "command": "open", "target": "/reset-password", "targets": [], "value": "" },
+        { "id": "25f2e754-2e56-4e8e-96ad-84dbf843112c", "comment": "", "command": "waitForElementVisible", "target": "css=a[href='/forgot-password']", "targets": [], "value": "10000" },
+        { "id": "e71f9763-4be6-4af4-bf84-29a734a02a27", "comment": "", "command": "runScript", "target": "if(!window.location.pathname.includes('/reset-password')) throw new Error('Expected /reset-password, got '+window.location.href);", "targets": [], "value": "" }
+      ]
+    }
+  ],
+  "suites": [
+    {
+      "id": "6a1f11c2-6da8-448e-86f8-fbbc50bc48ff",
+      "name": "Auth Core Suite",
+      "persistSession": false,
+      "parallel": false,
+      "timeout": 300,
+      "tests": [
+        "7ab74611-8049-4dfd-abd6-1d97187ee38f",
+        "ef66f687-f9f7-42d8-bdcc-a03b66353f0f",
+        "fbd8d652-c4b2-41d3-aec2-87b4457fbbab",
+        "a72a99a7-5bf8-4d75-a753-3194f47185e7",
+        "9f8cfcc2-c3ca-4052-b86d-bb3fcb45e3cc",
+        "3ec21eb5-0748-42d8-b691-1f7f3eef289a"
+      ]
+    }
+  ],
+  "urls": ["http://localhost:3000/"],
+  "plugins": []
+}

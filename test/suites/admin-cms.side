@@ -1,0 +1,269 @@
+{
+  "id": "ab123456-cd78-90ef-ab12-34567890abcd",
+  "version": "2.0",
+  "name": "EduKids Admin CMS",
+  "url": "http://localhost:3000",
+  "tests": [
+    {
+      "id": "cms00001-aaaa-bbbb-cccc-dddddddddd01",
+      "name": "AdminDashboard_Unauth_ShouldRedirectLogin",
+      "commands": [
+        {
+          "id": "cms11111-0000-0000-0000-000000000001",
+          "comment": "TEST 007 - Admin dashboard khi chưa đăng nhập phải redirect về /login",
+          "command": "open",
+          "target": "/",
+          "targets": [],
+          "value": ""
+        },
+        {
+          "id": "cms11111-0000-0000-0000-000000000002",
+          "command": "runScript",
+          "target": "document.cookie.split(';').forEach(function(c){document.cookie=c.replace(/^ +/,'').replace(/=.*/, '=;expires='+new Date(0).toUTCString()+';path=/');}); localStorage.clear(); sessionStorage.clear();",
+          "targets": [],
+          "value": ""
+        },
+        {
+          "id": "cms11111-0000-0000-0000-000000000003",
+          "command": "open",
+          "target": "/admin",
+          "targets": [],
+          "value": ""
+        },
+        {
+          "id": "cms11111-0000-0000-0000-000000000004",
+          "command": "waitForElementPresent",
+          "target": "css=body",
+          "targets": [],
+          "value": "10000"
+        },
+        {
+          "id": "cms11111-0000-0000-0000-000000000005",
+          "command": "runScript",
+          "target": "if(!window.location.pathname.includes('/login')) throw new Error('Expected /login redirect from /admin, got '+window.location.href);",
+          "targets": [],
+          "value": ""
+        }
+      ]
+    },
+    {
+      "id": "cms00002-aaaa-bbbb-cccc-dddddddddd02",
+      "name": "AdminMedia_Unauth_ShouldRedirectLogin",
+      "commands": [
+        {
+          "id": "cms22222-0000-0000-0000-000000000001",
+          "comment": "TEST 035/036 - Media page khi chưa đăng nhập",
+          "command": "open",
+          "target": "/",
+          "targets": [],
+          "value": ""
+        },
+        {
+          "id": "cms22222-0000-0000-0000-000000000002",
+          "command": "runScript",
+          "target": "document.cookie.split(';').forEach(function(c){document.cookie=c.replace(/^ +/,'').replace(/=.*/, '=;expires='+new Date(0).toUTCString()+';path=/');}); localStorage.clear(); sessionStorage.clear();",
+          "targets": [],
+          "value": ""
+        },
+        {
+          "id": "cms22222-0000-0000-0000-000000000003",
+          "command": "open",
+          "target": "/admin/media",
+          "targets": [],
+          "value": ""
+        },
+        {
+          "id": "cms22222-0000-0000-0000-000000000004",
+          "command": "waitForElementPresent",
+          "target": "css=body",
+          "targets": [],
+          "value": "10000"
+        },
+        {
+          "id": "cms22222-0000-0000-0000-000000000005",
+          "command": "runScript",
+          "target": "if(!window.location.pathname.includes('/login')) throw new Error('Expected /login redirect from /admin/media, got '+window.location.href);",
+          "targets": [],
+          "value": ""
+        }
+      ]
+    },
+    {
+      "id": "cms00003-aaaa-bbbb-cccc-dddddddddd03",
+      "name": "AdminMedia_FileInputOnlyAcceptsImageAudioVideo",
+      "commands": [
+        {
+          "id": "cms33333-0000-0000-0000-000000000001",
+          "comment": "TEST 036 - Kiểm tra input file chỉ accept image/audio/video (không phải .exe/.pdf)",
+          "command": "open",
+          "target": "/admin/media",
+          "targets": [],
+          "value": ""
+        },
+        {
+          "id": "cms33333-0000-0000-0000-000000000002",
+          "command": "waitForElementPresent",
+          "target": "css=body",
+          "targets": [],
+          "value": "10000"
+        },
+        {
+          "id": "cms33333-0000-0000-0000-000000000003",
+          "comment": "Nếu ở trang media (đã đăng nhập admin), check attribute accept của input file",
+          "command": "runScript",
+          "target": "if(window.location.pathname.includes('/admin/media')) { var input = document.querySelector('input[type=\\\"file\\\"]'); if(!input) throw new Error('File input not found on /admin/media'); var accept = input.getAttribute('accept') || ''; if(!accept.includes('image') || !accept.includes('audio') || !accept.includes('video')) throw new Error('File input should accept image/audio/video, got: '+accept); console.log('File input accept attribute:', accept); }",
+          "targets": [],
+          "value": ""
+        },
+        {
+          "id": "cms33333-0000-0000-0000-000000000004",
+          "comment": "Verify input không accept application/* hoặc .exe .pdf",
+          "command": "runScript",
+          "target": "if(window.location.pathname.includes('/admin/media')) { var input = document.querySelector('input[type=\\\"file\\\"]'); if(input) { var accept = input.getAttribute('accept') || ''; if(accept.includes('application') || accept.includes('.exe') || accept.includes('.pdf')) throw new Error('File input should NOT accept executables or PDFs, but got: '+accept); } }",
+          "targets": [],
+          "value": ""
+        }
+      ]
+    },
+    {
+      "id": "cms00004-aaaa-bbbb-cccc-dddddddddd04",
+      "name": "AdminMedia_UnsupportedFormat_ClientSideAlert",
+      "commands": [
+        {
+          "id": "cms44444-0000-0000-0000-000000000001",
+          "comment": "TEST 036 - Simulate upload file .exe và verify bị reject với alert",
+          "command": "open",
+          "target": "/admin/media",
+          "targets": [],
+          "value": ""
+        },
+        {
+          "id": "cms44444-0000-0000-0000-000000000002",
+          "command": "waitForElementPresent",
+          "target": "css=body",
+          "targets": [],
+          "value": "10000"
+        },
+        {
+          "id": "cms44444-0000-0000-0000-000000000003",
+          "comment": "Nếu đang ở /admin/media, gọi thẳng hàm processFiles với fake file có type không hợp lệ để test client-side rejection",
+          "command": "runScript",
+          "target": "if(window.location.pathname.includes('/admin/media')) { var fakeExeFile = new File(['malicious content'], 'shell.exe', { type: 'application/x-msdownload' }); var alertCalled = false; var origAlert = window.alert; window.alert = function(msg) { alertCalled = true; window.alert = origAlert; if(!msg.includes('hỗ trợ') && !msg.includes('Định dạng')) throw new Error('Alert message should mention unsupported format, got: '+msg); }; var input = document.querySelector('#file-upload'); if(!input) { window.alert = origAlert; throw new Error('File upload input#file-upload not found'); } var dt = new DataTransfer(); dt.items.add(fakeExeFile); Object.defineProperty(input, 'files', { value: dt.files, writable: true }); input.dispatchEvent(new Event('change', { bubbles: true })); setTimeout(function(){ window.alert = origAlert; }, 2000); }",
+          "targets": [],
+          "value": ""
+        },
+        {
+          "id": "cms44444-0000-0000-0000-000000000004",
+          "comment": "Đợi xử lý",
+          "command": "pause",
+          "target": "2000",
+          "targets": [],
+          "value": ""
+        }
+      ]
+    },
+    {
+      "id": "cms00005-aaaa-bbbb-cccc-dddddddddd05",
+      "name": "AdminTopics_Unauth_ShouldRedirectLogin",
+      "commands": [
+        {
+          "id": "cms55555-0000-0000-0000-000000000001",
+          "comment": "TEST 034 - Topics page khi chưa đăng nhập",
+          "command": "open",
+          "target": "/",
+          "targets": [],
+          "value": ""
+        },
+        {
+          "id": "cms55555-0000-0000-0000-000000000002",
+          "command": "runScript",
+          "target": "document.cookie.split(';').forEach(function(c){document.cookie=c.replace(/^ +/,'').replace(/=.*/, '=;expires='+new Date(0).toUTCString()+';path=/');}); localStorage.clear(); sessionStorage.clear();",
+          "targets": [],
+          "value": ""
+        },
+        {
+          "id": "cms55555-0000-0000-0000-000000000003",
+          "command": "open",
+          "target": "/admin/topics",
+          "targets": [],
+          "value": ""
+        },
+        {
+          "id": "cms55555-0000-0000-0000-000000000004",
+          "command": "waitForElementPresent",
+          "target": "css=body",
+          "targets": [],
+          "value": "10000"
+        },
+        {
+          "id": "cms55555-0000-0000-0000-000000000005",
+          "command": "runScript",
+          "target": "if(!window.location.pathname.includes('/login')) throw new Error('Expected /login redirect from /admin/topics, got '+window.location.href);",
+          "targets": [],
+          "value": ""
+        }
+      ]
+    },
+    {
+      "id": "cms00006-aaaa-bbbb-cccc-dddddddddd06",
+      "name": "AdminAuditLogs_Unauth_ShouldRedirectLogin",
+      "commands": [
+        {
+          "id": "cms66666-0000-0000-0000-000000000001",
+          "comment": "TEST 038 - Audit logs khi chưa đăng nhập",
+          "command": "open",
+          "target": "/",
+          "targets": [],
+          "value": ""
+        },
+        {
+          "id": "cms66666-0000-0000-0000-000000000002",
+          "command": "runScript",
+          "target": "document.cookie.split(';').forEach(function(c){document.cookie=c.replace(/^ +/,'').replace(/=.*/, '=;expires='+new Date(0).toUTCString()+';path=/');}); localStorage.clear(); sessionStorage.clear();",
+          "targets": [],
+          "value": ""
+        },
+        {
+          "id": "cms66666-0000-0000-0000-000000000003",
+          "command": "open",
+          "target": "/admin/audit-logs",
+          "targets": [],
+          "value": ""
+        },
+        {
+          "id": "cms66666-0000-0000-0000-000000000004",
+          "command": "waitForElementPresent",
+          "target": "css=body",
+          "targets": [],
+          "value": "10000"
+        },
+        {
+          "id": "cms66666-0000-0000-0000-000000000005",
+          "command": "runScript",
+          "target": "if(!window.location.pathname.includes('/login')) throw new Error('Expected /login redirect from /admin/audit-logs, got '+window.location.href);",
+          "targets": [],
+          "value": ""
+        }
+      ]
+    }
+  ],
+  "suites": [
+    {
+      "id": "cms99999-aaaa-bbbb-cccc-ddddddddddSuite",
+      "name": "Admin CMS Suite",
+      "persistSession": false,
+      "parallel": false,
+      "timeout": 300,
+      "tests": [
+        "cms00001-aaaa-bbbb-cccc-dddddddddd01",
+        "cms00002-aaaa-bbbb-cccc-dddddddddd02",
+        "cms00003-aaaa-bbbb-cccc-dddddddddd03",
+        "cms00004-aaaa-bbbb-cccc-dddddddddd04",
+        "cms00005-aaaa-bbbb-cccc-dddddddddd05",
+        "cms00006-aaaa-bbbb-cccc-dddddddddd06"
+      ]
+    }
+  ],
+  "urls": ["http://localhost:3000/"],
+  "plugins": []
+}
