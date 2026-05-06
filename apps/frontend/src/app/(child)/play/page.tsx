@@ -123,7 +123,7 @@ export default function PlayPage() {
         <div className="min-h-screen pb-20 md:pb-8 bg-gradient-to-b from-primary-light/25 via-background to-background">
             <GameHUD
                 nickname={child.nickname}
-                avatarUrl={child.avatarUrl}
+                avatar={child.avatar}
                 rewards={child.rewards}
                 hp={child.hp || 5}
                 onBackClick={handleExitChildMode}

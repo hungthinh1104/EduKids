@@ -9,7 +9,7 @@ import { DesktopNav } from './DesktopNav';
 
 interface GameHUDProps {
     nickname: string;
-    avatarUrl: string;
+    avatar: string;
     rewards: Pick<RewardSummary, 'streakDays' | 'totalPoints' | 'currentLevel'>;
     hp?: number;
     maxHp?: number;
@@ -22,7 +22,7 @@ interface GameHUDProps {
  * GameHUD — sticky top bar for all child game screens.
  * Used by: /play, /play/topic/[id], /play/topic/[id]/flashcard, /play/topic/[id]/quiz
  */
-export function GameHUD({ nickname, avatarUrl, rewards, hp = 5, maxHp = 5, backHref = '/play', onBackClick, activeNav = 'map' }: GameHUDProps) {
+export function GameHUD({ nickname, avatar, rewards, hp = 5, maxHp = 5, backHref = '/play', onBackClick, activeNav = 'map' }: GameHUDProps) {
     return (
         <motion.div
             initial={{ opacity: 1, y: -20 }}
@@ -59,8 +59,8 @@ export function GameHUD({ nickname, avatarUrl, rewards, hp = 5, maxHp = 5, backH
                     {/* Avatar + name */}
                     <div className="flex items-center gap-2.5 md:gap-3">
                         <div className="w-9 h-9 md:w-12 md:h-12 rounded-full bg-primary-light border-2 border-primary overflow-hidden flex items-center justify-center">
-                            {avatarUrl ? (
-                                <Image src={avatarUrl} alt={nickname} width={36} height={36} className="md:w-12 md:h-12" />
+                            {avatar ? (
+                                <Image src={avatar} alt={nickname} width={36} height={36} className="md:w-12 md:h-12" />
                             ) : (
                                 <span className="text-xl md:text-2xl">👶</span>
                             )}

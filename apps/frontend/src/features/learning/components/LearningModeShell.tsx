@@ -15,6 +15,7 @@ interface LearningModeShellProps {
   progressToClass?: string;
   children: React.ReactNode;
   headerRight?: React.ReactNode;
+  navRightSlot?: React.ReactNode;
   contentMaxWidthClass?: string;
 }
 
@@ -28,6 +29,7 @@ export function LearningModeShell({
   progressToClass = 'to-accent',
   children,
   headerRight,
+  navRightSlot,
   contentMaxWidthClass = 'max-w-lg',
 }: LearningModeShellProps) {
   const safeTotal = Math.max(progressTotal, 1);
@@ -55,9 +57,12 @@ export function LearningModeShell({
             />
           </div>
 
-          <Caption className="text-caption text-sm font-black whitespace-nowrap tabular-nums min-w-[48px] text-right">
-            {progressCurrent}/{progressTotal}
-          </Caption>
+          <div className="flex items-center gap-3">
+            {navRightSlot}
+            <Caption className="text-caption text-sm font-black whitespace-nowrap tabular-nums min-w-[48px] text-right">
+              {progressCurrent}/{progressTotal}
+            </Caption>
+          </div>
         </div>
       </div>
 
@@ -82,14 +87,16 @@ interface ModeStatePanelProps {
   title: string;
   description: string;
   emoji?: string;
+  action?: React.ReactNode;
 }
 
-export function ModeStatePanel({ title, description, emoji = '📚' }: ModeStatePanelProps) {
+export function ModeStatePanel({ title, description, emoji = '📚', action }: ModeStatePanelProps) {
   return (
-    <div className="text-center py-14 rounded-3xl border border-dashed border-border/80 bg-card/70">
+    <div className="text-center py-14 rounded-3xl border border-dashed border-border/80 bg-card/70 flex flex-col items-center">
       <div className="text-4xl mb-3">{emoji}</div>
       <Heading level={4} className="text-heading text-lg mb-1">{title}</Heading>
-      <Caption className="text-caption">{description}</Caption>
+      <Caption className="text-caption mb-6">{description}</Caption>
+      {action && <div className="w-full max-w-sm flex flex-col gap-3">{action}</div>}
     </div>
   );
 }

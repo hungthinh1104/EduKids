@@ -1,75 +1,62 @@
 'use client';
 
-import { useEffect, useMemo, Suspense } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useEffect, useState, Suspense } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/shared/store/auth.store';
 import { Loader2 } from 'lucide-react';
 import { getDefaultRouteByRole } from '@/shared/constants/navigation';
 import { Heading, Body } from '@/shared/components/Typography';
+import { authApi } from '@/features/auth/api/auth.api';
 
 function OAuthCallbackContent() {
     const router = useRouter();
-    const searchParams = useSearchParams();
     const setAuth = useAuthStore((state) => state.setAuth);
-
-    const parsedResult = useMemo(() => {
-        const dataParam = searchParams.get('data');
-        if (!dataParam) {
-            return {
-                error: 'Không tìm thấy thông tin đăng nhập.',
-                authData: null as null | {
-                    user: unknown;
-                    accessToken: string;
-                    refreshToken?: string;
-                    role: string;
-                },
-            };
-        }
-
-        try {
-            // Decode base64 containing utf-8 characters properly
-            const binaryString = window.atob(dataParam);
-            const bytes = new Uint8Array(binaryString.length);
-            for (let i = 0; i < binaryString.length; i++) {
-                bytes[i] = binaryString.charCodeAt(i);
-            }
-            const jsonStr = new TextDecoder('utf-8').decode(bytes);
-            const authData = JSON.parse(jsonStr);
-
-            if (authData?.accessToken && authData?.user) {
-                return { error: null, authData };
-            }
-
-            return { error: 'Dữ liệu đăng nhập không hợp lệ.', authData: null };
-        } catch (err) {
-            console.error('Failed to parse OAuth data', err);
-            return { error: 'Lỗi khi xử lý thông tin đăng nhập.', authData: null };
-        }
-    }, [searchParams]);
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        if (parsedResult.authData) {
-            setAuth(
-                parsedResult.authData.user,
-                parsedResult.authData.accessToken,
-                parsedResult.authData.refreshToken,
-                parsedResult.authData.role,
-            );
-            // Hard reload to ensure all layouts fetch correct auth state
-            window.location.href = getDefaultRouteByRole(parsedResult.authData.role);
-            return;
+        const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+        const accessToken = hashParams.get('token');
+        const refreshToken = hashParams.get('refresh') ?? undefined;
+
+        if (!accessToken) {
+            window.setTimeout(() => {
+                setError('Không tìm thấy thông tin đăng nhập.');
+            }, 0);
+            const timeout = setTimeout(() => router.push('/login'), 3000);
+            return () => clearTimeout(timeout);
         }
 
-        const timeout = setTimeout(() => router.push('/login'), 3000);
-        return () => clearTimeout(timeout);
-    }, [parsedResult, router, setAuth]);
+        // Clear tokens from URL bar so they don't linger in history
+        window.history.replaceState(null, '', window.location.pathname);
+
+        let cancelled = false;
+
+        void (async () => {
+            try {
+                const user = await authApi.me(accessToken);
+                if (cancelled) return;
+                setAuth(user, accessToken, refreshToken, user.role);
+                window.location.href = getDefaultRouteByRole(user.role);
+            } catch (err) {
+                console.error('Failed to finalize OAuth login', err);
+                if (!cancelled) {
+                    setError('Lỗi khi xử lý thông tin đăng nhập.');
+                    setTimeout(() => router.push('/login'), 3000);
+                }
+            }
+        })();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [router, setAuth]);
 
     return (
         <div className="w-full h-full flex flex-col items-center justify-center py-12 text-center">
-            {parsedResult.error ? (
+            {error ? (
                 <>
                     <Heading level={3} className="text-secondary mb-4">Đăng nhập thất bại</Heading>
-                    <Body className="text-muted">{parsedResult.error}</Body>
+                    <Body className="text-muted">{error}</Body>
                     <Body className="text-muted mt-2 text-sm">Đang chuyển hướng về trang đăng nhập...</Body>
                 </>
             ) : (

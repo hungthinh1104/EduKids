@@ -17,11 +17,11 @@ export function TestimonialsSection() {
                         viewport={{ once: true }}
                         transition={{ duration: 0.8 }}
                     >
-                        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 font-bold text-sm tracking-widest mb-6">
+                        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-error-light dark:bg-error/30 text-error font-bold text-sm tracking-widest mb-6">
                             <HeartPulse size={16} /> GÓC PHỤ HUYNH
                         </div>
                         <h2 className="font-heading font-black text-4xl sm:text-5xl lg:text-6xl text-heading mb-8 leading-[1.15]">
-                            Đồng hành cùng con, <br /> <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-500 to-orange-400">An tâm tuyệt đối.</span>
+                            Đồng hành cùng con, <br /> <span className="text-transparent bg-clip-text bg-gradient-to-r from-error to-warning">An tâm tuyệt đối.</span>
                         </h2>
                         <p className="text-xl mb-10 leading-relaxed text-body">
                             Hàng ngàn phụ huynh Việt Nam đã tin tưởng chọn <b>EduKids</b> làm người bạn đồng hành giúp bé phát triển tư duy ngoại ngữ một cách tự nhiên và an toàn nhất.
@@ -49,8 +49,8 @@ export function TestimonialsSection() {
                     {/* Right Reviews */}
                     <div className="relative">
                         {/* Decorative blobs */}
-                        <div className="absolute top-20 right-0 w-32 h-32 md:w-72 md:h-72 bg-rose-100 dark:bg-rose-900/20 rounded-full blur-2xl md:blur-3xl -z-10"></div>
-                        <div className="absolute bottom-0 left-10 w-32 h-32 md:w-64 md:h-64 bg-amber-100 dark:bg-amber-900/20 rounded-full blur-2xl md:blur-3xl -z-10"></div>
+                        <div className="absolute top-20 right-0 w-32 h-32 md:w-72 md:h-72 bg-error-light dark:bg-error/20 rounded-full blur-2xl md:blur-3xl -z-10"></div>
+                        <div className="absolute bottom-0 left-10 w-32 h-32 md:w-64 md:h-64 bg-warning-light dark:bg-warning/20 rounded-full blur-2xl md:blur-3xl -z-10"></div>
 
                         <div className="flex flex-col gap-8">
                             {/* Review Card 1 */}

@@ -131,32 +131,32 @@ export default function AdminAuditLogsPage() {
     const act = action?.toLowerCase() || '';
     if (act.includes('create')) {
       return {
-        badge: 'bg-emerald-100 text-emerald-700 border border-emerald-200',
-        iconBg: 'bg-emerald-500/10 text-emerald-600',
+        badge: 'bg-success-light text-success-dark border border-success/30',
+        iconBg: 'bg-success/10 text-success',
         icon: '➕',
         label: 'Tạo mới',
       };
     }
     if (act.includes('update')) {
       return {
-        badge: 'bg-sky-100 text-sky-700 border border-sky-200',
-        iconBg: 'bg-sky-500/10 text-sky-600',
+        badge: 'bg-primary-light text-primary border border-primary/30',
+        iconBg: 'bg-primary/10 text-primary',
         icon: '✏️',
         label: 'Cập nhật',
       };
     }
     if (act.includes('delete')) {
       return {
-        badge: 'bg-rose-100 text-rose-700 border border-rose-200',
-        iconBg: 'bg-rose-500/10 text-rose-600',
+        badge: 'bg-error-light text-error border border-error/30',
+        iconBg: 'bg-error/10 text-error',
         icon: '🗑️',
         label: 'Xóa',
       };
     }
     if (act.includes('publish')) {
       return {
-        badge: 'bg-violet-100 text-violet-700 border border-violet-200',
-        iconBg: 'bg-violet-500/10 text-violet-600',
+        badge: 'bg-accent-light text-accent border border-accent/30',
+        iconBg: 'bg-accent/10 text-accent',
         icon: '📢',
         label: 'Xuất bản',
       };
@@ -171,8 +171,8 @@ export default function AdminAuditLogsPage() {
     }
 
     return {
-      badge: 'bg-amber-100 text-amber-700 border border-amber-200',
-      iconBg: 'bg-amber-500/10 text-amber-600',
+      badge: 'bg-warning-light text-warning-dark border border-warning/30',
+      iconBg: 'bg-warning/10 text-warning',
       icon: '🔄',
       label: action || 'Khác',
     };
@@ -301,29 +301,29 @@ export default function AdminAuditLogsPage() {
             label: 'Tổng hành động',
             value: auditLogs.length,
             icon: <Activity className="h-5 w-5" />,
-            shell: 'from-blue-50 to-cyan-50 border-blue-100',
-            iconShell: 'bg-blue-500 text-white',
+            shell: 'from-primary-light/50 to-primary-light/30 border-primary/20',
+            iconShell: 'bg-primary text-white',
           },
           {
             label: 'Trong hôm nay',
             value: todayCount,
             icon: <Clock3 className="h-5 w-5" />,
-            shell: 'from-emerald-50 to-lime-50 border-emerald-100',
-            iconShell: 'bg-emerald-500 text-white',
+            shell: 'from-success-light/50 to-success-light/30 border-success/20',
+            iconShell: 'bg-success text-white',
           },
           {
             label: 'Admin hoạt động',
             value: activeUsersCount,
             icon: <Users className="h-5 w-5" />,
-            shell: 'from-violet-50 to-fuchsia-50 border-violet-100',
-            iconShell: 'bg-violet-500 text-white',
+            shell: 'from-accent-light/50 to-accent-light/30 border-accent/20',
+            iconShell: 'bg-accent text-white',
           },
           {
             label: 'Loại hành động',
             value: actionTypesCount,
             icon: <Sparkles className="h-5 w-5" />,
-            shell: 'from-amber-50 to-orange-50 border-amber-100',
-            iconShell: 'bg-amber-500 text-white',
+            shell: 'from-warning-light/50 to-warning-light/30 border-warning/20',
+            iconShell: 'bg-warning text-white',
           },
         ].map((card, index) => (
           <motion.div
@@ -375,7 +375,7 @@ export default function AdminAuditLogsPage() {
               placeholder="Tìm theo admin, hành động, đối tượng hoặc mô tả..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full rounded-2xl border border-border bg-background py-3 pl-12 pr-4 text-sm text-body outline-none transition placeholder:text-muted focus:border-blue-400 focus:bg-card focus:ring-4 focus:ring-blue-100"
+              className="w-full rounded-2xl border border-border bg-background py-3 pl-12 pr-4 text-sm text-body outline-none transition placeholder:text-muted focus:border-primary focus:bg-card focus:ring-4 focus:ring-primary/20"
             />
           </div>
 
@@ -390,7 +390,7 @@ export default function AdminAuditLogsPage() {
                     onClick={() => setActionFilter(option.value)}
                     className={`${pillBaseClass} ${
                       actionFilter === option.value
-                        ? 'border-blue-500 bg-blue-600 text-white shadow-sm'
+                        ? 'border-primary bg-primary text-white shadow-sm'
                         : 'border-border bg-card text-body hover:border-border hover:bg-background'
                     }`}
                   >
@@ -410,7 +410,7 @@ export default function AdminAuditLogsPage() {
                     onClick={() => setEntityFilter(option.value)}
                     className={`${pillBaseClass} ${
                       entityFilter === option.value
-                        ? 'border-violet-500 bg-violet-600 text-white shadow-sm'
+                        ? 'border-accent bg-accent text-white shadow-sm'
                         : 'border-border bg-card text-body hover:border-border hover:bg-background'
                     }`}
                   >
@@ -430,7 +430,7 @@ export default function AdminAuditLogsPage() {
                     onClick={() => setDateFilter(option.value)}
                     className={`${pillBaseClass} ${
                       dateFilter === option.value
-                        ? 'border-emerald-500 bg-emerald-600 text-white shadow-sm'
+                        ? 'border-success bg-success text-white shadow-sm'
                         : 'border-border bg-card text-body hover:border-border hover:bg-background'
                     }`}
                   >

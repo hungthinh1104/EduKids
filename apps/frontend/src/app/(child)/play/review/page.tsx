@@ -3,13 +3,13 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
-import { X, Volume2, RotateCcw, Star, ChevronRight, Clock } from 'lucide-react';
-import { Heading, Body, Caption } from '@/shared/components/Typography';
+import { Volume2, RotateCcw, Clock } from 'lucide-react';
+import { Heading, Caption } from '@/shared/components/Typography';
 import { KidButton } from '@/components/edukids/KidButton';
-import { LoadingScreen } from '@/components/edukids/LoadingScreen';
 import { reviewApi, ReviewItem, ReviewSubmission } from '@/features/learning/api/review.api';
-import { GameHUD } from '@/features/learning/components/GameHUD';
 import { useCurrentChild } from '@/features/learning/hooks/useCurrentChild';
+import { LearningModeShell, ModeStatePanel } from '@/features/learning/components/LearningModeShell';
+import { GameCompleteScreen } from '@/features/learning/components/GameCompleteScreen';
 
 type Difficulty = 'EASY' | 'MEDIUM' | 'HARD';
 
@@ -83,60 +83,7 @@ function ReviewCard({
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SessionComplete for SRS Review
-// ─────────────────────────────────────────────────────────────────────────────
-function ReviewSessionComplete({ logs, onRestart }: { logs: ReviewLog[]; onRestart: () => void }) {
-    useEffect(() => {
-        void import('@/shared/utils/confetti').then((m) => m.fireRewardConfetti());
-    }, []);
-    const easyCount = logs.filter((l) => l.difficulty === 'EASY').length;
-    const hardCount = logs.filter((l) => l.difficulty === 'HARD').length;
-    const stars = easyCount >= logs.length * 0.8 ? 3 : easyCount >= logs.length * 0.5 ? 2 : 1;
-    return (
-        <motion.div initial={{ opacity: 1, scale: 0.85 }} animate={{ opacity: 1, scale: 1 }} transition={{ type: 'spring', bounce: 0.4 }}
-            className="flex flex-col items-center gap-8 py-8 text-center px-4"
-        >
-            <motion.div animate={{ rotate: [0, -10, 10, 0], scale: [1, 1.1, 1] }} transition={{ duration: 1, delay: 0.3 }} className="text-7xl">🎓</motion.div>
-            <div>
-                <Heading level={2} className="text-heading text-3xl">Ôn tập xong!</Heading>
-                <Body className="text-body mt-1">Bé đã ôn {logs.length} từ hôm nay</Body>
-            </div>
-            <div className="flex gap-2">
-                {[1, 2, 3].map((s, i) => (
-                    <motion.div key={s} initial={{ scale: 0, rotate: -30 }} animate={{ scale: 1, rotate: 0 }} transition={{ delay: 0.4 + i * 0.15, type: 'spring', bounce: 0.6 }}>
-                        <Star size={44} className={s <= stars ? 'text-warning fill-warning drop-shadow-lg' : 'text-border'} />
-                    </motion.div>
-                ))}
-            </div>
-            <div className="grid grid-cols-3 gap-3 w-full max-w-xs">
-                {[
-                    { label: '😊 Nhớ tốt', value: easyCount, color: 'text-success' },
-                    { label: '🤔 Cần ôn', value: logs.filter((l) => l.difficulty === 'MEDIUM').length, color: 'text-warning' },
-                    { label: '😫 Quên', value: hardCount, color: 'text-error' },
-                ].map((s) => (
-                    <div key={s.label} className="bg-card border-2 border-border rounded-2xl p-3">
-                        <div className={`text-2xl font-heading font-black ${s.color}`}>{s.value}</div>
-                        <Caption className="text-caption text-[10px]">{s.label}</Caption>
-                    </div>
-                ))}
-            </div>
-            <div className="flex flex-col gap-3 w-full max-w-xs">
-                <KidButton variant="default" size="lg" className="w-full" onClick={onRestart}>
-                    <RotateCcw size={18} /> Ôn lại
-                </KidButton>
-                <Link href="/play">
-                    <KidButton variant="outline" size="default" className="w-full">
-                        Về bản đồ <ChevronRight size={16} />
-                    </KidButton>
-                </Link>
-            </div>
-        </motion.div>
-    );
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
 // Main SRS Review Page — UC-16
-// Endpoint: POST /api/vocabulary-review/submit { vocabId, difficulty, correct }
 // ─────────────────────────────────────────────────────────────────────────────
 export default function ReviewPage() {
     const { child, loading: childLoading } = useCurrentChild();
@@ -183,67 +130,7 @@ export default function ReviewPage() {
         }
         fetchReviewSession(childId);
     }, [child?.id]);
-
-    if (loading) {
-        return <LoadingScreen text="Đang tải bài ôn tập..." />;
-    }
-
-    if (loadError) {
-        return (
-            <div className="min-h-screen flex items-center justify-center">
-                <div className="text-center max-w-md px-6">
-                    <div className="text-6xl mb-4">😵</div>
-                    <Heading level={2} className="mb-2">Chưa mở được bài ôn tập</Heading>
-                    <Body className="text-caption mb-6">{loadError}</Body>
-                    <Link href="/play">
-                        <KidButton variant="default">Quay về màn hình chính</KidButton>
-                    </Link>
-                </div>
-            </div>
-        );
-    }
-
-    if (reviewDeck.length === 0) {
-        return (
-            <div className="min-h-screen flex items-center justify-center">
-                <div className="text-center max-w-lg px-6">
-                    <div className="text-6xl mb-4">🎉</div>
-                    <Heading level={2} className="mb-2">Hiện chưa có từ đến lượt ôn</Heading>
-                    <Body className="text-caption mb-4">
-                        {suggestionMessage || 'Bé chưa có thẻ ôn tập đến hạn. Mình gợi ý vài từ mới để tiếp tục học nhé!'}
-                    </Body>
-
-                    {suggestedItems.length > 0 ? (
-                        <div className="mb-6 rounded-[2rem] border border-border bg-card p-5 text-left">
-                            <Heading level={4} className="text-heading text-lg mb-3">Gợi ý học tiếp</Heading>
-                            <div className="space-y-3">
-
-                            {suggestedItems.slice(0, 3).map((item, index) => (
-                                <div key={item.reviewId || item.id || `suggested-${index}`}
-                                    className="rounded-2xl bg-background px-4 py-3 border border-border">
-                                    <div className="font-heading font-black text-heading">{item.word}</div>
-                                    <Caption className="text-caption">{item.translation}</Caption>
-                                </div>
-                            ))}
-                            </div>
-                        </div>
-                    ) : null}
-
-                    <div className="flex flex-col gap-3">
-                        <Link href="/play">
-                            <KidButton variant="default">Quay về màn hình chính</KidButton>
-                        </Link>
-                        <Link href="/play">
-                            <KidButton variant="outline">Chọn chủ đề mới để học</KidButton>
-                        </Link>
-                    </div>
-                </div>
-            </div>
-        );
-    }
-
     const card = reviewDeck[index];
-    const progress = (index / reviewDeck.length) * 100;
 
     async function handleRate(difficulty: Difficulty) {
         if (!child?.id) return;
@@ -285,6 +172,7 @@ export default function ReviewPage() {
         setDone(false);
 
         try {
+            setLoading(true);
             setLoadError(null);
             const session = await reviewApi.getSession(child.id, 10);
             setReviewDeck(session.items);
@@ -293,107 +181,159 @@ export default function ReviewPage() {
         } catch (err) {
             console.error('Failed to fetch new session:', err);
             setLoadError('Không thể tải lại bài ôn tập.');
+        } finally {
+            setLoading(false);
         }
     }
 
-    if (childLoading || !child) {
-        return <LoadingScreen />;
-    }
-
     return (
-        <div className="min-h-screen bg-gradient-to-b from-secondary-light via-background to-background pb-20 md:pb-8">
-            {/* Desktop GameHUD */}
-            <div className="hidden md:block">
-                <GameHUD
-                    nickname={child.nickname}
-                    avatarUrl={child.avatarUrl}
-                    rewards={child.rewards}
-                    activeNav="review"
-                />
-            </div>
-
-            {/* Mobile Top bar */}
-            <div className="sticky top-0 z-30 bg-card/80 backdrop-blur-xl border-b-2 border-border md:hidden">
-                <div className="max-w-lg md:max-w-4xl lg:max-w-7xl mx-auto px-4 md:px-6 h-14 flex items-center gap-4">
-                    <Link href="/play">
-                        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="w-8 h-8 rounded-full bg-background border-2 border-border flex items-center justify-center">
-                            <X size={14} className="text-body" />
-                        </motion.div>
-                    </Link>
-                    <div className="flex-1 h-3.5 bg-background rounded-full border border-border overflow-hidden">
-                        <motion.div animate={{ width: `${progress}%` }} transition={{ duration: 0.4 }} className="h-full bg-gradient-to-r from-secondary to-primary rounded-full" />
-                    </div>
-                    <Caption className="text-caption text-sm font-black whitespace-nowrap">{Math.min(index + 1, reviewDeck.length)}/{reviewDeck.length}</Caption>
-                </div>
-            </div>
-
-            <div className="max-w-lg md:max-w-4xl lg:max-w-7xl mx-auto px-6 md:px-8 pt-6 space-y-2">
-                {/* Due notification */}
-                <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
-                    className="flex items-center gap-2 bg-secondary-light border border-secondary/30 rounded-2xl px-4 py-2.5 text-sm"
-                >
-                    <Clock size={15} className="text-secondary" />
-                    <span className="font-heading font-bold text-secondary">{reviewDeck.length} từ cần ôn hôm nay</span>
-                </motion.div>
-            </div>
-
-            <div className="max-w-lg md:max-w-4xl lg:max-w-7xl mx-auto px-6 md:px-8 pt-5">
-                <AnimatePresence mode="wait">
-                    {done ? (
-                        <ReviewSessionComplete key="done" logs={logs} onRestart={handleRestart} />
-                    ) : (
-                        <motion.div key={index}
-                                initial={{ opacity: 1, x: leaving ? -60 : 60, scale: 0.95 }}
-                                animate={{ opacity: leaving ? 0 : 1, x: leaving ? -60 : 0, scale: leaving ? 0.95 : 1 }}
-                                transition={{ duration: 0.26 }}
-                                className="space-y-8 pt-3"
-                            >
-                            <ReviewCard
-                                card={card}
-                                flipped={flipped}
-                                onFlip={() => setFlipped(true)}
-                                onPlayAudio={() => {
-                                    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-                                        window.speechSynthesis.cancel();
-                                        const utterance = new SpeechSynthesisUtterance(card.word);
-                                        utterance.lang = 'en-US';
-                                        utterance.rate = 0.85;
-                                        utterance.pitch = 1.1;
-                                        window.speechSynthesis.speak(utterance);
-                                    }
-                                }}
-                            />
-
-                            {/* Difficulty buttons — only after flip */}
-                            <AnimatePresence>
-                                {flipped && (
-                                    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-                                        className="grid grid-cols-3 gap-2"
-                                    >
-                                        {DIFF_BUTTONS.map((b) => (
-                                            <motion.button key={b.difficulty} whileHover={{ scale: 1.05, y: -3 }} whileTap={{ scale: 0.94 }}
-                                                onClick={() => handleRate(b.difficulty)}
-                                                className={`flex flex-col items-center gap-0.5 py-3 px-2 rounded-2xl font-heading font-black text-xs border-b-4 active:border-b-0 active:translate-y-1 transition-all ${b.cls}`}
-                                            >
-                                                {b.label}
-                                                <span className="text-[10px] font-medium opacity-80">{b.sublabel}</span>
-                                            </motion.button>
-                                        ))}
-                                    </motion.div>
+        <LearningModeShell
+            backHref="/play"
+            progressCurrent={Math.min(index + 1, Math.max(reviewDeck.length, 1))}
+            progressTotal={Math.max(reviewDeck.length, 1)}
+            title="Ôn tập từ vựng"
+            subtitle="Xem thẻ và đánh giá độ khó để AI lên lịch ôn tập cho bé"
+            progressFromClass="from-secondary"
+            progressToClass="to-primary"
+            contentMaxWidthClass="max-w-lg md:max-w-2xl"
+        >
+            <AnimatePresence mode="wait">
+                {childLoading || loading ? (
+                    <ModeStatePanel
+                        title="Đang tải bài ôn tập"
+                        description="Vui lòng chờ trong giây lát..."
+                        emoji="📚"
+                    />
+                ) : loadError ? (
+                    <ModeStatePanel
+                        title="Chưa mở được bài ôn tập"
+                        description={loadError}
+                        emoji="😵"
+                        action={
+                            <Link href="/play">
+                                <KidButton variant="default">Quay về màn hình chính</KidButton>
+                            </Link>
+                        }
+                    />
+                ) : reviewDeck.length === 0 ? (
+                    <ModeStatePanel
+                        title="Chưa có từ đến lượt ôn"
+                        description={suggestionMessage || 'Bé chưa có thẻ ôn tập đến hạn. Mình gợi ý vài từ mới để tiếp tục học nhé!'}
+                        emoji="🎉"
+                        action={
+                            <div className="flex flex-col gap-3 w-full">
+                                {suggestedItems.length > 0 && (
+                                    <div className="mb-2 rounded-2xl border border-border bg-card p-4 text-left">
+                                        <Heading level={4} className="text-heading text-base mb-2">Gợi ý học tiếp</Heading>
+                                        <div className="space-y-2">
+                                            {suggestedItems.slice(0, 3).map((item, index) => (
+                                                <div
+                                                    key={item.reviewId ?? item.vocabularyId ?? `${item.word}-${index}`}
+                                                    className="rounded-xl bg-background px-3 py-2 border border-border"
+                                                >
+                                                    <div className="font-heading font-black text-sm text-heading">{item.word}</div>
+                                                    <Caption className="text-caption text-xs">{item.translation}</Caption>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
                                 )}
-                            </AnimatePresence>
+                                <Link href="/play">
+                                    <KidButton variant="default" className="w-full">Quay về màn hình chính</KidButton>
+                                </Link>
+                                <Link href="/play">
+                                    <KidButton variant="outline" className="w-full">Chọn chủ đề mới để học</KidButton>
+                                </Link>
+                            </div>
+                        }
+                    />
+                ) : done ? (
+                    (() => {
+                        const easyCount = logs.filter((l) => l.difficulty === 'EASY').length;
+                        const hardCount = logs.filter((l) => l.difficulty === 'HARD').length;
+                        const stars = easyCount >= logs.length * 0.8 ? 3 : easyCount >= logs.length * 0.5 ? 2 : 1;
 
-                            {!flipped && (
-                                <div className="text-center">
-                                    <KidButton variant="default" size="lg" onClick={() => setFlipped(true)} className="px-10">
-                                        Xem nghĩa
-                                    </KidButton>
-                                </div>
+                        return (
+                            <GameCompleteScreen
+                                emoji="🎓"
+                                title="Ôn tập xong!"
+                                subtitle={`Bé đã ôn ${logs.length} từ hôm nay`}
+                                starsEarned={stars}
+                                maxStars={3}
+                                topicId=""
+                                onRestart={handleRestart}
+                                restartLabel="Ôn lại"
+                                backLabel="Về bản đồ"
+                                stats={[
+                                    { label: '😊 Nhớ tốt', value: easyCount, colorClass: 'text-success' },
+                                    { label: '🤔 Cần ôn', value: logs.filter((l) => l.difficulty === 'MEDIUM').length, colorClass: 'text-warning' },
+                                    { label: '😫 Quên', value: hardCount, colorClass: 'text-error' },
+                                ]}
+                            />
+                        );
+                    })()
+                ) : (
+                    <motion.div key={index}
+                        initial={{ opacity: 1, x: leaving ? -60 : 60, scale: 0.95 }}
+                        animate={{ opacity: leaving ? 0 : 1, x: leaving ? -60 : 0, scale: leaving ? 0.95 : 1 }}
+                        transition={{ duration: 0.26 }}
+                        className="space-y-8 pt-2"
+                    >
+                        {/* Due notification */}
+                        <div className="flex justify-center">
+                            <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
+                                className="inline-flex items-center gap-2 bg-secondary-light border border-secondary/30 rounded-2xl px-4 py-2.5 text-sm"
+                            >
+                                <Clock size={15} className="text-secondary" />
+                                <span className="font-heading font-bold text-secondary">{reviewDeck.length} từ cần ôn hôm nay</span>
+                            </motion.div>
+                        </div>
+
+                        <ReviewCard
+                            card={card}
+                            flipped={flipped}
+                            onFlip={() => setFlipped(true)}
+                            onPlayAudio={() => {
+                                if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+                                    window.speechSynthesis.cancel();
+                                    const utterance = new SpeechSynthesisUtterance(card.word);
+                                    utterance.lang = 'en-US';
+                                    utterance.rate = 0.85;
+                                    utterance.pitch = 1.1;
+                                    window.speechSynthesis.speak(utterance);
+                                }
+                            }}
+                        />
+
+                        {/* Difficulty buttons — only after flip */}
+                        <AnimatePresence>
+                            {flipped && (
+                                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+                                    className="grid grid-cols-3 gap-2 max-w-sm mx-auto"
+                                >
+                                    {DIFF_BUTTONS.map((b) => (
+                                        <motion.button key={b.difficulty} whileHover={{ scale: 1.05, y: -3 }} whileTap={{ scale: 0.94 }}
+                                            onClick={() => handleRate(b.difficulty)}
+                                            className={`flex flex-col items-center gap-0.5 py-3 px-2 rounded-2xl font-heading font-black text-xs border-b-4 active:border-b-0 active:translate-y-1 transition-all ${b.cls}`}
+                                        >
+                                            {b.label}
+                                            <span className="text-[10px] font-medium opacity-80">{b.sublabel}</span>
+                                        </motion.button>
+                                    ))}
+                                </motion.div>
                             )}
-                        </motion.div>
-                    )}
-                </AnimatePresence>
-            </div>
-        </div>
+                        </AnimatePresence>
+
+                        {!flipped && (
+                            <div className="text-center">
+                                <KidButton variant="default" size="lg" onClick={() => setFlipped(true)} className="px-10 max-w-sm w-full">
+                                    Xem nghĩa
+                                </KidButton>
+                            </div>
+                        )}
+                    </motion.div>
+                )}
+            </AnimatePresence>
+        </LearningModeShell>
     );
 }

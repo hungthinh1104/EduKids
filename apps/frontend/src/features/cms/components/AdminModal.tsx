@@ -7,7 +7,7 @@ interface AdminModalProps {
   onClose: () => void;
   title: string;
   children: ReactNode;
-  maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl';
+  maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl' | '4xl';
 }
 
 const maxWidthMap = {
@@ -17,6 +17,7 @@ const maxWidthMap = {
   xl: 'max-w-xl',
   '2xl': 'max-w-2xl',
   '3xl': 'max-w-3xl',
+  '4xl': 'max-w-4xl',
 };
 
 export function AdminModal({ isOpen, onClose, title, children, maxWidth = '2xl' }: AdminModalProps) {

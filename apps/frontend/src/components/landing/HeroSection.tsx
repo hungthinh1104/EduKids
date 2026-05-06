@@ -107,7 +107,7 @@ export function HeroSection() {
                         <div className="flex items-center gap-4 text-muted font-medium mt-4 sm:mt-0">
                             <div className="flex -space-x-3">
                                 {[1, 2, 3, 4].map((i) => (
-                                    <Image priority width={40} height={40} key={i} src={`https://api.dicebear.com/7.x/notionists/svg?seed=${i}&scale=120`} alt={`Avatar ${i}`} className="w-10 h-10 rounded-full border-2 border-background bg-emerald-100" />
+                                    <Image priority width={40} height={40} key={i} src={`https://api.dicebear.com/7.x/notionists/svg?seed=${i}&scale=120`} alt={`Avatar ${i}`} className="w-10 h-10 rounded-full border-2 border-background bg-success-light" />
                                 ))}
                             </div>
                             <div>Hơn <b>10,000+</b> bé<br />đang học tập</div>

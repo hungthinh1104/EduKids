@@ -99,9 +99,13 @@ function ResetPasswordContent() {
 
     return (
         <motion.div initial="hidden" animate="visible" className="w-full space-y-6">
-            <motion.div variants={fadeInUp} className="text-center">
-                <Heading level={2} className="text-3xl text-heading mb-2">Đặt lại mật khẩu</Heading>
-                <Body className="text-body">Nhập mật khẩu mới cho tài khoản của bạn</Body>
+            <motion.div variants={fadeInUp} className="text-center mb-8">
+                <Heading level={2} className="text-4xl text-heading font-extrabold tracking-tight drop-shadow-sm mb-3">
+                    Đặt Lại Mật Khẩu
+                </Heading>
+                <p className="text-muted text-lg font-medium">
+                    Nhập mật khẩu mới cho tài khoản của bạn
+                </p>
             </motion.div>
 
             {error && (
@@ -138,7 +142,7 @@ function ResetPasswordContent() {
                         </button>
                     </div>
                     {errors.newPassword && (
-                        <p className="text-secondary text-sm font-medium ml-1">{errors.newPassword.message}</p>
+                        <Caption className="text-secondary text-sm font-medium ml-1">{errors.newPassword.message}</Caption>
                     )}
                 </motion.div>
 
@@ -162,7 +166,7 @@ function ResetPasswordContent() {
                         </button>
                     </div>
                     {errors.confirmPassword && (
-                        <p className="text-secondary text-sm font-medium ml-1">{errors.confirmPassword.message}</p>
+                        <Caption className="text-secondary text-sm font-medium ml-1">{errors.confirmPassword.message}</Caption>
                     )}
                 </motion.div>
 
@@ -170,7 +174,7 @@ function ResetPasswordContent() {
                     <button
                         type="submit"
                         disabled={isLoading}
-                        className="w-full flex items-center justify-center btn-primary h-14 text-lg transition-all hover:scale-105 disabled:opacity-70 disabled:scale-100"
+                        className={`w-full flex items-center justify-center btn-primary h-14 text-lg font-heading font-bold rounded-2xl transition-transform duration-200 ${isLoading ? 'opacity-80' : 'hover:scale-[1.02]'}`}
                     >
                         {isLoading ? <Loader2 size={22} className="animate-spin" /> : 'Đặt lại mật khẩu 🔐'}
                     </button>

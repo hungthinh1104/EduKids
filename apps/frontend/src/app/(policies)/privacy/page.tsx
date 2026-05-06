@@ -8,9 +8,9 @@ export const metadata = {
 export default function PrivacyPolicyPage() {
     return (
         <article className="prose prose-slate dark:prose-p:text-body dark:prose-headings:text-heading max-w-none">
-            <h1 className="text-4xl text-primary mb-8 text-center pb-8 border-b border-border font-heading font-bold">
+            <Heading level={2} className="text-4xl text-primary mb-8 text-center pb-8 border-b border-border font-heading font-bold">
                 Chính sách bảo mật
-            </h1>
+            </Heading>
 
             <Body className="text-lg text-muted mb-10 italic text-center">
                 Cập nhật lần cuối: Tháng 10, 2023

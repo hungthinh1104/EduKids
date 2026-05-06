@@ -207,7 +207,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
         {/* Skip to main content link (accessibility) */}
         <a
           href="#main"
-          className="sr-only focus:not-sr-only focus:fixed focus:left-0 focus:top-0 focus:z-50 focus:bg-blue-600 focus:p-4 focus:text-white"
+          className="sr-only focus:not-sr-only focus:fixed focus:left-0 focus:top-0 focus:z-50 focus:bg-primary focus:p-4 focus:text-white"
         >
           Skip to main content
         </a>

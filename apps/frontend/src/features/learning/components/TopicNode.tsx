@@ -18,12 +18,12 @@ interface TopicNodeProps {
     index: number;
 }
 
-const COLOR_MAP: Record<string, { bg: string; ring: string; text: string; glow: string }> = {
-    primary: { bg: 'bg-primary', ring: 'ring-primary', text: 'text-primary', glow: 'shadow-primary/40' },
-    success: { bg: 'bg-success', ring: 'ring-success', text: 'text-success', glow: 'shadow-success/40' },
-    secondary: { bg: 'bg-secondary', ring: 'ring-secondary', text: 'text-secondary', glow: 'shadow-secondary/40' },
-    accent: { bg: 'bg-accent', ring: 'ring-accent', text: 'text-accent', glow: 'shadow-accent/40' },
-    warning: { bg: 'bg-warning', ring: 'ring-warning', text: 'text-warning', glow: 'shadow-warning/40' },
+const COLOR_MAP: Record<string, { bg: string; border: string; ring: string; text: string; glow: string }> = {
+    primary: { bg: 'bg-primary', border: 'border-primary', ring: 'ring-primary/20', text: 'text-primary', glow: 'shadow-primary/40' },
+    success: { bg: 'bg-success', border: 'border-success', ring: 'ring-success/20', text: 'text-success', glow: 'shadow-success/40' },
+    secondary: { bg: 'bg-secondary', border: 'border-secondary', ring: 'ring-secondary/20', text: 'text-secondary', glow: 'shadow-secondary/40' },
+    accent: { bg: 'bg-accent', border: 'border-accent', ring: 'ring-accent/20', text: 'text-accent', glow: 'shadow-accent/40' },
+    warning: { bg: 'bg-warning', border: 'border-warning', ring: 'ring-warning/20', text: 'text-warning', glow: 'shadow-warning/40' },
 };
 
 export function TopicNode({ id, name, icon, color, starsEarned, completed, total, locked, isCurrent, index }: TopicNodeProps) {
@@ -69,7 +69,7 @@ export function TopicNode({ id, name, icon, color, starsEarned, completed, total
                         }}
                         className={`relative w-52 rounded-[1.75rem] bg-card border-2 p-5 flex flex-col items-center gap-3 cursor-pointer
               shadow-lg group
-              ${isCurrent ? `border-${color} shadow-${color}/30 shadow-xl ring-4 ring-${color}/20` : 'border-border hover:border-current hover:shadow-lg'}
+                            ${isCurrent ? `${colors.border} ${colors.glow} shadow-xl ring-4 ${colors.ring}` : 'border-border hover:border-current hover:shadow-lg'}
             `}
                     >
                         {/* Current badge */}
@@ -95,7 +95,7 @@ export function TopicNode({ id, name, icon, color, starsEarned, completed, total
                         </div>
 
                         {/* Name */}
-                        <Heading level={4} className={`text-heading text-base text-center group-hover:${colors.text} transition-colors`}>
+                        <Heading level={4} className={`text-heading text-base text-center ${colors.text} group-hover:opacity-90 transition-colors`}>
                             {name}
                         </Heading>
 

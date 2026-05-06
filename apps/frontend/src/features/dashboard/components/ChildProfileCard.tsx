@@ -18,9 +18,9 @@ interface ChildProfileCardProps {
 const LEVEL_COLORS = [
     'from-success to-success-dark',
     'from-primary to-primary-dark',
-    'from-accent to-purple-600',
-    'from-warning to-orange-500',
-    'from-secondary to-rose-700',
+    'from-accent to-accent-dark',
+    'from-warning to-warning-dark',
+    'from-secondary to-secondary-dark',
 ];
 
 function getLevelColor(level: number) {

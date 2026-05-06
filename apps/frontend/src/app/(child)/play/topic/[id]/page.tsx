@@ -186,6 +186,14 @@ export default function TopicDetailPage() {
                     ? vocabularyCount < 2
                     : false,
     }));
+    const availableModes = gameModes.filter((mode) => !mode.locked);
+    const primaryMode =
+        availableModes.find((mode) => mode.id === 'flashcard') ??
+        availableModes.find((mode) => mode.id === 'quiz') ??
+        availableModes[0] ??
+        null;
+    const secondaryModes = availableModes.filter((mode) => mode.id !== primaryMode?.id).slice(0, 2);
+    const primaryModeHref = primaryMode ? `/play/topic/${safeTopicId}/${primaryMode.id}` : '/play';
 
     // Show first 5 vocabularies as preview
     const vocabPreview = (topic.vocabularies || []).slice(0, 5);
@@ -301,44 +309,45 @@ export default function TopicDetailPage() {
                                         </div>
                                     )}
                                 </div>
-
-                                <div className="relative border-t border-white/15 bg-black/20 px-4 py-3 backdrop-blur-sm">
-                                    <div className="flex items-center justify-between gap-3">
-                                        <div>
-                                            <Caption color="textInverse" className="text-white/70 uppercase tracking-[0.18em]">
-                                                Tiến độ hiện tại
-                                            </Caption>
-                                            <div className="mt-1 text-lg font-black text-white">
-                                                {completedCount}/{vocabularyCount} từ
-                                            </div>
-                                        </div>
-                                        <div className="text-right">
-                                            <Caption color="textInverse" className="text-white/70">
-                                                Hoàn thành
-                                            </Caption>
-                                            <div className="mt-1 text-lg font-black text-white">
-                                                {Math.round(progressPct)}%
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
                             </motion.div>
                         </div>
                     </div>
                 </div>
             </div>
-            {/* Progress panel (overlapping) */}
-            <div className="max-w-lg md:max-w-4xl lg:max-w-7xl mx-auto px-6 md:px-8 -mt-6 mb-8">
+
+            {/* Progress panel */}
+            <div className="max-w-lg md:max-w-4xl lg:max-w-7xl mx-auto px-6 md:px-8 mb-8">
                 <motion.div
-                    initial={{ opacity: 1, y: 20 }}
+                    initial={{ opacity: 1, y: 16 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.2 }}
-                    className="bg-card border-2 border-border rounded-2xl p-5 shadow-xl"
+                    transition={{ delay: 0.18 }}
+                    className="bg-card border-2 border-border rounded-[1.75rem] p-5 md:p-6 shadow-xl"
                 >
-                    <div className="flex items-center justify-between mb-3">
-                        <Caption className="font-bold text-heading">Tiến độ</Caption>
-                        <Caption className={`font-black text-sm ${colors.text}`}>{completedCount}/{vocabularyCount} từ</Caption>
+                    <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-5">
+                        <div>
+                            <Heading level={3} className="text-heading text-xl">Tiến độ chủ đề</Heading>
+                            <Caption className="text-caption mt-1">Theo dõi nhanh để biết bé đang đi đến đâu</Caption>
+                        </div>
+                        <div className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-black ${colors.light} ${colors.text}`}>
+                            <CheckCircle2 size={16} /> {Math.round(progressPct)}% hoàn thành
+                        </div>
                     </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
+                        <div className="rounded-2xl border border-border bg-background p-4">
+                            <Caption className="text-caption">Từ đã học</Caption>
+                            <div className="mt-1 text-xl font-black text-heading">{completedCount}/{vocabularyCount}</div>
+                        </div>
+                        <div className="rounded-2xl border border-border bg-background p-4">
+                            <Caption className="text-caption">Sao đạt được</Caption>
+                            <div className="mt-1 text-xl font-black text-heading">{starsEarned}/3 ⭐</div>
+                        </div>
+                        <div className="rounded-2xl border border-border bg-background p-4">
+                            <Caption className="text-caption">Mức độ</Caption>
+                            <div className="mt-1 text-xl font-black text-heading">{learningLevelLabel}</div>
+                        </div>
+                    </div>
+
                     <div className="w-full h-3 bg-background rounded-full border border-border overflow-hidden">
                         <motion.div
                             initial={{ width: 0 }}
@@ -347,13 +356,87 @@ export default function TopicDetailPage() {
                             className={`h-full ${colors.bg} rounded-full`}
                         />
                     </div>
+                    <div className="mt-2 flex items-center justify-between">
+                        <Caption className="text-caption">Bắt đầu bằng Flashcard để tăng tốc ghi nhớ</Caption>
+                        <Caption className={`font-bold ${colors.text}`}>{Math.round(progressPct)}%</Caption>
+                    </div>
+                </motion.div>
+            </div>
+
+            {/* Quick start */}
+            <div className="max-w-lg md:max-w-4xl lg:max-w-7xl mx-auto px-6 md:px-8 mb-8">
+                <motion.div
+                    initial={{ opacity: 1, y: 16 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.26 }}
+                    className="rounded-[2rem] border-2 border-border bg-card shadow-xl p-5 md:p-6"
+                >
+                    <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+                        <div className="space-y-2">
+                            <Caption className="text-caption font-bold uppercase tracking-[0.18em]">Lộ trình gợi ý</Caption>
+                            <Heading level={3} className="text-heading text-xl md:text-2xl">
+                                Học theo thứ tự dễ nhất, đỡ bị rối
+                            </Heading>
+                            <Body className="text-body text-sm md:text-base max-w-2xl leading-7">
+                                Bắt đầu bằng Flashcard để làm quen từ vựng, sau đó chuyển sang Quiz hoặc Phát âm để ôn luyện tự nhiên hơn.
+                            </Body>
+                        </div>
+
+                        <div className="grid gap-3 sm:grid-cols-2 lg:w-[460px]">
+                            <Link href={primaryModeHref} className="sm:col-span-2">
+                                <motion.div
+                                    whileHover={{ scale: 1.02, y: -2 }}
+                                    whileTap={{ scale: 0.98 }}
+                                    className="flex items-center justify-between gap-4 rounded-2xl border-2 border-primary bg-primary text-white px-4 py-4 shadow-lg shadow-primary/25"
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <div className="grid place-items-center w-11 h-11 rounded-2xl bg-white/15 backdrop-blur-sm">
+                                            {primaryMode?.icon ?? <Play size={22} />}
+                                        </div>
+                                        <div className="text-left">
+                                            <div className="text-xs font-black uppercase tracking-[0.18em] text-white/80">Bắt đầu ngay</div>
+                                            <div className="font-heading font-black text-lg leading-tight">
+                                                {primaryMode ? primaryMode.label : 'Quay về bản đồ học'}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="rounded-full bg-white/15 px-3 py-1 text-sm font-black">
+                                        ▶
+                                    </div>
+                                </motion.div>
+                            </Link>
+
+                            {secondaryModes.map((mode) => {
+                                const mc = COLOR_MAP[mode.color] ?? COLOR_MAP.primary;
+                                return (
+                                    <Link key={mode.id} href={`/play/topic/${safeTopicId}/${mode.id}`}>
+                                        <motion.div
+                                            whileHover={{ scale: 1.02, y: -2 }}
+                                            whileTap={{ scale: 0.98 }}
+                                            className={`rounded-2xl border-2 ${mc.border} bg-card px-4 py-4 shadow-md transition-shadow hover:shadow-lg`}
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <div className={`grid place-items-center w-11 h-11 rounded-2xl ${mc.light} ${mc.text}`}>
+                                                    {mode.icon}
+                                                </div>
+                                                <div className="min-w-0">
+                                                    <div className="font-heading font-black text-heading text-sm">{mode.label}</div>
+                                                    <Caption className="text-caption text-[11px] line-clamp-2">{mode.desc}</Caption>
+                                                </div>
+                                            </div>
+                                        </motion.div>
+                                    </Link>
+                                );
+                            })}
+                        </div>
+                    </div>
                 </motion.div>
             </div>
 
             {/* Game Modes */}
             <div className="max-w-lg md:max-w-4xl lg:max-w-7xl mx-auto px-6 md:px-8 mb-8">
                 <Heading level={3} className="text-heading text-xl mb-4">Chọn cách học 🎮</Heading>
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                     {gameModes.map((mode, i) => {
                         const mc = COLOR_MAP[mode.color] ?? COLOR_MAP.primary;
                         const isModeTracked = TRACKED_MODE_IDS.includes(mode.id as TrackedModeId);
@@ -369,7 +452,7 @@ export default function TopicDetailPage() {
                                 className={mode.locked ? "cursor-not-allowed" : ""}
                             >
                                 {mode.locked ? (
-                                    <div className="relative bg-background border-2 border-dashed border-border rounded-2xl p-5 opacity-50 cursor-not-allowed flex flex-col items-center gap-3">
+                                    <div className="relative min-h-[168px] bg-background border-2 border-dashed border-border rounded-2xl p-5 opacity-50 cursor-not-allowed flex flex-col items-center gap-3">
                                         <div className="w-14 h-14 rounded-2xl bg-border/30 flex items-center justify-center text-body">{mode.icon}</div>
                                         <div className="text-center">
                                             <div className="font-heading font-black text-heading text-sm">{mode.label}</div>
@@ -381,7 +464,7 @@ export default function TopicDetailPage() {
                                     </div>
                                 ) : (
                                     <Link href={`/play/topic/${safeTopicId}/${mode.id}`}>
-                                        <div className={`relative bg-card border-2 ${mc.border} rounded-2xl p-5 cursor-pointer flex flex-col items-center gap-3 shadow-md hover:shadow-lg transition-shadow group`}>
+                                        <div className={`relative min-h-[168px] bg-card border-2 ${mc.border} rounded-2xl p-5 cursor-pointer flex flex-col items-center gap-3 shadow-md hover:shadow-lg transition-shadow group`}>
                                             {isModeTracked && completed && (
                                                 <div className="absolute top-2 right-2 inline-flex items-center gap-1 bg-success text-white text-[10px] font-bold px-2 py-1 rounded-full">
                                                     <CheckCircle2 className="w-3 h-3" /> Xong
@@ -408,7 +491,10 @@ export default function TopicDetailPage() {
 
             {/* Vocabulary Preview */}
             <div className="max-w-lg md:max-w-4xl lg:max-w-7xl mx-auto px-6 md:px-8">
-                <Heading level={3} className="text-heading text-xl mb-4">Từ vựng trong bài</Heading>
+                <div className="flex items-end justify-between gap-4 mb-4">
+                    <Heading level={3} className="text-heading text-xl">Từ vựng trong bài</Heading>
+                    <Caption className="text-caption text-sm text-right">Xem trước vài từ đầu tiên để bé đỡ bị ngợp</Caption>
+                </div>
                 {vocabPreview.length > 0 ? (
                     <div className="bg-card border-2 border-border rounded-2xl overflow-hidden">
                         {vocabPreview.map((v, i) => (
@@ -419,14 +505,14 @@ export default function TopicDetailPage() {
                                 viewport={{ once: true }}
                                 transition={{ delay: i * 0.07 }}
                                 whileHover={{ x: 4, backgroundColor: 'rgba(0,0,0,0.02)' }}
-                                className={`flex items-center justify-between p-4 transition-colors ${i < vocabPreview.length - 1 ? 'border-b border-border' : ''}`}
+                                className={`flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 transition-colors ${i < vocabPreview.length - 1 ? 'border-b border-border' : ''}`}
                             >
-                                <div>
+                                <div className="min-w-0">
                                     <span className="font-heading font-black text-heading text-base mr-2">{v.word}</span>
-                                    <Caption className="text-caption text-xs">{v.phonetic}</Caption>
-                                    <div className="text-body text-sm">{v.translation}</div>
+                                    <Caption className="text-caption text-xs block mt-1">{v.phonetic}</Caption>
+                                    <div className="text-body text-sm mt-1 line-clamp-2">{v.translation}</div>
                                 </div>
-                                <div className="bg-background text-caption text-xs font-bold px-3 py-1.5 rounded-xl border border-border">Chưa học</div>
+                                <div className="self-start sm:self-auto bg-background text-caption text-xs font-bold px-3 py-1.5 rounded-xl border border-border whitespace-nowrap">Chưa học</div>
                             </motion.div>
                         ))}
                         {vocabularyCount > vocabPreview.length && (

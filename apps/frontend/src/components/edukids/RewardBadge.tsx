@@ -39,7 +39,7 @@ export function RewardBadge({ className, variant = 'default', showSparkle = true
         >
             <div className={cn(baseClasses, variantClasses, className)} {...props}>
                 {showSparkle && (
-                    <Sparkles className="w-4 h-4 mr-1.5 text-yellow-400 animate-pulse" />
+                    <Sparkles className="w-4 h-4 mr-1.5 text-warning animate-pulse" />
                 )}
                 {children}
             </div>

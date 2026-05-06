@@ -3,16 +3,16 @@
 import { useState, useCallback, useEffect } from 'react';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
-import Link from 'next/link';
 import Image from 'next/image';
 import { useParams } from 'next/navigation';
-import { Volume2, RotateCcw, Star, ChevronRight } from 'lucide-react';
+import { Volume2, RotateCcw } from 'lucide-react';
 import { Heading, Body, Caption } from '@/shared/components/Typography';
 import { KidButton } from '@/components/edukids/KidButton';
 import { contentApi, Vocabulary } from '@/features/learning/api/content.api';
 import { flashcardApi } from '@/features/learning/api/flashcard.api';
 import { markTopicModeCompleted } from '@/features/learning/utils/topic-mode-progress';
 import { LearningModeShell, ModeStatePanel } from '@/features/learning/components/LearningModeShell';
+import { GameCompleteScreen } from '@/features/learning/components/GameCompleteScreen';
 import { playSound } from '@/shared/utils/sound';
 import { useRef } from 'react';
 
@@ -119,75 +119,6 @@ function SRSButtons({ onRate }: { onRate: (r: SRSRating) => void }) {
                     <span className="text-[10px] font-medium opacity-80">{b.subLabel}</span>
                 </motion.button>
             ))}
-        </motion.div>
-    );
-}
-
-// ── Session Complete Screen ────────────────────────────────────────────────
-function SessionComplete({ logs, topicId, onRestart }: { logs: SRSLog[]; topicId: string; onRestart: () => void }) {
-    useEffect(() => {
-        void import('@/shared/utils/confetti').then((m) => m.fireRewardConfetti());
-        playSound('fanfare');
-    }, []);
-    const easyCount = logs.filter((l) => l.rating === 'easy' || l.rating === 'good').length;
-    const starsEarned = easyCount >= logs.length * 0.8 ? 3 : easyCount >= logs.length * 0.5 ? 2 : 1;
-
-    return (
-        <motion.div
-            initial={{ opacity: 1, scale: 0.85 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ type: 'spring', bounce: 0.4 }}
-            className="flex flex-col items-center justify-center min-h-[60vh] gap-8 text-center px-4 md:px-6"
-        >
-            <motion.div
-                animate={{ rotate: [0, -10, 10, 0], scale: [1, 1.1, 1] }}
-                transition={{ duration: 1, delay: 0.3 }}
-                className="text-8xl"
-            >
-                🎉
-            </motion.div>
-            <div>
-                <Heading level={2} className="text-heading text-4xl mb-2">Xuất sắc!</Heading>
-                <Body className="text-body text-lg">Bé đã hoàn thành {logs.length} từ</Body>
-            </div>
-
-            {/* Stars */}
-            <div className="flex gap-3">
-                {[1, 2, 3].map((s, i) => (
-                    <motion.div
-                        key={s}
-                        initial={{ opacity: 0, scale: 0, rotate: -30 }}
-                        animate={{ opacity: 1, scale: 1, rotate: 0 }}
-                        transition={{ delay: 0.4 + i * 0.15, type: 'spring', bounce: 0.6 }}
-                    >
-                        <Star size={48} className={s <= starsEarned ? 'text-star fill-star drop-shadow-lg' : 'text-border'} />
-                    </motion.div>
-                ))}
-            </div>
-
-            {/* Score summary */}
-            <div className="grid grid-cols-2 gap-3 w-full max-w-xs">
-                {[
-                    { label: 'Thuộc tốt', value: logs.filter((l) => l.rating === 'good' || l.rating === 'easy').length, color: 'text-success' },
-                    { label: 'Cần ôn lại', value: logs.filter((l) => l.rating === 'again' || l.rating === 'hard').length, color: 'text-warning' },
-                ].map((s) => (
-                    <div key={s.label} className="bg-card border-2 border-border rounded-2xl p-4">
-                        <div className={`text-3xl font-heading font-black ${s.color}`}>{s.value}</div>
-                        <Caption className="text-caption text-xs">{s.label}</Caption>
-                    </div>
-                ))}
-            </div>
-
-            <div className="flex flex-col gap-3 w-full max-w-xs">
-                <KidButton variant="default" size="lg" className="w-full" onClick={onRestart}>
-                    <RotateCcw size={18} /> Học lại
-                </KidButton>
-                <Link href={`/play/topic/${topicId}`}>
-                    <KidButton variant="outline" size="default" className="w-full">
-                        Quay lại chủ đề <ChevronRight size={16} />
-                    </KidButton>
-                </Link>
-            </div>
         </motion.div>
     );
 }
@@ -333,7 +264,26 @@ export default function FlashcardPage() {
                         emoji="🧩"
                     />
                 ) : done ? (
-                    <SessionComplete logs={logs} topicId={topicId} onRestart={() => { setIndex(0); setFlipped(false); setLogs([]); setDone(false); }} />
+                    (() => {
+                        const easyCount = logs.filter((l) => l.rating === 'easy' || l.rating === 'good').length;
+                        const starsEarned = easyCount >= logs.length * 0.8 ? 3 : easyCount >= logs.length * 0.5 ? 2 : 1;
+                        
+                        return (
+                            <GameCompleteScreen
+                                emoji="🎉"
+                                title="Xuất sắc!"
+                                subtitle={`Bé đã hoàn thành ${logs.length} từ`}
+                                starsEarned={starsEarned}
+                                topicId={topicId}
+                                onRestart={() => { setIndex(0); setFlipped(false); setLogs([]); setDone(false); }}
+                                restartLabel="Học lại"
+                                stats={[
+                                    { label: 'Thuộc tốt', value: logs.filter((l) => l.rating === 'good' || l.rating === 'easy').length, colorClass: 'text-success' },
+                                    { label: 'Cần ôn lại', value: logs.filter((l) => l.rating === 'again' || l.rating === 'hard').length, colorClass: 'text-warning' }
+                                ]}
+                            />
+                        );
+                    })()
                 ) : (
                     <AnimatePresence mode="wait">
                         <motion.div

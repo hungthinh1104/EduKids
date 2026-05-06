@@ -37,7 +37,7 @@ export interface ProfileListDto {
 export interface CreateChildProfileRequest {
     nickname: string;
     age: number;
-    avatarUrl?: string;
+    avatar?: string;
 }
 
 export interface SwitchChildProfileRequest {

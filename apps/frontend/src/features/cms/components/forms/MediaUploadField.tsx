@@ -4,6 +4,7 @@ import { useRef, useState } from 'react';
 import { Loader2, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 import { uploadMediaFile } from '@/features/media/api/media.api';
+import { Caption } from '@/shared/components/Typography';
 
 type MediaType = 'IMAGE' | 'AUDIO' | 'VIDEO';
 type MediaContext = 'VOCABULARY' | 'TOPIC' | 'QUIZ';
@@ -90,11 +91,11 @@ export function MediaUploadField({
           <span>{isUploading ? 'Đang tải...' : buttonLabel}</span>
         </button>
 
-        <p className="text-xs text-muted sm:text-right">
+        <Caption className="text-xs text-muted sm:text-right">
           {currentValue
             ? 'Đã có file gắn vào field này.'
             : 'Có thể upload trực tiếp hoặc dán URL thủ công.'}
-        </p>
+        </Caption>
       </div>
     </div>
   );

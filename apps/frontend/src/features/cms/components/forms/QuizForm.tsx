@@ -4,6 +4,7 @@ import * as z from 'zod';
 import { CMSQuiz, CMSVocabulary } from '@/features/cms/api/cms.api';
 import { useEffect, useRef, useCallback } from 'react';
 import { toast } from 'sonner';
+import { Caption } from '@/shared/components/Typography';
 import { MediaUploadField } from './MediaUploadField';
 import { deleteMediaFile } from '@/features/media/api/media.api';
 
@@ -346,11 +347,11 @@ export function QuizForm({
           <input
             {...register('title')}
             className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all ${
-              errors.title ? 'border-red-500 bg-red-50' : 'border-border'
+              errors.title ? 'border-error bg-error-light' : 'border-border'
             }`}
             placeholder="Bài tập về thú cưng..."
           />
-          {errors.title && <p className="text-red-500 text-sm mt-1">{errors.title.message}</p>}
+          {errors.title && <Caption className="text-error text-sm mt-1">{errors.title.message}</Caption>}
         </div>
 
         {/* Description */}
@@ -360,11 +361,11 @@ export function QuizForm({
             {...register('description')}
             rows={2}
             className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all ${
-              errors.description ? 'border-red-500 bg-red-50' : 'border-border'
+              errors.description ? 'border-error bg-error-light' : 'border-border'
             }`}
             placeholder="Mô tả ngắn cho bài kiểm tra"
           />
-          {errors.description && <p className="text-red-500 text-sm mt-1">{errors.description.message}</p>}
+          {errors.description && <Caption className="text-error text-sm mt-1">{errors.description.message}</Caption>}
         </div>
 
         {/* Question */}
@@ -374,11 +375,11 @@ export function QuizForm({
             {...register('questionText')}
             rows={3}
             className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all ${
-              errors.questionText ? 'border-red-500 bg-red-50' : 'border-border'
+              errors.questionText ? 'border-error bg-error-light' : 'border-border'
             }`}
             placeholder="Con chó trong tiếng Anh là gì?"
           />
-          {errors.questionText && <p className="text-red-500 text-sm mt-1">{errors.questionText.message}</p>}
+          {errors.questionText && <Caption className="text-error text-sm mt-1">{errors.questionText.message}</Caption>}
         </div>
 
         <div>
@@ -387,11 +388,11 @@ export function QuizForm({
             type="text"
             {...register('questionImageUrl')}
             className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all ${
-              errors.questionImageUrl ? 'border-red-500 bg-red-50' : 'border-border'
+              errors.questionImageUrl ? 'border-error bg-error-light' : 'border-border'
             }`}
             placeholder="https://..."
           />
-          {errors.questionImageUrl && <p className="text-red-500 text-sm mt-1">{errors.questionImageUrl.message}</p>}
+          {errors.questionImageUrl && <Caption className="text-error text-sm mt-1">{errors.questionImageUrl.message}</Caption>}
           <MediaUploadField
             mediaType="IMAGE"
             context="QUIZ"
@@ -414,7 +415,7 @@ export function QuizForm({
             {...register('difficultyLevel', { valueAsNumber: true })}
             min={1} max={5}
             className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all ${
-              errors.difficultyLevel ? 'border-red-500 bg-red-50' : 'border-border'
+              errors.difficultyLevel ? 'border-error bg-error-light' : 'border-border'
             }`}
           />
         </div>
@@ -423,20 +424,20 @@ export function QuizForm({
         <div className="bg-background p-6 rounded-2xl border border-border">
           <label className="block text-sm font-bold text-heading mb-4">Các lựa chọn (chọn đáp án đúng)</label>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
             {fields.map((field, index) => (
               <div key={field.id} className="relative">
-                <div className="flex items-center gap-3 bg-card p-3 rounded-xl border border-border">
+                <div className="flex flex-col gap-3 bg-card p-3 rounded-xl border border-border md:flex-row md:items-center">
                   <input
                     type="radio"
                     {...register('correctAnswerIndex')}
                     value={String(index)}
-                    className="w-5 h-5 text-blue-600 focus:ring-blue-500"
+                    className="w-5 h-5 text-primary focus:ring-primary/50 shrink-0 md:mt-0.5"
                   />
                   <input
                     {...register(`options.${index}.value` as const)}
-                    className={`flex-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                      errors.options?.[index]?.value ? 'border-red-500 bg-red-50' : 'border-border'
+                    className={`min-w-0 flex-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                      errors.options?.[index]?.value ? 'border-error bg-error-light' : 'border-border'
                     }`}
                     placeholder={`Lựa chọn ${String.fromCharCode(65 + index)}`}
                   />
@@ -444,22 +445,22 @@ export function QuizForm({
                     <button
                       type="button"
                       onClick={() => removeOption(index)}
-                      className="px-2 py-1 rounded-lg text-xs font-semibold text-error hover:bg-error/10"
+                      className="w-full md:w-auto px-3 py-2 rounded-lg text-xs font-semibold text-error hover:bg-error/10 shrink-0"
                     >
                       Xóa
                     </button>
                   )}
                 </div>
                 {errors.options?.[index]?.value && (
-                  <p className="text-red-500 text-xs mt-1 ml-9">{errors.options[index]?.value?.message}</p>
+                  <Caption className="text-error text-xs mt-1 ml-9">{errors.options[index]?.value?.message}</Caption>
                 )}
               </div>
             ))}
           </div>
           <div className="mt-3 flex items-center justify-between gap-3">
-            <p className="text-xs text-caption">
+            <Caption className="text-xs text-caption">
               Tối thiểu 2 lựa chọn, tối đa 6 lựa chọn. Backend sẽ giữ đúng structure này.
-            </p>
+            </Caption>
             <button
               type="button"
               onClick={addOption}
@@ -470,7 +471,7 @@ export function QuizForm({
             </button>
           </div>
           {errors.correctAnswerIndex && (
-            <p className="text-red-500 text-sm mt-3 font-medium text-center">Vui lòng chọn 1 đáp án đúng</p>
+            <Caption className="text-error text-sm mt-3 font-medium text-center">Vui lòng chọn 1 đáp án đúng</Caption>
           )}
         </div>
 
@@ -479,9 +480,9 @@ export function QuizForm({
             <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
               <div>
                 <label className="block text-sm font-bold text-heading">Pick nhanh từ trong chủ đề</label>
-                <p className="text-sm text-caption">
+                <Caption className="text-sm text-caption">
                   Bấm vào từ để thêm nhanh vào đáp án, hoặc dùng làm đáp án đúng hiện tại.
-                </p>
+                </Caption>
               </div>
               <span className="px-3 py-1 rounded-full bg-card text-primary text-xs font-bold border border-primary/10">
                 {topicVocabularies.length} từ
@@ -530,14 +531,14 @@ export function QuizForm({
           type="button"
           onClick={() => void handleCancel()}
           disabled={isLoading}
-          className="flex-1 px-6 py-3.5 bg-muted/10 hover:bg-gray-200 text-heading rounded-xl font-bold transition-all disabled:opacity-50"
+          className="flex-1 px-6 py-3.5 bg-background hover:bg-background/80 border border-border text-heading rounded-xl font-bold transition-all disabled:opacity-50"
         >
           Hủy bỏ
         </button>
         <button
           type="submit"
           disabled={isLoading}
-          className="flex-[2] flex justify-center items-center px-6 py-3.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold shadow-lg transition-all disabled:opacity-70 disabled:cursor-not-allowed"
+          className="flex-[2] flex justify-center items-center px-6 py-3.5 bg-primary hover:bg-primary-dark text-white rounded-xl font-bold shadow-lg transition-all disabled:opacity-70 disabled:cursor-not-allowed"
         >
           {isLoading ? (
             <div className="w-5 h-5 border-2 border-white/50 border-t-white rounded-full animate-spin"></div>

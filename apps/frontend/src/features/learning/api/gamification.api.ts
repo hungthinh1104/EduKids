@@ -217,21 +217,21 @@ export const gamificationApi = {
     void childId;
     const response = await axiosInstance.get<ApiEnvelope<{
       childId?: number;
-      avatar?: string;
-      ownedItems?: Array<Record<string, unknown>>;
+      previewUrl?: string;
+      layers?: Array<Record<string, unknown>>;
     }>>(
-      'gamification/avatar/customization'
+      'gamification/avatar'
     );
     const payload = response.data.data;
-    const ownedItems = Array.isArray(payload.ownedItems)
-      ? payload.ownedItems.map(normalizeShopItem)
+    const layers = Array.isArray(payload.layers)
+      ? payload.layers.map(normalizeShopItem)
       : [];
 
     return {
       childId: Number(payload.childId ?? 0),
-      avatar: typeof payload.avatar === 'string' ? payload.avatar : '',
-      equippedItems: ownedItems.filter((item) => item.isEquipped),
-      availableItems: ownedItems,
+      avatar: typeof payload.previewUrl === 'string' ? payload.previewUrl : '',
+      equippedItems: layers.filter((item) => item.isEquipped),
+      availableItems: layers,
     };
   },
 

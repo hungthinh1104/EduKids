@@ -212,7 +212,7 @@ export default function AdminTopicsPage() {
                 )}
 
                 {(topic.hasVideo || topic.videoUrl) && (
-                  <div className="absolute top-4 left-4 rounded-full border border-blue-200/70 bg-blue-50/90 px-3 py-1 text-[11px] font-bold tracking-wide text-blue-700 shadow-sm backdrop-blur-sm">
+                  <div className="absolute top-4 left-4 rounded-full border border-primary/30 bg-primary-light/90 px-3 py-1 text-[11px] font-bold tracking-wide text-primary shadow-sm backdrop-blur-sm">
                     🎬 Có video
                   </div>
                 )}
@@ -220,8 +220,8 @@ export default function AdminTopicsPage() {
                 {/* Status Badge Overlaid */}
                 <div className="absolute top-4 right-4 bg-card/90 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-sm border border-border/60">
                   <span className={`text-xs font-bold tracking-wide ${
-                    topic.status === 'PUBLISHED' ? 'text-green-600' :
-                    topic.status === 'DRAFT' ? 'text-amber-600' :
+                    topic.status === 'PUBLISHED' ? 'text-success' :
+                    topic.status === 'DRAFT' ? 'text-warning' :
                     'text-body'
                   }`}>
                     {topic.status}

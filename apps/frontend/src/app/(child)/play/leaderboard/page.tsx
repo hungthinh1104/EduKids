@@ -13,7 +13,7 @@ import { gamificationApi, type LeaderboardEntry } from '@/features/learning/api/
 
 const PODIUM_STYLES = [
   {
-    wrapper: 'from-warning-light/40 via-yellow-100/20 to-orange-100/20 border-warning/40',
+    wrapper: 'from-warning-light/40 via-warning-light/20 to-warning-light/10 border-warning/40',
     badge: 'bg-warning text-white',
     text: 'text-warning',
     icon: '👑',
@@ -27,9 +27,9 @@ const PODIUM_STYLES = [
     label: 'Hạng 2',
   },
   {
-    wrapper: 'from-orange-100/40 via-amber-50/20 to-card border-orange-200/50',
-    badge: 'bg-orange-500 text-white',
-    text: 'text-orange-600',
+    wrapper: 'from-accent-light/40 via-accent-light/20 to-card border-accent/50',
+    badge: 'bg-accent text-white',
+    text: 'text-accent',
     icon: '🥉',
     label: 'Hạng 3',
   },
@@ -87,7 +87,7 @@ export default function LeaderboardPage() {
       <div className="hidden md:block">
         <GameHUD
           nickname={child.nickname}
-          avatarUrl={child.avatarUrl}
+          avatar={child.avatar}
           rewards={child.rewards}
           activeNav="leaderboard"
         />
@@ -109,7 +109,7 @@ export default function LeaderboardPage() {
         <motion.div
           initial={{ opacity: 1, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          className="rounded-[2rem] border border-warning/30 bg-gradient-to-r from-warning to-orange-400 p-5 text-white shadow-lg shadow-warning/20"
+          className="rounded-[2rem] border border-warning/30 bg-gradient-to-r from-warning to-warning-dark p-5 text-white shadow-lg shadow-warning/20"
         >
           <div className="flex items-start justify-between gap-4">
             <div>
@@ -267,7 +267,7 @@ export default function LeaderboardPage() {
                           #{entry.rank}
                         </div>
 
-                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-pink-400 to-purple-500 text-lg font-heading font-black text-white">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-accent-light to-accent text-lg font-heading font-black text-white">
                           {(entry.childName || 'U').charAt(0).toUpperCase()}
                         </div>
 

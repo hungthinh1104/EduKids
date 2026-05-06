@@ -4,7 +4,9 @@ import { useCallback, useEffect, useState } from 'react';
 import axios from 'axios';
 import { apiClient as axiosInstance } from '@/shared/services/api.client';
 import { setActiveProfile } from '@/features/profile/api/profile.api';
+import { gamificationApi } from '@/features/learning/api/gamification.api';
 import { setTopicModeProgressChildScope } from '@/features/learning/utils/topic-mode-progress';
+import { resolveChildAvatarUrl, syncChildAvatarById } from '@/features/profile/utils/avatar-sync';
 import type { ApiEnvelope } from '@/features/auth/types';
 import type {
     ChildProfile,
@@ -81,6 +83,26 @@ export function useChildProfiles() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
+    const syncActiveProfileAvatar = useCallback(async (profiles: ChildProfile[], activeProfileId: number | null) => {
+        if (!activeProfileId) {
+            return profiles;
+        }
+
+        try {
+            const customization = await gamificationApi.getAvatarCustomization(activeProfileId);
+            const activeProfile = profiles.find((profile) => profile.id === activeProfileId) ?? null;
+            const resolvedAvatar = resolveChildAvatarUrl(
+                activeProfile,
+                { avatar: customization.avatar },
+                activeProfile?.avatar,
+            );
+
+            return syncChildAvatarById(profiles, activeProfileId, resolvedAvatar);
+        } catch {
+            return profiles;
+        }
+    }, []);
+
     const loadProfiles = useCallback(async () => {
         setLoading(true);
         setError(null);
@@ -90,7 +112,6 @@ export function useChildProfiles() {
 
             const normalizedProfiles: ChildProfile[] = (payload.profiles ?? []).map((profile) => {
                 const source = profile as Partial<ChildProfile> & {
-                    avatarUrl?: string;
                     totalStars?: number;
                     level?: number;
                 };
@@ -99,7 +120,7 @@ export function useChildProfiles() {
                     id: Number(source.id ?? 0),
                     nickname: source.nickname ?? 'Bé yêu',
                     age: Number(source.age ?? 6),
-                    avatar: source.avatar ?? source.avatarUrl ?? 'https://api.dicebear.com/7.x/bottts/svg?seed=child',
+                    avatar: resolveChildAvatarUrl(source, null),
                     totalPoints: Number(source.totalPoints ?? source.totalStars ?? 0),
                     currentLevel: Number(source.currentLevel ?? source.level ?? 1),
                     badgesEarned: Number(source.badgesEarned ?? 0),
@@ -110,11 +131,14 @@ export function useChildProfiles() {
                 };
             });
 
+            const nextActiveProfileId = payload.activeProfileId ?? normalizedProfiles[0]?.id ?? null;
+            const profilesWithSyncedAvatar = await syncActiveProfileAvatar(normalizedProfiles, nextActiveProfileId);
+
             setData({
-                profiles: normalizedProfiles,
+                profiles: profilesWithSyncedAvatar,
                 totalCount: Number(payload.totalCount ?? normalizedProfiles.length),
                 maxProfiles: Number(payload.maxProfiles ?? 5),
-                activeProfileId: payload.activeProfileId ?? normalizedProfiles[0]?.id ?? null,
+                activeProfileId: nextActiveProfileId,
             });
         } catch (err: unknown) {
             if (axios.isAxiosError(err)) {
@@ -138,33 +162,61 @@ export function useChildProfiles() {
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [syncActiveProfileAvatar]);
 
     useEffect(() => {
         void loadProfiles();
     }, [loadProfiles]);
 
+    useEffect(() => {
+        const onAvatarUpdate = (event: Event) => {
+            const customEvent = event as CustomEvent<{ avatar?: string; childId?: number }>;
+            const nextAvatar = customEvent.detail?.avatar;
+            const targetChildId = customEvent.detail?.childId;
+
+            if (!nextAvatar) {
+                return;
+            }
+
+            setData((prev) => ({
+                ...prev,
+                profiles: prev.profiles.map((profile) => {
+                    const shouldUpdate = targetChildId != null ? profile.id === targetChildId : profile.isActive;
+                    return shouldUpdate ? { ...profile, avatar: nextAvatar } : profile;
+                }),
+            }));
+        };
+
+        window.addEventListener('edukids-avatar-updated', onAvatarUpdate as EventListener);
+        return () => window.removeEventListener('edukids-avatar-updated', onAvatarUpdate as EventListener);
+    }, []);
+
     const switchActiveProfile = useCallback(async (childId: number) => {
         try {
+            const currentProfiles = data.profiles;
             const result = await setActiveProfile(childId);
             const switchedProfileId = result.profile.id;
+            const syncedProfiles = await syncActiveProfileAvatar(
+                currentProfiles.map((profile) => ({
+                    ...profile,
+                    isActive: profile.id === switchedProfileId,
+                })),
+                switchedProfileId,
+            );
 
             setTopicModeProgressChildScope(switchedProfileId);
 
             setData((prev) => ({
                 ...prev,
                 activeProfileId: switchedProfileId,
-                profiles: prev.profiles.map((profile) => ({
-                    ...profile,
-                    isActive: profile.id === switchedProfileId,
-                })),
+                profiles: syncedProfiles,
             }));
 
             return true;
         } catch {
             return false;
         }
-    }, []);
+    }, [data.profiles, syncActiveProfileAvatar]);
 
     return {
         ...data,

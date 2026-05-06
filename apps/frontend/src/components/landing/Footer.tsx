@@ -16,10 +16,10 @@ export function Footer() {
                         <a href="#" className="w-12 h-12 rounded-full bg-slate-900/50 flex items-center justify-center hover:bg-primary hover:text-white transition-all hover:-translate-y-1" aria-label="Facebook">
                             <Facebook size={20} />
                         </a>
-                        <a href="#" className="w-12 h-12 rounded-full bg-slate-900/50 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all hover:-translate-y-1" aria-label="YouTube">
+                        <a href="#" className="w-12 h-12 rounded-full bg-slate-900/50 flex items-center justify-center hover:bg-error hover:text-white transition-all hover:-translate-y-1" aria-label="YouTube">
                             <Youtube size={20} />
                         </a>
-                        <a href="#" className="w-12 h-12 rounded-full bg-slate-900/50 flex items-center justify-center hover:bg-pink-500 hover:text-white transition-all hover:-translate-y-1" aria-label="Instagram">
+                        <a href="#" className="w-12 h-12 rounded-full bg-slate-900/50 flex items-center justify-center hover:bg-accent hover:text-white transition-all hover:-translate-y-1" aria-label="Instagram">
                             <Instagram size={20} />
                         </a>
                     </div>

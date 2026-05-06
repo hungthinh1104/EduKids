@@ -2,14 +2,12 @@ import { Metadata } from 'next';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
-import { FloatingNavbar } from '@/shared/components/layout/FloatingNavbar';
 import { KidButton } from '@/components/edukids/KidButton';
-import { HeroSection } from '@/components/landing/HeroSection';
+import { LandingInteractiveSections } from '@/components/landing/LandingInteractiveSections';
 
-// Lazy load below-the-fold components for better initial performance
+// Lazy load below-the-fold sections for better initial performance.
 const FeaturesSection = dynamic(() => import('@/components/landing/FeaturesSection').then(mod => mod.FeaturesSection), { ssr: true });
 const JourneySection = dynamic(() => import('@/components/landing/JourneySection').then(mod => mod.JourneySection), { ssr: true });
-const TestimonialsSection = dynamic(() => import('@/components/landing/TestimonialsSection').then(mod => mod.TestimonialsSection), { ssr: true });
 const CtaSection = dynamic(() => import('@/components/landing/CtaSection').then(mod => mod.CtaSection), { ssr: true });
 const Footer = dynamic(() => import('@/components/landing/Footer').then(mod => mod.Footer), { ssr: true });
 
@@ -28,13 +26,7 @@ export const metadata: Metadata = {
 export default function HomePage() {
   return (
     <main id="main" className="min-h-screen bg-background text-body overflow-hidden font-sans">
-      <FloatingNavbar
-        links={[
-          { href: '#features', label: 'Khám Phá' },
-          { href: '#how-it-works', label: 'Phương Pháp' },
-          { href: '#parents', label: 'Phụ Huynh' }
-        ]}
-        showThemeToggle={true}
+      <LandingInteractiveSections
         rightActions={
           <>
             <Link href="/login" className="hidden sm:block">
@@ -49,10 +41,8 @@ export default function HomePage() {
         }
       />
 
-      <HeroSection />
       <FeaturesSection />
       <JourneySection />
-      <TestimonialsSection />
       <CtaSection />
       <Footer />
     </main>

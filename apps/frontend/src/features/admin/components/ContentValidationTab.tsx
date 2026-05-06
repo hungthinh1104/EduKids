@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Clock, ShieldCheck, ShieldX } from 'lucide-react';
 import { TableBadge } from '@/features/admin/components/AdminUI';
+import { Body } from '@/shared/components/Typography';
 import { toast } from 'sonner';
 
 export interface PendingItem {
@@ -65,7 +66,7 @@ export function ContentValidationTab({ pendingItems, onItemsChange, onApproveIte
                 {pendingItems.length === 0 ? (
                     <div className="py-16 text-center">
                         <ShieldCheck size={40} className="text-success mx-auto mb-3" />
-                        <p className="font-heading font-bold text-heading">Tất cả đã được duyệt!</p>
+                        <Body className="font-heading font-bold text-heading">Tất cả đã được duyệt!</Body>
                     </div>
                 ) : (
                     <div className="divide-y divide-border">

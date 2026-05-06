@@ -206,11 +206,11 @@ export default function AdminQuizzesPage() {
 
   const getDifficultyColor = (level: number) => {
     switch (level) {
-      case 1: return 'text-green-600 bg-green-50 border-green-200';
-      case 2: return 'text-blue-600 bg-blue-50 border-blue-200';
-      case 3: return 'text-yellow-600 bg-yellow-50 border-yellow-200';
-      case 4: return 'text-orange-600 bg-orange-50 border-orange-200';
-      case 5: return 'text-red-600 bg-red-50 border-red-200';
+      case 1: return 'text-success bg-success-light border-success/30';
+      case 2: return 'text-primary bg-primary-light border-primary/30';
+      case 3: return 'text-warning bg-warning-light border-warning/30';
+      case 4: return 'text-accent bg-accent-light border-accent/30';
+      case 5: return 'text-error bg-error-light border-error/30';
       default: return 'text-body bg-background border-border';
     }
   };
@@ -336,8 +336,8 @@ export default function AdminQuizzesPage() {
                   </span>
                   {quiz.status && (
                     <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                      quiz.status === 'PUBLISHED' ? 'bg-green-100 text-green-700' :
-                      quiz.status === 'DRAFT' ? 'bg-amber-100 text-amber-700' :
+                      quiz.status === 'PUBLISHED' ? 'bg-success-light text-success' :
+                      quiz.status === 'DRAFT' ? 'bg-warning-light text-warning' :
                       'bg-muted/10 text-heading'
                     }`}>
                       {quiz.status}
@@ -356,7 +356,7 @@ export default function AdminQuizzesPage() {
                   <button
                     type="button"
                     onClick={() => openEditModal(quiz)}
-                    className="flex-[2] flex justify-center items-center gap-1.5 px-3 py-2 bg-background hover:bg-blue-50 text-body hover:text-blue-600 rounded-xl transition-colors font-medium text-sm border border-transparent hover:border-blue-100"
+                    className="flex-[2] flex justify-center items-center gap-1.5 px-3 py-2 bg-background hover:bg-primary-light/40 text-body hover:text-primary rounded-xl transition-colors font-medium text-sm border border-transparent hover:border-primary/30"
                   >
                     <Edit2 className="w-4 h-4" />
                     <span>Chỉnh sửa</span>
@@ -366,7 +366,7 @@ export default function AdminQuizzesPage() {
                     <button
                       type="button"
                       onClick={() => handlePublish(quiz.id)}
-                      className="flex-1 flex justify-center items-center gap-1.5 px-3 py-2 bg-green-50/50 hover:bg-green-100/80 text-green-700 rounded-xl transition-colors text-sm"
+                      className="flex-1 flex justify-center items-center gap-1.5 px-3 py-2 bg-success-light/50 hover:bg-success-light text-success rounded-xl transition-colors text-sm"
                       title="Xuất bản"
                     >
                       <CheckCircle className="w-4 h-4" />
@@ -377,7 +377,7 @@ export default function AdminQuizzesPage() {
                   <button
                     type="button"
                     onClick={() => handleDelete(quiz.id)}
-                    className="flex items-center justify-center px-4 py-2 bg-background/80 hover:bg-red-50 text-muted hover:text-red-500 rounded-xl transition-colors"
+                    className="flex items-center justify-center px-4 py-2 bg-background/80 hover:bg-error-light text-muted hover:text-error rounded-xl transition-colors"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -397,12 +397,12 @@ export default function AdminQuizzesPage() {
                         key={idx}
                         className={`flex items-start gap-3 p-3.5 rounded-xl border transition-all ${
                           isCorrect
-                            ? 'bg-green-50 border-green-200 text-green-800 shadow-sm'
+                            ? 'bg-success-light border-success/30 text-success-dark shadow-sm'
                             : 'bg-card border-border text-body'
                         }`}
                       >
                         <span className={`flex shrink-0 w-6 h-6 items-center justify-center rounded-full text-xs font-bold ${
-                          isCorrect ? 'bg-green-200 text-green-800' : 'bg-muted/10 text-muted'
+                          isCorrect ? 'bg-success-light text-success' : 'bg-muted/10 text-muted'
                         }`}>
                           {String.fromCharCode(65 + idx)}
                         </span>
@@ -410,7 +410,7 @@ export default function AdminQuizzesPage() {
                           {optionText}
                         </span>
                         {isCorrect && (
-                          <CheckCircle className="w-5 h-5 text-green-500 ml-auto shrink-0" />
+                          <CheckCircle className="w-5 h-5 text-success ml-auto shrink-0" />
                         )}
                       </div>
                     );
@@ -427,7 +427,7 @@ export default function AdminQuizzesPage() {
         isOpen={showCreateModal} 
         onClose={() => setShowCreateModal(false)}
         title={editingQuiz ? 'Chỉnh sửa Câu hỏi' : 'Thêm Câu hỏi Trắc nghiệm'}
-        maxWidth="2xl"
+        maxWidth="4xl"
       >
         <QuizForm 
           initialData={editingQuiz}

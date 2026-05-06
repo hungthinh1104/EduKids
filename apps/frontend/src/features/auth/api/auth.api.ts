@@ -12,6 +12,17 @@ export const authApi = {
         return response.data.data;
     },
 
+    me: async (accessToken?: string) => {
+        const response = await apiClient.get<ApiEnvelope<AuthResponse['user']>>('auth/me', {
+            headers: accessToken
+                ? {
+                    Authorization: `Bearer ${accessToken}`,
+                }
+                : undefined,
+        });
+        return response.data.data;
+    },
+
     logout: async () => {
         return apiClient.post('auth/logout');
     },

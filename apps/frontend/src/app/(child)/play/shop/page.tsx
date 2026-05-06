@@ -14,11 +14,12 @@ import { useCurrentChild } from '@/features/learning/hooks/useCurrentChild';
 import { CATEGORIES } from '@/features/learning/components/shop/constants';
 import { ShopGrid } from '@/features/learning/components/shop/ShopGrid';
 import { ItemPreviewDrawer } from '@/features/learning/components/shop/ItemPreviewDrawer';
+import { resolveChildAvatarUrl } from '@/features/profile/utils/avatar-sync';
 
 export default function ShopPage() {
     const { child, loading: childLoading } = useCurrentChild();
     const childId = child?.id ?? 0;
-    const fallbackAvatarUrl = child?.avatarUrl ?? '';
+    const fallbackAvatarUrl = child?.avatar ?? '';
 
     const [shopItems, setShopItems] = useState<ShopItem[]>([]);
     const [stars, setStars] = useState(0);
@@ -63,7 +64,7 @@ export default function ShopPage() {
                 setShopItems(items);
                 setStars(rewards.stars);
                 setCoins(rewards.coins);
-                setPreviewAvatarUrl(customization.avatar || fallbackAvatarUrl);
+                setPreviewAvatarUrl(resolveChildAvatarUrl({ avatar: fallbackAvatarUrl }, { avatar: customization.avatar }, fallbackAvatarUrl));
                 setEquippedBySlot({
                     'Mũ': customization.equippedItems.find((item) => item.category === 'Mũ')?.id ?? null,
                     'Áo': customization.equippedItems.find((item) => item.category === 'Áo')?.id ?? null,
@@ -121,7 +122,11 @@ export default function ShopPage() {
         try {
             await gamificationApi.equipItem(childId, item.id);
             const customization = await gamificationApi.getAvatarCustomization(childId);
-            setPreviewAvatarUrl(customization.avatar || child.avatarUrl);
+            const nextAvatarUrl = resolveChildAvatarUrl(child, { avatar: customization.avatar }, child.avatar);
+            setPreviewAvatarUrl(nextAvatarUrl);
+            window.dispatchEvent(new CustomEvent('edukids-avatar-updated', {
+                detail: { avatar: nextAvatarUrl, childId },
+            }));
             setShopItems((prev) =>
                 prev.map((shopItem) => {
                     const equippedItem = customization.equippedItems.find((equipped) => equipped.id === shopItem.id);
@@ -159,7 +164,7 @@ export default function ShopPage() {
             <div className="hidden md:block">
                 <GameHUD
                     nickname={child.nickname}
-                    avatarUrl={previewAvatarUrl || child.avatarUrl}
+                    avatar={previewAvatarUrl || child.avatar}
                     rewards={{ ...child.rewards, totalPoints: stars }}
                     activeNav="shop"
                 />
@@ -196,7 +201,7 @@ export default function ShopPage() {
                 <motion.div initial={{ opacity: 1, y: 12 }} animate={{ opacity: 1, y: 0 }} className="bg-gradient-candy rounded-[2rem] p-5 flex items-center gap-5">
                     <div className="relative w-20 h-20 flex-shrink-0">
                         <div className="w-full h-full rounded-full bg-card/20 border-4 border-white/50 flex items-center justify-center overflow-hidden">
-                            <Image src={previewAvatarUrl || child.avatarUrl} alt={child.nickname} width={80} height={80} className="h-full w-full object-contain p-1" />
+                            <Image src={previewAvatarUrl || child.avatar} alt={child.nickname} width={80} height={80} className="h-full w-full object-contain p-1" />
                         </div>
                         {/* Show equipped hat emoji on avatar */}
                         {equippedBySlot['Mũ'] && (

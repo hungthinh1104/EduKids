@@ -206,7 +206,7 @@ export default function AdminMediaPage() {
         />
         <label htmlFor="file-upload" className="cursor-pointer block">
           <div className="text-center">
-            <Upload className="w-12 h-12 text-blue-600 mx-auto mb-3 group-hover:scale-110 transition" />
+            <Upload className="w-12 h-12 text-primary mx-auto mb-3 group-hover:scale-110 transition" />
             <p className="font-bold text-heading mb-1">
               {isUploading ? 'Đang tải...' : isDragging ? 'Thả file vào đây để tải lên' : 'Kéo và thả file vào đây hoặc nhấp để chọn'}
             </p>
@@ -245,7 +245,7 @@ export default function AdminMediaPage() {
       {/* Files List */}
       {isLoading ? (
         <div className="text-center py-12 bg-card rounded-2xl border border-border/70 shadow-sm">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
           <p className="mt-4 text-body">Đang tải...</p>
         </div>
       ) : filteredFiles.length === 0 ? (

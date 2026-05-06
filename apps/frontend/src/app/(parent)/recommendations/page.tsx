@@ -39,20 +39,10 @@ export default function ParentRecommendationsPage() {
       setIsLoading(true);
       const data = await getRecommendations(childId);
       setRecommendations(data?.recommendations || []);
-      setEmptyMessage(data?.noRecommendationMessage || 'Chưa có gợi ý nào');
-
-      if ((data?.recommendations?.length ?? 0) === 0) {
-        try {
-          setIsRegenerating(true);
-          const regenerated = await regenerateRecommendations(childId);
-          setRecommendations(regenerated?.recommendations || []);
-          setEmptyMessage(regenerated?.noRecommendationMessage || 'Hệ thống chưa tạo được gợi ý phù hợp.');
-        } catch (regenerateError) {
-          console.error('Failed to regenerate recommendations:', regenerateError);
-        } finally {
-          setIsRegenerating(false);
-        }
-      }
+      setEmptyMessage(
+        data?.noRecommendationMessage ||
+          'Bé chưa có gợi ý nào. Nhấn "Tạo gợi ý mới" để bắt đầu!',
+      );
     } catch (error) {
       console.error('Failed to load recommendations:', error);
       setRecommendations([]);
@@ -67,10 +57,15 @@ export default function ParentRecommendationsPage() {
     try {
       setIsRegenerating(true);
       const data = await regenerateRecommendations(activeChild.id);
-      setRecommendations(data?.recommendations || []);
+      const recs = data?.recommendations || [];
+      setRecommendations(recs);
       setEmptyMessage(data?.noRecommendationMessage || 'Hệ thống chưa tạo được gợi ý phù hợp.');
+      if (recs.length > 0) {
+        toast.success(`Đã tạo ${recs.length} gợi ý mới cho ${activeChild?.nickname || 'bé'}.`);
+      }
     } catch (error) {
       console.error('Failed to regenerate recommendations:', error);
+      toast.error('Không thể tạo gợi ý mới lúc này. Vui lòng thử lại sau.');
       setEmptyMessage('Không thể tạo gợi ý mới lúc này. Vui lòng thử lại sau.');
     } finally {
       setIsRegenerating(false);
@@ -87,14 +82,14 @@ export default function ParentRecommendationsPage() {
       : recommendations.filter((r) => r.type === activeCategory);
 
   const getRecommendationIcon = (type: string) => {
-    switch (type?.toLowerCase()) {
-      case 'topic':
+    switch (type) {
+      case 'TOPIC':
         return '📚';
-      case 'review':
+      case 'REVIEW':
         return '🔄';
-      case 'pronunciation':
+      case 'PRONUNCIATION':
         return '🎤';
-      case 'quiz':
+      case 'QUIZ':
         return '📝';
       default:
         return '💡';
@@ -102,29 +97,29 @@ export default function ParentRecommendationsPage() {
   };
 
   const getRecommendationColor = (type: string) => {
-    switch (type?.toLowerCase()) {
-      case 'topic':
-        return 'from-blue-500 to-cyan-500';
-      case 'review':
-        return 'from-purple-500 to-pink-500';
-      case 'pronunciation':
-        return 'from-green-500 to-emerald-500';
-      case 'quiz':
-        return 'from-orange-500 to-red-500';
+    switch (type) {
+      case 'TOPIC':
+        return 'from-primary to-primary-dark';
+      case 'REVIEW':
+        return 'from-secondary to-secondary-dark';
+      case 'PRONUNCIATION':
+        return 'from-success to-success-dark';
+      case 'QUIZ':
+        return 'from-warning to-warning-dark';
       default:
-        return 'from-indigo-500 to-blue-500';
+        return 'from-accent to-accent-dark';
     }
   };
 
   const getRecommendationLabel = (type: string) => {
-    switch (type?.toLowerCase()) {
-      case 'topic':
+    switch (type) {
+      case 'TOPIC':
         return 'Theo Chủ Đề';
-      case 'review':
+      case 'REVIEW':
         return 'Ôn Tập';
-      case 'pronunciation':
+      case 'PRONUNCIATION':
         return 'Phát Âm';
-      case 'quiz':
+      case 'QUIZ':
         return 'Bài Quiz';
       default:
         return 'Gợi Ý';
@@ -156,17 +151,21 @@ export default function ParentRecommendationsPage() {
     setActivatingRecommendationId(recommendation.id);
 
     try {
-      let appliedPath: AppliedLearningPath | undefined;
-
-      try {
-        appliedPath = await applyRecommendation(activeChild.id, recommendation.id);
-      } catch (error) {
-        console.error('Failed to apply recommendation before start:', error);
-      }
+      const appliedPath = await applyRecommendation(activeChild.id, recommendation.id);
 
       const learningRoute = resolveLearningRoute(recommendation, appliedPath);
-      const restoreRoute = '/session/restore-parent?next=/recommendations';
 
+      // Guard: if we couldn't resolve a real topic, don't navigate
+      if (!learningRoute || learningRoute === '/play/review') {
+        const firstTopicId = appliedPath.topics.find((t) => t.id > 0)?.id;
+        if (!firstTopicId) {
+          toast.error('Bài học này chưa sẵn sàng. Vui lòng thử gợi ý khác hoặc tạo gợi ý mới.');
+          setRecommendations((prev) => prev.filter((r) => r.id !== recommendation.id));
+          return;
+        }
+      }
+
+      const restoreRoute = '/session/restore-parent?next=/recommendations';
       backupParentSession();
       window.history.replaceState(window.history.state, '', restoreRoute);
 
@@ -175,18 +174,24 @@ export default function ParentRecommendationsPage() {
       window.location.assign(learningRoute);
     } catch (error) {
       console.error('Failed to start recommendation:', error);
-      toast.error('Không thể mở bài học được gợi ý lúc này. Vui lòng thử lại.');
+      const msg = error instanceof Error ? error.message : '';
+      if (msg.toLowerCase().includes('playable') || msg.toLowerCase().includes('not found')) {
+        toast.error('Bài học trong gợi ý này không còn khả dụng. Vui lòng tạo gợi ý mới.');
+        setRecommendations((prev) => prev.filter((r) => r.id !== recommendation.id));
+      } else {
+        toast.error('Không thể mở bài học được gợi ý lúc này. Vui lòng thử lại.');
+      }
     } finally {
       setActivatingRecommendationId(null);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-primary-light/25 via-background to-background pb-28">
-      <div className="max-w-6xl mx-auto px-4 md:px-6 pt-6">
+    <div className="pb-28">
+      <div className="max-w-6xl mx-auto pt-6">
       {/* Header */}
       <motion.div
-        initial={{ opacity: 1, y: -20 }}
+        initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         className="mb-6 rounded-3xl border border-primary/15 bg-gradient-to-r from-primary-light/45 via-card to-accent-light/35 p-6 md:p-7 shadow-sm"
       >
@@ -278,7 +283,7 @@ export default function ParentRecommendationsPage() {
           {filteredRecommendations.map((rec, idx) => (
             <motion.div
               key={rec.id}
-              initial={{ opacity: 1, x: -20 }}
+              initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: idx * 0.05 }}
               className="group"
@@ -308,19 +313,19 @@ export default function ParentRecommendationsPage() {
                           {rec.difficulty && (
                             <div>
                               <Caption className="text-caption text-xs">Mức Độ</Caption>
-                              <p className="font-bold text-body">{rec.difficulty}</p>
+                              <Body className="font-bold text-body">{rec.difficulty}</Body>
                             </div>
                           )}
                           {(rec.estimatedMinutes ?? rec.estimatedTime) && (
                             <div>
                               <Caption className="text-caption text-xs">Thời Gian</Caption>
-                              <p className="font-bold text-body">~{rec.estimatedMinutes ?? rec.estimatedTime} phút</p>
+                              <Body className="font-bold text-body">~{rec.estimatedMinutes ?? rec.estimatedTime} phút</Body>
                             </div>
                           )}
                           {rec.masteryPercentage !== undefined && (
                             <div>
                               <Caption className="text-caption text-xs">Độ Thành Thạo</Caption>
-                              <p className="font-bold text-body">{rec.masteryPercentage}%</p>
+                              <Body className="font-bold text-body">{rec.masteryPercentage}%</Body>
                             </div>
                           )}
                         </div>
@@ -328,10 +333,10 @@ export default function ParentRecommendationsPage() {
                         {/* Reason */}
                         {rec.reason && (
                           <div className="mt-4 p-3 bg-primary-light/40 border border-primary/20 rounded-lg">
-                            <p className="text-xs text-primary-dark">
+                            <Caption className="text-xs text-primary-dark">
                               <span className="font-bold">Lý do: </span>
                               {rec.reason}
-                            </p>
+                            </Caption>
                           </div>
                         )}
                       </div>
@@ -356,7 +361,7 @@ export default function ParentRecommendationsPage() {
                   {rec.masteryPercentage !== undefined && (
                     <div className="h-2 bg-background rounded-full overflow-hidden border border-border/50">
                       <div
-                        className="h-full bg-gradient-to-r from-blue-500 to-purple-500"
+                        className="h-full bg-gradient-to-r from-primary to-accent"
                         style={{ width: `${rec.masteryPercentage}%` }}
                       />
                     </div>
@@ -370,7 +375,7 @@ export default function ParentRecommendationsPage() {
 
       {/* Info Section */}
       <motion.div
-        initial={{ opacity: 1, y: 20 }}
+        initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
         className="mt-8 bg-gradient-to-r from-primary-light/45 to-accent-light/45 rounded-2xl p-6 border border-primary/20 shadow-sm"

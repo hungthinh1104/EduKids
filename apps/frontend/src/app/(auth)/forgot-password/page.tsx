@@ -86,9 +86,13 @@ function ForgotPasswordContent() {
 
     return (
         <motion.div initial="hidden" animate="visible" className="w-full space-y-6">
-            <motion.div variants={fadeInUp} className="text-center">
-                <Heading level={2} className="text-3xl text-heading mb-2">Quên mật khẩu?</Heading>
-                <Body className="text-body">Nhập email để nhận link đặt lại mật khẩu</Body>
+            <motion.div variants={fadeInUp} className="text-center mb-8">
+                <Heading level={2} className="text-4xl text-heading font-extrabold tracking-tight drop-shadow-sm mb-3">
+                    Quên Mật Khẩu
+                </Heading>
+                <p className="text-muted text-lg font-medium">
+                    Nhập email để nhận link đặt lại mật khẩu
+                </p>
             </motion.div>
 
             {error && (
@@ -114,7 +118,7 @@ function ForgotPasswordContent() {
                         />
                     </div>
                     {errors.email && (
-                        <p className="text-secondary text-sm font-medium ml-1">{errors.email.message}</p>
+                        <Caption className="text-secondary text-sm font-medium ml-1">{errors.email.message}</Caption>
                     )}
                 </motion.div>
 
@@ -122,7 +126,7 @@ function ForgotPasswordContent() {
                     <button
                         type="submit"
                         disabled={isLoading}
-                        className="w-full flex items-center justify-center btn-primary h-14 text-lg transition-all hover:scale-105 disabled:opacity-70 disabled:scale-100"
+                        className={`w-full flex items-center justify-center btn-primary h-14 text-lg font-heading font-bold rounded-2xl transition-transform duration-200 ${isLoading ? 'opacity-80' : 'hover:scale-[1.02]'}`}
                     >
                         {isLoading ? <Loader2 size={22} className="animate-spin" /> : 'Gửi link đặt lại 📧'}
                     </button>

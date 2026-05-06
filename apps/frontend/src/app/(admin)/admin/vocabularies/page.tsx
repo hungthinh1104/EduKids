@@ -238,8 +238,8 @@ export default function AdminVocabulariesPage() {
                 {vocab.status && (
                   <div className="absolute top-3 left-3 bg-card/90 backdrop-blur-sm px-3 py-1 rounded-full shadow-sm border border-border/60">
                     <span className={`text-[10px] uppercase font-bold tracking-wider ${
-                      vocab.status === 'PUBLISHED' ? 'text-green-600' :
-                      vocab.status === 'DRAFT' ? 'text-amber-600' :
+                      vocab.status === 'PUBLISHED' ? 'text-success' :
+                      vocab.status === 'DRAFT' ? 'text-warning' :
                       'text-body'
                     }`}>
                       {vocab.status}

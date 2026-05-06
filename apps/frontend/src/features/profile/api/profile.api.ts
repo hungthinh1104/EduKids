@@ -6,7 +6,7 @@ export interface ChildProfile {
   id: number;
   nickname: string;
   age: number;
-  avatar: string; // Note: Backend uses 'avatar', not 'avatarUrl'
+  avatar: string;
   totalPoints: number;
   currentLevel: number;
   badgesEarned: number;
@@ -24,7 +24,6 @@ export interface ChildProfileWithStats extends ChildProfile {
     currentLevel: number;
   };
   hp: number;
-  avatarUrl: string; // Alias for compatibility with existing components
 }
 
 export interface ProfileSwitchResponse {
@@ -63,7 +62,6 @@ export const getActiveProfile = async (): Promise<ChildProfileWithStats | null> 
     // Transform to match component expectations
     return {
       ...profile,
-      avatarUrl: profile.avatar, // Alias for compatibility
       hp: 5, // Default HP (could fetch from learning progress if needed)
       rewards: {
         streakDays: profile.streakDays || 0,
@@ -128,7 +126,7 @@ export const setActiveProfile = async (childId: number): Promise<ProfileSwitchRe
 export const createProfile = async (data: {
   nickname: string;
   age: number;
-  avatarUrl?: string;
+  avatar?: string;
 }): Promise<ChildProfile> => {
   const response = await apiClient.post('/profiles', data);
   return response.data.data.profile;
@@ -140,7 +138,7 @@ export const createProfile = async (data: {
  */
 export const updateProfile = async (
   id: number,
-  data: { nickname?: string; age?: number; avatarUrl?: string }
+  data: { nickname?: string; age?: number; avatar?: string }
 ): Promise<ChildProfile> => {
   const response = await apiClient.put(`/profiles/${id}`, data);
   return response.data.data.profile;

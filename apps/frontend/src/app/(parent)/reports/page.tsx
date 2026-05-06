@@ -185,7 +185,7 @@ export default function ReportsPage() {
                 <div className="flex gap-2 flex-wrap md:flex-nowrap">
                     <button 
                         onClick={() => setShowSubscriptionModal(true)} 
-                        className="flex items-center justify-center gap-2 px-3 md:px-4 py-2.5 bg-card border border-border rounded-xl text-xs md:text-sm font-heading font-bold text-body hover:bg-purple-50 hover:border-purple-400 transition-colors shadow-sm print:hidden flex-1 md:flex-none whitespace-nowrap"
+                        className="flex items-center justify-center gap-2 px-3 md:px-4 py-2.5 bg-card border border-border rounded-xl text-xs md:text-sm font-heading font-bold text-body hover:bg-primary-light/50 hover:border-primary/40 transition-colors shadow-sm print:hidden flex-1 md:flex-none whitespace-nowrap"
                     >
                         <Bell size={14} className="md:w-4 md:h-4" /> <span className="hidden md:inline">{subscriptionPrefs?.isSubscribed ? 'Chỉnh lịch gửi tự động' : 'Thiết lập gửi tự động'}</span>
                         <span className="md:hidden">Lịch gửi</span>
@@ -418,7 +418,7 @@ export default function ReportsPage() {
                         className="bg-card rounded-2xl md:rounded-3xl shadow-2xl p-4 md:p-8 max-w-md w-full max-h-[90vh] overflow-y-auto"
                     >
                         <div className="flex items-center justify-between mb-4 md:mb-6">
-                            <h3 className="text-lg md:text-2xl font-bold text-heading">Cài đặt gửi báo cáo</h3>
+                            <Heading level={3} className="text-lg md:text-2xl font-bold text-heading">Cài đặt gửi báo cáo</Heading>
                             <button
                                 onClick={() => setShowSubscriptionModal(false)}
                                 className="text-muted hover:text-body dark:hover:text-gray-300 transition text-lg"
@@ -429,8 +429,8 @@ export default function ReportsPage() {
 
                         {isLoadingPrefs ? (
                             <div className="text-center py-8">
-                                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto"></div>
-                                <p className="mt-4 text-body dark:text-muted text-sm">Đang tải...</p>
+                                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+                                <Body className="mt-4 text-body dark:text-muted text-sm">Đang tải...</Body>
                             </div>
                         ) : (
                             <div className="space-y-4 md:space-y-6">
@@ -440,18 +440,18 @@ export default function ReportsPage() {
                                         : 'Hiện tại bạn chưa bật gửi báo cáo tự động.'}
                                 </div>
 
-                                <p className="text-xs md:text-sm font-bold text-heading dark:text-body">
+                                <Body className="text-xs md:text-sm font-bold text-heading dark:text-body">
                                     Chọn kênh nhận báo cáo tự động
-                                </p>
-                                <p className="mt-1 text-[10px] md:text-xs text-muted">
+                                </Body>
+                                <Caption className="mt-1 text-[10px] md:text-xs text-muted">
                                     Hệ thống chỉ hỗ trợ một kênh tại một thời điểm.
-                                </p>
+                                </Caption>
 
                                 {/* Email Subscription */}
-                                <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/30 rounded-lg md:rounded-2xl p-3 md:p-4">
+                                <div className="bg-gradient-to-br from-primary-light/40 to-primary-light/80 dark:from-primary-dark/30 dark:to-primary-dark/50 rounded-lg md:rounded-2xl p-3 md:p-4 border border-primary/20">
                                     <div className="flex items-center justify-between mb-2 md:mb-3">
                                         <div className="flex items-center gap-2 md:gap-3">
-                                            <Mail className="w-5 h-5 md:w-6 md:h-6 text-blue-600 dark:text-blue-400 flex-shrink-0" />
+                                            <Mail className="w-5 h-5 md:w-6 md:h-6 text-primary flex-shrink-0" />
                                             <span className="font-bold text-xs md:text-sm text-heading">Email</span>
                                         </div>
                                         <label className="relative inline-flex items-center cursor-pointer">
@@ -471,17 +471,17 @@ export default function ReportsPage() {
                                                 disabled={isSavingPrefs}
                                                 className="sr-only peer"
                                             />
-                                            <div className="w-10 h-6 md:w-11 md:h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-card after:border-border after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                                            <div className="w-10 h-6 md:w-11 md:h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/30 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-card after:border-border after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
                                         </label>
                                     </div>
-                                    <p className="text-xs md:text-sm text-body dark:text-muted">Nhận báo cáo qua email mỗi tuần</p>
+                                    <Caption className="text-xs md:text-sm text-body dark:text-muted">Nhận báo cáo qua email mỗi tuần</Caption>
                                 </div>
 
                                 {/* Zalo Subscription */}
-                                <div className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/30 dark:to-green-800/30 rounded-lg md:rounded-2xl p-3 md:p-4">
+                                <div className="bg-gradient-to-br from-success-light/40 to-success-light/80 dark:from-success-dark/30 dark:to-success-dark/50 rounded-lg md:rounded-2xl p-3 md:p-4 border border-success/20">
                                     <div className="flex items-center justify-between mb-2 md:mb-3">
                                         <div className="flex items-center gap-2 md:gap-3">
-                                            <Bell className="w-5 h-5 md:w-6 md:h-6 text-green-600 dark:text-green-400 flex-shrink-0" />
+                                            <Bell className="w-5 h-5 md:w-6 md:h-6 text-success flex-shrink-0" />
                                             <span className="font-bold text-xs md:text-sm text-heading">Zalo</span>
                                         </div>
                                         <label className="relative inline-flex items-center cursor-pointer">
@@ -501,10 +501,10 @@ export default function ReportsPage() {
                                                 disabled={isSavingPrefs}
                                                 className="sr-only peer"
                                             />
-                                            <div className="w-10 h-6 md:w-11 md:h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-card after:border-border after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+                                            <div className="w-10 h-6 md:w-11 md:h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-success/30 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-card after:border-border after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-success"></div>
                                         </label>
                                     </div>
-                                    <p className="text-xs md:text-sm text-body dark:text-muted">Nhận báo cáo qua Zalo mỗi tuần</p>
+                                    <Caption className="text-xs md:text-sm text-body dark:text-muted">Nhận báo cáo qua Zalo mỗi tuần</Caption>
                                 </div>
 
                                 <button
@@ -538,14 +538,14 @@ export default function ReportsPage() {
                                     <div className="grid grid-cols-1 gap-3">
                                         <button
                                             disabled
-                                            className="px-3 md:px-4 py-2 md:py-3 rounded-lg md:rounded-xl font-bold text-xs md:text-sm transition bg-purple-600/90 text-white shadow-lg cursor-not-allowed"
+                                            className="px-3 md:px-4 py-2 md:py-3 rounded-lg md:rounded-xl font-bold text-xs md:text-sm transition bg-primary/90 text-white shadow-lg cursor-not-allowed"
                                         >
                                             Hàng tuần
                                         </button>
                                     </div>
-                                    <p className="mt-2 text-[10px] md:text-xs text-muted">Hiện tại hệ thống hỗ trợ gửi báo cáo tự động theo tuần.</p>
+                                    <Caption className="mt-2 text-[10px] md:text-xs text-muted">Hiện tại hệ thống hỗ trợ gửi báo cáo tự động theo tuần.</Caption>
                                     {subscriptionPrefs?.isSubscribed && (
-                                        <p className="mt-2 text-[10px] md:text-xs text-body dark:text-muted">
+                                        <Caption className="mt-2 text-[10px] md:text-xs text-body dark:text-muted">
                                             Kênh hiện tại: {subscriptionPrefs.preferredChannel === 'ZALO' ? 'Zalo' : 'Email'}
                                             {' • '}
                                             Thời gian: {String(subscriptionPrefs.reportHour ?? 9).padStart(2, '0')}:00
@@ -555,12 +555,12 @@ export default function ReportsPage() {
                                                     Lần gần nhất: {new Date(subscriptionPrefs.lastReportSentAt).toLocaleDateString('vi-VN')}
                                                 </>
                                             ) : null}
-                                        </p>
+                                        </Caption>
                                     )}
                                 </div>
 
                                 {subscriptionMessage && (
-                                    <div className={`rounded-lg md:rounded-2xl px-3 md:px-4 py-2 md:py-3 text-xs md:text-sm ${subscriptionMessage.includes('Không thể') ? 'bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400' : 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400'}`}>
+                                    <div className={`rounded-lg md:rounded-2xl px-3 md:px-4 py-2 md:py-3 text-xs md:text-sm ${subscriptionMessage.includes('Không thể') ? 'bg-error-light text-error' : 'bg-success-light text-success'}`}>
                                         {subscriptionMessage}
                                     </div>
                                 )}
@@ -574,7 +574,7 @@ export default function ReportsPage() {
 
                                 <button
                                     onClick={() => setShowSubscriptionModal(false)}
-                                    className="w-full px-4 md:px-6 py-2.5 md:py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold text-xs md:text-sm rounded-lg md:rounded-xl shadow-lg hover:shadow-xl transition transform hover:scale-105"
+                                    className="w-full px-4 md:px-6 py-2.5 md:py-3 bg-gradient-to-r from-primary to-accent text-white font-bold text-xs md:text-sm rounded-lg md:rounded-xl shadow-lg hover:shadow-xl transition transform hover:scale-105"
                                 >
                                     Xong
                                 </button>

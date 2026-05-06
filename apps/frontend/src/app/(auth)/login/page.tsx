@@ -7,12 +7,11 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import axios from 'axios';
 import * as z from 'zod';
-import { Heading, Body, Caption } from '@/shared/components/Typography';
+import { Heading, Caption } from '@/shared/components/Typography';
 import { Mail, Lock, Loader2, AlertCircle } from 'lucide-react';
 import { authApi } from '@/features/auth/api/auth.api';
 import { useAuthStore } from '@/shared/store/auth.store';
 import { motion } from 'framer-motion';
-import MagneticButton from '@/shared/components/landing/MagneticButton';
 import { getDefaultRouteByRole, PARENT_PATHS, CHILD_PATHS, ADMIN_PATHS } from '@/shared/constants/navigation';
 import { colors } from '@/shared/utils/design-tokens';
 
@@ -116,13 +115,13 @@ function LoginPageContent() {
             variants={staggerContainer}
             className="w-full"
         >
-            <motion.div variants={fadeInUp} className="text-center mb-8 space-y-2">
-                <Heading level={2} className="text-heading text-4xl sm:text-[2.6rem] font-black tracking-tight leading-tight">
-                    Đăng nhập
+            <motion.div variants={fadeInUp} className="text-center mb-8">
+                <Heading level={2} className="text-4xl text-heading font-extrabold tracking-tight drop-shadow-sm mb-3">
+                    Đăng Nhập
                 </Heading>
-                <Body className="text-body text-base sm:text-lg font-medium leading-relaxed">
-                    Chào mừng ba mẹ quay lại cùng bé!
-                </Body>
+                <p className="text-muted text-lg font-medium">
+                    Chào mừng ba mẹ quay lại cùng bé! 🌟
+                </p>
             </motion.div>
 
             {globalError && (
@@ -149,7 +148,7 @@ function LoginPageContent() {
                         />
                     </div>
                     {errors.email && (
-                        <p className="text-secondary text-sm font-medium ml-1 mt-1">{errors.email.message}</p>
+                        <Caption className="text-secondary text-sm font-medium ml-1 mt-1">{errors.email.message}</Caption>
                     )}
                 </motion.div>
 
@@ -174,27 +173,19 @@ function LoginPageContent() {
                         />
                     </div>
                     {errors.password && (
-                        <p className="text-secondary text-sm font-medium ml-1 mt-1">{errors.password.message}</p>
+                        <Caption className="text-secondary text-sm font-medium ml-1 mt-1">{errors.password.message}</Caption>
                     )}
                 </motion.div>
 
                 {/* Submit logic */}
-                <motion.div variants={fadeInUp} className="pt-4">
-                    <button type="submit" className="hidden" /> {/* Hidden submit for Enter key */}
-                    <MagneticButton
-                        className="w-full block"
-                        onClick={handleSubmit(onSubmit)}
+                <motion.div variants={fadeInUp} className="pt-2">
+                    <button
+                        type="submit"
+                        disabled={isLoading}
+                        className={`w-full flex items-center justify-center btn-primary h-14 text-lg font-heading font-bold rounded-2xl transition-transform duration-200 ${isLoading ? 'opacity-80' : 'hover:scale-[1.02]'}`}
                     >
-                        <div
-                            className={`w-full flex items-center justify-center btn-primary h-14 text-lg transition-transform duration-300 ${isLoading ? 'opacity-80 scale-95' : 'hover:scale-105'}`}
-                        >
-                            {isLoading ? (
-                                <Loader2 className="w-6 h-6 animate-spin" />
-                            ) : (
-                                'Khởi hành ngay! 🚀'
-                            )}
-                        </div>
-                    </MagneticButton>
+                        {isLoading ? <Loader2 className="w-6 h-6 animate-spin" /> : 'Khởi hành ngay! 🚀'}
+                    </button>
                 </motion.div>
             </form>
 

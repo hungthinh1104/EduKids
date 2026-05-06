@@ -1,17 +1,16 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import Link from 'next/link';
 import Image from 'next/image';
 import { useParams } from 'next/navigation';
-import { X, Heart, Flame, Zap, CheckCircle2, XCircle, ChevronRight, RotateCcw, Star } from 'lucide-react';
-import { Heading, Body, Caption } from '@/shared/components/Typography';
-import { KidButton } from '@/components/edukids/KidButton';
+import { Heart, Flame, Zap, CheckCircle2, XCircle } from 'lucide-react';
+import { Heading, Caption } from '@/shared/components/Typography';
 import { quizApi, QuizQuestion, QuizOption } from '@/features/learning/api/quiz.api';
 import { markTopicModeCompleted } from '@/features/learning/utils/topic-mode-progress';
 import { playSound } from '@/shared/utils/sound';
-import { useRef } from 'react';
+import { LearningModeShell, ModeStatePanel } from '@/features/learning/components/LearningModeShell';
+import { GameCompleteScreen } from '@/features/learning/components/GameCompleteScreen';
 
 const MAX_HP = 5;
 const STREAK_BONUS_AT = 3;
@@ -70,73 +69,6 @@ function TimerRing({ seconds, total }: { seconds: number; total: number }) {
             </svg>
             <span className={`font-heading font-black text-lg z-10 ${seconds <= 5 ? 'text-secondary animate-pulse' : 'text-heading'}`}>{seconds}</span>
         </div>
-    );
-}
-
-// ── Session Result ─────────────────────────────────────────────────────────
-function QuizComplete({ correct, total, topicId, onRestart }: { correct: number; total: number; topicId: string; onRestart: () => void }) {
-    useEffect(() => {
-        void import('@/shared/utils/confetti').then((m) => m.fireRewardConfetti());
-        playSound('fanfare');
-    }, []);
-    const pct = Math.round((correct / total) * 100);
-    const stars = pct >= 90 ? 3 : pct >= 60 ? 2 : 1;
-    const msg = pct >= 90 ? '🏆 Hoàn hảo!' : pct >= 60 ? '💪 Không tệ!' : '📚 Cố lên nào!';
-
-    return (
-        <motion.div
-            initial={{ opacity: 1, scale: 0.85 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ type: 'spring', bounce: 0.4 }}
-            className="flex flex-col items-center justify-center min-h-[70vh] gap-7 text-center px-6"
-        >
-            <motion.div animate={{ rotate: [0, -12, 12, 0] }} transition={{ duration: 1, delay: 0.3 }} className="text-8xl">
-                {pct >= 90 ? '🏆' : pct >= 60 ? '🎉' : '😅'}
-            </motion.div>
-
-            <div>
-                <Heading level={2} className="text-heading text-4xl mb-1">{msg}</Heading>
-                <Body className="text-body text-xl">{correct}/{total} câu đúng</Body>
-            </div>
-
-            {/* Stars */}
-            <div className="flex gap-3">
-                {[1, 2, 3].map((s, i) => (
-                    <motion.div key={s} initial={{ opacity: 0, scale: 0, rotate: -30 }} animate={{ opacity: 1, scale: 1, rotate: 0 }} transition={{ delay: 0.4 + i * 0.15, type: 'spring', bounce: 0.6 }}>
-                        <Star size={52} className={s <= stars ? 'text-star fill-star drop-shadow-lg' : 'text-border'} />
-                    </motion.div>
-                ))}
-            </div>
-
-            {/* Accuracy ring */}
-            <div className="relative w-32 h-32">
-                <svg viewBox="0 0 100 100" className="-rotate-90 w-full h-full">
-                    <circle cx="50" cy="50" r="40" fill="none" stroke="var(--color-border)" strokeWidth="8" />
-                    <motion.circle cx="50" cy="50" r="40" fill="none" stroke="var(--color-success)" strokeWidth="8"
-                        strokeDasharray={251.2}
-                        initial={{ strokeDashoffset: 251.2 }}
-                        animate={{ strokeDashoffset: 251.2 - (pct / 100) * 251.2 }}
-                        transition={{ duration: 1, ease: 'easeOut', delay: 0.3 }}
-                        strokeLinecap="round"
-                    />
-                </svg>
-                <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <span className="font-heading font-black text-3xl text-heading">{pct}%</span>
-                    <Caption className="text-caption text-xs">chính xác</Caption>
-                </div>
-            </div>
-
-            <div className="flex flex-col gap-3 w-full max-w-xs">
-                <KidButton variant="default" size="lg" className="w-full" onClick={onRestart}>
-                    <RotateCcw size={18} /> Chơi lại
-                </KidButton>
-                <Link href={`/play/topic/${topicId}`}>
-                    <KidButton variant="outline" className="w-full">
-                        Quay lại chủ đề <ChevronRight size={16} />
-                    </KidButton>
-                </Link>
-            </div>
-        </motion.div>
     );
 }
 
@@ -294,70 +226,23 @@ export default function QuizPage() {
         return () => clearTimeout(t);
     }, [timeLeft, selected, done, handleAnswer]);
 
-    if (done) {
-        return (
-            <div className="min-h-screen bg-gradient-to-b from-warning-light via-background to-background">
-                <QuizComplete
-                    correct={correctCount}
-                    total={index + 1}
-                    topicId={id}
-                    onRestart={() => {
-                        if (answerTimeoutRef.current) {
-                            clearTimeout(answerTimeoutRef.current);
-                            answerTimeoutRef.current = null;
-                        }
-                        void loadQuiz();
-                    }}
-                />
-            </div>
-        );
-    }
-
-    if (loading) {
-        return (
-            <div className="min-h-screen bg-gradient-to-b from-warning-light via-background to-background flex items-center justify-center">
-                <Body className="text-caption">Đang tải câu hỏi...</Body>
-            </div>
-        );
-    }
-
-    if (loadError) {
-        return (
-            <div className="min-h-screen bg-gradient-to-b from-warning-light via-background to-background flex items-center justify-center">
-                <Body className="text-error">{loadError}</Body>
-            </div>
-        );
-    }
-
-    if (questions.length === 0) {
-        return (
-            <div className="min-h-screen bg-gradient-to-b from-warning-light via-background to-background flex items-center justify-center">
-                <Body className="text-caption">Chưa có câu hỏi nào</Body>
-            </div>
-        );
-    }
+    const pct = done && index > 0 ? Math.round((correctCount / (index + 1)) * 100) : 0;
+    const starsEarned = pct >= 90 ? 3 : pct >= 60 ? 2 : 1;
+    const titleComplete = pct >= 90 ? 'Hoàn hảo!' : pct >= 60 ? 'Không tệ!' : 'Cố lên nào!';
+    const emojiComplete = pct >= 90 ? '🏆' : pct >= 60 ? '🎉' : '😅';
 
     return (
-        <div className="min-h-screen bg-gradient-to-b from-warning-light via-background to-background pb-20 md:pb-8">
-            <FeedbackOverlay state={answerState} />
-
-            {/* HUD Bar */}
-            <div className="sticky top-0 z-30 bg-card/80 backdrop-blur-xl border-b-2 border-border">
-                <div className="max-w-lg md:max-w-4xl lg:max-w-7xl mx-auto px-4 md:px-6 h-14 flex items-center gap-3">
-                    <Link href={`/play/topic/${id}`}>
-                        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="flex items-center justify-center w-8 h-8 rounded-full bg-background border-2 border-border hover:border-primary transition-colors">
-                            <X size={14} className="text-body" />
-                        </motion.div>
-                    </Link>
-
-                    {/* Progress */}
-                    <div className="flex-1 h-3.5 bg-background rounded-full border border-border overflow-hidden">
-                        <motion.div
-                            animate={{ width: `${(index / questions.length) * 100}%` }}
-                            className="h-full bg-gradient-to-r from-warning to-primary rounded-full"
-                        />
-                    </div>
-
+        <LearningModeShell
+            backHref={`/play/topic/${id}`}
+            progressCurrent={Math.min(index + 1, Math.max(questions.length, 1))}
+            progressTotal={Math.max(questions.length, 1)}
+            title="Quiz Game"
+            subtitle="Chọn đáp án đúng và nhanh nhất có thể"
+            progressFromClass="from-warning"
+            progressToClass="to-primary"
+            contentMaxWidthClass="max-w-lg"
+            navRightSlot={
+                <div className="flex items-center gap-3">
                     {/* HP */}
                     <div className="flex gap-0.5">
                         {[...Array(MAX_HP)].map((_, i) => (
@@ -374,111 +259,152 @@ export default function QuizPage() {
                         </motion.div>
                     )}
                 </div>
-            </div>
+            }
+        >
+            <FeedbackOverlay state={answerState} />
 
-            <AnimatePresence mode="wait">
-                <motion.div
-                    key={index}
-                    initial={{ opacity: 1, y: 30 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -20 }}
-                    transition={{ duration: 0.3 }}
-                    className="max-w-lg mx-auto px-6 pt-6 space-y-6"
-                >
-                    {/* Timer + Question number */}
-                    <div className="flex items-center justify-between">
-                        <Caption className="text-caption font-black text-base">Câu {index + 1}/{questions.length}</Caption>
-                        <TimerRing seconds={timeLeft} total={TIME_LIMIT} />
-                    </div>
+            {loading ? (
+                <ModeStatePanel
+                    title="Đang tải câu hỏi"
+                    description="Chuẩn bị câu hỏi cho bé..."
+                    emoji="⏳"
+                />
+            ) : loadError ? (
+                <ModeStatePanel
+                    title="Có lỗi xảy ra"
+                    description={loadError}
+                    emoji="❌"
+                />
+            ) : questions.length === 0 ? (
+                <ModeStatePanel
+                    title="Chưa có câu hỏi"
+                    description="Chủ đề này chưa có câu hỏi nào để luyện."
+                    emoji="📭"
+                />
+            ) : done ? (
+                <GameCompleteScreen
+                    emoji={emojiComplete}
+                    title={titleComplete}
+                    subtitle={`Bé đã trả lời ${correctCount}/${index + 1} câu đúng`}
+                    starsEarned={starsEarned}
+                    topicId={id}
+                    onRestart={() => {
+                        if (answerTimeoutRef.current) {
+                            clearTimeout(answerTimeoutRef.current);
+                            answerTimeoutRef.current = null;
+                        }
+                        void loadQuiz();
+                    }}
+                    stats={[
+                        { label: 'Chính xác', value: `${pct}%`, colorClass: pct >= 80 ? 'text-success' : 'text-primary' },
+                        { label: 'Câu đúng', value: correctCount, colorClass: 'text-success' }
+                    ]}
+                />
+            ) : (
+                <AnimatePresence mode="wait">
+                    <motion.div
+                        key={index}
+                        initial={{ opacity: 1, y: 30 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -20 }}
+                        transition={{ duration: 0.3 }}
+                        className="space-y-6 pt-2"
+                    >
+                        {/* Timer + Question number */}
+                        <div className="flex items-center justify-between">
+                            <Caption className="text-caption font-black text-base">Câu {index + 1}/{questions.length}</Caption>
+                            <TimerRing seconds={timeLeft} total={TIME_LIMIT} />
+                        </div>
 
-                    {/* Streak bonus notification */}
-                    <AnimatePresence>
-                        {streak > 0 && streak % STREAK_BONUS_AT === 0 && (
-                            <motion.div
-                                initial={{ opacity: 0, scale: 0.8, y: -10 }}
-                                animate={{ opacity: 1, scale: 1, y: 0 }}
-                                exit={{ opacity: 0, scale: 0.8 }}
-                                className="flex items-center justify-center gap-2 bg-warning text-white px-4 py-2 rounded-2xl font-heading font-black text-sm shadow-lg shadow-warning/30"
-                            >
-                                <Zap size={16} className="fill-white" /> Streak x{streak}! +Bonus sao 🌟
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
+                        {/* Streak bonus notification */}
+                        <AnimatePresence>
+                            {streak > 0 && streak % STREAK_BONUS_AT === 0 && (
+                                <motion.div
+                                    initial={{ opacity: 0, scale: 0.8, y: -10 }}
+                                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                                    exit={{ opacity: 0, scale: 0.8 }}
+                                    className="flex items-center justify-center gap-2 bg-warning text-white px-4 py-2 rounded-2xl font-heading font-black text-sm shadow-lg shadow-warning/30"
+                                >
+                                    <Zap size={16} className="fill-white" /> Streak x{streak}! +Bonus sao 🌟
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
 
-                    {/* Question */}
-                    {q && (
-                        <>
-                            <div className="bg-card border-2 border-border rounded-[2rem] p-8 text-center shadow-lg min-h-[220px] flex flex-col items-center justify-center">
-                                {q.questionImage ? (
-                                    <div className="mb-5 w-full max-w-[260px] h-[160px] rounded-2xl overflow-hidden border border-border/70 bg-background">
-                                        <Image
-                                            src={q.questionImage}
-                                            alt="Quiz question"
-                                            className="w-full h-full object-cover"
-                                            loading="lazy"
-                                            width={260}
-                                            height={160}
-                                        />
-                                    </div>
-                                ) : (
-                                    <motion.div
-                                        animate={{ scale: [1, 1.06, 1] }}
-                                        transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-                                        className="text-7xl mb-5"
-                                    >
-                                        ❓
-                                    </motion.div>
-                                )}
-                                <Heading level={3} className="text-heading text-2xl">{q.questionText}</Heading>
-                            </div>
-
-                            {/* Options */}
-                            <div className="grid grid-cols-2 gap-3">
-                                {q.shuffledOptions.map((opt: QuizOption, i: number) => {
-                                    const isSelected = selected === opt.text;
-                                    const isCorrect = revealedCorrectOptionId === opt.id;
-                                    const showFeedback = selected !== null;
-
-                                    let optCls = 'bg-card border-2 border-border text-heading hover:border-primary/60 hover:bg-primary-light hover:text-primary';
-                                    if (showFeedback) {
-                                        if (isCorrect) optCls = 'bg-success border-success text-white shadow-lg shadow-success/30';
-                                        else if (isSelected && !isCorrect) optCls = 'bg-error border-error text-white shadow-lg shadow-error/30';
-                                        else optCls = 'bg-background border-border text-caption opacity-50';
-                                    }
-
-                                    return (
-                                        <motion.button
-                                            key={opt.id}
-                                            initial={{ opacity: 0, y: 16 }}
-                                            animate={
-                                                showFeedback && isCorrect
-                                                    ? { scale: [1, 1.1, 1.05], boxShadow: ['0px 0px 0px rgba(0,0,0,0)', '0px 0px 40px rgba(16, 185, 129, 0.6)', '0px 0px 20px rgba(16, 185, 129, 0.4)'] }
-                                                    : showFeedback && isSelected && !isCorrect
-                                                        ? { x: [0, -10, 10, -10, 10, 0] }
-                                                        : { opacity: 1, y: 0 }
-                                            }
-                                            transition={
-                                                showFeedback && isSelected && !isCorrect
-                                                    ? { duration: 0.4 }
-                                                    : { delay: !showFeedback ? 0.05 * i : 0 }
-                                            }
-                                            whileHover={!selected ? { scale: 1.03, y: -3 } : undefined}
-                                            whileTap={!selected ? { scale: 0.97 } : undefined}
-                                            onClick={() => handleAnswer(opt)}
-                                            disabled={!!selected}
-                                            className={`relative flex items-center justify-center gap-2 p-4 rounded-2xl font-heading font-black text-base border-2 min-h-[80px] transition-all duration-200 ${optCls}`}
+                        {/* Question */}
+                        {q && (
+                            <>
+                                <div className="bg-card border-2 border-border rounded-[2rem] p-8 text-center shadow-lg min-h-[220px] flex flex-col items-center justify-center">
+                                    {q.questionImage ? (
+                                        <div className="mb-5 w-full max-w-[260px] h-[160px] rounded-2xl overflow-hidden border border-border/70 bg-background">
+                                            <Image
+                                                src={q.questionImage}
+                                                alt="Quiz question"
+                                                className="w-full h-full object-cover"
+                                                loading="lazy"
+                                                width={260}
+                                                height={160}
+                                            />
+                                        </div>
+                                    ) : (
+                                        <motion.div
+                                            animate={{ scale: [1, 1.06, 1] }}
+                                            transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+                                            className="text-7xl mb-5"
                                         >
-                                            {showFeedback && isCorrect && <CheckCircle2 size={18} className="flex-shrink-0" />}
-                                            {showFeedback && isSelected && !isCorrect && <XCircle size={18} className="flex-shrink-0" />}
-                                            {opt.text}
-                                        </motion.button>
-                                    );
-                                })}
-                            </div>
-                        </>
-                    )}
-                </motion.div>
-            </AnimatePresence>
-        </div>
+                                            ❓
+                                        </motion.div>
+                                    )}
+                                    <Heading level={3} className="text-heading text-2xl">{q.questionText}</Heading>
+                                </div>
+
+                                {/* Options */}
+                                <div className="grid grid-cols-2 gap-3">
+                                    {q.shuffledOptions.map((opt: QuizOption, i: number) => {
+                                        const isSelected = selected === opt.text;
+                                        const isCorrect = revealedCorrectOptionId === opt.id;
+                                        const showFeedback = selected !== null;
+
+                                        let optCls = 'bg-card border-2 border-border text-heading hover:border-primary/60 hover:bg-primary-light hover:text-primary';
+                                        if (showFeedback) {
+                                            if (isCorrect) optCls = 'bg-success border-success text-white shadow-lg shadow-success/30';
+                                            else if (isSelected && !isCorrect) optCls = 'bg-error border-error text-white shadow-lg shadow-error/30';
+                                            else optCls = 'bg-background border-border text-caption opacity-50';
+                                        }
+
+                                        return (
+                                            <motion.button
+                                                key={opt.id}
+                                                initial={{ opacity: 0, y: 16 }}
+                                                animate={
+                                                    showFeedback && isCorrect
+                                                        ? { scale: [1, 1.1, 1.05], boxShadow: ['0px 0px 0px rgba(0,0,0,0)', '0px 0px 40px rgba(16, 185, 129, 0.6)', '0px 0px 20px rgba(16, 185, 129, 0.4)'] }
+                                                        : showFeedback && isSelected && !isCorrect
+                                                            ? { x: [0, -10, 10, -10, 10, 0] }
+                                                            : { opacity: 1, y: 0 }
+                                                }
+                                                transition={
+                                                    showFeedback && isSelected && !isCorrect
+                                                        ? { duration: 0.4 }
+                                                        : { delay: !showFeedback ? 0.05 * i : 0 }
+                                                }
+                                                whileHover={!selected ? { scale: 1.03, y: -3 } : undefined}
+                                                whileTap={!selected ? { scale: 0.97 } : undefined}
+                                                onClick={() => handleAnswer(opt)}
+                                                disabled={!!selected}
+                                                className={`relative flex items-center justify-center gap-2 p-4 rounded-2xl font-heading font-black text-base border-2 min-h-[80px] transition-all duration-200 ${optCls}`}
+                                            >
+                                                {showFeedback && isCorrect && <CheckCircle2 size={18} className="flex-shrink-0" />}
+                                                {showFeedback && isSelected && !isCorrect && <XCircle size={18} className="flex-shrink-0" />}
+                                                {opt.text}
+                                            </motion.button>
+                                        );
+                                    })}
+                                </div>
+                            </>
+                        )}
+                    </motion.div>
+                </AnimatePresence>
+            )}
+        </LearningModeShell>
     );
 }

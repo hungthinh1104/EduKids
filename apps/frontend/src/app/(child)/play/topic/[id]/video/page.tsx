@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { PlayCircle } from 'lucide-react';
+import { Heading, Body } from '@/shared/components/Typography';
 import { contentApi, Topic } from '@/features/learning/api/content.api';
 import { LearningModeShell, ModeStatePanel } from '@/features/learning/components/LearningModeShell';
 
@@ -54,9 +55,9 @@ export default function TopicVideoPage() {
       ) : topic?.videoUrl ? (
         <div className="space-y-5">
           <div className="rounded-[2rem] border border-border/70 bg-card/90 p-5 shadow-sm">
-            <h2 className="font-heading text-xl font-black text-heading">{topic.name}</h2>
+            <Heading level={2} className="font-heading text-xl font-black text-heading">{topic.name}</Heading>
             {topic.description && (
-              <p className="mt-2 text-sm text-body">{topic.description}</p>
+              <Body className="mt-2 text-sm text-body">{topic.description}</Body>
             )}
           </div>
 

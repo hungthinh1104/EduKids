@@ -3,6 +3,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { CMSTopic } from '@/features/cms/api/cms.api';
 import { useEffect, useRef, useCallback } from 'react';
+import { Caption } from '@/shared/components/Typography';
 import { MediaUploadField } from './MediaUploadField';
 import { deleteMediaFile } from '@/features/media/api/media.api';
 
@@ -156,11 +157,11 @@ export function TopicForm({ initialData, onSubmit, onCancel, isLoading }: TopicF
           <input
             {...register('name')}
             className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all ${
-              errors.name ? 'border-red-500 bg-red-50' : 'border-border'
+              errors.name ? 'border-error bg-error-light' : 'border-border'
             }`}
             placeholder="Ví dụ: Animals, Colors..."
           />
-          {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name.message}</p>}
+          {errors.name && <Caption className="text-error text-sm mt-1">{errors.name.message}</Caption>}
         </div>
 
         {/* Description */}
@@ -170,11 +171,11 @@ export function TopicForm({ initialData, onSubmit, onCancel, isLoading }: TopicF
             {...register('description')}
             rows={4}
             className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all ${
-              errors.description ? 'border-red-500 bg-red-50' : 'border-border'
+              errors.description ? 'border-error bg-error-light' : 'border-border'
             }`}
             placeholder="Mô tả chi tiết về topic..."
           />
-          {errors.description && <p className="text-red-500 text-sm mt-1">{errors.description.message}</p>}
+          {errors.description && <Caption className="text-error text-sm mt-1">{errors.description.message}</Caption>}
         </div>
 
         {/* Learning Level */}
@@ -185,10 +186,10 @@ export function TopicForm({ initialData, onSubmit, onCancel, isLoading }: TopicF
             {...register('learningLevel', { valueAsNumber: true })}
             min={1} max={5}
             className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all ${
-              errors.learningLevel ? 'border-red-500 bg-red-50' : 'border-border'
+              errors.learningLevel ? 'border-error bg-error-light' : 'border-border'
             }`}
           />
-          {errors.learningLevel && <p className="text-red-500 text-sm mt-1">{errors.learningLevel.message}</p>}
+          {errors.learningLevel && <Caption className="text-error text-sm mt-1">{errors.learningLevel.message}</Caption>}
         </div>
 
         {/* Image/Video URLs */}
@@ -199,11 +200,11 @@ export function TopicForm({ initialData, onSubmit, onCancel, isLoading }: TopicF
               type="text"
               {...register('imageUrl')}
               className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all ${
-                errors.imageUrl ? 'border-red-500 bg-red-50' : 'border-border'
+                errors.imageUrl ? 'border-error bg-error-light' : 'border-border'
               }`}
               placeholder="https://..."
             />
-            {errors.imageUrl && <p className="text-red-500 text-sm mt-1">{errors.imageUrl.message}</p>}
+            {errors.imageUrl && <Caption className="text-error text-sm mt-1">{errors.imageUrl.message}</Caption>}
             <MediaUploadField
               mediaType="IMAGE"
               context="TOPIC"
@@ -224,11 +225,11 @@ export function TopicForm({ initialData, onSubmit, onCancel, isLoading }: TopicF
               type="text"
               {...register('videoUrl')}
               className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all ${
-                errors.videoUrl ? 'border-red-500 bg-red-50' : 'border-border'
+                errors.videoUrl ? 'border-error bg-error-light' : 'border-border'
               }`}
               placeholder="https://..."
             />
-            {errors.videoUrl && <p className="text-red-500 text-sm mt-1">{errors.videoUrl.message}</p>}
+            {errors.videoUrl && <Caption className="text-error text-sm mt-1">{errors.videoUrl.message}</Caption>}
             <MediaUploadField
               mediaType="VIDEO"
               context="TOPIC"
@@ -262,14 +263,14 @@ export function TopicForm({ initialData, onSubmit, onCancel, isLoading }: TopicF
           type="button"
           onClick={() => void handleCancel()}
           disabled={isLoading}
-          className="h-12 px-6 bg-muted/10 hover:bg-gray-200 text-heading rounded-xl font-bold transition-all disabled:opacity-50"
+          className="h-12 px-6 bg-background hover:bg-background/80 border border-border text-heading rounded-xl font-bold transition-all disabled:opacity-50"
         >
           Hủy bỏ
         </button>
         <button
           type="submit"
           disabled={isLoading}
-          className="flex h-12 items-center justify-center px-6 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold shadow-lg hover:shadow-blue-600/30 transition-all disabled:opacity-70 disabled:cursor-not-allowed"
+          className="flex h-12 items-center justify-center px-6 bg-primary hover:bg-primary-dark text-white rounded-xl font-bold shadow-lg transition-all disabled:opacity-70 disabled:cursor-not-allowed"
         >
           {isLoading ? (
             <div className="w-5 h-5 border-2 border-white/50 border-t-white rounded-full animate-spin"></div>

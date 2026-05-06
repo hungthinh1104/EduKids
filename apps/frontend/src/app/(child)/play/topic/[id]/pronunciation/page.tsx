@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import Link from 'next/link';
 import Image from 'next/image';
 import { useParams } from 'next/navigation';
 import { Mic, Volume2, Star, RotateCcw, ChevronRight } from 'lucide-react';
@@ -12,6 +11,7 @@ import { contentApi, Vocabulary } from '@/features/learning/api/content.api';
 import { getPronunciationErrorMessage, submitPronunciation } from '@/features/pronunciation/api/pronunciation.api';
 import { markTopicModeCompleted } from '@/features/learning/utils/topic-mode-progress';
 import { LearningModeShell, ModeStatePanel } from '@/features/learning/components/LearningModeShell';
+import { GameCompleteScreen } from '@/features/learning/components/GameCompleteScreen';
 
 // Confidence → stars mapping (matches backend pronunciation service)
 function confidenceToStars(pct: number) {
@@ -129,55 +129,6 @@ function StarRating({ stars }: { stars: number }) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SessionComplete — summary after all words
-// ─────────────────────────────────────────────────────────────────────────────
-function SessionComplete({ results, topicId, onRestart }: { results: PronunciationResult[]; topicId: string; onRestart: () => void }) {
-    useEffect(() => {
-        void import('@/shared/utils/confetti').then((m) => m.fireRewardConfetti());
-    }, []);
-    const avgStars = results.reduce((a, r) => a + r.stars, 0) / results.length;
-    const totalPoints = results.reduce((a, r) => a + r.points, 0);
-    const avgConf = Math.round(results.reduce((a, r) => a + r.confidence, 0) / results.length);
-
-    return (
-        <motion.div initial={{ opacity: 1, scale: 0.85 }} animate={{ opacity: 1, scale: 1 }} transition={{ type: 'spring', bounce: 0.4 }}
-                className="flex flex-col items-center gap-8 text-center px-4 py-8"
-        >
-            <motion.div animate={{ rotate: [0, -10, 10, 0], scale: [1, 1.1, 1] }} transition={{ duration: 1, delay: 0.3 }} className="text-7xl">🎤</motion.div>
-            <div>
-                <Heading level={2} className="text-heading text-3xl">Luyện xong rồi! 🎉</Heading>
-                <Body className="text-body mt-1">Bé đã phát âm {results.length} từ</Body>
-            </div>
-            <StarRating stars={Math.round(avgStars)} />
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full max-w-md">
-                {[
-                    { label: 'Tổng điểm', value: `+${totalPoints}⭐`, color: 'text-warning' },
-                    { label: 'Độ chính xác', value: `${avgConf}%`, color: avgConf >= 76 ? 'text-success' : 'text-primary' },
-                    { label: 'Từ giỏi (4-5⭐)', value: results.filter((r) => r.stars >= 4).length, color: 'text-success' },
-                ].map((s) => (
-                    <div key={s.label} className="bg-card border-2 border-border rounded-2xl p-3 text-center">
-                        <div className={`text-xl font-heading font-black ${s.color}`}>{s.value}</div>
-                        <Caption className="text-caption text-[10px]">{s.label}</Caption>
-                    </div>
-                ))}
-            </div>
-
-            <div className="flex flex-col gap-3 w-full max-w-xs">
-                <KidButton variant="default" size="lg" className="w-full" onClick={onRestart}>
-                    <RotateCcw size={18} /> Luyện lại
-                </KidButton>
-                <Link href={`/play/topic/${topicId}`}>
-                    <KidButton variant="outline" size="default" className="w-full">
-                        Quay lại chủ đề <ChevronRight size={16} />
-                    </KidButton>
-                </Link>
-            </div>
-        </motion.div>
-    );
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
 // Main Pronunciation Page — UC-03
 // Endpoint: POST /api/pronunciation/:vocabularyId
 // ─────────────────────────────────────────────────────────────────────────────
@@ -264,13 +215,35 @@ export default function PronunciationPage() {
                             emoji="📭"
                         />
                     ) : done ? (
-                        <SessionComplete key="done" results={results} topicId={id} onRestart={() => {
-                            setIndex(0);
-                            setStage('ready');
-                            setConfidence(0);
-                            setResults([]);
-                            setDone(false);
-                        }} />
+                        (() => {
+                            const avgStars = results.reduce((a, r) => a + r.stars, 0) / results.length;
+                            const totalPoints = results.reduce((a, r) => a + r.points, 0);
+                            const avgConf = Math.round(results.reduce((a, r) => a + r.confidence, 0) / results.length);
+
+                            return (
+                                <GameCompleteScreen
+                                    emoji="🎤"
+                                    title="Luyện xong rồi! 🎉"
+                                    subtitle={`Bé đã phát âm ${results.length} từ`}
+                                    starsEarned={Math.round(avgStars)}
+                                    maxStars={5}
+                                    topicId={id}
+                                    onRestart={() => {
+                                        setIndex(0);
+                                        setStage('ready');
+                                        setConfidence(0);
+                                        setResults([]);
+                                        setDone(false);
+                                    }}
+                                    restartLabel="Luyện lại"
+                                    stats={[
+                                        { label: 'Tổng điểm', value: `+${totalPoints}⭐`, colorClass: 'text-warning' },
+                                        { label: 'Độ chính xác', value: `${avgConf}%`, colorClass: avgConf >= 76 ? 'text-success' : 'text-primary' },
+                                        { label: 'Từ giỏi (4-5⭐)', value: results.filter((r) => r.stars >= 4).length, colorClass: 'text-success' }
+                                    ]}
+                                />
+                            );
+                        })()
                     ) : vocab ? (
                         <motion.div key={index} initial={{ opacity: 0, x: 60 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -60 }} transition={{ duration: 0.25 }} className="space-y-8 max-w-xl mx-auto">
 

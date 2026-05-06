@@ -3,6 +3,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { CMSVocabulary } from '@/features/cms/api/cms.api';
 import { useEffect, useRef, useCallback } from 'react';
+import { Caption } from '@/shared/components/Typography';
 import { MediaUploadField } from './MediaUploadField';
 import { deleteMediaFile } from '@/features/media/api/media.api';
 
@@ -155,11 +156,11 @@ export function VocabularyForm({ initialData, onSubmit, onCancel, isLoading }: V
           <input
             {...register('word')}
             className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all ${
-              errors.word ? 'border-red-500 bg-red-50' : 'border-border'
+              errors.word ? 'border-error bg-error-light' : 'border-border'
             }`}
             placeholder="dog"
           />
-          {errors.word && <p className="text-red-500 text-sm mt-1">{errors.word.message}</p>}
+          {errors.word && <Caption className="text-error text-sm mt-1">{errors.word.message}</Caption>}
         </div>
 
         {/* Definition */}
@@ -169,11 +170,11 @@ export function VocabularyForm({ initialData, onSubmit, onCancel, isLoading }: V
             {...register('translation')}
             rows={3}
             className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all ${
-              errors.translation ? 'border-red-500 bg-red-50' : 'border-border'
+              errors.translation ? 'border-error bg-error-light' : 'border-border'
             }`}
             placeholder="A domestic animal..."
           />
-          {errors.translation && <p className="text-red-500 text-sm mt-1">{errors.translation.message}</p>}
+          {errors.translation && <Caption className="text-error text-sm mt-1">{errors.translation.message}</Caption>}
         </div>
 
         {/* Phonetic */}
@@ -204,11 +205,11 @@ export function VocabularyForm({ initialData, onSubmit, onCancel, isLoading }: V
             <input
               {...register('imageUrl')}
               className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all ${
-                errors.imageUrl ? 'border-red-500 bg-red-50' : 'border-border'
+                errors.imageUrl ? 'border-error bg-error-light' : 'border-border'
               }`}
               placeholder="https://..."
             />
-            {errors.imageUrl && <p className="text-red-500 text-sm mt-1">{errors.imageUrl.message}</p>}
+            {errors.imageUrl && <Caption className="text-error text-sm mt-1">{errors.imageUrl.message}</Caption>}
             <MediaUploadField
               mediaType="IMAGE"
               context="VOCABULARY"
@@ -227,11 +228,11 @@ export function VocabularyForm({ initialData, onSubmit, onCancel, isLoading }: V
             <input
               {...register('audioUrl')}
               className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all ${
-                errors.audioUrl ? 'border-red-500 bg-red-50' : 'border-border'
+                errors.audioUrl ? 'border-error bg-error-light' : 'border-border'
               }`}
               placeholder="https://..."
             />
-            {errors.audioUrl && <p className="text-red-500 text-sm mt-1">{errors.audioUrl.message}</p>}
+            {errors.audioUrl && <Caption className="text-error text-sm mt-1">{errors.audioUrl.message}</Caption>}
             <MediaUploadField
               mediaType="AUDIO"
               context="VOCABULARY"
@@ -254,14 +255,14 @@ export function VocabularyForm({ initialData, onSubmit, onCancel, isLoading }: V
           type="button"
           onClick={() => void handleCancel()}
           disabled={isLoading}
-          className="h-12 px-6 bg-muted/10 hover:bg-gray-200 text-heading rounded-xl font-bold transition-all disabled:opacity-50"
+          className="h-12 px-6 bg-background hover:bg-background/80 border border-border text-heading rounded-xl font-bold transition-all disabled:opacity-50"
         >
           Hủy bỏ
         </button>
         <button
           type="submit"
           disabled={isLoading}
-          className="flex h-12 items-center justify-center px-6 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold shadow-lg transition-all disabled:opacity-70 disabled:cursor-not-allowed"
+          className="flex h-12 items-center justify-center px-6 bg-primary hover:bg-primary-dark text-white rounded-xl font-bold shadow-lg transition-all disabled:opacity-70 disabled:cursor-not-allowed"
         >
           {isLoading ? (
             <div className="w-5 h-5 border-2 border-white/50 border-t-white rounded-full animate-spin"></div>

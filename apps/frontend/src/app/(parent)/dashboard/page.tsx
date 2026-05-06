@@ -51,7 +51,7 @@ export default function ParentDashboardPage() {
     const maxMinutes = Math.max(...chartData.map((d: ChartDataPoint) => d.value), 1);
 
     return (
-        <div className="max-w-7xl mx-auto space-y-6 md:space-y-10 px-4 md:px-1">
+        <div className="space-y-6 md:space-y-10">
             {/* ── Profile Selector ── */}
             <section>
                 <motion.div

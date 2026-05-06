@@ -250,7 +250,7 @@ export default function SettingsPage() {
     };
 
     return (
-        <div className="min-h-screen pb-8 px-4 md:px-0">
+        <div className="pb-8">
             {/* Header */}
             <motion.div initial={{ opacity: 1, y: -16 }} animate={{ opacity: 1, y: 0 }} className="mb-6 md:mb-8">
                 <Heading level={2} className="text-heading text-2xl md:text-3xl mb-1">Cài đặt ⚙️</Heading>

@@ -149,15 +149,9 @@ apiClient.interceptors.response.use(
 
         try {
             const refreshToken = Cookies.get('refresh_token');
-
-            if (!refreshToken) {
-                throw new Error('Missing refresh token');
-            }
-
-            // Backend yêu cầu refreshToken trong body
             const { data } = await axios.post(
                 `${API_URL}/auth/refresh`,
-                { refreshToken },
+                refreshToken ? { refreshToken } : {},
                 { withCredentials: true },
             );
 

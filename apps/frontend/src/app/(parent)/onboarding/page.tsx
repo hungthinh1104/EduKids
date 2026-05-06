@@ -61,7 +61,7 @@ export default function OnboardingPage() {
             await createProfile({
                 nickname: nickname.trim(),
                 age,
-                avatarUrl: `https://api.dicebear.com/7.x/bottts/svg?seed=${avatar}`,
+                avatar: `https://api.dicebear.com/7.x/bottts/svg?seed=${avatar}`,
             });
             router.push(getDefaultRouteByRole('PARENT'));
         } catch (err) {

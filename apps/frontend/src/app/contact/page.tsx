@@ -55,7 +55,7 @@ export default function ContactPage() {
                     {/* Right Column: Interactive Form */}
                     <div className="lg:col-span-3 bg-card rounded-[2.5rem] p-8 md:p-12 border-4 border-border shadow-2xl">
                         <div className="flex items-center gap-4 mb-8">
-                            <div className="p-3 bg-accent-light dark:bg-pink-900/50 text-accent rounded-2xl">
+                            <div className="p-3 bg-accent-light dark:bg-accent/30 text-accent rounded-2xl">
                                 <MessageSquareHeart size={32} />
                             </div>
                             <Heading level={2} className="text-3xl text-heading">Gửi lời nhắn</Heading>

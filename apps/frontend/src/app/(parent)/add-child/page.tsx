@@ -51,7 +51,7 @@ export default function AddChildPage() {
             const payload: CreateChildProfileRequest = {
                 nickname: nickname.trim(),
                 age,
-                avatarUrl: `https://api.dicebear.com/7.x/bottts/svg?seed=${selectedAvatar}`,
+                avatar: `https://api.dicebear.com/7.x/bottts/svg?seed=${selectedAvatar}`,
             };
 
             const response = await axiosInstance.post<ApiEnvelope<ProfileActionResultDto>>('profiles', payload);

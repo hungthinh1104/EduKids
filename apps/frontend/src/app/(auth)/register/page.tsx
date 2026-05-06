@@ -120,8 +120,12 @@ function RegisterPageContent() {
     return (
         <div className="w-full">
             <div className="text-center mb-8">
-                <Heading level={2} color="primary" className="text-4xl font-extrabold mb-3 tracking-tight drop-shadow-sm">Đăng Ký</Heading>
-                <Body className="text-muted text-lg font-medium">Tạo tài khoản để bắt đầu hành trình học tập! 🌟</Body>
+                <Heading level={2} className="text-4xl text-heading font-extrabold tracking-tight drop-shadow-sm mb-3">
+                    Đăng Ký
+                </Heading>
+                <p className="text-muted text-lg font-medium">
+                    Tạo tài khoản để bắt đầu hành trình học tập! 🌟
+                </p>
             </div>
 
             {globalError && (
@@ -150,7 +154,7 @@ function RegisterPageContent() {
                             />
                         </div>
                         {errors.lastName && (
-                            <p className="text-secondary text-xs font-medium ml-1 mt-1">{errors.lastName.message}</p>
+                            <Caption className="text-secondary text-sm font-medium ml-1 mt-1">{errors.lastName.message}</Caption>
                         )}
                     </div>
 
@@ -166,7 +170,7 @@ function RegisterPageContent() {
                             />
                         </div>
                         {errors.firstName && (
-                            <p className="text-secondary text-xs font-medium ml-1 mt-1">{errors.firstName.message}</p>
+                            <Caption className="text-secondary text-sm font-medium ml-1 mt-1">{errors.firstName.message}</Caption>
                         )}
                     </div>
                 </div>
@@ -187,7 +191,7 @@ function RegisterPageContent() {
                         />
                     </div>
                     {errors.email && (
-                        <p className="text-secondary text-sm font-medium ml-1 mt-1">{errors.email.message}</p>
+                        <Caption className="text-secondary text-sm font-medium ml-1 mt-1">{errors.email.message}</Caption>
                     )}
                 </div>
 
@@ -209,7 +213,7 @@ function RegisterPageContent() {
                         />
                     </div>
                     {errors.password && (
-                        <p className="text-secondary text-xs font-medium ml-1 mt-1 leading-tight">{errors.password.message}</p>
+                        <Caption className="text-secondary text-sm font-medium ml-1 mt-1 leading-tight">{errors.password.message}</Caption>
                     )}
                 </div>
 
@@ -231,7 +235,7 @@ function RegisterPageContent() {
                         />
                     </div>
                     {errors.confirmPassword && (
-                        <p className="text-secondary text-sm font-medium ml-1 mt-1">{errors.confirmPassword.message}</p>
+                        <Caption className="text-secondary text-sm font-medium ml-1 mt-1">{errors.confirmPassword.message}</Caption>
                     )}
                 </div>
 
@@ -244,12 +248,11 @@ function RegisterPageContent() {
                     </Caption>
                 </div>
 
-                {/* Submit logic */}
                 <div className="pt-2">
                     <button
                         type="submit"
                         disabled={isLoading}
-                        className={`w-full flex items-center justify-center btn-success h-14 text-lg transition-transform duration-200 ${isLoading ? 'opacity-80' : 'hover:scale-[1.02]'}`}
+                        className={`w-full flex items-center justify-center btn-success h-14 text-lg font-heading font-bold rounded-2xl transition-transform duration-200 ${isLoading ? 'opacity-80' : 'hover:scale-[1.02]'}`}
                     >
                         {isLoading ? <Loader2 className="w-6 h-6 animate-spin" /> : 'Tạo tài khoản ⭐'}
                     </button>
@@ -284,12 +287,12 @@ function RegisterPageContent() {
             </div>
 
             <div className="mt-6 text-center">
-                <p className="text-muted font-medium">
+                <Body className="text-muted font-medium">
                     Đã có tài khoản?{' '}
                     <Link href="/login" className="text-primary font-bold hover:underline decoration-2 underline-offset-4 transition-all">
                         Đăng nhập ngay
                     </Link>
-                </p>
+                </Body>
             </div>
         </div>
     );

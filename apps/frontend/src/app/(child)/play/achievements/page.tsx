@@ -85,7 +85,7 @@ export default function AchievementsPage() {
             <div className="hidden md:block">
                 <GameHUD
                     nickname={child.nickname}
-                    avatarUrl={child.avatarUrl}
+                    avatar={child.avatar}
                     rewards={child.rewards}
                     activeNav="achievements"
                 />
@@ -120,7 +120,7 @@ export default function AchievementsPage() {
                 ) : (
                     <>
                         {/* Progress banner */}
-                        <motion.div initial={{ opacity: 1, y: 12 }} animate={{ opacity: 1, y: 0 }} className="bg-gradient-to-r from-warning to-orange-400 rounded-[2rem] p-5 text-white">
+                        <motion.div initial={{ opacity: 1, y: 12 }} animate={{ opacity: 1, y: 0 }} className="bg-gradient-to-r from-warning to-warning-dark rounded-[2rem] p-5 text-white">
                             <div className="flex items-center justify-between mb-3">
                                 <div>
                                     <Heading level={3} color="textInverse" className="text-xl mb-0.5">Bộ sưu tập</Heading>
