@@ -6,6 +6,7 @@ import { FlashcardRepository } from "./repositories/flashcard.repository";
 import { FlashcardActivityRepository } from "./repositories/flashcard-activity.repository";
 import { LearningProgressRepository } from "../learning/repositories/learning-progress.repository";
 import { PrismaService } from "../../prisma/prisma.service";
+import { GamificationService } from "../gamification/gamification.service";
 import { ActivityType } from "./dto/flashcard.dto";
 
 describe("FlashcardService", () => {
@@ -65,6 +66,7 @@ describe("FlashcardService", () => {
           useValue: mockLearningProgressRepository,
         },
         { provide: PrismaService, useValue: mockPrismaService },
+        { provide: GamificationService, useValue: { awardPoints: jest.fn().mockReturnValue(Promise.resolve()), checkAndAwardBadges: jest.fn().mockReturnValue(Promise.resolve()) } },
       ],
     }).compile();
 

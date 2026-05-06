@@ -3,6 +3,7 @@ import { describe, it, expect, beforeEach, jest } from "@jest/globals";
 import { BadRequestException } from "@nestjs/common";
 import { QuizController } from "./quiz.controller";
 import { QuizService } from "./quiz.service";
+import { RedisAnalyticsService } from "../admin-analytics/service/redis-analytics.service";
 
 describe("QuizController", () => {
   let controller: QuizController;
@@ -18,7 +19,10 @@ describe("QuizController", () => {
 
     const module: TestingModule = await Test.createTestingModule({
       controllers: [QuizController],
-      providers: [{ provide: QuizService, useValue: quizServiceMock }],
+      providers: [
+        { provide: QuizService, useValue: quizServiceMock },
+        { provide: RedisAnalyticsService, useValue: { trackContentView: jest.fn().mockReturnValue(Promise.resolve()), trackQuizStarted: jest.fn().mockReturnValue(Promise.resolve()), trackQuizCompleted: jest.fn().mockReturnValue(Promise.resolve()) } },
+      ],
     }).compile();
 
     controller = module.get<QuizController>(QuizController);

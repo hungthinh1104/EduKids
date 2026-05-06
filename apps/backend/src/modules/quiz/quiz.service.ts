@@ -614,7 +614,10 @@ export class QuizService {
     const totalQuestions = session.questions.length;
     const correctAnswers = session.answers.filter((a) => a.isCorrect).length;
     const incorrectAnswers = totalQuestions - correctAnswers;
-    const accuracy = totalQuestions > 0 ? Math.round((correctAnswers / totalQuestions) * 100) : 0;
+    const accuracy =
+      totalQuestions > 0
+        ? Math.round((correctAnswers / totalQuestions) * 100)
+        : 0;
     const percentageScore = accuracy;
     const maxScore = session.questions.reduce(
       (sum, q) => sum + q.pointsValue,
@@ -666,13 +669,16 @@ export class QuizService {
               pointsAwarded,
             });
 
-            void this.gamificationService.checkAndAwardBadges(childId).catch(() => {});
+            void this.gamificationService
+              .checkAndAwardBadges(childId)
+              .catch(() => {});
           }
         } finally {
           this.quizSessionService.releaseRewardGrantLock(quizSessionId);
         }
       } else {
-        const latestSession = await this.quizSessionService.getSession(quizSessionId);
+        const latestSession =
+          await this.quizSessionService.getSession(quizSessionId);
         Object.assign(session, latestSession);
       }
     }
@@ -746,7 +752,8 @@ export class QuizService {
       incorrectAnswers,
       accuracy,
       totalTimeMs,
-      averageTimePerQuestion: totalQuestions > 0 ? Math.round(totalTimeMs / totalQuestions) : 0,
+      averageTimePerQuestion:
+        totalQuestions > 0 ? Math.round(totalTimeMs / totalQuestions) : 0,
       performanceMessage:
         this.quizScoringService.generatePerformanceMessage(percentageScore),
       starsEarned,

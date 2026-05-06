@@ -90,7 +90,9 @@ export class QuizController {
     }
 
     const session = await this.quizService.startQuiz(user.childId, dto);
-    void this.redisAnalytics.trackContentView(String(dto.topicId), 'QUIZ', String(user.id)).catch(() => {});
+    void this.redisAnalytics
+      .trackContentView(String(dto.topicId), "QUIZ", String(user.id))
+      .catch(() => {});
     return session;
   }
 

@@ -82,7 +82,8 @@ export class ConflictResolutionService {
     conflict: ConflictDto;
     shouldApply: boolean;
   } {
-    const serverTime = serverDbTimestamp ?? serverUpdate.timestamp ?? Date.now();
+    const serverTime =
+      serverDbTimestamp ?? serverUpdate.timestamp ?? Date.now();
     const clientTime = clientUpdate.timestamp ?? Date.now();
     const timeDiff = Math.abs(clientTime - serverTime);
 
@@ -92,7 +93,11 @@ export class ConflictResolutionService {
     }
 
     // Otherwise use last-write-wins
-    return this.resolveLastWriteWins(serverUpdate, clientUpdate, serverDbTimestamp);
+    return this.resolveLastWriteWins(
+      serverUpdate,
+      clientUpdate,
+      serverDbTimestamp,
+    );
   }
 
   /**

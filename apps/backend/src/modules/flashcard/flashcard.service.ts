@@ -227,7 +227,9 @@ export class FlashcardService {
         return { activity, updatedChild };
       });
 
-      void this.gamificationService.checkAndAwardBadges(childId).catch(() => {});
+      void this.gamificationService
+        .checkAndAwardBadges(childId)
+        .catch(() => {});
 
       const audioPlaybackFailed = !vocabulary.media?.some(
         (media) => media.type === "AUDIO",

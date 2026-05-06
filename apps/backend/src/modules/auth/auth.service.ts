@@ -192,7 +192,9 @@ export class AuthService {
       },
     });
 
-    void this.redisAnalytics.trackSessionStart(String(user.id), tokens.accessToken).catch(() => {});
+    void this.redisAnalytics
+      .trackSessionStart(String(user.id), tokens.accessToken)
+      .catch(() => {});
 
     return {
       accessToken: tokens.accessToken,
@@ -456,7 +458,9 @@ export class AuthService {
       },
     });
 
-    void this.redisAnalytics.trackSessionStart(String(user.id), tokens.accessToken).catch(() => {});
+    void this.redisAnalytics
+      .trackSessionStart(String(user.id), tokens.accessToken)
+      .catch(() => {});
 
     return {
       accessToken: tokens.accessToken,

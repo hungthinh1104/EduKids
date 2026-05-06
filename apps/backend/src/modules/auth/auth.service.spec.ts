@@ -8,6 +8,7 @@ import { RegisterDto } from "./dto/register.dto";
 import { AuthRateLimitService } from "./services/auth-rate-limit.service";
 import { AuthTokenService } from "./services/auth-token.service";
 import { AuthPasswordService } from "./services/auth-password.service";
+import { RedisAnalyticsService } from "../admin-analytics/service/redis-analytics.service";
 
 describe("AuthService - register", () => {
   let service: AuthService;
@@ -56,6 +57,7 @@ describe("AuthService - register", () => {
         { provide: AuthRateLimitService, useValue: authRateLimitServiceMock },
         { provide: AuthTokenService, useValue: authTokenServiceMock },
         { provide: AuthPasswordService, useValue: authPasswordServiceMock },
+        { provide: RedisAnalyticsService, useValue: { trackUserLogin: jest.fn(), trackUserRegistration: jest.fn() } },
       ],
     }).compile();
 

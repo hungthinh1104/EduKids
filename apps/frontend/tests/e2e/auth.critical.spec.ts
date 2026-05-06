@@ -1,7 +1,12 @@
 import { test, expect, Page } from '@playwright/test';
 
-function mockAuthSuccess(page: Page) {
-  return page.route('**/auth/login', async (route) => {
+// In dev/test, the browser calls the backend directly at NEXT_PUBLIC_API_URL
+// (see api.client.ts: localhost → bypass Next.js proxy).
+// Playwright intercepts at the browser level, so we match the backend URL.
+const API = process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, '') ?? 'http://localhost:3001/api';
+
+async function mockAuthSuccess(page: Page) {
+  await page.route(/\/api\/auth\/login/, async (route) => {
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -24,6 +29,24 @@ function mockAuthSuccess(page: Page) {
       }),
     });
   });
+
+  // Mock child profiles endpoint so dashboard doesn't trigger 401→logout loop
+  await page.route(/\/api\/profiles/, async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ data: [] }),
+    });
+  });
+
+  // Mock token refresh so mock tokens don't cause auto-logout
+  await page.route(/\/api\/auth\/refresh/, async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ data: { accessToken: 'mock-access-token', refreshToken: 'mock-refresh-token' } }),
+    });
+  });
 }
 
 test('login critical flow: valid credentials navigate to parent dashboard', async ({ page }) => {
@@ -35,7 +58,7 @@ test('login critical flow: valid credentials navigate to parent dashboard', asyn
   await page.locator('input[type="password"]').fill('SecurePass123');
   await page.getByText(/Khởi hành ngay!/).click();
 
-  await expect(page).toHaveURL(/\/dashboard/);
+  await expect(page).toHaveURL(/\/dashboard/, { timeout: 10_000 });
 });
 
 test('register critical validation: mismatched confirm password shows error', async ({ page }) => {
@@ -55,7 +78,7 @@ test('register critical validation: mismatched confirm password shows error', as
 });
 
 test('forgot-password critical flow: success state is shown after submit', async ({ page }) => {
-  await page.route('**/auth/forgot-password', async (route) => {
+  await page.route(/\/api\/auth\/forgot-password/, async (route) => {
     await route.fulfill({
       status: 200,
       contentType: 'application/json',

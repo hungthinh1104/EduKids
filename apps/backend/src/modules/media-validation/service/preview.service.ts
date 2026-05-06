@@ -13,8 +13,7 @@ export class PreviewService {
   private readonly CLOUDINARY_UPLOAD_RE =
     /^(https?:\/\/res\.cloudinary\.com\/[^/]+\/[^/]+\/upload\/)(.*)/;
 
-  private readonly PLACEHOLDER_IMAGE =
-    `https://res.cloudinary.com/${process.env.CLOUDINARY_CLOUD_NAME || "edukids"}/image/upload/w_400,h_300,c_fill,q_auto/placeholder`;
+  private readonly PLACEHOLDER_IMAGE = `https://res.cloudinary.com/${process.env.CLOUDINARY_CLOUD_NAME || "edukids"}/image/upload/w_400,h_300,c_fill,q_auto/placeholder`;
 
   /**
    * Insert Cloudinary transformation string before the public_id segment.
@@ -134,7 +133,9 @@ export class PreviewService {
 
   private generateTextPreview(text?: string, maxLength = 500): string {
     if (!text) return "";
-    return text.length <= maxLength ? text : text.substring(0, maxLength) + "...";
+    return text.length <= maxLength
+      ? text
+      : text.substring(0, maxLength) + "...";
   }
 
   /**
@@ -173,7 +174,10 @@ export class PreviewService {
 
     if (imageUrl) {
       return {
-        previewUrl: this.transform(imageUrl, `${watermark},w_1920,h_1080,c_fill,q_auto`),
+        previewUrl: this.transform(
+          imageUrl,
+          `${watermark},w_1920,h_1080,c_fill,q_auto`,
+        ),
         resolution: "1920x1080",
         format: "jpg",
         watermarked: true,
@@ -182,7 +186,10 @@ export class PreviewService {
 
     if (videoUrl) {
       return {
-        previewUrl: this.transform(videoUrl, `${watermark},w_1920,h_1080,c_fill,q_auto`),
+        previewUrl: this.transform(
+          videoUrl,
+          `${watermark},w_1920,h_1080,c_fill,q_auto`,
+        ),
         resolution: "1920x1080",
         format: "mp4",
         watermarked: true,

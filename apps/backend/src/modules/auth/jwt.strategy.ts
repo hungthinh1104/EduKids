@@ -42,7 +42,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     }
 
     // Track DAU — fire-and-forget, Redis SADD deduplicates per day automatically
-    void this.redisAnalytics.trackUserActivity(String(payload.sub)).catch(() => {});
+    void this.redisAnalytics
+      .trackUserActivity(String(payload.sub))
+      .catch(() => {});
 
     // Return user data attached to request.user
     return {

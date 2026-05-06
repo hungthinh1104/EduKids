@@ -130,7 +130,9 @@ export class ContentController {
 
     try {
       const result = await this.contentService.getTopicById(topicId, childId);
-      void this.redisAnalytics.trackContentView(String(topicId), 'TOPIC', String(req.user.userId)).catch(() => {});
+      void this.redisAnalytics
+        .trackContentView(String(topicId), "TOPIC", String(req.user.userId))
+        .catch(() => {});
       return result;
     } catch (error) {
       // UC-01 Exception: Media loading fails
@@ -183,7 +185,13 @@ export class ContentController {
     @Request() req,
   ): Promise<VocabularyDto> {
     const result = await this.contentService.getVocabularyById(vocabularyId);
-    void this.redisAnalytics.trackContentView(String(vocabularyId), 'VOCABULARY', String(req.user?.userId)).catch(() => {});
+    void this.redisAnalytics
+      .trackContentView(
+        String(vocabularyId),
+        "VOCABULARY",
+        String(req.user?.userId),
+      )
+      .catch(() => {});
     return result;
   }
 

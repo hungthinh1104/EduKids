@@ -8,6 +8,7 @@ import { QuizSessionService } from "./services/quiz-session.service";
 import { QuizScoringService } from "./services/quiz-scoring.service";
 import { QuizQuestionService } from "./services/quiz-question.service";
 import { QuizEventPublisherService } from "./services/quiz-event-publisher.service";
+import { GamificationService } from "../gamification/gamification.service";
 import { QuizDifficulty } from "./dto/quiz.dto";
 
 describe("QuizService", () => {
@@ -81,6 +82,10 @@ describe("QuizService", () => {
         {
           provide: QuizEventPublisherService,
           useValue: mockQuizEventPublisherService,
+        },
+        {
+          provide: GamificationService,
+          useValue: { awardPoints: jest.fn(), checkAndAwardBadges: jest.fn() },
         },
       ],
     }).compile();

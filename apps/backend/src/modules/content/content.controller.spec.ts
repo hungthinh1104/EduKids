@@ -3,6 +3,7 @@ import { describe, it, expect, beforeEach, jest } from "@jest/globals";
 import { HttpException, HttpStatus } from "@nestjs/common";
 import { ContentController } from "./content.controller";
 import { ContentService } from "./content.service";
+import { RedisAnalyticsService } from "../admin-analytics/service/redis-analytics.service";
 
 describe("ContentController", () => {
   let controller: ContentController;
@@ -18,7 +19,10 @@ describe("ContentController", () => {
 
     const module: TestingModule = await Test.createTestingModule({
       controllers: [ContentController],
-      providers: [{ provide: ContentService, useValue: contentServiceMock }],
+      providers: [
+        { provide: ContentService, useValue: contentServiceMock },
+        { provide: RedisAnalyticsService, useValue: { trackContentView: jest.fn().mockReturnValue(Promise.resolve()) } },
+      ],
     }).compile();
 
     controller = module.get<ContentController>(ContentController);
@@ -85,7 +89,7 @@ describe("ContentController", () => {
     const expected = { id: 11, word: "dog" };
     (contentServiceMock.getVocabularyById as any).mockResolvedValue(expected);
 
-    const result = await controller.getVocabularyById(11);
+    const result = await controller.getVocabularyById(11, { user: { userId: 1 } } as any);
 
     expect(contentServiceMock.getVocabularyById).toHaveBeenCalledWith(11);
     expect(result).toEqual(expected);

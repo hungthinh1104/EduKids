@@ -25,17 +25,21 @@ export class AvatarCustomizationService {
     private prisma: PrismaService,
   ) {}
 
-  private buildPreviewUrl(childId: number): string {
-    const apiBase = (process.env.PUBLIC_API_BASE_URL || 'http://localhost:3001/api').replace(/\/+$/, '');
+  private buildPreviewUrl(): string {
+    const apiBase = (
+      process.env.PUBLIC_API_BASE_URL || "http://localhost:3001/api"
+    ).replace(/\/+$/, "");
     return `${apiBase}/gamification/avatar/preview`;
   }
 
   private async syncChildProfileAvatar(childId: number): Promise<void> {
-    const previewUrl = this.buildPreviewUrl(childId);
-    await this.prisma.childProfile.update({
-      where: { id: childId },
-      data: { avatar: previewUrl },
-    }).catch(() => {});
+    const previewUrl = this.buildPreviewUrl();
+    await this.prisma.childProfile
+      .update({
+        where: { id: childId },
+        data: { avatar: previewUrl },
+      })
+      .catch(() => {});
   }
 
   /**
@@ -270,7 +274,7 @@ export class AvatarCustomizationService {
     return {
       childId,
       layers: configData.layers || [],
-      previewUrl: this.buildPreviewUrl(childId),
+      previewUrl: this.buildPreviewUrl(),
       updatedAt: new Date().toISOString(),
     };
   }
@@ -289,7 +293,7 @@ export class AvatarCustomizationService {
           assetUrl: buildAvatarLayerAssetUrl(DEFAULT_AVATAR_ITEMS[0]),
         },
       ],
-      previewUrl: this.buildPreviewUrl(childId),
+      previewUrl: this.buildPreviewUrl(),
       updatedAt: new Date().toISOString(),
     };
   }
