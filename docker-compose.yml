@@ -48,7 +48,7 @@ services:
     environment:
       NODE_ENV: ${NODE_ENV:-production}
       PORT: ${BACKEND_PORT:-3001}
-      DATABASE_URL: ${DATABASE_URL:-postgresql://${DB_USER:-edukids}:${DB_PASSWORD:-edukids}@postgres:5432/${DB_NAME:-edukids_db}?sslmode=disable}
+      DATABASE_URL: ${DATABASE_URL:-postgresql://edukids:edukids@postgres:5432/edukids_db?sslmode=disable}
       REDIS_URL: redis://:${REDIS_PASSWORD:?REDIS_PASSWORD is required}@redis:6379
       REDIS_HOST: redis
       REDIS_PORT: 6379
@@ -71,6 +71,9 @@ services:
       CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY}
       CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET}
       CLOUDINARY_BASE_URL: ${CLOUDINARY_BASE_URL}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.5-flash}
+      GEMINI_BASE_URL: ${GEMINI_BASE_URL:-https://generativelanguage.googleapis.com}
       SENTRY_DSN: ${SENTRY_DSN}
       SENTRY_RELEASE: ${SENTRY_RELEASE}
       SENTRY_ENVIRONMENT: ${SENTRY_ENVIRONMENT:-production}
@@ -111,7 +114,8 @@ services:
     ports:
       - "${BIND_HOST:-0.0.0.0}:3000:3000"
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     networks:
       - edukids-network
 

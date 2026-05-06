@@ -1,141 +1,143 @@
-# Backend Environment Variables Required
+# Backend Environment Setup
 
-## Essential Variables (Must Configure)
+This document is the practical env guide for `apps/backend`.
 
-### Database
-- **DATABASE_URL** - PostgreSQL connection string
-  - Example: `postgresql://user:password@localhost:5432/edukids`
-  - Used for: Prisma ORM database connection
+Use it together with:
 
-### Authentication
-- **JWT_SECRET** - Secret key for JWT token signing
-  - Default fallback: `edukids-secret-key-change-in-production`
-  - ⚠️ **MUST change in production!**
-  - Used for: Auth token generation and validation
+- [apps/backend/package.json](./apps/backend/package.json)
+- [docker-compose.yml](./docker-compose.yml)
+- [apps/backend/src/main.ts](./apps/backend/src/main.ts)
 
-### Redis Configuration
-- **REDIS_HOST** - Redis server hostname
-  - Default: `localhost`
-  
-- **REDIS_PORT** - Redis server port
-  - Default: `6379`
-  
-- **REDIS_PASSWORD** - Redis authentication password (optional)
-  - Default: none
-  
-- **REDIS_PROGRESS_DB** - Redis database number for progress sync
-  - Default: `2`
-  - Used for: Learning progress synchronization cache
+## How backend env is used
 
-## Optional Variables (Have Defaults)
+There are two common ways to run the backend:
 
-### Pronunciation / Azure Speech
-- **PRONUNCIATION_PROVIDER** - Provider dùng để chấm pronunciation
-  - Values: `CUSTOM`, `AZURE_SPEECH`, `GOOGLE_SPEECH`
-  - Demo recommendation: `AZURE_SPEECH`
+- Direct local run from `apps/backend` using `.env.development` or `.env.production`
+- Docker Compose run from repo root using the root `.env`
 
-- **AZURE_SPEECH_KEY** - Azure Speech subscription key
-  - Required when `PRONUNCIATION_PROVIDER=AZURE_SPEECH`
+Do not assume the root `.env.example` fully replaces `apps/backend/.env.development`; they serve different entrypoints.
 
-- **AZURE_SPEECH_REGION** - Azure Speech region, ví dụ `southeastasia`
-  - Required when `PRONUNCIATION_PROVIDER=AZURE_SPEECH`
+## Core variables
 
-- **AZURE_SPEECH_LANGUAGE** - Speech recognition language
-  - Default: `en-US`
+These are the most important variables to set correctly.
 
-### CORS Configuration
-- **CORS_ORIGIN** - Allowed frontend origin
-  - Default: `http://localhost:3000`
-  - Used for: Cross-Origin Resource Sharing
+### Required for most local work
 
-### Content Delivery
-- **CLOUDINARY_BASE_URL** - Cloudinary CDN base URL for media
-  - Default: `https://res.cloudinary.com/edukids`
-  - Used for: Flashcard and content images
+- `DATABASE_URL`
+- `REDIS_URL`
+- `JWT_SECRET`
+- `CORS_ORIGIN`
 
-### Frontend URL (for gateways, not currently enabled)
-- **FRONTEND_URL** - Frontend application URL
-  - Default: `http://localhost:3000`
-  - Used for: WebSocket gateway CORS (when enabled)
+### Commonly needed in real environments
 
-## Example .env File
+- `FRONTEND_URL`
+- `PUBLIC_API_BASE_URL`
+- `APP_HOST`
+- `PORT`
+
+### Needed only if the related feature is used
+
+- `GOOGLE_CLIENT_ID`
+- `GOOGLE_CLIENT_SECRET`
+- `SMTP_HOST`
+- `SMTP_PORT`
+- `SMTP_USER`
+- `SMTP_PASSWORD`
+- `SMTP_FROM`
+- `CLOUDINARY_CLOUD_NAME`
+- `CLOUDINARY_API_KEY`
+- `CLOUDINARY_API_SECRET`
+- `CLOUDINARY_BASE_URL`
+- `AZURE_SPEECH_KEY`
+- `AZURE_SPEECH_REGION`
+- `GEMINI_API_KEY`
+- `SENTRY_DSN`
+
+## Minimum local example
 
 ```bash
-# Database
-DATABASE_URL="postgresql://<db_user>:<db_password>@localhost:5432/edukids"
+NODE_ENV=development
+PORT=3001
+APP_HOST=0.0.0.0
 
-# Authentication  
-JWT_SECRET="<set-strong-jwt-secret-min-32-chars>"
-
-# Redis Configuration
-REDIS_HOST="localhost"
+DATABASE_URL=postgresql://edukids:password@localhost:5432/edukids_db
+REDIS_URL=redis://:redis_password@localhost:6379
+REDIS_HOST=localhost
 REDIS_PORT=6379
-REDIS_PASSWORD=""
-REDIS_PROGRESS_DB=2
+REDIS_PASSWORD=redis_password
 
-# CORS
-CORS_ORIGIN="http://localhost:3000"
+JWT_SECRET=replace_with_a_real_secret
+JWT_EXPIRY=24h
 
-# Content Delivery
-CLOUDINARY_BASE_URL="https://res.cloudinary.com/edukids"
+CORS_ORIGIN=http://localhost:3000
+FRONTEND_URL=http://localhost:3000
+PUBLIC_API_BASE_URL=http://localhost:3001/api
 
-# Pronunciation / Azure Speech
-PRONUNCIATION_PROVIDER="CUSTOM"
-AZURE_SPEECH_KEY=""
-AZURE_SPEECH_REGION=""
-AZURE_SPEECH_LANGUAGE="en-US"
+PRONUNCIATION_PROVIDER=CUSTOM
 ```
 
-## Setup Steps for Local Development
+## Feature-specific notes
 
-1. **PostgreSQL Database**
-   ```bash
-   # Create database
-   createdb edukids
-   
-   # Set DATABASE_URL
-  export DATABASE_URL="postgresql://<db_user>:<db_password>@localhost:5432/edukids"
-   ```
+### Auth
 
-2. **Redis Server**
-   ```bash
-   # Start Redis (macOS with brew)
-   brew services start redis
-   
-   # Or using Docker
-   docker run -d -p 6379:6379 redis:latest
-   ```
+- `JWT_SECRET` must be a real secret in any shared or production environment
+- Google OAuth is only active when `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` are present
 
-3. **Run Prisma Migrations**
-   ```bash
-   npx prisma migrate deploy
-   npx prisma seed  # Optional: seed sample data
-   ```
+### Redis and progress sync
 
-4. **Start Backend**
-   ```bash
-   npm run start:dev
-   ```
+- `REDIS_URL` is the main connection string
+- Some codepaths also read `REDIS_HOST`, `REDIS_PORT`, and `REDIS_PASSWORD`
+- Keep both the URL-style and split variables aligned
 
-## Optional: Disabled Modules (Don't Need Variables)
+### Media
 
-These modules are disabled and don't require environment setup:
-- Analytics Module (commented out in app.module.ts)
-- Pronunciation Module  
-- Report Module
-- Recommendation Module
-- Media Module
+Media upload paths rely on Cloudinary credentials. If those values are absent, media-related flows may fail or remain partially usable only in local/mock scenarios.
 
-If you enable them, review their documentation for additional environment variables.
+### Pronunciation
 
-## Security Notes for Production
+- `PRONUNCIATION_PROVIDER` supports `CUSTOM` and `AZURE_SPEECH` in the current repo context
+- Set Azure credentials only when using the Azure-backed provider
 
-⚠️ **Before deploying to production:**
+### Recommendations
 
-1. Change `JWT_SECRET` to a strong random value (min 32 characters)
-2. Use strong database password
-3. Set `REDIS_PASSWORD` for Redis authentication
-4. Update `CORS_ORIGIN` to match your production frontend URL
-5. Use production PostgreSQL server (not localhost)
-6. Use production Redis server (not localhost)
-7. Store all sensitive values in environment management service (AWS Secrets Manager, Heroku Config Vars, etc.)
+Gemini-backed recommendation paths require `GEMINI_API_KEY` and related config.
+
+### Metrics and monitoring
+
+- `/api/metrics` is enabled by default outside strict production
+- In production, use `METRICS_TOKEN` if you want to protect the metrics endpoint
+
+## Production checks
+
+`apps/backend/src/main.ts` validates several env vars in production and will fail fast if placeholder values are still present.
+
+At minimum, production should have real values for:
+
+- `JWT_SECRET`
+- `DATABASE_URL`
+- `REDIS_URL`
+- `CLOUDINARY_CLOUD_NAME`
+- `CLOUDINARY_API_KEY`
+- `CLOUDINARY_API_SECRET`
+
+## Recommended startup flow
+
+```bash
+cd apps/backend
+npm install
+npm run prisma:migrate
+npm run prisma:seed
+npm run start:dev
+```
+
+Health check after boot:
+
+```bash
+curl http://localhost:3001/api/system/health
+```
+
+## Notes for coding agents
+
+- Prefer reading `apps/backend/.env.development` and `apps/backend/src/main.ts` before changing config behavior.
+- Do not trust older comments claiming some modules are disabled; `apps/backend/src/app.module.ts` is the source of truth for currently wired modules.
+- If env behavior seems inconsistent, verify whether the app is being run through Docker Compose or directly from `apps/backend`.

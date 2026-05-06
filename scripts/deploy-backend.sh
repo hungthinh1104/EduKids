@@ -56,7 +56,7 @@ echo "[INFO] Waiting for PostgreSQL to be ready..."
 max_attempts=30
 attempt=1
 while (( attempt <= max_attempts )); do
-  if docker compose --env-file "$ENV_FILE" exec -T postgres pg_isready -U postgres >/dev/null 2>&1; then
+  if docker compose --env-file "$ENV_FILE" exec -T postgres pg_isready >/dev/null 2>&1; then
     echo "[INFO] PostgreSQL is ready."
     break
   fi

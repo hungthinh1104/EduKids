@@ -1,320 +1,179 @@
-# EduKids Root README
+# EduKids
 
-<div align="center">
-  <h1>🎓 EduKids</h1>
-  <p><strong>An AI-powered English learning platform with gamification for kids</strong></p>
-  
-  ![Tech Stack](https://img.shields.io/badge/Next.js-Nest.js-blue?style=flat-square)
-  ![Database](https://img.shields.io/badge/PostgreSQL-Redis-green?style=flat-square)
-  ![Infrastructure](https://img.shields.io/badge/Docker-Docker%20Compose-blue?style=flat-square)
-</div>
+EduKids is a monorepo for a kid-focused English learning platform with a Next.js frontend, a NestJS backend, PostgreSQL, Redis, and a local monitoring stack.
 
----
+This file is the main entrypoint for humans and coding agents. If you are using Claude or another agent to continue the repo, read [CLAUDE.md](./CLAUDE.md) right after this.
 
-## 📋 Project Overview
+## Repo shape
 
-EduKids is a comprehensive English language learning platform designed specifically for children. It combines interactive learning modules, AI-powered speech recognition, and gamification elements to make language learning engaging and fun.
-
-### 🎯 Key Features
-
-- **Interactive Learning**: Flashcards, lessons, quizzes with immediate feedback
-- **Speech Recognition**: Web Speech API integration for pronunciation practice
-- **Optional Azure Speech**: Provider-based pronunciation assessment for demo/prod upgrades
-- **Gamification**: Points, badges, achievements, and leaderboards
-- **Parent Dashboard**: Monitor child progress and learning analytics
-- **Real-time Progress**: Track vocabulary mastery and learning paths
-- **Responsive Design**: Mobile-first UI for kids (6-12 years old)
-
----
-
-## 🏗️ Tech Stack
-
-### Frontend
-- **Framework**: [Next.js 14+](https://nextjs.org/) with App Router
-- **Styling**: [Tailwind CSS](https://tailwindcss.com/)
-- **State Management**: [Zustand](https://github.com/pmndrs/zustand)
-- **Type Safety**: TypeScript
-- **Speech API**: Web Speech API for voice recording & recognition
-- **Optional cloud speech**: Azure Speech provider support in backend pronunciation flow
-
-### Backend
-- **Runtime**: [Node.js 20+](https://nodejs.org/)
-- **Framework**: [NestJS](https://nestjs.com/) with DDD architecture
-- **ORM**: [Prisma](https://www.prisma.io/)
-- **Database**: PostgreSQL
-- **Caching**: Redis
-- **Job Queue**: BullMQ (async tasks)
-- **Authentication**: JWT + Passport
-
-### Infrastructure
-- **Containerization**: Docker & Docker Compose
-- **Development**: Hot reload for both frontend & backend
-- **Monitoring**: Prometheus + Grafana + Alertmanager + Blackbox + Exporters (Node, cAdvisor, Postgres, Redis)
-
----
-
-## 📁 Project Structure
-
-```
-EduKids/
+```text
+.
 ├── apps/
-│   ├── frontend/          # Next.js application
-│   └── backend/           # NestJS application
-├── shared/                # Shared types & constants
-├── docker/                # Docker configurations
-├── docs/                  # Documentation
-├── docker-compose.yml     # Local development setup
-└── .env.example          # Environment template
+│   ├── frontend/   # Next.js app
+│   └── backend/    # NestJS API
+├── docs/           # Supporting docs, plans, test notes, deploy guides
+├── docker/         # Dockerfiles + monitoring config
+├── scripts/        # Utility scripts
+└── docker-compose.yml
 ```
 
-**Detailed structure**: See [PROJECT_STRUCTURE.md](./docs/PROJECT_STRUCTURE.md)
+## Current stack
 
----
+- Frontend: Next.js 16, React 19, TypeScript, Tailwind, Zustand
+- Backend: NestJS 11, Prisma 7, PostgreSQL, Redis, Bull
+- Monitoring: Prometheus, Grafana, Alertmanager, Blackbox exporter
+- Infra: Docker Compose for local full-stack runs
 
-## 🚀 Quick Start
+## Source of truth
 
-### Prerequisites
-- Docker & Docker Compose
-- Node.js 20+ (for local development)
-- npm/yarn
+Use these files first when figuring out the repo:
 
-### Setup (Recommended - with Docker)
+- [CLAUDE.md](./CLAUDE.md): repo handoff, working agreements, and next priorities
+- [apps/frontend/package.json](./apps/frontend/package.json): frontend scripts and dependency versions
+- [apps/backend/package.json](./apps/backend/package.json): backend scripts and dependency versions
+- [apps/backend/src/app.module.ts](./apps/backend/src/app.module.ts): backend modules currently wired in
+- [apps/backend/prisma/schema.prisma](./apps/backend/prisma/schema.prisma): data model source of truth
+- [docker-compose.yml](./docker-compose.yml): local stack topology and ports
+
+Treat some older docs in `docs/` as reference material, not guaranteed source of truth.
+
+## Quick start
+
+### Option 1: run the full stack with Docker
+
+1. Copy the root env file:
 
 ```bash
-# 1. Clone the repository
-git clone <repository-url>
-cd EduKids
-
-# 2. Setup environment
-cp .env.example .env.local
-
-# 3. Start all services
-docker-compose up -d
-
-# 4. Run migrations
-docker-compose exec backend npm run prisma:migrate
-
-# 5. Access the application
-# Frontend: http://localhost:3000
-# Backend API: http://localhost:3001/api
-# Prometheus: http://localhost:9090
-# Grafana: http://localhost:3003
-# Alertmanager: http://localhost:9093
+cp .env.example .env
 ```
 
-For detailed setup instructions, see [QUICK_START.md](./docs/QUICK_START.md)
+2. Fill in required values in `.env`, especially:
 
----
+- `REDIS_PASSWORD`
+- `JWT_SECRET`
+- any external service credentials you actually want to use
 
-## 📚 Documentation
+3. Start the stack:
 
-- **[Quick Start Guide](./docs/QUICK_START.md)** - Get up and running
-- **[Project Structure](./docs/PROJECT_STRUCTURE.md)** - Architecture and directory organization
-- **[Docker Setup](./docker-compose.yml)** - Infrastructure configuration
-- **[Azure backend-only demo deploy](./docs/AZURE_BACKEND_DEMO_DEPLOY.md)** - Cheapest Azure VM deployment for backend container only
-- **[Monitoring Setup](./docs/MONITORING_SETUP.md)** - Prometheus + Grafana + alert rules
-
----
-
-## 🔧 Development
-
-### Run Full Stack
 ```bash
-docker-compose up -d
+docker compose up -d --build
 ```
 
-### Run Individual Services
+4. Run backend migrations:
 
-**Backend Only**
+```bash
+docker compose exec backend npm run prisma:migrate
+```
+
+5. Optional seed:
+
+```bash
+docker compose exec backend npm run prisma:seed
+```
+
+### Default local URLs
+
+- Frontend: `http://localhost:3000`
+- Backend root: `http://localhost:3001`
+- Backend health: `http://localhost:3001/api/system/health`
+- Metrics: `http://localhost:3001/api/metrics`
+- Prometheus: `http://localhost:9090`
+- Grafana: `http://localhost:3003`
+
+### Option 2: run apps directly without Docker
+
+Start PostgreSQL and Redis yourself first, then:
+
 ```bash
 cd apps/backend
 npm install
 npm run start:dev
 ```
 
-**Frontend Only**
+In another terminal:
+
 ```bash
 cd apps/frontend
 npm install
 npm run dev
 ```
 
----
+The frontend expects the backend at `http://localhost:3001/api` by default.
 
-## 📊 Architecture Overview
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    CLIENT BROWSER                           │
-│  ┌──────────────────────────────────────────────────────┐  │
-│  │              Next.js Frontend (3000)                 │  │
-│  │  • Zustand State Management                          │  │
-│  │  • Web Speech API Integration                        │  │
-│  │  • Responsive UI (Tailwind CSS)                      │  │
-│  └──────────────────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────────────┘
-                          ↓ HTTP/WebSocket
-┌─────────────────────────────────────────────────────────────┐
-│              NestJS Backend (3001)                          │
-│  ┌─────────────────────────────────────────────────────┐   │
-│  │  Authentication │ Users │ Content │ Learning        │   │
-│  │  Gamification  │ Analytics │ Notifications          │   │
-│  └─────────────────────────────────────────────────────┘   │
-│                          ↓
-│  ┌─────────────────────────────────────────────────────┐   │
-│  │  PostgreSQL (5432)  │  Redis (6379)                │   │
-│  │  • User Data        │ • Cache Layer               │   │
-│  │  • Learning Content │ • Session Store             │   │
-│  │  • Progress Logs    │ • Job Queue (BullMQ)        │   │
-│  └─────────────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────────┘
-```
-
----
-
-## 🔐 Security Features
-
-- ✅ JWT-based authentication
-- ✅ Role-based access control (RBAC)
-- ✅ Password hashing with bcrypt
-- ✅ CORS configuration
-- ✅ Environment variable protection
-- ✅ Input validation & sanitization
-- ✅ SQL injection prevention (via Prisma)
-
----
-
-## 📈 Database Schema
-
-The application uses **Domain-Driven Design** with Prisma ORM:
-
-### Main Domains
-- **auth**: User authentication & authorization
-- **users**: Parent and child user profiles
-- **content**: Topics and vocabulary
-- **learning-progress**: Lesson and quiz progress
-- **gamification**: Points, badges, achievements
-- **analytics**: Activity logs and user insights
-
-See `apps/backend/prisma/schema.prisma` for full schema details.
-
----
-
-## 🔄 Redis & BullMQ
-
-### Cache Strategy
-- Learning content cached for 24 hours
-- Session data stored in Redis
-- Real-time leaderboard updates
-
-### Job Queues
-- Email notifications
-- Weekly progress reports
-- Monthly analytics generation
-
----
-
-## 🧪 Testing
-
-### Backend
-```bash
-cd apps/backend
-npm run test              # Unit tests
-npm run test:e2e         # Integration tests
-npm run test:cov         # Coverage report
-```
+## App-specific commands
 
 ### Frontend
+
 ```bash
 cd apps/frontend
-npm run test              # Unit tests
-npm run test:e2e         # E2E tests (Playwright)
+npm run dev
+npm run lint
+npm run type-check
+npm run test
+npm run test:e2e
 ```
 
----
+More frontend context: [apps/frontend/README.md](./apps/frontend/README.md)
 
-## 🚀 Deployment
-
-### Production Build
+### Backend
 
 ```bash
-# Backend
 cd apps/backend
-npm run build
-
-# Frontend
-cd apps/frontend
-npm run build
+npm run start:dev
+npm run lint
+npm run test
+npm run test:e2e
+npm run prisma:migrate
+npm run prisma:seed
 ```
 
-### Docker Images
+Backend env notes: [BACKEND_ENV_SETUP.md](./BACKEND_ENV_SETUP.md)
 
-```bash
-# Build and push to registry
-docker build -f docker/Dockerfile.backend -t edukids-backend:latest ./apps/backend
-docker build -f docker/Dockerfile.frontend -t edukids-frontend:latest ./apps/frontend
-```
+## Environment model
 
----
+There are two layers of env files in this repo:
 
-## 📝 Environment Variables
+- Root `.env.example`: values used by `docker compose`
+- App env files inside `apps/backend` and `apps/frontend`: values used when running apps directly
 
-See `.env.example` for all available variables:
+Key frontend variables:
 
-```env
-# Database
-DATABASE_URL=postgresql://user:password@localhost:5432/edukids_db
+- `NEXT_PUBLIC_API_URL`
+- `NEXT_PUBLIC_WS_URL`
 
-# Redis
-REDIS_URL=redis://:password@localhost:6379
+Key backend variables:
 
-# JWT
-JWT_SECRET=your-secret-key
-JWT_EXPIRY=24h
+- `DATABASE_URL`
+- `REDIS_URL`
+- `JWT_SECRET`
+- `CORS_ORIGIN`
+- `FRONTEND_URL`
+- `PUBLIC_API_BASE_URL`
+- `PRONUNCIATION_PROVIDER`
+- Cloudinary credentials if media upload is used
 
-# Frontend
-NEXT_PUBLIC_API_URL=http://localhost:3001/api
-```
+See [BACKEND_ENV_SETUP.md](./BACKEND_ENV_SETUP.md) for the backend-specific breakdown.
 
----
+## Architecture notes
 
-## 🤝 Contributing
+- Backend global prefix is `/api`
+- Frontend axios client resolves backend base URL from `NEXT_PUBLIC_API_URL`
+- In production browser contexts, frontend code routes API traffic through same-origin `/api` to avoid CORS issues
+- Backend exposes `/api/system/health` and `/api/metrics`
+- CORS is configured dynamically from `CORS_ORIGIN` and `FRONTEND_URL`
 
-1. Create a feature branch: `git checkout -b feature/new-feature`
-2. Commit changes: `git commit -am 'Add new feature'`
-3. Push to branch: `git push origin feature/new-feature`
-4. Submit pull request
+## Documentation map
 
----
+Useful supporting docs:
 
-## 📄 License
+- [docs/API_ENDPOINTS_SUMMARY.md](./docs/API_ENDPOINTS_SUMMARY.md): manual API summary, useful for orientation
+- [docs/BACKEND_REFACTOR_BLUEPRINT_2026-04-04.md](./docs/BACKEND_REFACTOR_BLUEPRINT_2026-04-04.md): backend refactor direction and risk register
+- [docs/MONITORING_SETUP.md](./docs/MONITORING_SETUP.md): Prometheus and Grafana setup
+- [docs/AZURE_BACKEND_DEMO_DEPLOY.md](./docs/AZURE_BACKEND_DEMO_DEPLOY.md): backend-only Azure deployment notes
+- [docs/Test Plan.md](./docs/Test%20Plan.md): test coverage checklist and manual/automation mapping
+- [docs/Usecase document.md](./docs/Usecase%20document.md): product/use-case reference
 
-This project is proprietary software. All rights reserved.
+## Notes for handoff
 
----
-
-## 📞 Support
-
-For issues or questions:
-- Check [QUICK_START.md](./docs/QUICK_START.md)
-- Review Docker logs: `docker-compose logs <service>`
-- Contact development team
-
----
-
-## 🎯 Roadmap
-
-- [ ] Mobile app (React Native)
-- [ ] AI-powered tutoring module
-- [ ] Video lessons
-- [ ] Multilingual support
-- [ ] Advanced analytics dashboard
-- [ ] Parent-child messaging system
-- [ ] Integration with popular learning standards
-
----
-
-<div align="center">
-  <p><strong>Built with ❤️ for kids learning English</strong></p>
-  <p>© 2024 EduKids Platform. All rights reserved.</p>
-</div>
+- The repo already has uncommitted changes in some frontend and test files. Do not revert unrelated work casually.
+- Some docs in the repo are older than the current codebase. Prefer package files, app wiring, Prisma schema, and `CLAUDE.md` when there is a mismatch.
