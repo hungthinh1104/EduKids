@@ -5,9 +5,17 @@ ROOT_DIR="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 cd "$ROOT_DIR"
 
 if ! command -v rg >/dev/null 2>&1; then
-  echo "[secret-scan] ripgrep (rg) is required but not installed."
-  echo "Install it and run again."
-  exit 2
+  echo "[secret-scan] ripgrep not found — attempting auto-install..."
+  if command -v apt-get >/dev/null 2>&1; then
+    apt-get install -y -qq ripgrep 2>/dev/null || true
+  elif command -v brew >/dev/null 2>&1; then
+    brew install ripgrep 2>/dev/null || true
+  fi
+  if ! command -v rg >/dev/null 2>&1; then
+    echo "[secret-scan] ripgrep (rg) is required but not installed."
+    echo "Install it and run again."
+    exit 2
+  fi
 fi
 
 echo "[secret-scan] scanning workspace for potential hardcoded secrets..."
