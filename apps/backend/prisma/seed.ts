@@ -24,8 +24,7 @@ async function main() {
   // 0. SEED ADMIN USER
   // ========================================
   console.log('👤 Seeding Admin User...');
-  //const adminPassword = process.env.ADMIN_SEED_PASSWORD || 'ChangeMe-Local-Only-123!';
-  const adminPassword = 'admin123'
+  const adminPassword = process.env.ADMIN_SEED_PASSWORD || 'ChangeMe-Local-Only-123!';
 
   if (process.env.NODE_ENV === 'production' && !process.env.ADMIN_SEED_PASSWORD) {
     throw new Error('ADMIN_SEED_PASSWORD is required when seeding in production');

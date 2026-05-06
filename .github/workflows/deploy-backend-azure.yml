@@ -176,6 +176,15 @@ jobs:
               exit 1
             fi
 
+            # Run seed (idempotent — safe to run on every deploy; skips if already seeded)
+            echo "▶ Running Prisma seed..."
+            docker run --rm \
+              -e DATABASE_URL="${{ secrets.DATABASE_URL }}" \
+              -e NODE_ENV=production \
+              -e ADMIN_SEED_PASSWORD="${{ secrets.ADMIN_SEED_PASSWORD }}" \
+              "$IMAGE" \
+              npm run prisma:seed || echo "⚠️ Seed skipped or failed (non-blocking)"
+
             # Run new container (only if migrations succeeded)
             echo "▶ Starting app container (migrations already completed)..."
             docker run -d \
@@ -203,7 +212,18 @@ jobs:
               -e AZURE_SPEECH_REGION="${{ vars.AZURE_SPEECH_REGION }}" \
               -e AZURE_SPEECH_LANGUAGE="${{ vars.AZURE_SPEECH_LANGUAGE || 'en-US' }}" \
               -e METRICS_TOKEN="${{ secrets.METRICS_TOKEN }}" \
+              -e SENTRY_DSN="${{ secrets.SENTRY_DSN }}" \
+              -e SENTRY_ENVIRONMENT="${{ vars.SENTRY_ENVIRONMENT || 'production' }}" \
               -e SENTRY_RELEASE="${{ github.sha }}" \
+              -e GOOGLE_CLIENT_ID="${{ secrets.GOOGLE_CLIENT_ID }}" \
+              -e GOOGLE_CLIENT_SECRET="${{ secrets.GOOGLE_CLIENT_SECRET }}" \
+              -e CLOUDINARY_CLOUD_NAME="${{ secrets.CLOUDINARY_CLOUD_NAME }}" \
+              -e CLOUDINARY_API_KEY="${{ secrets.CLOUDINARY_API_KEY }}" \
+              -e CLOUDINARY_API_SECRET="${{ secrets.CLOUDINARY_API_SECRET }}" \
+              -e CLOUDINARY_BASE_URL="${{ vars.CLOUDINARY_BASE_URL }}" \
+              -e GEMINI_API_KEY="${{ secrets.GEMINI_API_KEY }}" \
+              -e GEMINI_MODEL="${{ vars.GEMINI_MODEL || 'gemini-2.5-flash' }}" \
+              -e GEMINI_BASE_URL="${{ vars.GEMINI_BASE_URL || 'https://generativelanguage.googleapis.com' }}" \
               "$IMAGE"
 
             # Health check (30 attempts × 3s = 90s timeout)
