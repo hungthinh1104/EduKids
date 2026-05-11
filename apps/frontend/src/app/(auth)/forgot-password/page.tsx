@@ -90,9 +90,9 @@ function ForgotPasswordContent() {
                 <Heading level={2} className="text-4xl text-heading font-extrabold tracking-tight drop-shadow-sm mb-3">
                     Quên Mật Khẩu
                 </Heading>
-                <p className="text-muted text-lg font-medium">
-                    Nhập email để nhận link đặt lại mật khẩu
-                </p>
+                <Body className="text-muted text-lg font-medium">
+                    Nhập email để nhận hướng dẫn khôi phục mật khẩu.
+                </Body>
             </motion.div>
 
             {error && (

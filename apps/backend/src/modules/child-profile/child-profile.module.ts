@@ -5,11 +5,8 @@ import { ChildProfileController } from "./child-profile.controller";
 import { ChildProfileService } from "./child-profile.service";
 import { ChildProfileRepository } from "./child-profile.repository";
 import { PrismaService } from "../../prisma/prisma.service";
+import { SubscriptionModule } from "../subscription/subscription.module";
 
-/**
- * UC-06: Manage Multi-Child Profiles Module
- * Parent creates and switches between multiple child profiles
- */
 @Module({
   imports: [
     JwtModule.registerAsync({
@@ -20,6 +17,7 @@ import { PrismaService } from "../../prisma/prisma.service";
         signOptions: { expiresIn: "15m" },
       }),
     }),
+    SubscriptionModule,
   ],
   controllers: [ChildProfileController],
   providers: [ChildProfileService, ChildProfileRepository, PrismaService],

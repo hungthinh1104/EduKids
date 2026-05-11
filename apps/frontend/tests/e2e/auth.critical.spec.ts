@@ -1,10 +1,5 @@
 import { test, expect, Page } from '@playwright/test';
 
-// In dev/test, the browser calls the backend directly at NEXT_PUBLIC_API_URL
-// (see api.client.ts: localhost → bypass Next.js proxy).
-// Playwright intercepts at the browser level, so we match the backend URL.
-const API = process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, '') ?? 'http://localhost:3001/api';
-
 async function mockAuthSuccess(page: Page) {
   await page.route(/\/api\/auth\/login/, async (route) => {
     await route.fulfill({

@@ -18,6 +18,7 @@ import {
 
 // Shared Components
 import { AdminPageHeader } from '@/features/cms/components/AdminPageHeader';
+import { Heading, Body, Caption } from '@/shared/components/Typography';
 import { AdminSearchBar } from '@/features/cms/components/AdminSearchBar';
 import { AdminModal } from '@/features/cms/components/AdminModal';
 import { AdminEmptyState } from '@/features/cms/components/AdminEmptyState';
@@ -158,7 +159,7 @@ export default function AdminVocabulariesPage() {
   }, [vocabularies, deferredSearchQuery]);
 
   return (
-    <div className="p-6 md:p-8 max-w-7xl mx-auto">
+    <div className="p-4 sm:p-6 md:p-8 max-w-7xl mx-auto">
       {/* 1. Header */}
       <AdminPageHeader 
         title="Quản lý Từ Vựng" 
@@ -171,8 +172,8 @@ export default function AdminVocabulariesPage() {
       />
 
       {/* 2. Topic Selector */}
-      <div className="bg-card rounded-2xl shadow-sm border border-border/70 p-6 mb-6">
-        <label className="block text-sm font-bold text-heading mb-3">Chọn Chủ Đề Học</label>
+      <div className="bg-card rounded-2xl shadow-sm border border-border/70 p-4 sm:p-6 mb-4 sm:mb-6">
+        <label className="block text-xs sm:text-sm font-bold text-heading mb-3">Chọn Chủ Đề Học</label>
         <select
           value={selectedTopicId ?? ''}
           onChange={(e) => {
@@ -216,11 +217,11 @@ export default function AdminVocabulariesPage() {
           description={searchQuery ? 'Không tìm thấy từ vựng nào khớp với từ khóa của bạn.' : 'Chủ đề này hiện tại chưa có từ vựng nào. Hãy thêm từ mới nhé.'}
         />
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
           {filteredVocabs.map(vocab => (
             <div key={vocab.id} className="bg-card rounded-3xl shadow-sm hover:shadow-md transition-all overflow-hidden border border-border/70 group flex flex-col">
               {/* Image Header */}
-              <div className="h-40 bg-gradient-to-br from-primary-light/35 to-accent-light/35 relative overflow-hidden flex items-center justify-center">
+              <div className="h-32 sm:h-40 bg-gradient-to-br from-primary-light/35 to-accent-light/35 relative overflow-hidden flex items-center justify-center">
                 {vocab.imageUrl ? (
                   <Image
                     src={vocab.imageUrl}
@@ -251,16 +252,16 @@ export default function AdminVocabulariesPage() {
               {/* Card Content */}
               <div className="p-5 flex-1 flex flex-col">
                 <div className="mb-2 flex min-h-[2.25rem] items-start justify-between gap-2">
-                  <h3 className="line-clamp-1 text-xl font-extrabold tracking-tight text-heading transition-colors group-hover:text-primary">{vocab.word}</h3>
+                  <Heading level={3} className="line-clamp-1 text-lg sm:text-xl font-extrabold tracking-tight text-heading transition-colors group-hover:text-primary">{vocab.word}</Heading>
                   {vocab.phonetic && (
                     <span className="rounded-md border border-border/60 bg-background px-2 py-1 text-xs font-mono text-caption">{vocab.phonetic}</span>
                   )}
                 </div>
 
-                <p className="mb-3 min-h-[2.75rem] line-clamp-2 text-sm font-medium text-body">{vocab.translation}</p>
+                <Body className="mb-3 min-h-[2.75rem] line-clamp-2 text-sm font-medium text-body">{vocab.translation}</Body>
 
                 {vocab.exampleSentence && (
-                  <p className="mb-4 line-clamp-2 min-h-[3.5rem] rounded-lg border border-border/60 bg-background p-2.5 text-sm italic text-caption">&quot;{vocab.exampleSentence}&quot;</p>
+                  <Caption className="mb-4 line-clamp-2 min-h-[3.5rem] rounded-lg border border-border/60 bg-background p-2 sm:p-2.5 text-sm italic text-caption">&quot;{vocab.exampleSentence}&quot;</Caption>
                 )}
 
                 {!vocab.exampleSentence && <div className="mb-4 min-h-[3.5rem]"></div>}
@@ -268,7 +269,7 @@ export default function AdminVocabulariesPage() {
                 <div className="mt-auto pt-4 border-t border-border/60">
                   {vocab.audioUrl ? (
                     <div className="mb-4">
-                      <audio controls preload="none" className="w-full h-8 custom-audio-player opacity-70 group-hover:opacity-100 transition-opacity">
+                      <audio controls preload="none" className="w-full h-7 sm:h-8 custom-audio-player opacity-70 group-hover:opacity-100 transition-opacity">
                         <source src={vocab.audioUrl} type="audio/mpeg" />
                       </audio>
                     </div>

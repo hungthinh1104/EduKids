@@ -6,8 +6,8 @@ import Image from 'next/image';
 import { Edit2, Trash2, Archive, CheckCircle, Plus } from 'lucide-react';
 import { getCMSTopics, createTopic, updateTopic, deleteTopic, publishTopic, archiveTopic, type CMSTopic } from '@/features/cms/api/cms.api';
 import { toast } from 'sonner';
-
 // Shared Components
+import { Heading, Caption } from '@/shared/components/Typography';
 import { AdminPageHeader } from '@/features/cms/components/AdminPageHeader';
 import { AdminSearchBar } from '@/features/cms/components/AdminSearchBar';
 import { AdminModal } from '@/features/cms/components/AdminModal';
@@ -157,7 +157,7 @@ export default function AdminTopicsPage() {
   });
 
   return (
-    <div className="p-6 md:p-8 max-w-7xl mx-auto">
+    <div className="p-4 sm:p-6 md:p-8 max-w-7xl mx-auto">
       {/* 1. Header */}
       <AdminPageHeader 
         title="Quản lý Topics" 
@@ -194,11 +194,11 @@ export default function AdminTopicsPage() {
           description={searchQuery ? 'Không tìm thấy kết quả phù hợp với từ khóa của bạn.' : 'Chưa có chủ đề nào được tạo. Hãy nhấn "Tạo Topic Mới" để bắt đầu.'}
         />
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           {filteredTopics.map((topic) => (
             <div key={topic.id} className="bg-card rounded-3xl shadow-sm hover:shadow-md transition-all overflow-hidden border border-border/70 group">
               {/* Image Header */}
-              <div className="h-44 bg-gradient-to-br from-primary-light/40 to-accent-light/35 relative overflow-hidden flex items-center justify-center">
+              <div className="h-36 sm:h-44 bg-gradient-to-br from-primary-light/40 to-accent-light/35 relative overflow-hidden flex items-center justify-center">
                 {topic.imageUrl ? (
                   <Image
                     src={topic.imageUrl}
@@ -230,9 +230,9 @@ export default function AdminTopicsPage() {
               </div>
 
               {/* Card Body */}
-              <div className="p-6">
-                <h3 className="text-xl font-bold text-heading mb-2 truncate group-hover:text-primary transition-colors">{topic.name}</h3>
-                <p className="text-caption text-sm mb-5 line-clamp-2 leading-relaxed h-10">{topic.description}</p>
+              <div className="p-4 sm:p-6">
+                <Heading level={3} className="text-xl font-bold text-heading mb-2 line-clamp-1 group-hover:text-primary transition-colors">{topic.name}</Heading>
+                <Caption className="text-caption text-sm mb-4 sm:mb-5 line-clamp-2 leading-relaxed">{topic.description}</Caption>
 
                 <div className="flex items-center gap-4 text-sm text-caption mb-5 pb-5 border-b border-border/60">
                   <div className="flex items-center gap-1.5 bg-background px-3 py-1.5 rounded-lg border border-border/60">

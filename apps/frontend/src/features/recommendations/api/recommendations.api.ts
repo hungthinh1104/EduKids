@@ -286,12 +286,22 @@ export const dismissRecommendation = async (
 };
 
 /**
- * Regenerate recommendations (AI)
+ * Regenerate recommendations (algorithm-based)
  * POST /api/recommendations/child/:childId/regenerate
  * @Roles PARENT
  */
 export const regenerateRecommendations = async (childId: number): Promise<RecommendationsList> => {
   const response = await apiClient.post(`/recommendations/child/${childId}/regenerate`);
+  return mapRecommendationsList(response.data.data as RecommendationsListDto);
+};
+
+/**
+ * Regenerate recommendations using Gemini AI (Vietnamese copy + learning path)
+ * POST /api/recommendations/child/:childId/regenerate-gemini
+ * @Roles PARENT
+ */
+export const regenerateRecommendationsWithGemini = async (childId: number): Promise<RecommendationsList> => {
+  const response = await apiClient.post(`/recommendations/child/${childId}/regenerate-gemini`);
   return mapRecommendationsList(response.data.data as RecommendationsListDto);
 };
 
@@ -315,38 +325,3 @@ export const getRecommendationStats = async (childId: number): Promise<Recommend
   return mapRecommendationStats(response.data.data as RecommendationStatisticsDto);
 };
 
-/**
- * Update path progress
- * PUT /api/recommendations/paths/:pathId/progress
- * @Roles PARENT
- * @body { topicId: number, completed: boolean }
- */
-export const updatePathProgress = async (
-  pathId: number,
-  topicId: number,
-  completed: boolean
-): Promise<AppliedLearningPath> => {
-  void topicId;
-  void completed;
-  throw new Error(
-    `Update path progress is not supported by the current backend contract (path ${pathId}).`,
-  );
-};
-
-/**
- * Pause learning path
- * POST /api/recommendations/paths/:pathId/pause
- * @Roles PARENT
- */
-export const pauseLearningPath = async (pathId: number): Promise<{ message: string }> => {
-  throw new Error(`Pause learning path is not supported by the current backend contract (path ${pathId}).`);
-};
-
-/**
- * Resume learning path
- * POST /api/recommendations/paths/:pathId/resume
- * @Roles PARENT
- */
-export const resumeLearningPath = async (pathId: number): Promise<{ message: string }> => {
-  throw new Error(`Resume learning path is not supported by the current backend contract (path ${pathId}).`);
-};

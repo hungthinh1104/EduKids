@@ -7,7 +7,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import axios from 'axios';
 import * as z from 'zod';
-import { Heading, Caption } from '@/shared/components/Typography';
+import { Heading, Body, Caption } from '@/shared/components/Typography';
 import { Mail, Lock, Loader2, AlertCircle } from 'lucide-react';
 import { authApi } from '@/features/auth/api/auth.api';
 import { useAuthStore } from '@/shared/store/auth.store';
@@ -119,9 +119,9 @@ function LoginPageContent() {
                 <Heading level={2} className="text-4xl text-heading font-extrabold tracking-tight drop-shadow-sm mb-3">
                     Đăng Nhập
                 </Heading>
-                <p className="text-muted text-lg font-medium">
-                    Chào mừng ba mẹ quay lại cùng bé! 🌟
-                </p>
+                <Body className="text-muted text-lg font-medium">
+                    Đăng nhập để khám phá vũ trụ học thuật cùng bé.
+                </Body>
             </motion.div>
 
             {globalError && (
@@ -217,12 +217,12 @@ function LoginPageContent() {
             </motion.div>
 
             <motion.div variants={fadeInUp} className="mt-8 text-center">
-                <p className="text-muted font-medium">
+                <Body className="text-muted font-medium">
                     Chưa có tài khoản?{' '}
-                    <Link href="/register" className="text-primary font-bold hover:underline decoration-2 underline-offset-4 transition-all">
-                        Tạo tài khoản mới
+                    <Link href="/register" className="text-primary font-bold hover:underline">
+                        Đăng ký ngay
                     </Link>
-                </p>
+                </Body>
             </motion.div>
         </motion.div>
     );

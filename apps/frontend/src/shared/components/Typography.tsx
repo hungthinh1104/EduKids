@@ -9,7 +9,15 @@ type TextAlign = 'left' | 'center' | 'right' | 'justify';
 type TextColor = keyof typeof semanticColors;
 type TextSize = 'sm' | 'base' | 'lg';
 
-// ==========================================
+// Static maps to prevent Tailwind from purging dynamic class strings
+const weightClasses: Record<NonNullable<BaseTypographyProps['weight']>, string> = {
+  normal: 'font-normal',
+  medium: 'font-medium',
+  semibold: 'font-semibold',
+  bold: 'font-bold',
+  extrabold: 'font-extrabold',
+};
+
 // They use CSS custom properties so dark mode works automatically.
 // Fallback to semanticColors (static) for places where CSS vars aren't available.
 const cssVarColorMap: Partial<Record<TextColor, string>> = {
@@ -70,20 +78,8 @@ export function Display({
 
   return (
     <Component
-      className={`
-        text-display
-        text-${align}
-        text-[${resolvedColor}]
-        font-${weight}
-        leading-tight
-        tracking-wider
-        ${className}
-      `}
-      style={{
-        ...style,
-        color: resolvedColor as string,
-        textAlign: align,
-      }}
+      className={`text-display ${weightClasses[weight]} leading-tight tracking-wider ${className}`}
+      style={{ ...style, color: resolvedColor as string, textAlign: align }}
     >
       {children}
     </Component>
@@ -106,20 +102,8 @@ export function Title({
 
   return (
     <h1
-      className={`
-        text-4xl
-        md:text-5xl
-        font-heading
-        font-${weight}
-        leading-snug
-        tracking-wider
-        ${className}
-      `}
-      style={{
-        ...style,
-        color: resolvedColor as string,
-        textAlign: align,
-      }}
+      className={`text-4xl md:text-5xl font-heading ${weightClasses[weight]} leading-snug tracking-wider ${className}`}
+      style={{ ...style, color: resolvedColor as string, textAlign: align }}
     >
       {children}
     </h1>
@@ -131,7 +115,7 @@ export function Title({
 // ==========================================
 
 interface HeadingProps extends BaseTypographyProps {
-  level?: 2 | 3 | 4;
+  level?: 1 | 2 | 3 | 4 | 5 | 6;
 }
 
 export function Heading({
@@ -144,9 +128,12 @@ export function Heading({
   level = 2,
 }: HeadingProps) {
   const sizeClasses = {
+    1: 'text-4xl md:text-5xl',
     2: 'text-3xl md:text-4xl',
     3: 'text-2xl md:text-3xl',
     4: 'text-xl md:text-2xl',
+    5: 'text-lg md:text-xl',
+    6: 'text-base md:text-lg',
   };
 
   const HeadingTag = `h${level}` as keyof React.JSX.IntrinsicElements;
@@ -156,14 +143,7 @@ export function Heading({
   return React.createElement(
     HeadingTag,
     {
-      className: `
-        ${sizeClasses[level]}
-        font-heading
-        font-${weight}
-        leading-snug
-        tracking-wide
-        ${className}
-      `,
+      className: `${sizeClasses[level]} font-heading ${weightClasses[weight]} leading-snug tracking-wide ${className}`,
       style: {
         ...style,
         color: resolvedColor as string,
@@ -201,18 +181,8 @@ export function Body({
 
   return (
     <p
-      className={`
-        ${sizeClasses[size]}
-        font-body
-        font-${weight}
-        leading-relaxed
-        ${className}
-      `}
-      style={{
-        ...style,
-        color: resolvedColor as string,
-        textAlign: align,
-      }}
+      className={`${sizeClasses[size]} font-body ${weightClasses[weight]} leading-relaxed ${className}`}
+      style={{ ...style, color: resolvedColor as string, textAlign: align }}
     >
       {children}
     </p>
@@ -240,19 +210,8 @@ export function Caption({
 
   return (
     <span
-      className={`
-        text-sm
-        font-body
-        font-${weight}
-        leading-snug
-        ${muted ? 'opacity-75' : ''}
-        ${className}
-      `}
-      style={{
-        ...style,
-        color: resolvedColor as string,
-        textAlign: align,
-      }}
+      className={`text-sm font-body ${weightClasses[weight]} leading-snug ${muted ? 'opacity-75' : ''} ${className}`}
+      style={{ ...style, color: resolvedColor as string, textAlign: align }}
     >
       {children}
     </span>
@@ -284,20 +243,8 @@ export function Label({
   return (
     <label
       htmlFor={htmlFor}
-      className={`
-        text-sm
-        font-baloo-2
-        font-${weight}
-        leading-snug
-        tracking-wide
-        block
-        ${className}
-      `}
-      style={{
-        ...style,
-        color: resolvedColor as string,
-        textAlign: align,
-      }}
+      className={`text-sm font-baloo-2 ${weightClasses[weight]} leading-snug tracking-wide block ${className}`}
+      style={{ ...style, color: resolvedColor as string, textAlign: align }}
     >
       {children}
       {required && <span className="ml-1 text-error">*</span>}
@@ -320,19 +267,8 @@ export function ButtonText({
 
   return (
     <span
-      className={`
-        text-sm
-        font-heading
-        font-${weight}
-        leading-snug
-        tracking-widest
-        uppercase
-        ${className}
-      `}
-      style={{
-        ...style,
-        color: resolvedColor as string,
-      }}
+      className={`text-sm font-heading ${weightClasses[weight]} leading-snug tracking-widest uppercase ${className}`}
+      style={{ ...style, color: resolvedColor as string }}
     >
       {children}
     </span>

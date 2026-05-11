@@ -123,9 +123,9 @@ function RegisterPageContent() {
                 <Heading level={2} className="text-4xl text-heading font-extrabold tracking-tight drop-shadow-sm mb-3">
                     Đăng Ký
                 </Heading>
-                <p className="text-muted text-lg font-medium">
-                    Tạo tài khoản để bắt đầu hành trình học tập! 🌟
-                </p>
+                <Body className="text-muted text-lg font-medium">
+                    Tạo tài khoản miễn phí và bắt đầu hành trình học tập vui nhộn.
+                </Body>
             </div>
 
             {globalError && (
@@ -138,7 +138,7 @@ function RegisterPageContent() {
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
 
                 {/* Name Fields Row */}
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                     <div className="space-y-2">
                         <label className="text-sm font-bold text-heading ml-1 block">Họ</label>
                         <div className="relative">
@@ -240,8 +240,8 @@ function RegisterPageContent() {
                 </div>
 
                 {/* Terms agreement notice */}
-                <div className="pt-2 pb-2">
-                    <Caption className="text-muted text-center text-[13px]">
+                <div className="pt-2 pb-3">
+                    <Caption className="text-muted text-center text-xs">
                         Bằng việc đăng ký, bạn đồng ý với{' '}
                         <Link href="/terms" className="text-primary hover:underline">Điều khoản Dịch vụ</Link> và{' '}
                         <Link href="/privacy" className="text-primary hover:underline">Chính sách Bảo mật</Link> của EduKids.

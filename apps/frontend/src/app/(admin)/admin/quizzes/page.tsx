@@ -16,8 +16,8 @@ import {
   type CMSQuiz,
   type CMSVocabulary,
 } from '@/features/cms/api/cms.api';
-
 // Shared Components
+import { Heading, Body, Caption } from '@/shared/components/Typography';
 import { AdminPageHeader } from '@/features/cms/components/AdminPageHeader';
 import { AdminSearchBar } from '@/features/cms/components/AdminSearchBar';
 import { AdminModal } from '@/features/cms/components/AdminModal';
@@ -227,7 +227,7 @@ export default function AdminQuizzesPage() {
   };
 
   return (
-    <div className="p-6 md:p-8 max-w-7xl mx-auto">
+    <div className="p-4 sm:p-6 md:p-8 max-w-7xl mx-auto">
       {/* 1. Header */}
       <AdminPageHeader 
         title="Quản lý Bài Kiểm Tra (Quizzes)" 
@@ -240,8 +240,8 @@ export default function AdminQuizzesPage() {
       />
 
       {/* 2. Topic Selector */}
-      <div className="bg-card rounded-2xl shadow-sm border border-border/70 p-6 mb-6">
-        <label className="block text-sm font-bold text-heading mb-3">Chọn Chủ Đề Học</label>
+      <div className="bg-card rounded-2xl shadow-sm border border-border/70 p-4 sm:p-6 mb-6">
+        <label className="block text-xs sm:text-sm font-bold text-heading mb-3">Chọn Chủ Đề Học</label>
         <select
           value={selectedTopicId ?? ''}
           onChange={(e) => setSelectedTopicId(parseInt(e.target.value))}
@@ -267,13 +267,13 @@ export default function AdminQuizzesPage() {
       )}
 
       {selectedTopicId && (
-        <div className="bg-card rounded-2xl shadow-sm border border-border/70 p-6 mb-6">
+        <div className="bg-card rounded-2xl shadow-sm border border-border/70 p-4 sm:p-6 mb-4 sm:mb-6">
           <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
             <div>
-              <h3 className="text-lg font-bold text-heading">Chọn nhanh từ trong chủ đề</h3>
-              <p className="text-sm text-caption">
+              <Heading level={3} className="text-lg font-bold text-heading">Chọn nhanh từ trong chủ đề</Heading>
+              <Caption className="text-sm text-caption">
                 {selectedTopic?.name ?? 'Chủ đề hiện tại'} đang hiển thị tối đa {topicVocabularies.length} từ để pick nhanh khi tạo quiz.
-              </p>
+              </Caption>
             </div>
             <span className="px-3 py-1 rounded-full bg-primary-light text-primary text-xs font-bold">
               {topicVocabularies.length} từ
@@ -281,15 +281,15 @@ export default function AdminQuizzesPage() {
           </div>
 
           {topicVocabularies.length === 0 ? (
-            <p className="text-sm text-caption">
+            <Caption className="text-sm text-caption">
               Chủ đề này chưa có từ vựng nào để gợi ý nhanh cho quiz.
-            </p>
+            </Caption>
           ) : (
             <div className="flex flex-wrap gap-2">
               {topicVocabularies.slice(0, 16).map((vocabulary) => (
                 <span
                   key={vocabulary.id}
-                  className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary-light/40 px-3 py-1.5 text-xs font-semibold text-primary-dark"
+                  className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary-light/40 px-2 sm:px-3 py-1 sm:py-1.5 text-xs font-semibold text-primary-dark"
                   title={vocabulary.translation}
                 >
                   <span>{vocabulary.word}</span>
@@ -326,11 +326,11 @@ export default function AdminQuizzesPage() {
       ) : (
         <div className="space-y-4">
           {filteredQuizzes.map(quiz => (
-            <div key={quiz.id} className="bg-card rounded-3xl shadow-sm hover:shadow-md transition-all p-6 md:p-8 border border-border/70 flex flex-col md:flex-row gap-8">
+            <div key={quiz.id} className="bg-card rounded-3xl shadow-sm hover:shadow-md transition-all p-4 sm:p-6 md:p-8 border border-border/70 flex flex-col md:flex-row gap-6 md:gap-8">
               {/* Question Context */}
               <div className="flex-1">
                 <div className="flex flex-wrap items-center gap-3 mb-3">
-                  <h3 className="text-xl font-bold text-heading">{quiz.title}</h3>
+                  <Heading level={3} className="text-xl font-bold text-heading">{quiz.title}</Heading>
                   <span className={`px-3 py-1 rounded-full text-xs font-bold border ${getDifficultyColor(quiz.difficultyLevel || 1)}`}>
                     {getDifficultyLabel(quiz.difficultyLevel || 1)}
                   </span>
@@ -345,11 +345,11 @@ export default function AdminQuizzesPage() {
                   )}
                 </div>
                 
-                {quiz.description && <p className="text-caption text-sm mb-4">{quiz.description}</p>}
+                {quiz.description && <Caption className="text-caption text-sm mb-4">{quiz.description}</Caption>}
 
                 <div className="bg-primary-light/35 rounded-2xl p-5 mb-6 border border-primary/15">
-                  <p className="text-sm font-bold text-primary-dark mb-2 uppercase tracking-wide">Câu hỏi</p>
-                  <p className="text-heading font-medium text-lg">&quot;{quiz.questionText}&quot;</p>
+                  <Caption className="text-sm font-bold text-primary-dark mb-2 uppercase tracking-wide">Câu hỏi</Caption>
+                  <Body className="text-heading font-medium text-lg">&quot;{quiz.questionText}&quot;</Body>
                 </div>
 
                 <div className="flex gap-2">
@@ -385,8 +385,8 @@ export default function AdminQuizzesPage() {
               </div>
 
               {/* Options Sidebar */}
-              <div className="md:w-[320px] shrink-0 bg-background/70 rounded-2xl p-5 border border-border/70">
-                <h4 className="text-sm font-bold text-body mb-4 tracking-wide">CÁC LỰA CHỌN</h4>
+              <div className="md:w-[280px] lg:w-[320px] shrink-0 bg-background/70 rounded-2xl p-3 sm:p-5 border border-border/70">
+                <Heading level={4} className="text-sm font-bold text-body mb-4 tracking-wide">CÁC LỰA CHỌN</Heading>
                 <div className="space-y-3">
                   {(quiz.options || []).map((option, idx: number) => {
                     const optionText = typeof option === 'string' ? option : option.text;

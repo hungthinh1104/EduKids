@@ -13,19 +13,15 @@ import {
   ProfileActionResultDto,
   DeleteProfileResultDto,
 } from "./child-profile.dto";
+import { SubscriptionService } from "../subscription/subscription.service";
+import { PLAN_LIMITS } from "../subscription/subscription.dto";
 
-/**
- * Service for managing child profiles
- * Business logic for parent's multi-child profile management
- */
 @Injectable()
 export class ChildProfileService {
-  // Maximum number of child profiles per parent
-  private readonly MAX_PROFILES_PER_PARENT = 5;
-
   constructor(
     private readonly repository: ChildProfileRepository,
     private readonly jwtService: JwtService,
+    private readonly subscriptionService: SubscriptionService,
   ) {}
 
   /**
@@ -39,11 +35,12 @@ export class ChildProfileService {
     parentId: number,
     dto: CreateChildProfileDto,
   ): Promise<ProfileActionResultDto> {
-    // Check profile count limit
+    const plan = await this.subscriptionService.getPlanForUser(parentId);
+    const maxProfiles = PLAN_LIMITS[plan].maxChildProfiles;
     const currentCount = await this.repository.countProfilesForParent(parentId);
-    if (currentCount >= this.MAX_PROFILES_PER_PARENT) {
+    if (currentCount >= maxProfiles) {
       throw new BadRequestException(
-        `You can only create up to ${this.MAX_PROFILES_PER_PARENT} child profiles. Please delete an existing profile to add a new one.`,
+        `Gói ${plan === "FREE" ? "Miễn phí" : "Premium"} chỉ cho phép tối đa ${maxProfiles} hồ sơ bé. Nâng cấp lên Premium để thêm hồ sơ.`,
       );
     }
 
@@ -71,13 +68,15 @@ export class ChildProfileService {
   async getAllProfiles(parentId: number): Promise<ProfileListDto> {
     const profiles = await this.repository.getAllProfilesForParent(parentId);
     const activeProfile = await this.repository.getActiveProfile(parentId);
+    const plan = await this.subscriptionService.getPlanForUser(parentId);
+    const maxProfiles = PLAN_LIMITS[plan].maxChildProfiles;
 
     return {
       profiles: profiles.map((profile) =>
         this.mapToProfileDto(profile, profile.id === activeProfile?.id),
       ),
       totalCount: profiles.length,
-      maxProfiles: this.MAX_PROFILES_PER_PARENT,
+      maxProfiles,
       activeProfileId: activeProfile?.id || null,
     };
   }

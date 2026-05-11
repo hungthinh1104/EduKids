@@ -103,9 +103,9 @@ function ResetPasswordContent() {
                 <Heading level={2} className="text-4xl text-heading font-extrabold tracking-tight drop-shadow-sm mb-3">
                     Đặt Lại Mật Khẩu
                 </Heading>
-                <p className="text-muted text-lg font-medium">
-                    Nhập mật khẩu mới cho tài khoản của bạn
-                </p>
+                <Body className="text-muted text-lg font-medium">
+                    Nhập mật khẩu mới của bạn để hoàn tất.
+                </Body>
             </motion.div>
 
             {error && (
@@ -137,7 +137,7 @@ function ResetPasswordContent() {
                             disabled={isLoading}
                         />
                         <button type="button" onClick={() => setShowNew((v) => !v)}
-                            className="absolute inset-y-0 right-0 pr-3 flex items-center text-caption hover:text-heading">
+                            className="absolute inset-y-0 right-0 pr-3 flex items-center justify-center text-caption hover:text-heading">
                             {showNew ? <EyeOff size={18} /> : <Eye size={18} />}
                         </button>
                     </div>
@@ -161,7 +161,7 @@ function ResetPasswordContent() {
                             disabled={isLoading}
                         />
                         <button type="button" onClick={() => setShowConfirm((v) => !v)}
-                            className="absolute inset-y-0 right-0 pr-3 flex items-center text-caption hover:text-heading">
+                            className="absolute inset-y-0 right-0 pr-3 flex items-center justify-center text-caption hover:text-heading">
                             {showConfirm ? <EyeOff size={18} /> : <Eye size={18} />}
                         </button>
                     </div>

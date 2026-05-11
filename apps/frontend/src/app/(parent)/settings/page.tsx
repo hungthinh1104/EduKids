@@ -12,6 +12,7 @@ import { Heading, Body, Caption } from '@/shared/components/Typography';
 import { KidButton } from '@/components/edukids/KidButton';
 import { authApi } from '@/features/auth/api/auth.api';
 import { getReportPreferences, updateReportPreferences } from '@/features/reports/api/reports.api';
+import { getSubscription, upgradeSubscription, type Subscription } from '@/features/subscription/api/subscription.api';
 import { useAuthStore } from '@/shared/store/auth.store';
 import { useChildProfiles } from '@/features/dashboard/hooks/useChildProfiles';
 import { deleteProfile } from '@/features/profile/api/profile.api';
@@ -53,9 +54,9 @@ function Toggle({ value, onChange }: { value: boolean; onChange: (v: boolean) =>
 
 // -----------------------------------------------------------------------
 
-const PLAN_OPTIONS = [
-    { id: 'free', label: 'Miễn phí', price: '0đ/tháng', features: ['1 hồ sơ bé', '5 chủ đề cơ bản', 'Không có AI phát âm'], current: false },
-    { id: 'premium', label: '⭐ Premium', price: '99.000đ/tháng', features: ['Tối đa 3 hồ sơ bé', 'Tất cả chủ đề', 'AI phát âm + báo cáo nâng cao'], current: true },
+const PLAN_DEFINITIONS = [
+    { id: 'FREE' as const, label: 'Miễn phí', price: '0đ/tháng', features: ['1 hồ sơ bé', '5 chủ đề cơ bản', 'Không có AI phát âm'] },
+    { id: 'PREMIUM' as const, label: '⭐ Premium', price: '99.000đ/tháng', features: ['Tối đa 3 hồ sơ bé', 'Tất cả chủ đề', 'AI phát âm', 'Báo cáo nâng cao'] },
 ];
 
 export default function SettingsPage() {
@@ -66,6 +67,10 @@ export default function SettingsPage() {
     const patchUser = useAuthStore((state) => state.patchUser);
     const profilesData = useChildProfiles();
     
+    const [subscription, setSubscription] = useState<Subscription | null>(null);
+    const [subscriptionLoading, setSubscriptionLoading] = useState(true);
+    const [upgradingPlan, setUpgradingPlan] = useState(false);
+
     const [notifications, setNotificationsRaw] = useState(true);
     const [dailyReminder, setDailyReminderRaw] = useState(true);
     const [studyLimit, setStudyLimitRaw] = useState(30); // minutes per day
@@ -102,6 +107,21 @@ export default function SettingsPage() {
             if (pwdTimeoutRef.current) clearTimeout(pwdTimeoutRef.current);
             if (profileTimeoutRef.current) clearTimeout(profileTimeoutRef.current);
         };
+    }, []);
+
+    // Load subscription from backend
+    useEffect(() => {
+        void (async () => {
+            try {
+                const sub = await getSubscription();
+                setSubscription(sub);
+            } catch {
+                // default to FREE display
+                setSubscription({ plan: 'FREE', status: 'ACTIVE', expiresAt: null, maxChildProfiles: 1, features: [] });
+            } finally {
+                setSubscriptionLoading(false);
+            }
+        })();
     }, []);
 
     // Load settings: localStorage first, then backend preferences
@@ -281,7 +301,9 @@ export default function SettingsPage() {
                     </Heading>
                     <Caption color="textInverse" className="text-xs md:text-sm truncate text-white/80">{user?.email || 'parent@example.com'}</Caption>
                     <div className="mt-2 inline-flex items-center gap-1.5 bg-card/20 px-2.5 md:px-3 py-1 rounded-full text-[10px] md:text-xs font-heading font-black backdrop-blur-sm">
-                        ⭐ Premium đến 31/12/2026
+                        {subscriptionLoading ? '...' : subscription?.plan === 'PREMIUM'
+                            ? `⭐ Premium${subscription.expiresAt ? ` đến ${new Date(subscription.expiresAt).toLocaleDateString('vi-VN')}` : ''}`
+                            : 'Miễn phí'}
                     </div>
                 </div>
                 <ChevronRight size={18} className="md:w-5 md:h-5 text-white/70 flex-shrink-0 hidden sm:block" />
@@ -419,13 +441,15 @@ export default function SettingsPage() {
                     {/* ── Plan ── */}
                     {activeTab === 'plan' && (
                         <div className="space-y-3 md:space-y-4">
-                            {PLAN_OPTIONS.map((plan) => (
+                            {PLAN_DEFINITIONS.map((plan) => {
+                                const isCurrent = !subscriptionLoading && (subscription?.plan ?? 'FREE') === plan.id;
+                                return (
                                 <motion.div
                                     key={plan.id}
                                     whileHover={{ scale: 1.02 }}
-                                    className={`relative bg-card border-2 rounded-lg md:rounded-2xl p-3 md:p-5 ${plan.current ? 'border-primary shadow-lg shadow-primary/15' : 'border-border'}`}
+                                    className={`relative bg-card border-2 rounded-lg md:rounded-2xl p-3 md:p-5 ${isCurrent ? 'border-primary shadow-lg shadow-primary/15' : 'border-border'}`}
                                 >
-                                    {plan.current && (
+                                    {isCurrent && (
                                         <div className="absolute top-2 md:top-4 right-2 md:right-4 bg-primary text-white text-[9px] md:text-xs font-heading font-black px-2 md:px-2.5 py-0.5 rounded-full">Hiện tại</div>
                                     )}
                                     <Heading level={4} className="text-heading text-base md:text-lg mb-1">{plan.label}</Heading>
@@ -438,18 +462,30 @@ export default function SettingsPage() {
                                             </li>
                                         ))}
                                     </ul>
-                                        {!plan.current && (
-                                            <KidButton
-                                                type="button"
-                                                variant="default"
-                                                className="w-full mt-3 md:mt-4 text-xs md:text-sm py-1.5 md:py-2"
-                                                onClick={() => setActiveTab('security')}
-                                            >
-                                                Nâng cấp
-                                            </KidButton>
-                                        )}
+                                    {!isCurrent && plan.id === 'PREMIUM' && (
+                                        <KidButton
+                                            type="button"
+                                            variant="default"
+                                            disabled={upgradingPlan}
+                                            className="w-full mt-3 md:mt-4 text-xs md:text-sm py-1.5 md:py-2"
+                                            onClick={async () => {
+                                                setUpgradingPlan(true);
+                                                try {
+                                                    const updated = await upgradeSubscription('PREMIUM');
+                                                    setSubscription(updated);
+                                                } catch {
+                                                    // silently fail — payment not yet wired
+                                                } finally {
+                                                    setUpgradingPlan(false);
+                                                }
+                                            }}
+                                        >
+                                            {upgradingPlan ? 'Đang xử lý...' : 'Nâng cấp'}
+                                        </KidButton>
+                                    )}
                                 </motion.div>
-                            ))}
+                                );
+                            })}
 
                             <div className="bg-card border-2 border-border rounded-lg md:rounded-2xl px-3 md:px-5">
                                 <SettingRow icon={<CreditCard size={14} className="md:w-4 md:h-4" />} label="Lịch sử thanh toán" desc="Xem hóa đơn">

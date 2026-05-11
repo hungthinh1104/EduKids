@@ -22,6 +22,7 @@ import { CmsModule } from "./modules/cms/cms.module";
 import { AdminAnalyticsModule } from "./modules/admin-analytics/admin-analytics.module";
 import { UsersModule } from "./modules/users/users.module";
 import { AvatarCustomizationModule } from "./modules/avatar-customization/avatar-customization.module";
+import { SubscriptionModule } from "./modules/subscription/subscription.module";
 import { RootController } from "./root.controller";
 import { ConfigModule } from "@nestjs/config";
 @Module({
@@ -59,6 +60,7 @@ import { ConfigModule } from "@nestjs/config";
     AdminAnalyticsModule,
     UsersModule,
     AvatarCustomizationModule,
+    SubscriptionModule,
   ],
   providers: [
     {

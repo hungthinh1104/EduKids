@@ -3,12 +3,13 @@
 import { motion } from 'framer-motion';
 import Image from 'next/image';
 import { HeartPulse, CheckCircle2, Star } from 'lucide-react';
+import { Heading, Body } from '@/shared/components/Typography';
 
 export function TestimonialsSection() {
     return (
         <section id="parents" className="py-32 px-4 bg-background relative overflow-hidden">
             <div className="max-w-7xl mx-auto">
-                <div className="grid lg:grid-cols-2 gap-20 items-center">
+                <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
 
                     {/* Left Content */}
                     <motion.div
@@ -20,14 +21,14 @@ export function TestimonialsSection() {
                         <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-error-light dark:bg-error/30 text-error font-bold text-sm tracking-widest mb-6">
                             <HeartPulse size={16} /> GÓC PHỤ HUYNH
                         </div>
-                        <h2 className="font-heading font-black text-4xl sm:text-5xl lg:text-6xl text-heading mb-8 leading-[1.15]">
+                        <Heading level={2} className="font-heading font-black text-4xl sm:text-5xl lg:text-6xl text-heading mb-8 leading-[1.15]">
                             Đồng hành cùng con, <br /> <span className="text-transparent bg-clip-text bg-gradient-to-r from-error to-warning">An tâm tuyệt đối.</span>
-                        </h2>
-                        <p className="text-xl mb-10 leading-relaxed text-body">
+                        </Heading>
+                        <Body className="text-xl mb-10 leading-relaxed text-body">
                             Hàng ngàn phụ huynh Việt Nam đã tin tưởng chọn <b>EduKids</b> làm người bạn đồng hành giúp bé phát triển tư duy ngoại ngữ một cách tự nhiên và an toàn nhất.
-                        </p>
+                        </Body>
 
-                        <div className="space-y-6 mb-12">
+                        <div className="space-y-5 sm:space-y-6 mb-8 sm:mb-12">
                             {[
                                 { title: 'Báo cáo học tập tự động', desc: 'Nhận phân tích chi tiết lộ trình học qua Email/Zalo mỗi tuần.' },
                                 { title: 'Môi trường 100% An toàn', desc: 'Không chứa quảng cáo và nội dung độc hại. Giao diện thân thiện với trẻ nhỏ.' },
@@ -38,8 +39,8 @@ export function TestimonialsSection() {
                                         <CheckCircle2 className="text-success" size={24} />
                                     </div>
                                     <div>
-                                        <h4 className="font-heading font-bold text-xl text-heading mb-1">{item.title}</h4>
-                                        <p className="text-body">{item.desc}</p>
+                                        <Heading level={4} className="font-heading font-bold text-xl text-heading mb-1">{item.title}</Heading>
+                                        <Body className="text-body">{item.desc}</Body>
                                     </div>
                                 </div>
                             ))}
@@ -64,13 +65,13 @@ export function TestimonialsSection() {
                                 <div className="flex items-center gap-1.5 text-warning mb-6">
                                     {[1, 2, 3, 4, 5].map(i => <Star key={i} className="fill-current" size={22} />)}
                                 </div>
-                                <p className="italic text-body mb-8 text-xl leading-relaxed">
+                                <Body className="italic text-body mb-6 sm:mb-8 text-base sm:text-xl leading-relaxed">
                                     &quot;Bé Bi nhà mình từ hồi học EduKids tự giác hẳn. Tối nào ăn cơm xong cũng đòi vọc iPad đọc từ mới lấy phần thưởng. Phát âm của con dạo này tây lắm luôn!&quot;
-                                </p>
+                                </Body>
                                 <div className="flex items-center gap-5 border-t border-border pt-6">
                                     <Image src="https://api.dicebear.com/7.x/notionists/svg?seed=Trinh" alt="Avatar" width={60} height={60} className="rounded-full bg-background border-2 border-background" />
                                     <div>
-                                        <h5 className="font-heading font-bold text-heading text-lg">Trần Thu Trà</h5>
+                                        <Heading level={5} className="font-heading font-bold text-heading text-lg">Trần Thu Trà</Heading>
                                         <span className="text-muted text-sm">Mẹ bé Bi (7 tuổi)</span>
                                     </div>
                                 </div>
@@ -87,13 +88,13 @@ export function TestimonialsSection() {
                                 <div className="flex items-center gap-1.5 text-warning mb-6">
                                     {[1, 2, 3, 4, 5].map(i => <Star key={i} className="fill-current" size={22} />)}
                                 </div>
-                                <p className="italic text-body mb-8 text-xl leading-relaxed">
+                                <Body className="italic text-body mb-6 sm:mb-8 text-base sm:text-xl leading-relaxed">
                                     &quot;App màu sắc siêu đẹp, thiết kế nhân vật giống y chơi game nên hai đứa nhà mình khoái lắm. Hơn cả học tiếng Anh, nó giúp bé rèn luyện tư duy rất tốt.&quot;
-                                </p>
+                                </Body>
                                 <div className="flex items-center gap-5 border-t border-border pt-6">
                                     <Image src="https://api.dicebear.com/7.x/notionists/svg?seed=HoangPhat" alt="Avatar" width={60} height={60} className="rounded-full bg-background border-2 border-background" />
                                     <div>
-                                        <h5 className="font-heading font-bold text-heading text-lg">Lê Hoàng Phát</h5>
+                                        <Heading level={5} className="font-heading font-bold text-heading text-lg">Lê Hoàng Phát</Heading>
                                         <span className="text-muted text-sm">Ba cặp song sinh Nhím & Thỏ</span>
                                     </div>
                                 </div>

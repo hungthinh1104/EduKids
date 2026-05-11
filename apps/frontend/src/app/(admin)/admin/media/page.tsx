@@ -156,7 +156,7 @@ export default function AdminMediaPage() {
   };
 
   return (
-    <div className="p-6 md:p-8 max-w-7xl mx-auto space-y-6">
+    <div className="p-4 sm:p-6 md:p-8 max-w-7xl mx-auto space-y-6">
       {/* Header */}
       <div className="rounded-3xl border border-primary/15 bg-gradient-to-r from-primary-light/55 via-card to-accent-light/40 p-6 shadow-sm">
         <div>
@@ -166,20 +166,20 @@ export default function AdminMediaPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <div className="bg-card rounded-2xl border border-border/70 shadow-sm p-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4 md:gap-6 mb-6">
+        <div className="bg-card rounded-2xl border border-border/70 shadow-sm p-3 sm:p-4">
           <Caption className="text-caption text-sm mb-1">Tổng File</Caption>
-          <p className="text-2xl font-heading font-black text-heading">{mediaFiles.length}</p>
+          <Body className="text-2xl font-heading font-black text-heading">{mediaFiles.length}</Body>
         </div>
-        <div className="bg-card rounded-2xl border border-border/70 shadow-sm p-4">
+        <div className="bg-card rounded-2xl border border-border/70 shadow-sm p-3 sm:p-4">
           <Caption className="text-caption text-sm mb-1">Dung Lượng Sử Dụng</Caption>
-          <p className="text-2xl font-heading font-black text-heading">{formatFileSize(getTotalSize())}</p>
+          <Body className="text-2xl font-heading font-black text-heading">{formatFileSize(getTotalSize())}</Body>
         </div>
-        <div className="bg-card rounded-2xl border border-border/70 shadow-sm p-4">
+        <div className="bg-card rounded-2xl border border-border/70 shadow-sm p-3 sm:p-4">
           <Caption className="text-caption text-sm mb-1">Loại File</Caption>
-          <p className="text-2xl font-heading font-black text-heading">
+          <Body className="text-2xl font-heading font-black text-heading">
             {Array.from(new Set(mediaFiles.map(f => getFileType(f.mimeType)))).length}
-          </p>
+          </Body>
         </div>
       </div>
 
@@ -191,7 +191,7 @@ export default function AdminMediaPage() {
           setIsDragging(true);
         }}
         onDragLeave={() => setIsDragging(false)}
-        className={`bg-gradient-to-br from-primary-light/40 to-accent-light/35 rounded-2xl shadow-sm border-2 border-dashed p-8 mb-6 cursor-pointer transition group ${
+        className={`bg-gradient-to-br from-primary-light/40 to-accent-light/35 rounded-2xl shadow-sm border-2 border-dashed p-5 sm:p-8 mb-6 cursor-pointer transition group ${
           isDragging ? 'border-primary bg-primary-light/60' : 'border-primary/35 hover:border-primary/60'
         }`}
       >
@@ -206,11 +206,11 @@ export default function AdminMediaPage() {
         />
         <label htmlFor="file-upload" className="cursor-pointer block">
           <div className="text-center">
-            <Upload className="w-12 h-12 text-primary mx-auto mb-3 group-hover:scale-110 transition" />
-            <p className="font-bold text-heading mb-1">
+            <Upload className="w-10 h-10 sm:w-12 sm:h-12 text-primary mx-auto mb-3 group-hover:scale-110 transition" />
+            <Body className="font-bold text-heading mb-1">
               {isUploading ? 'Đang tải...' : isDragging ? 'Thả file vào đây để tải lên' : 'Kéo và thả file vào đây hoặc nhấp để chọn'}
-            </p>
-            <p className="text-sm text-body">Hỗ trợ: Hình ảnh, Âm thanh, Video</p>
+            </Body>
+            <Caption className="text-sm text-body">Hỗ trợ: Hình ảnh, Âm thanh, Video</Caption>
           </div>
         </label>
       </div>
@@ -222,7 +222,7 @@ export default function AdminMediaPage() {
           placeholder="Tìm kiếm file..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="flex-1 min-w-64 px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
+          className="flex-1 min-w-0 sm:min-w-64 px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
         />
         <div className="flex gap-2">
                 {(['all', 'image', 'audio', 'video'] as const).map(type => (
@@ -246,12 +246,12 @@ export default function AdminMediaPage() {
       {isLoading ? (
         <div className="text-center py-12 bg-card rounded-2xl border border-border/70 shadow-sm">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-body">Đang tải...</p>
+          <Body className="mt-4 text-body">Đang tải...</Body>
         </div>
       ) : filteredFiles.length === 0 ? (
         <div className="text-center py-12 bg-card rounded-2xl border border-border/70 shadow-sm">
           <HardDrive className="w-12 h-12 text-caption mx-auto mb-3" />
-          <p className="text-caption">Không có file nào</p>
+          <Caption className="text-caption">Không có file nào</Caption>
         </div>
       ) : (
         <div className="space-y-3">
@@ -272,7 +272,7 @@ export default function AdminMediaPage() {
                   {/* File Info */}
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
-                      <h3 className="font-bold text-heading">{file.originalFilename}</h3>
+                      <Heading level={3} className="font-bold text-heading">{file.originalFilename}</Heading>
                       <span className="text-xs px-2 py-1 bg-background text-body rounded border border-border/60">
                         {getFileType(file.mimeType).toUpperCase()}
                       </span>
@@ -290,7 +290,7 @@ export default function AdminMediaPage() {
 
                     {/* File Preview */}
                     {fileUrl && getFileType(file.mimeType) === 'image' && (
-                      <div className="relative mt-2 h-32 w-full max-w-xs overflow-hidden rounded-lg">
+                      <div className="relative mt-2 h-24 sm:h-32 w-full max-w-xs overflow-hidden rounded-lg">
                         <Image
                           src={fileUrl}
                           alt={file.originalFilename}

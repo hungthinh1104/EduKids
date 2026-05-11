@@ -5,7 +5,7 @@ import { motion, useScroll, useTransform } from 'framer-motion';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Sparkles, Play, Star, Brain, Mic, CheckCircle2 } from 'lucide-react';
-import { Body } from '@/shared/components/Typography';
+import { Heading, Body, Caption } from '@/shared/components/Typography';
 import { KidButton } from '@/components/edukids/KidButton';
 import MagneticButton from '@/shared/components/landing/MagneticButton';
 import { useAuthStore } from '@/shared/store/auth.store';
@@ -53,7 +53,7 @@ export function HeroSection() {
                 <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center [mask-image:linear-gradient(180deg,white,rgba(255,255,255,0))] opacity-20 dark:opacity-10"></div>
             </div>
 
-            <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-16 lg:gap-8 relative z-10 w-full">
+            <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-8 md:gap-12 lg:gap-8 relative z-10 w-full">
                 {/* Left Column (Text Content) */}
                 <motion.div
                     variants={staggerContainer}
@@ -66,11 +66,11 @@ export function HeroSection() {
                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75"></span>
                             <span className="relative inline-flex rounded-full h-3 w-3 bg-success"></span>
                         </span>
-                        <span className="font-heading font-bold text-body text-sm tracking-wide">English for Future Leaders</span>
+                        <Caption className="font-heading font-bold text-body text-sm tracking-wide">English for Future Leaders</Caption>
                     </motion.div>
 
                     <motion.div variants={fadeInUp}>
-                        <h1 className="font-heading font-black text-5xl sm:text-6xl md:text-7xl lg:text-[5rem] leading-[1.05] tracking-tight text-heading mb-6">
+                        <Heading level={1} className="font-heading font-black text-5xl sm:text-6xl md:text-7xl lg:text-[5rem] leading-[1.05] tracking-tight text-heading mb-6">
                             Giỏi Tiếng Anh <br />
                             <span className="relative inline-block mt-2">
                                 Toả Sáng <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-secondary to-accent animate-gradient bg-[length:200%_auto]">Tương Lai!</span> 🚀
@@ -79,7 +79,7 @@ export function HeroSection() {
                                     <path d="M0 10 Q 50 20 100 10" fill="transparent" stroke="currentColor" strokeWidth="6" strokeLinecap="round" />
                                 </svg>
                             </span>
-                        </h1>
+                        </Heading>
                     </motion.div>
 
                     <motion.div variants={fadeInUp}>
@@ -105,9 +105,9 @@ export function HeroSection() {
                             </MagneticButton>
                         </Link>
                         <div className="flex items-center gap-4 text-muted font-medium mt-4 sm:mt-0">
-                            <div className="flex -space-x-3">
+                            <div className="flex -space-x-2 sm:-space-x-3">
                                 {[1, 2, 3, 4].map((i) => (
-                                    <Image priority width={40} height={40} key={i} src={`https://api.dicebear.com/7.x/notionists/svg?seed=${i}&scale=120`} alt={`Avatar ${i}`} className="w-10 h-10 rounded-full border-2 border-background bg-success-light" />
+                                    <Image priority width={40} height={40} key={i} src={`https://api.dicebear.com/7.x/notionists/svg?seed=${i}&scale=120`} alt={`Avatar ${i}`} className="w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 border-background bg-success-light" />
                                 ))}
                             </div>
                             <div>Hơn <b>10,000+</b> bé<br />đang học tập</div>
@@ -147,8 +147,8 @@ export function HeroSection() {
                             </div>
 
                             {/* UI Overlay Mockups within the screen */}
-                            <div className="absolute bottom-6 left-6 right-6 flex items-center justify-between">
-                                <div className="bg-card/10 backdrop-blur-md px-4 py-2 rounded-2xl border border-border/20 text-white font-medium flex items-center gap-2">
+                            <div className="absolute bottom-3 sm:bottom-6 left-3 sm:left-6 right-3 sm:right-6 flex items-center justify-between">
+                                <div className="bg-card/10 backdrop-blur-md px-2 sm:px-4 py-1.5 sm:py-2 rounded-2xl border border-border/20 text-white font-medium flex items-center gap-2">
                                     <Star className="text-warning fill-warning" size={18} /> Đang xem bài 02
                                 </div>
                                 <div className="flex gap-2">
@@ -173,7 +173,7 @@ export function HeroSection() {
                             <CheckCircle2 size={32} className="text-white" />
                         </div>
                         <div>
-                            <p className="font-heading font-bold text-heading text-lg leading-tight">Tuyệt vời!</p>
+                            <Body className="font-heading font-bold text-heading text-lg leading-tight">Tuyệt vời!</Body>
                             <div className="flex items-center gap-1 text-sm font-bold text-success bg-success/10 px-2 py-1 rounded-lg w-fit mt-1">
                                 <Star size={14} className="fill-current" /> +50 điểm
                             </div>
@@ -198,8 +198,8 @@ export function HeroSection() {
                             <span className="absolute bottom-0 right-0 w-4 h-4 bg-success border-2 border-background rounded-full"></span>
                         </div>
                         <div className="text-center mt-1">
-                            <p className="font-heading font-bold text-heading">Robot AI</p>
-                            <p className="text-xs font-semibold text-primary uppercase tracking-wider">Đang Lắng Nghe</p>
+                            <Body className="font-heading font-bold text-heading">Robot AI</Body>
+                            <Caption className="text-xs font-semibold text-primary uppercase tracking-wider">Đang Lắng Nghe</Caption>
                         </div>
                     </motion.div>
                 </motion.div>
