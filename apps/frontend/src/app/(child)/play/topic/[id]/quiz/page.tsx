@@ -185,6 +185,8 @@ export default function QuizPage() {
             }
         }
 
+        const newHp = isCorrect ? hp : Math.max(0, hp - 1);
+
         if (isCorrect) {
             playSound('success');
             setAnswerState('correct');
@@ -195,7 +197,7 @@ export default function QuizPage() {
         if (!isCorrect) {
             playSound('error');
             setAnswerState('wrong');
-            setHp((h) => Math.max(0, h - 1));
+            setHp(newHp);
             setStreak(0);
         }
 
@@ -206,7 +208,7 @@ export default function QuizPage() {
             setSelected(null);
             setRevealedCorrectOptionId(null);
             setTimeLeft(TIME_LIMIT);
-            if (index + 1 >= questions.length || hp - (isCorrect ? 0 : 1) <= 0) {
+            if (index + 1 >= questions.length || newHp <= 0) {
                 markTopicModeCompleted(parsedTopicId, 'quiz');
                 setDone(true);
             } else {
@@ -226,7 +228,7 @@ export default function QuizPage() {
         return () => clearTimeout(t);
     }, [timeLeft, selected, done, handleAnswer]);
 
-    const pct = done && index > 0 ? Math.round((correctCount / (index + 1)) * 100) : 0;
+    const pct = done ? Math.round((correctCount / Math.max(index + 1, 1)) * 100) : 0;
     const starsEarned = pct >= 90 ? 3 : pct >= 60 ? 2 : 1;
     const titleComplete = pct >= 90 ? 'Hoàn hảo!' : pct >= 60 ? 'Không tệ!' : 'Cố lên nào!';
     const emojiComplete = pct >= 90 ? '🏆' : pct >= 60 ? '🎉' : '😅';

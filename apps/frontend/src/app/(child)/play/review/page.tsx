@@ -97,6 +97,7 @@ export default function ReviewPage() {
     const [suggestionMessage, setSuggestionMessage] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
     const [loadError, setLoadError] = useState<string | null>(null);
+    const [isRating, setIsRating] = useState(false);
     const transitionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     useEffect(() => {
@@ -133,7 +134,8 @@ export default function ReviewPage() {
     const card = reviewDeck[index];
 
     async function handleRate(difficulty: Difficulty) {
-        if (!child?.id) return;
+        if (!child?.id || isRating) return;
+        setIsRating(true);
         const correct = difficulty !== 'HARD';
         const newLog: ReviewLog = { vocabId: card.vocabularyId, difficulty, correct };
 
@@ -153,6 +155,7 @@ export default function ReviewPage() {
         setLogs(updated);
 
         if (index + 1 >= reviewDeck.length) {
+            setIsRating(false);
             setDone(true);
         } else {
             setLeaving(true);
@@ -160,6 +163,7 @@ export default function ReviewPage() {
                 setIndex((i) => i + 1);
                 setFlipped(false);
                 setLeaving(false);
+                setIsRating(false);
             }, 260);
         }
     }
@@ -217,32 +221,47 @@ export default function ReviewPage() {
                     />
                 ) : reviewDeck.length === 0 ? (
                     <ModeStatePanel
-                        title="Chưa có từ đến lượt ôn"
-                        description={suggestionMessage || 'Bé chưa có thẻ ôn tập đến hạn. Mình gợi ý vài từ mới để tiếp tục học nhé!'}
-                        emoji="🎉"
+                        title={suggestedItems.length > 0 ? 'Ôn thử từ mới nhé! 🌱' : 'Chưa có từ đến lượt ôn'}
+                        description={
+                            suggestedItems.length > 0
+                                ? 'Chưa có thẻ đến hạn, nhưng bé có thể ôn thử mấy từ dưới đây!'
+                                : suggestionMessage || 'Bé chưa có thẻ ôn tập. Hãy học thêm chủ đề mới để mở thẻ ôn nhé!'
+                        }
+                        emoji={suggestedItems.length > 0 ? '📖' : '🎉'}
                         action={
                             <div className="flex flex-col gap-3 w-full">
                                 {suggestedItems.length > 0 && (
-                                    <div className="mb-2 rounded-2xl border border-border bg-card p-4 text-left">
-                                        <Heading level={4} className="text-heading text-base mb-2">Gợi ý học tiếp</Heading>
-                                        <div className="space-y-2">
-                                            {suggestedItems.slice(0, 3).map((item, index) => (
-                                                <div
-                                                    key={item.reviewId ?? item.vocabularyId ?? `${item.word}-${index}`}
-                                                    className="rounded-xl bg-background px-3 py-2 border border-border"
-                                                >
-                                                    <div className="font-heading font-black text-sm text-heading">{item.word}</div>
-                                                    <Caption className="text-caption text-xs">{item.translation}</Caption>
-                                                </div>
-                                            ))}
+                                    <>
+                                        <div className="mb-1 rounded-2xl border border-border bg-card p-4 text-left">
+                                            <Heading level={4} className="text-heading text-base mb-2">Từ gợi ý</Heading>
+                                            <div className="space-y-2">
+                                                {suggestedItems.slice(0, 4).map((item, i) => (
+                                                    <div
+                                                        key={item.reviewId ?? item.vocabularyId ?? `${item.word}-${i}`}
+                                                        className="rounded-xl bg-background px-3 py-2 border border-border"
+                                                    >
+                                                        <div className="font-heading font-black text-sm text-heading">{item.word}</div>
+                                                        <Caption className="text-caption text-xs">{item.translation}</Caption>
+                                                    </div>
+                                                ))}
+                                            </div>
                                         </div>
-                                    </div>
+                                        <KidButton
+                                            variant="default"
+                                            className="w-full"
+                                            onClick={() => {
+                                                setReviewDeck(suggestedItems);
+                                                setSuggestedItems([]);
+                                            }}
+                                        >
+                                            🚀 Ôn luôn {suggestedItems.length} từ này!
+                                        </KidButton>
+                                    </>
                                 )}
                                 <Link href="/play">
-                                    <KidButton variant="default" className="w-full">Quay về màn hình chính</KidButton>
-                                </Link>
-                                <Link href="/play">
-                                    <KidButton variant="outline" className="w-full">Chọn chủ đề mới để học</KidButton>
+                                    <KidButton variant={suggestedItems.length > 0 ? 'outline' : 'default'} className="w-full">
+                                        Quay về màn hình chính
+                                    </KidButton>
                                 </Link>
                             </div>
                         }
@@ -261,6 +280,7 @@ export default function ReviewPage() {
                                 starsEarned={stars}
                                 maxStars={3}
                                 topicId=""
+                                backHref="/play"
                                 onRestart={handleRestart}
                                 restartLabel="Ôn lại"
                                 backLabel="Về bản đồ"
@@ -314,7 +334,8 @@ export default function ReviewPage() {
                                     {DIFF_BUTTONS.map((b) => (
                                         <motion.button key={b.difficulty} whileHover={{ scale: 1.05, y: -3 }} whileTap={{ scale: 0.94 }}
                                             onClick={() => handleRate(b.difficulty)}
-                                            className={`flex flex-col items-center gap-0.5 py-3 px-2 rounded-2xl font-heading font-black text-xs border-b-4 active:border-b-0 active:translate-y-1 transition-all ${b.cls}`}
+                                            disabled={isRating}
+                                            className={`flex flex-col items-center gap-0.5 py-3 px-2 rounded-2xl font-heading font-black text-xs border-b-4 active:border-b-0 active:translate-y-1 transition-all ${b.cls} disabled:opacity-60 disabled:cursor-not-allowed`}
                                         >
                                             {b.label}
                                             <span className="text-[10px] font-medium opacity-80">{b.sublabel}</span>

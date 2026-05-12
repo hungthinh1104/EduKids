@@ -54,7 +54,7 @@ export class UsersService {
       return {
       id: user.id,
       email: user.email,
-      avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(user.email)}`,
+      avatar: `https://api.dicebear.com/9.x/avataaars/svg?seed=${encodeURIComponent(user.email)}`,
       plan,
       status: user.isActive ? "active" : "banned",
       joinedAt: user.createdAt.toISOString(),

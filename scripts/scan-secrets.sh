@@ -20,7 +20,8 @@ fi
 
 echo "[secret-scan] scanning workspace for potential hardcoded secrets..."
 
-RESULTS="$(rg -n --hidden \
+# Scan 1: quoted secrets in all source files
+SOURCE_RESULTS="$(rg -n --hidden \
   --glob '!.git' \
   --glob '!**/node_modules/**' \
   --glob '!**/.next/**' \
@@ -47,6 +48,17 @@ RESULTS="$(rg -n --hidden \
   -e 'ghp_[0-9A-Za-z]{36}' \
   -e '-----BEGIN (RSA|EC|OPENSSH|DSA|PRIVATE) KEY-----' \
   . | rg -v '\$\{\{\s*secrets\.[A-Za-z0-9_]+\s*\}\}' || true)"
+
+# Scan 2: unquoted secrets specifically in .env files (catches KEY=value without quotes)
+ENV_RESULTS="$(rg -n \
+  --glob '**/.env' \
+  --glob '**/.env.*' \
+  --glob '!**/.env.example' \
+  --glob '!**/.env.sample' \
+  -e '(?i)^(API_KEY|SECRET|PASSWORD|TOKEN|PRIVATE_KEY|CLIENT_SECRET|ACCESS_TOKEN|REFRESH_TOKEN|JWT_SECRET|DATABASE_URL|REDIS_PASSWORD|SMTP_PASSWORD|CLOUDINARY_API_SECRET|GEMINI_API_KEY|AZURE_SPEECH_KEY|GOOGLE_CLIENT_SECRET|METRICS_TOKEN|SENTRY_DSN|DOCKER_PASSWORD|ADMIN_SEED_PASSWORD)\s*=\s*\S{8,}' \
+  . | rg -v '^\S+=\s*$' | rg -v 'example|changeme|your[-_]|<[^>]+>' || true)"
+
+RESULTS="${SOURCE_RESULTS}${ENV_RESULTS}"
 
 if [[ -n "$RESULTS" ]]; then
   echo "[secret-scan] potential secrets detected:"

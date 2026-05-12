@@ -22,6 +22,7 @@ export interface GameCompleteScreenProps {
     maxStars?: number;
     stats: GameStat[];
     topicId: string;
+    backHref?: string;
     onRestart: () => void;
     restartLabel?: string;
     backLabel?: string;
@@ -35,6 +36,7 @@ export function GameCompleteScreen({
     maxStars = 3,
     stats,
     topicId,
+    backHref,
     onRestart,
     restartLabel = 'Chơi lại',
     backLabel = 'Quay lại chủ đề',
@@ -102,7 +104,7 @@ export function GameCompleteScreen({
                 <KidButton variant="default" size="lg" className="w-full" onClick={onRestart}>
                     <RotateCcw size={18} /> {restartLabel}
                 </KidButton>
-                <Link href={`/play/topic/${topicId}`}>
+                <Link href={backHref ?? `/play/topic/${topicId}`}>
                     <KidButton variant="outline" size="default" className="w-full">
                         {backLabel} <ChevronRight size={16} />
                     </KidButton>

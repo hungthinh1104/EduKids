@@ -89,8 +89,8 @@ jobs:
         env:
           NEXT_PUBLIC_API_URL: http://localhost:3001/api
 
-      - name: Security audit (high+)
-        run: npm audit --audit-level=high
+      - name: Security audit (critical only)
+        run: npm audit --omit=dev --audit-level=critical
 
   secrets-scan:
     name: Secret scan

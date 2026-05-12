@@ -1,12 +1,12 @@
 name: Deploy Backend → Azure
 
 on:
-  push:
+  # On push: only deploy after CI gates pass (avoids duplicate lint/test work)
+  workflow_run:
+    workflows: ["Monorepo CI Gates"]
+    types: [completed]
     branches: [main]
-    paths:
-      - "apps/backend/**"
-      - "docker/Dockerfile.backend"
-      - ".github/workflows/deploy-backend-azure.yml"
+  # Manual trigger retains its own gates since CI may not have run for the target ref
   workflow_dispatch:
     inputs:
       environment:
@@ -23,11 +23,26 @@ env:
 
 jobs:
   # ─────────────────────────────────────────────
-  # 0. CI GATES: Lint & Type Check (Pre-merge)
+  # 0. Guard: abort if CI failed (workflow_run only)
+  # ─────────────────────────────────────────────
+  ci-guard:
+    name: Check CI result
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'workflow_run' }}
+    steps:
+      - name: Abort if CI failed
+        if: ${{ github.event.workflow_run.conclusion != 'success' }}
+        run: |
+          echo "❌ Monorepo CI Gates did not succeed (conclusion: ${{ github.event.workflow_run.conclusion }}). Skipping deploy."
+          exit 1
+
+  # ─────────────────────────────────────────────
+  # 0b. CI GATES for manual dispatch only
   # ─────────────────────────────────────────────
   ci-gates:
-    name: Lint & Type Check
+    name: Lint & Type Check (manual dispatch only)
     runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'workflow_dispatch' }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -63,13 +78,17 @@ jobs:
 
       - name: ✅ All CI gates passed
         run: echo "Lint, TypeScript, and Prisma validation successful"
-    # ─────────────────────────────────────────────
+
+  # ─────────────────────────────────────────────
   # 1. Build & push image to Docker Hub
   # ─────────────────────────────────────────────
   build-and-push:
     name: Build & Push to Docker Hub
     runs-on: ubuntu-latest
-    needs: ci-gates
+    needs:
+      - ci-guard
+      - ci-gates
+    if: ${{ always() && (needs.ci-guard.result == 'success' || needs.ci-gates.result == 'success') }}
     environment: ${{ github.event.inputs.environment || 'production' }}
     outputs:
       image_tag: ${{ steps.meta.outputs.tag }}
@@ -153,9 +172,8 @@ jobs:
             echo "▶ Pulling image: $IMAGE"
 
             # Log in to Docker Hub on VM
-            docker login \
-              -u ${{ secrets.DOCKER_USERNAME }} \
-              -p ${{ secrets.DOCKER_PASSWORD }}
+            echo "${{ secrets.DOCKER_PASSWORD }}" | docker login \
+              -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
             docker pull "$IMAGE"
 
@@ -169,12 +187,10 @@ jobs:
               -e DATABASE_URL="${{ secrets.DATABASE_URL }}" \
               -e NODE_ENV=production \
               "$IMAGE" \
-              npm run prisma:migrate:deploy
-
-            if [[ $? -ne 0 ]]; then
-              echo "❌ Migration failed - aborting deploy to prevent app startup with incompatible schema"
-              exit 1
-            fi
+              npm run prisma:migrate:deploy || {
+                echo "❌ Migration failed - aborting deploy to prevent app startup with incompatible schema"
+                exit 1
+              }
 
             # Run seed (idempotent — safe to run on every deploy; skips if already seeded)
             echo "▶ Running Prisma seed..."
@@ -183,7 +199,9 @@ jobs:
               -e NODE_ENV=production \
               -e ADMIN_SEED_PASSWORD="${{ secrets.ADMIN_SEED_PASSWORD }}" \
               "$IMAGE" \
-              npm run prisma:seed || echo "⚠️ Seed skipped or failed (non-blocking)"
+              npm run prisma:seed \
+              && echo "✅ Seed completed" \
+              || echo "⚠️ Seed exited non-zero (exit $?) — likely already seeded, continuing deploy"
 
             # Run new container (only if migrations succeeded)
             echo "▶ Starting app container (migrations already completed)..."

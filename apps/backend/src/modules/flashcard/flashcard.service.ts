@@ -186,24 +186,25 @@ export class FlashcardService {
             select: { completedAt: true },
           });
 
-          if (!existingProgress?.completedAt) {
-            await tx.learningProgress.upsert({
-              where: {
-                childId_vocabularyId: {
-                  childId,
-                  vocabularyId: dto.vocabularyId,
-                },
-              },
-              create: {
+          await tx.learningProgress.upsert({
+            where: {
+              childId_vocabularyId: {
                 childId,
                 vocabularyId: dto.vocabularyId,
-                completedAt: new Date(),
               },
-              update: {
-                completedAt: new Date(),
-              },
-            });
-          }
+            },
+            create: {
+              childId,
+              vocabularyId: dto.vocabularyId,
+              completedAt: new Date(),
+              lastReviewedAt: new Date(),
+            },
+            update: {
+              lastReviewedAt: new Date(),
+              // Only set completedAt on the first correct answer
+              ...(!existingProgress?.completedAt && { completedAt: new Date() }),
+            },
+          });
         }
 
         const updatedPoints = await tx.childProfile.update({

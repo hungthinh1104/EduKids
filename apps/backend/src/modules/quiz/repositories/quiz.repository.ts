@@ -319,22 +319,31 @@ export class QuizRepository {
       where: { childId_vocabularyId: { childId, vocabularyId } },
     });
 
-    if (existing) {
-      return this.prisma.learningProgress.update({
-        where: { childId_vocabularyId: { childId, vocabularyId } },
-        data: {
-          lastReviewedAt: new Date(),
-        },
-      });
-    } else {
-      return this.prisma.learningProgress.create({
-        data: {
-          childId,
-          vocabularyId,
-          lastReviewedAt: new Date(),
-        },
-      });
-    }
+    const progressPromise = existing
+      ? this.prisma.learningProgress.update({
+          where: { childId_vocabularyId: { childId, vocabularyId } },
+          data: { lastReviewedAt: new Date() },
+        })
+      : this.prisma.learningProgress.create({
+          data: { childId, vocabularyId, lastReviewedAt: new Date() },
+        });
+
+    // Ensure a VocabularyReview entry exists so the word appears in review queue
+    const reviewPromise = this.prisma.vocabularyReview.upsert({
+      where: { childId_vocabularyId: { childId, vocabularyId } },
+      create: {
+        childId,
+        vocabularyId,
+        interval: 1,
+        easeFactor: 2.5,
+        reviewCount: 0,
+        nextReview: new Date(),
+      },
+      update: {},
+    });
+
+    const [progress] = await Promise.all([progressPromise, reviewPromise]);
+    return progress;
   }
 
   async getQuizStats(childId: number) {

@@ -14,7 +14,11 @@ import type { ApiEnvelope } from '@/features/auth/types';
 import type { CreateChildProfileRequest, ProfileActionResultDto } from '@/features/profile/types/child-profile.types';
 import { getDefaultRouteByRole } from '@/shared/constants/navigation';
 
-const AVATAR_SEEDS = ['bong', 'chip', 'luna', 'robo', 'kiwi', 'mochi', 'pixel', 'star'];
+const AVATAR_SEEDS = [
+    { seed: 'cat', emoji: '🐱' }, { seed: 'dog', emoji: '🐶' }, { seed: 'bunny', emoji: '🐰' },
+    { seed: 'bear', emoji: '🐻' }, { seed: 'panda', emoji: '🐼' }, { seed: 'fox', emoji: '🦊' },
+    { seed: 'lion', emoji: '🦁' }, { seed: 'owl', emoji: '🦉' }, { seed: 'dino', emoji: '🦕' },
+];
 const DIFFICULTIES = [
     { value: 1, label: 'Dễ', desc: 'Bé mới bắt đầu', emoji: '🌱' },
     { value: 2, label: 'Trung bình', desc: 'Đã biết một ít', emoji: '📚' },
@@ -28,7 +32,7 @@ export default function AddChildPage() {
     const [step, setStep] = useState(0);
     const [nickname, setNickname] = useState('');
     const [age, setAge] = useState(7);
-    const [selectedAvatar, setSelectedAvatar] = useState(AVATAR_SEEDS[0]);
+    const [selectedAvatar, setSelectedAvatar] = useState(AVATAR_SEEDS[0].seed);
     const [difficulty, setDifficulty] = useState(1);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submitError, setSubmitError] = useState<string | null>(null);
@@ -51,7 +55,7 @@ export default function AddChildPage() {
             const payload: CreateChildProfileRequest = {
                 nickname: nickname.trim(),
                 age,
-                avatar: `https://api.dicebear.com/7.x/bottts/svg?seed=${selectedAvatar}`,
+                avatar: `https://api.dicebear.com/9.x/bottts/svg?seed=${selectedAvatar}`,
             };
 
             const response = await axiosInstance.post<ApiEnvelope<ProfileActionResultDto>>('profiles', payload);
@@ -149,24 +153,25 @@ export default function AddChildPage() {
                         <motion.div key="step1" initial={{ opacity: 1, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }}>
                             <Heading level={2} className="text-heading text-2xl mb-2">Chọn Avatar! 🎭</Heading>
                             <Body className="text-body mb-6">Ấn vào nhân vật bé yêu thích nhé!</Body>
-                            <div className="grid grid-cols-4 gap-3">
-                                {AVATAR_SEEDS.map((seed) => (
+                            <div className="grid grid-cols-3 gap-3">
+                                {AVATAR_SEEDS.map((av) => (
                                     <motion.button
-                                        key={seed}
+                                        key={av.seed}
                                         whileHover={{ scale: 1.08 }}
                                         whileTap={{ scale: 0.95 }}
-                                        onClick={() => setSelectedAvatar(seed)}
-                                        className={`relative rounded-2xl p-2 border-4 transition-all ${selectedAvatar === seed ? 'border-primary shadow-lg shadow-primary/25' : 'border-border hover:border-primary/40'
+                                        onClick={() => setSelectedAvatar(av.seed)}
+                                        className={`relative rounded-2xl p-2 border-4 transition-all flex flex-col items-center gap-1 ${selectedAvatar === av.seed ? 'border-primary shadow-lg shadow-primary/25 bg-primary-light' : 'border-border hover:border-primary/40'
                                             }`}
                                     >
                                         <Image
-                                            src={`https://api.dicebear.com/7.x/bottts/svg?seed=${seed}`}
-                                            alt={`Avatar ${seed}`}
+                                            src={`https://api.dicebear.com/9.x/bottts/svg?seed=${av.seed}`}
+                                            alt={`Avatar ${av.seed}`}
                                             width={64}
                                             height={64}
                                             className="w-full aspect-square object-contain"
                                         />
-                                        {selectedAvatar === seed && (
+                                        <span className="text-lg">{av.emoji}</span>
+                                        {selectedAvatar === av.seed && (
                                             <div className="absolute -top-2 -right-2 w-6 h-6 bg-primary rounded-full flex items-center justify-center">
                                                 <Check size={12} className="text-white" />
                                             </div>
@@ -206,7 +211,7 @@ export default function AddChildPage() {
 
                             {/* Preview */}
                             <div className="mt-6 p-4 rounded-2xl bg-background border-2 border-border flex items-center gap-4">
-                                <Image src={`https://api.dicebear.com/7.x/bottts/svg?seed=${selectedAvatar}`} alt="preview" width={56} height={56} className="rounded-full bg-primary-light p-1" />
+                                <Image src={`https://api.dicebear.com/9.x/bottts/svg?seed=${selectedAvatar}`} alt="preview" width={56} height={56} className="rounded-full bg-primary-light p-1" />
                                 <div>
                                     <div className="font-heading font-black text-heading text-lg">{nickname || 'Bé của bạn'}</div>
                                     <Caption className="text-caption text-sm">{age} tuổi · Lv.1 mới</Caption>

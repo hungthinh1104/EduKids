@@ -74,11 +74,11 @@ export class VocabularyReviewRepository {
     newEase: number,
     newRepetitions: number,
     timeSpentMs?: number,
+    difficulty?: "EASY" | "MEDIUM" | "HARD",
   ) {
     const nextReviewDate = new Date();
     nextReviewDate.setDate(nextReviewDate.getDate() + newInterval);
 
-    // Update review item
     const updated = await this.prisma.vocabularyReview.update({
       where: {
         childId_vocabularyId: { childId, vocabularyId },
@@ -92,13 +92,12 @@ export class VocabularyReviewRepository {
       include: { vocabulary: true },
     });
 
-    // Log review session
     await this.prisma.reviewSessionLog.create({
       data: {
         childId,
         vocabularyId,
         correct,
-        difficulty: correct ? "EASY" : "HARD",
+        difficulty: difficulty ?? (correct ? "EASY" : "HARD"),
         timeSpentMs,
         newInterval,
         newEase,
@@ -106,6 +105,43 @@ export class VocabularyReviewRepository {
     });
 
     return updated;
+  }
+
+  /**
+   * Seed VocabularyReview rows from LearningProgress so the review queue
+   * is populated after flashcard/quiz sessions.
+   * Only creates rows that don't exist yet; returns count of new rows.
+   */
+  async seedReviewItemsFromLearningProgress(
+    childId: number,
+  ): Promise<number> {
+    const [learnedIds, reviewedIds] = await Promise.all([
+      this.prisma.learningProgress
+        .findMany({ where: { childId }, select: { vocabularyId: true } })
+        .then((rows) => rows.map((r) => r.vocabularyId)),
+      this.prisma.vocabularyReview
+        .findMany({ where: { childId }, select: { vocabularyId: true } })
+        .then((rows) => rows.map((r) => r.vocabularyId)),
+    ]);
+
+    const reviewedSet = new Set(reviewedIds);
+    const toSeed = learnedIds.filter((id) => !reviewedSet.has(id));
+
+    if (toSeed.length === 0) return 0;
+
+    await this.prisma.vocabularyReview.createMany({
+      data: toSeed.map((vocabularyId) => ({
+        childId,
+        vocabularyId,
+        interval: 1,
+        easeFactor: 2.5,
+        reviewCount: 0,
+        nextReview: new Date(),
+      })),
+      skipDuplicates: true,
+    });
+
+    return toSeed.length;
   }
 
   /**

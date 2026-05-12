@@ -25,7 +25,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
                 <div className="relative z-10 w-full max-w-lg text-center space-y-8 flex flex-col items-center">
                     <div className="w-48 h-48 bg-white/40 dark:bg-black/20 rounded-full flex items-center justify-center backdrop-blur-sm border-4 border-primary/30 shadow-xl animate-bounce-gentle">
                         <Image
-                            src="https://api.dicebear.com/7.x/bottts/svg?seed=edukids-hero"
+                            src="https://api.dicebear.com/9.x/bottts/svg?seed=edukids-hero"
                             alt="EduKids Mascot"
                             width={140}
                             height={140}
@@ -57,7 +57,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
                     {/* Mobile Only Logo & Home Link */}
                     <div className="lg:hidden flex flex-col items-center mb-8 space-y-4">
                         <Image
-                            src="https://api.dicebear.com/7.x/bottts/svg?seed=edukids-hero"
+                            src="https://api.dicebear.com/9.x/bottts/svg?seed=edukids-hero"
                             alt="EduKids Mascot"
                             width={80}
                             height={80}

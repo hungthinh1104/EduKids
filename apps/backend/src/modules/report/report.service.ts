@@ -430,7 +430,7 @@ export class ReportService {
       childId,
       childName: child.nickname || `Bé #${childId}`,
       childAge: child.age,
-      avatar: child.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=child-${childId}`,
+      avatar: child.avatar || `https://api.dicebear.com/9.x/bottts/svg?seed=child-${childId}`,
       minutesLearned,
       sessionsCompleted,
       pronunciationAccuracy,

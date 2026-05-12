@@ -69,7 +69,7 @@ export function TestimonialsSection() {
                                     &quot;Bé Bi nhà mình từ hồi học EduKids tự giác hẳn. Tối nào ăn cơm xong cũng đòi vọc iPad đọc từ mới lấy phần thưởng. Phát âm của con dạo này tây lắm luôn!&quot;
                                 </Body>
                                 <div className="flex items-center gap-5 border-t border-border pt-6">
-                                    <Image src="https://api.dicebear.com/7.x/notionists/svg?seed=Trinh" alt="Avatar" width={60} height={60} className="rounded-full bg-background border-2 border-background" />
+                                    <Image src="https://api.dicebear.com/9.x/notionists/svg?seed=Trinh" alt="Avatar" width={60} height={60} className="rounded-full bg-background border-2 border-background" />
                                     <div>
                                         <Heading level={5} className="font-heading font-bold text-heading text-lg">Trần Thu Trà</Heading>
                                         <span className="text-muted text-sm">Mẹ bé Bi (7 tuổi)</span>
@@ -92,7 +92,7 @@ export function TestimonialsSection() {
                                     &quot;App màu sắc siêu đẹp, thiết kế nhân vật giống y chơi game nên hai đứa nhà mình khoái lắm. Hơn cả học tiếng Anh, nó giúp bé rèn luyện tư duy rất tốt.&quot;
                                 </Body>
                                 <div className="flex items-center gap-5 border-t border-border pt-6">
-                                    <Image src="https://api.dicebear.com/7.x/notionists/svg?seed=HoangPhat" alt="Avatar" width={60} height={60} className="rounded-full bg-background border-2 border-background" />
+                                    <Image src="https://api.dicebear.com/9.x/notionists/svg?seed=HoangPhat" alt="Avatar" width={60} height={60} className="rounded-full bg-background border-2 border-background" />
                                     <div>
                                         <Heading level={5} className="font-heading font-bold text-heading text-lg">Lê Hoàng Phát</Heading>
                                         <span className="text-muted text-sm">Ba cặp song sinh Nhím & Thỏ</span>

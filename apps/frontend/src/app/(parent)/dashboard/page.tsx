@@ -149,14 +149,15 @@ export default function ParentDashboardPage() {
             {!profileLoading && activeProfile && analytics?.hasData && (
                 <section>
                     <motion.div initial={{ opacity: 1, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.6 }} className="flex items-center gap-2 md:gap-3 mb-4 md:mb-6">
-                        <Image 
-                            src={activeProfile.avatar} 
-                            alt={`Avatar của ${activeProfile.nickname}`} 
-                            width={32} 
-                            height={32} 
-                            className="rounded-full bg-primary-light p-0.5 w-8 h-8 md:w-9 md:h-9" 
+                        <Image
+                            src={activeProfile.avatar || `https://api.dicebear.com/9.x/bottts/svg?seed=${activeProfile.nickname}`}
+                            alt={`Avatar của ${activeProfile.nickname}`}
+                            width={32}
+                            height={32}
+                            className="rounded-full bg-primary-light p-0.5 w-8 h-8 md:w-9 md:h-9"
                             priority={false}
                             loading="lazy"
+                            onError={(e) => { e.currentTarget.src = `https://api.dicebear.com/9.x/bottts/svg?seed=${activeProfile.nickname}`; }}
                         />
                         <Heading level={3} className="text-heading text-base md:text-xl">
                             Báo cáo của <span className="text-primary">{analytics.childNickname}</span> — 7 ngày

@@ -76,6 +76,8 @@ export const readTopicModeProgress = (topicId: number): TopicModeProgress => {
   }
 };
 
+export const TOPIC_MODE_PROGRESS_EVENT = 'edukids-topic-mode-progress-updated';
+
 export const markTopicModeCompleted = (topicId: number, mode: TopicLearningMode): TopicModeProgress => {
   const next = {
     ...readTopicModeProgress(topicId),
@@ -86,6 +88,8 @@ export const markTopicModeCompleted = (topicId: number, mode: TopicLearningMode)
   if (typeof window !== 'undefined' && Number.isInteger(topicId) && topicId > 0) {
     try {
       window.localStorage.setItem(getStorageKey(topicId), JSON.stringify(next));
+      // Dispatch custom event so same-tab listeners can react (storage event is cross-tab only)
+      window.dispatchEvent(new CustomEvent(TOPIC_MODE_PROGRESS_EVENT, { detail: { topicId, mode } }));
     } catch {
       // ignore storage write errors
     }

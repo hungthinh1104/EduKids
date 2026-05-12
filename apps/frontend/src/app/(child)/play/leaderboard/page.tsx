@@ -245,12 +245,12 @@ export default function LeaderboardPage() {
               </div>
 
               <div className="space-y-3">
-                {leaderboard.length === 0 ? (
+                {restOfBoard.length === 0 ? (
                   <div className="rounded-[2rem] border border-dashed border-border bg-card/90 p-8 text-center">
-                    <Body className="text-caption">Chưa có dữ liệu bảng xếp hạng.</Body>
+                    <Body className="text-caption">{leaderboard.length === 0 ? 'Chưa có dữ liệu bảng xếp hạng.' : 'Không có thêm học viên nào ngoài top 3.'}</Body>
                   </div>
                 ) : (
-                  (restOfBoard.length > 0 ? restOfBoard : leaderboard).map((entry, index) => (
+                  restOfBoard.map((entry, index) => (
                     <motion.div
                       key={entry.childId}
                       initial={{ opacity: 1, x: -16 }}

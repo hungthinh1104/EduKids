@@ -286,7 +286,7 @@ export default function SettingsPage() {
             >
                 <div className="w-14 h-14 md:w-16 md:h-16 rounded-full bg-card/20 border-4 border-white/50 flex items-center justify-center overflow-hidden flex-shrink-0">
                     <Image 
-                        src="https://api.dicebear.com/7.x/bottts/svg?seed=parent" 
+                        src="https://api.dicebear.com/9.x/bottts/svg?seed=parent" 
                         alt="Ảnh đại diện phụ huynh" 
                         width={56} 
                         height={56}

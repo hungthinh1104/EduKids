@@ -87,12 +87,10 @@ if docker compose --env-file "$ENV_FILE" exec -T postgres pg_isready >/dev/null 
     POOLED_DATABASE_URL="$migration_db_url" \
     DIRECT_DATABASE_URL="$migration_db_url" \
     npm run prisma:migrate:deploy
-  )
-
-  if (( $? != 0 )); then
+  ) || {
     echo "[ERROR] Migration failed - aborting app start to prevent incompatible schema"
     exit 1
-  fi
+  }
 else
   echo "[ERROR] Cannot connect to PostgreSQL for migration"
   exit 1

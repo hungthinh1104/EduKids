@@ -220,6 +220,7 @@ export default function FlashcardPage() {
         }
 
         playSound('pop');
+        setActivityWarning(null);
         setLogs(updatedLogs);
         if (index + 1 >= deck.length) {
             markTopicModeCompleted(parsedTopicId, 'flashcard');

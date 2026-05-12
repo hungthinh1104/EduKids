@@ -21,7 +21,7 @@ import {
 import { Heading, Body, Caption } from '@/shared/components/Typography';
 import { LoadingScreen } from '@/components/edukids/LoadingScreen';
 import { contentApi, Topic } from '@/features/learning/api/content.api';
-import { readTopicModeProgress, type TopicModeProgress } from '@/features/learning/utils/topic-mode-progress';
+import { readTopicModeProgress, TOPIC_MODE_PROGRESS_EVENT, type TopicModeProgress } from '@/features/learning/utils/topic-mode-progress';
 
 type GameModeId = 'flashcard' | 'quiz' | 'pronunciation' | 'video';
 type TrackedModeId = 'flashcard' | 'quiz' | 'pronunciation';
@@ -85,9 +85,14 @@ export default function TopicDetailPage() {
 
         setModeProgress(readTopicModeProgress(parsedTopicId));
 
-        const onStorage = () => setModeProgress(readTopicModeProgress(parsedTopicId));
-        window.addEventListener('storage', onStorage);
-        return () => window.removeEventListener('storage', onStorage);
+        const onProgress = () => setModeProgress(readTopicModeProgress(parsedTopicId));
+        // Listen to both cross-tab (storage) and same-tab (custom event) updates
+        window.addEventListener('storage', onProgress);
+        window.addEventListener(TOPIC_MODE_PROGRESS_EVENT, onProgress);
+        return () => {
+            window.removeEventListener('storage', onProgress);
+            window.removeEventListener(TOPIC_MODE_PROGRESS_EVENT, onProgress);
+        };
     }, [parsedTopicId]);
 
     useEffect(() => {

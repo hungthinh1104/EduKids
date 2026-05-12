@@ -1,3 +1,4 @@
+import { randomUUID } from "crypto";
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { VocabularyReviewRepository } from "../repository/vocabulary-review.repository";
 import { SpacedRepetitionService } from "./spaced-repetition.service";
@@ -14,14 +15,18 @@ export class VocabularyReviewService {
    * Get review items due today
    */
   async getReviewSession(childId: number, limit: number = 20) {
-    const items = await this.repository.getItemsDueForReview(childId, limit);
+    let items = await this.repository.getItemsDueForReview(childId, limit);
 
     if (items.length === 0) {
-      // No items due - suggest new vocabulary
-      const suggestions = await this.repository.suggestNewVocabulary(
-        childId,
-        5,
-      );
+      // Seed from LearningProgress (words seen in flashcard/quiz but not yet queued)
+      const seeded = await this.repository.seedReviewItemsFromLearningProgress(childId);
+      if (seeded > 0) {
+        items = await this.repository.getItemsDueForReview(childId, limit);
+      }
+    }
+
+    if (items.length === 0) {
+      const suggestions = await this.repository.suggestNewVocabulary(childId, 5);
       return {
         sessionId: 0,
         childId,
@@ -29,21 +34,28 @@ export class VocabularyReviewService {
         itemCount: 0,
         sessionStartedAt: new Date().toISOString(),
         suggestion: {
-          message: "No items due for review. Try learning new vocabulary!",
-          suggestedItems: suggestions,
+          message: "Chưa có từ đến lượt ôn. Hãy học thêm chủ đề mới nhé!",
+          suggestedItems: suggestions.map((v) => ({
+            vocabularyId: v.id,
+            topicId: v.topicId,
+            word: v.word,
+            definition: v.translation ?? "",
+            example: v.exampleSentence ?? undefined,
+            pronunciation: v.phonetic ?? undefined,
+          })),
         },
       };
     }
 
     return {
-      sessionId: Math.random(),
+      sessionId: randomUUID(),
       childId,
       items: items.map((item) => ({
         vocabularyId: item.vocabularyId,
         word: item.vocabulary.word,
-        definition: item.vocabulary.translation,
-        example: item.vocabulary.exampleSentence,
-        pronunciation: item.vocabulary.phonetic,
+        definition: item.vocabulary.translation ?? "",
+        example: item.vocabulary.exampleSentence ?? undefined,
+        pronunciation: item.vocabulary.phonetic ?? undefined,
         currentInterval: item.interval,
         reviewCount: item.reviewCount,
         easeFactor: item.easeFactor,
@@ -81,7 +93,6 @@ export class VocabularyReviewService {
       reviewItem.reviewCount + 1,
     );
 
-    // Record the result
     await this.repository.recordReviewResult(
       childId,
       request.vocabularyId,
@@ -90,6 +101,7 @@ export class VocabularyReviewService {
       result.easeFactor,
       reviewItem.reviewCount + 1,
       request.timeSpentMs,
+      request.difficulty,
     );
 
     // Award stars for correct answers (UC-C11, UC-C12)

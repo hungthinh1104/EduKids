@@ -61,7 +61,7 @@ export default function OnboardingPage() {
             await createProfile({
                 nickname: nickname.trim(),
                 age,
-                avatar: `https://api.dicebear.com/7.x/bottts/svg?seed=${avatar}`,
+                avatar: `https://api.dicebear.com/9.x/bottts/svg?seed=${avatar}`,
             });
             router.push(getDefaultRouteByRole('PARENT'));
         } catch (err) {
@@ -72,7 +72,7 @@ export default function OnboardingPage() {
         }
     };
 
-    const selectedAvatarUrl = `https://api.dicebear.com/7.x/bottts/svg?seed=${avatar}`;
+    const selectedAvatarUrl = `https://api.dicebear.com/9.x/bottts/svg?seed=${avatar}`;
 
     return (
         <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6">
@@ -175,7 +175,7 @@ export default function OnboardingPage() {
                                         onClick={() => setAvatar(av.seed)}
                                         className={`relative p-3 rounded-2xl border-2 transition-all flex flex-col items-center gap-1 ${avatar === av.seed ? 'border-primary bg-primary-light shadow-lg shadow-primary/20' : 'border-border bg-card hover:border-primary/40'}`}
                                     >
-                                        <Image src={`https://api.dicebear.com/7.x/bottts/svg?seed=${av.seed}`} alt={av.seed} width={48} height={48} className="rounded-xl" />
+                                        <Image src={`https://api.dicebear.com/9.x/bottts/svg?seed=${av.seed}`} alt={av.seed} width={48} height={48} className="rounded-xl" />
                                         {avatar === av.seed && (
                                             <motion.div layoutId="avatar-check" className="absolute -top-1.5 -right-1.5">
                                                 <CheckCircle2 size={18} className="text-primary fill-white" />

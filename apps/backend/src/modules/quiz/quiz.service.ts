@@ -134,6 +134,7 @@ export class QuizService {
         const distractors = [...(distractorsByVocabulary.get(vocab.id) || [])];
         const correctOptionId = Math.floor(Math.random() * 4) + 1;
         const options: QuizOptionDto[] = [];
+        let distractorIndex = 0;
         for (let i = 1; i <= 4; i++) {
           if (i === correctOptionId) {
             options.push({
@@ -142,10 +143,13 @@ export class QuizService {
               imageUrl: undefined,
             });
           } else {
-            const distractor = distractors.shift();
+            // Cycle through distractors if fewer than needed
+            const distractor = distractors.length > 0
+              ? distractors[distractorIndex++ % distractors.length]
+              : null;
             options.push({
               id: i,
-              text: distractor?.word || "Unknown",
+              text: distractor?.word || vocab.translation || vocab.word,
               imageUrl: undefined,
             });
           }
@@ -275,6 +279,7 @@ export class QuizService {
       const distractors = [...(distractorsByVocabulary.get(vocab.id) || [])];
       const correctOptionId = Math.floor(Math.random() * 4) + 1;
       const options: QuizOptionDto[] = [];
+      let distractorIndex = 0;
 
       for (let i = 1; i <= 4; i++) {
         if (i === correctOptionId) {
@@ -284,10 +289,13 @@ export class QuizService {
             imageUrl: vocab.media?.[0]?.url,
           });
         } else {
-          const distractor = distractors.shift();
+          // Cycle through distractors if fewer than needed
+          const distractor = distractors.length > 0
+            ? distractors[distractorIndex++ % distractors.length]
+            : null;
           options.push({
             id: i,
-            text: distractor?.word || "Unknown",
+            text: distractor?.word || vocab.translation || vocab.word,
             imageUrl: undefined,
           });
         }

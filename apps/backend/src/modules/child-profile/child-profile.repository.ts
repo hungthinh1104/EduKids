@@ -228,14 +228,9 @@ export class ChildProfileRepository {
    * @returns Default avatar URL
    */
   private getDefaultAvatarUrl(age: number): string {
-    // Age-appropriate default avatars
-    if (age <= 6) {
-      return "https://cdn.edukids.com/avatars/default-young.png";
-    } else if (age <= 9) {
-      return "https://cdn.edukids.com/avatars/default-middle.png";
-    } else {
-      return "https://cdn.edukids.com/avatars/default-older.png";
-    }
+    const seeds = ['cat', 'dog', 'bunny', 'bear', 'panda', 'fox', 'lion', 'owl', 'dino'];
+    const seed = seeds[age % seeds.length];
+    return `https://api.dicebear.com/9.x/bottts/svg?seed=${seed}`;
   }
 
   /**

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import { useParams } from 'next/navigation';
@@ -145,6 +145,20 @@ export default function PronunciationPage() {
     const [results, setResults] = useState<PronunciationResult[]>([]);
     const [done, setDone] = useState(false);
     const [practiceError, setPracticeError] = useState<string | null>(null);
+    const activeStreamRef = useRef<MediaStream | null>(null);
+    const isMountedRef = useRef(true);
+
+    useEffect(() => {
+        isMountedRef.current = true;
+        return () => {
+            isMountedRef.current = false;
+            // Stop any active mic stream when navigating away
+            if (activeStreamRef.current) {
+                activeStreamRef.current.getTracks().forEach((t) => t.stop());
+                activeStreamRef.current = null;
+            }
+        };
+    }, []);
 
     useEffect(() => {
         async function loadVocabularies() {
@@ -291,6 +305,7 @@ export default function PronunciationPage() {
                                                     let recordedSampleRate = 16000;
                                                     try {
                                                         stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                                                        activeStreamRef.current = stream;
                                                         // eslint-disable-next-line @typescript-eslint/no-explicit-any
                                                         ctx = new (window.AudioContext ?? (window as any).webkitAudioContext)({ sampleRate: 16000 });
                                                         await ctx.resume();
@@ -305,12 +320,14 @@ export default function PronunciationPage() {
                                                     } catch {
                                                         if (stream) {
                                                             stream.getTracks().forEach((track) => track.stop());
+                                                            activeStreamRef.current = null;
                                                         }
                                                     }
 
                                                     // ── 3-second countdown ───────────────────────────────
                                                     for (let c = 2; c >= 0; c--) {
                                                         await new Promise<void>((res) => setTimeout(res, 1000));
+                                                        if (!isMountedRef.current) return;
                                                         setCountdown(c);
                                                     }
 
@@ -320,9 +337,12 @@ export default function PronunciationPage() {
                                                         processor.disconnect();
                                                         source.disconnect();
                                                         stream.getTracks().forEach((t) => t.stop());
+                                                        activeStreamRef.current = null;
                                                         void ctx.close();
                                                         audioBase64 = encodePcmToWavBase64(chunks, recordedSampleRate) ?? undefined;
                                                     }
+
+                                                    if (!isMountedRef.current) return;
 
                                                     // ── submit to backend ─────────────────────────────────
                                                     try {
@@ -337,9 +357,11 @@ export default function PronunciationPage() {
                                                             audioBase64,
                                                             audioMimeType: 'audio/wav',
                                                         });
+                                                        if (!isMountedRef.current) return;
                                                         setConfidence(response.confidenceScore);
                                                         setStage('result');
                                                     } catch (error) {
+                                                        if (!isMountedRef.current) return;
                                                         console.error('Pronunciation request failed:', error);
                                                         setConfidence(0);
                                                         setPracticeError(getPronunciationErrorMessage(error));

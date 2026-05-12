@@ -6,7 +6,7 @@ export interface AvatarCustomizationSource {
   avatar?: string | null;
 }
 
-export const DEFAULT_CHILD_AVATAR = 'https://api.dicebear.com/7.x/bottts/svg?seed=child';
+export const DEFAULT_CHILD_AVATAR = 'https://api.dicebear.com/9.x/bottts/svg?seed=child';
 
 export function resolveChildAvatarUrl(
   source: ChildAvatarSource | null | undefined,

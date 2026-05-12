@@ -8,6 +8,7 @@ import Link from 'next/link';
 import { Flame, Star, Lock, ChevronRight, Loader2 } from 'lucide-react';
 import { Heading, Body, Caption } from '@/shared/components/Typography';
 import { switchProfile } from '@/features/profile/api/profile.api';
+import { DEFAULT_CHILD_AVATAR } from '@/features/profile/utils/avatar-sync';
 import type { ChildProfile } from '@/features/profile/types/child-profile.types';
 
 interface ChildProfileCardProps {
@@ -87,11 +88,12 @@ export function ChildProfileCard({ profile, isActive }: ChildProfileCardProps) {
                         <div className={`relative w-24 h-24 rounded-full bg-gradient-to-br ${levelGradient} p-1 shadow-md`}>
                             <div className="w-full h-full rounded-full bg-card flex items-center justify-center overflow-hidden">
                                 <Image
-                                    src={profile.avatar}
+                                    src={profile.avatar || DEFAULT_CHILD_AVATAR}
                                     alt={profile.nickname}
                                     width={88}
                                     height={88}
                                     className="object-contain p-1"
+                                    onError={(e) => { e.currentTarget.src = DEFAULT_CHILD_AVATAR; }}
                                 />
                             </div>
                             {/* Level Badge */}

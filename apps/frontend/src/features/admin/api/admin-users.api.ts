@@ -38,7 +38,7 @@ const normalizeUsers = (payload: unknown): AdminUser[] => {
       avatar:
         typeof user.avatar === 'string' && user.avatar.length > 0
           ? user.avatar
-          : `https://api.dicebear.com/7.x/avataaars/svg?seed=${typeof user.email === 'string' ? user.email : `user-${index + 1}`}`,
+          : `https://api.dicebear.com/9.x/avataaars/svg?seed=${typeof user.email === 'string' ? user.email : `user-${index + 1}`}`,
       children,
       plan: planRaw === 'premium' ? 'premium' : 'free',
       status:

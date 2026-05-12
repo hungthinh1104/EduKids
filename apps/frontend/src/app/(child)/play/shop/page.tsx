@@ -30,6 +30,7 @@ export default function ShopPage() {
     const [loading, setLoading] = useState(true);
     const [loadError, setLoadError] = useState<string | null>(null);
     const [purchased, setPurchased] = useState<number | null>(null);
+    const [isPurchasing, setIsPurchasing] = useState(false);
     const purchaseTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     useEffect(() => {
@@ -96,6 +97,8 @@ export default function ShopPage() {
         .filter((label): label is string => Boolean(label));
 
     async function handleBuy(item: ShopItem) {
+        if (isPurchasing) return;
+        setIsPurchasing(true);
         try {
             const result = await gamificationApi.purchaseItem(childId, item.id);
             if (result.success) {
@@ -112,6 +115,8 @@ export default function ShopPage() {
         } catch (err) {
             console.error('Failed to purchase item:', err);
             toast.error('Không thể mua item này', { description: 'Vui lòng kiểm tra số sao/xu và thử lại.' });
+        } finally {
+            setIsPurchasing(false);
         }
     }
 
