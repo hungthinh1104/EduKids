@@ -242,6 +242,9 @@ export class ChildProfileService {
       expiresIn: "7d",
     });
 
+    // Create a new session record so JWT strategy's session-revocation check passes
+    await this.repository.createSession(parentId, refreshToken);
+
     return {
       success: true,
       message: `Switched to ${profile.nickname}'s profile! 👋`,

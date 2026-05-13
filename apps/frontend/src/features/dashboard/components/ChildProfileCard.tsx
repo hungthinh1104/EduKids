@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -29,7 +28,7 @@ function getLevelColor(level: number) {
 }
 
 export function ChildProfileCard({ profile, isActive }: ChildProfileCardProps) {
-    const router = useRouter();
+
     const [switching, setSwitching] = useState(false);
     const [switchError, setSwitchError] = useState<string | null>(null);
     const levelGradient = getLevelColor(profile.currentLevel);
@@ -46,10 +45,11 @@ export function ChildProfileCard({ profile, isActive }: ChildProfileCardProps) {
             
             // Switch profile to get LEARNER role JWT + set role=LEARNER cookie
             await switchProfile(profile.id);
-            
-            // Use router.push for smooth navigation with new cookies
-            // Middleware will validate role=LEARNER and allow /play access
-            router.push('/play');
+
+            // Hard navigation so the browser sends the new role=LEARNER cookie
+            // in the request headers — middleware reads cookies from the request,
+            // so a soft router.push() can miss freshly-set cookies.
+            window.location.href = '/play';
         } catch (error) {
             console.error('Failed to switch profile:', error);
             setSwitchError('Không thể chuyển hồ sơ. Vui lòng thử lại.');

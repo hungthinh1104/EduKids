@@ -250,4 +250,14 @@ export class ChildProfileRepository {
   async revokeAllSessions(userId: number): Promise<void> {
     await this.prisma.session.deleteMany({ where: { userId } });
   }
+
+  async createSession(userId: number, refreshToken: string): Promise<void> {
+    await this.prisma.session.create({
+      data: {
+        userId,
+        token: refreshToken,
+        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      },
+    });
+  }
 }
