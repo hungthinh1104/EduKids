@@ -13,7 +13,7 @@ export function TestimonialsSection() {
 
                     {/* Left Content */}
                     <motion.div
-                        initial={{ opacity: 1, x: -20 }}
+                        initial={{ opacity: 0, x: -20 }}
                         whileInView={{ opacity: 1, x: 0 }}
                         viewport={{ once: true }}
                         transition={{ duration: 0.8 }}
@@ -56,7 +56,7 @@ export function TestimonialsSection() {
                         <div className="flex flex-col gap-8">
                             {/* Review Card 1 */}
                             <motion.div
-                                initial={{ opacity: 1, y: 18 }}
+                                initial={{ opacity: 0, y: 18 }}
                                 whileInView={{ opacity: 1, y: 0 }}
                                 viewport={{ once: true }}
                                 transition={{ duration: 0.6 }}
@@ -79,7 +79,7 @@ export function TestimonialsSection() {
 
                             {/* Review Card 2 */}
                             <motion.div
-                                initial={{ opacity: 1, y: 18 }}
+                                initial={{ opacity: 0, y: 18 }}
                                 whileInView={{ opacity: 1, y: 0 }}
                                 viewport={{ once: true }}
                                 transition={{ duration: 0.6, delay: 0.2 }}

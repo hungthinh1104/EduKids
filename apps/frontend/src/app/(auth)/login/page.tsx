@@ -22,7 +22,7 @@ const staggerContainer = {
 };
 
 const fadeInUp = {
-    hidden: { opacity: 1, y: 20 },
+    hidden: { opacity: 0, y: 20 },
     visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: 'easeOut' as const } },
 };
 
@@ -98,7 +98,7 @@ function LoginPageContent() {
             if (status === 401) {
                 setGlobalError('Email hoặc mật khẩu không chính xác.');
             } else if (status === 403) {
-                setGlobalError('Tài khoản đã bị khóa tạm thời do đăng nhập sai quá nhiều lần.');
+                setGlobalError('Tài khoản đã bị khóa tạm thời. Vui lòng thử lại sau 15 phút hoặc liên hệ hỗ trợ.');
             } else {
                 console.error('Login error:', error);
                 setGlobalError('Đã có lỗi xảy ra. Vui lòng thử lại sau.');
@@ -182,9 +182,9 @@ function LoginPageContent() {
                     <button
                         type="submit"
                         disabled={isLoading}
-                        className={`w-full flex items-center justify-center btn-primary h-14 text-lg font-heading font-bold rounded-2xl transition-transform duration-200 ${isLoading ? 'opacity-80' : 'hover:scale-[1.02]'}`}
+                        className={`w-full flex items-center justify-center btn-primary h-14 text-lg font-heading font-bold rounded-2xl transition-transform duration-200 ${isLoading ? 'opacity-70 cursor-not-allowed' : 'hover:scale-[1.02]'}`}
                     >
-                        {isLoading ? <Loader2 className="w-6 h-6 animate-spin" /> : 'Khởi hành ngay! 🚀'}
+                        {isLoading ? <><Loader2 className="w-6 h-6 animate-spin mr-2" />Đang đăng nhập...</> : 'Khởi hành ngay! 🚀'}
                     </button>
                 </motion.div>
             </form>

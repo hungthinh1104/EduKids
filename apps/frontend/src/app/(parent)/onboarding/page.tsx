@@ -145,7 +145,7 @@ export default function OnboardingPage() {
                             <div className="grid grid-cols-3 gap-3">
                                 {AGES.map((a, i) => (
                                     <motion.button key={a}
-                                        initial={{ opacity: 1, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.04 }}
+                                        initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.04 }}
                                         onClick={() => setAge(a)}
                                         className={`py-4 rounded-2xl font-heading font-black text-2xl border-2 transition-all ${age === a ? 'bg-primary text-white border-primary shadow-lg shadow-primary/30 scale-110' : 'bg-card border-border text-heading hover:border-primary/60'}`}
                                     >
@@ -197,7 +197,7 @@ export default function OnboardingPage() {
                             </motion.div>
 
                             <div>
-                                <motion.div initial={{ opacity: 1, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+                                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
                                     <Heading level={2} className="text-heading text-3xl">{nickname} {age} tuổi 🎉</Heading>
                                     <Body className="text-body mt-2">Hồ sơ đã sẵn sàng! Bắt đầu hành trình học nào!</Body>
                                 </motion.div>

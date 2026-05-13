@@ -78,7 +78,7 @@ export default function PlayPage() {
         return (
             <div className="min-h-screen flex items-center justify-center p-6 bg-gradient-to-b from-primary-light/50 to-background">
                 <motion.div 
-                    initial={{ opacity: 1, scale: 0.9, y: 20 }}
+                    initial={{ opacity: 0, scale: 0.9, y: 20 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     transition={{ type: "spring", duration: 0.6 }}
                     className="max-w-md w-full bg-card rounded-[2.5rem] p-8 md:p-10 text-center shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] border-4 border-border/50 relative overflow-hidden"
@@ -133,7 +133,7 @@ export default function PlayPage() {
             {/* Page header */}
             <div className="max-w-lg md:max-w-4xl lg:max-w-7xl mx-auto px-4 md:px-6 pt-8 pb-4">
                 <motion.div
-                    initial={{ opacity: 1, y: 16 }}
+                    initial={{ opacity: 0, y: 16 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.5 }}
                     className="rounded-3xl border border-border/70 bg-card/90 p-5 md:p-6 text-center shadow-sm"
@@ -153,7 +153,7 @@ export default function PlayPage() {
                 {/* Daily Streak Banner */}
                 {(child.rewards.streakDays ?? 0) > 0 && (
                     <motion.div
-                        initial={{ opacity: 1, y: 8 }}
+                        initial={{ opacity: 0, y: 8 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.2 }}
                         className="mt-3 flex items-center gap-3 bg-warning-light/90 border border-warning/40 rounded-2xl px-4 py-2.5 shadow-sm"
@@ -174,7 +174,7 @@ export default function PlayPage() {
                 {dueReviews > 0 && (
                     <Link href="/play/review">
                         <motion.div
-                            initial={{ opacity: 1, y: 8 }}
+                            initial={{ opacity: 0, y: 8 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.4 }}
                             whileHover={{ scale: 1.02 }}

@@ -113,7 +113,7 @@ export default function AddChildPage() {
                 <AnimatePresence mode="wait">
                     {/* Step 0: Name + Age */}
                     {step === 0 && (
-                        <motion.div key="step0" initial={{ opacity: 1, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }}>
+                        <motion.div key="step0" initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }}>
                             <Heading level={2} className="text-heading text-2xl mb-2">Bé tên gì nào? 👶</Heading>
                             <Body className="text-body mb-8">Đặt biệt danh thật dễ thương cho bé nhé!</Body>
 
@@ -153,7 +153,7 @@ export default function AddChildPage() {
 
                     {/* Step 1: Avatar */}
                     {step === 1 && (
-                        <motion.div key="step1" initial={{ opacity: 1, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }}>
+                        <motion.div key="step1" initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }}>
                             <Heading level={2} className="text-heading text-2xl mb-2">Chọn Avatar! 🎭</Heading>
                             <Body className="text-body mb-6">Ấn vào nhân vật bé yêu thích nhé!</Body>
                             <div className="grid grid-cols-3 gap-3">
@@ -187,7 +187,7 @@ export default function AddChildPage() {
 
                     {/* Step 2: Difficulty */}
                     {step === 2 && (
-                        <motion.div key="step2" initial={{ opacity: 1, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }}>
+                        <motion.div key="step2" initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }}>
                             <Heading level={2} className="text-heading text-2xl mb-2">Mức độ học 🎯</Heading>
                             <Body className="text-body mb-6">Bé đã biết tiếng Anh chưa?</Body>
                             <div className="space-y-3">

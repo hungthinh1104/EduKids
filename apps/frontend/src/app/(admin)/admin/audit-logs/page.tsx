@@ -262,7 +262,7 @@ export default function AdminAuditLogsPage() {
   return (
     <div className="space-y-6 md:space-y-8">
       <motion.section
-        initial={{ opacity: 1, y: 16 }}
+        initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         className="relative overflow-hidden rounded-[28px] border border-white/60 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-6 text-white shadow-[0_20px_70px_rgba(15,23,42,0.18)]"
       >
@@ -328,7 +328,7 @@ export default function AdminAuditLogsPage() {
         ].map((card, index) => (
           <motion.div
             key={card.label}
-            initial={{ opacity: 1, y: 14 }}
+            initial={{ opacity: 0, y: 14 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.06 }}
             className={`rounded-3xl border bg-gradient-to-br ${card.shell} p-5 shadow-sm`}
@@ -492,7 +492,7 @@ export default function AdminAuditLogsPage() {
             return (
               <motion.div
                 key={log.id}
-                initial={{ opacity: 1, y: 14 }}
+                initial={{ opacity: 0, y: 14 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.04 }}
                 className="overflow-hidden rounded-[28px] border border-border bg-card shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg"

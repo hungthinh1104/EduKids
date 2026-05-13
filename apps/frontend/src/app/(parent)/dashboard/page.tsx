@@ -17,7 +17,7 @@ const staggerContainer = {
 };
 
 const fadeUp = {
-    hidden: { opacity: 1, y: 24 },
+    hidden: { opacity: 0, y: 24 },
     visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
 };
 
@@ -55,7 +55,7 @@ export default function ParentDashboardPage() {
             {/* ── Profile Selector ── */}
             <section>
                 <motion.div
-                    initial={{ opacity: 1, y: -16 }}
+                    initial={{ opacity: 0, y: -16 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.5 }}
                     className="mb-6 md:mb-8 rounded-2xl md:rounded-3xl border border-primary/15 bg-gradient-to-r from-primary-light/50 via-card to-accent-light/40 p-4 md:p-6 md:p-7 shadow-sm"
@@ -66,7 +66,7 @@ export default function ParentDashboardPage() {
 
                 {!profileLoading && profiles.length > 0 && (
                     <motion.div
-                        initial={{ opacity: 1, y: 12 }}
+                        initial={{ opacity: 0, y: 12 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.3 }}
                         className="mb-4 md:mb-6 rounded-xl md:rounded-2xl border border-border/70 bg-card/90 p-2.5 md:p-3.5 md:p-4 shadow-sm"
@@ -148,7 +148,7 @@ export default function ParentDashboardPage() {
             {/* ── Analytics Overview (from AnalyticsOverviewDto) ── */}
             {!profileLoading && activeProfile && analytics?.hasData && (
                 <section>
-                    <motion.div initial={{ opacity: 1, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.6 }} className="flex items-center gap-2 md:gap-3 mb-4 md:mb-6">
+                    <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.6 }} className="flex items-center gap-2 md:gap-3 mb-4 md:mb-6">
                         <Image
                             src={activeProfile.avatar || `https://api.dicebear.com/9.x/bottts/svg?seed=${activeProfile.nickname}`}
                             alt={`Avatar của ${activeProfile.nickname}`}
@@ -193,7 +193,7 @@ export default function ParentDashboardPage() {
                     </motion.div>
 
                     {/* Activity bar chart — data from analytics.learningTime.chartData (ChartDataPoint[]) */}
-                    <motion.div initial={{ opacity: 1, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.6 }} className="bg-card/90 backdrop-blur-sm border border-border/70 shadow-[0_8px_24px_rgba(0,0,0,0.05)] rounded-lg md:rounded-[2rem] p-4 md:p-6 md:p-8">
+                    <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.6 }} className="bg-card/90 backdrop-blur-sm border border-border/70 shadow-[0_8px_24px_rgba(0,0,0,0.05)] rounded-lg md:rounded-[2rem] p-4 md:p-6 md:p-8">
                         <div className="flex items-center justify-between mb-4 md:mb-6 gap-2">
                             <div className="flex items-center gap-2 min-w-0">
                                 <TrendingUp size={18} className="md:w-5 md:h-5 text-primary flex-shrink-0" />

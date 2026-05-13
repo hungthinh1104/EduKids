@@ -121,7 +121,7 @@ export default function AchievementsPage() {
                 ) : (
                     <>
                         {/* Progress banner */}
-                        <motion.div initial={{ opacity: 1, y: 12 }} animate={{ opacity: 1, y: 0 }} className="bg-gradient-to-r from-warning to-warning-dark rounded-[2rem] p-5 text-white">
+                        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="bg-gradient-to-r from-warning to-warning-dark rounded-[2rem] p-5 text-white">
                             <div className="flex items-center justify-between mb-3">
                                 <div>
                                     <Heading level={3} color="textInverse" className="text-xl mb-0.5">Bộ sưu tập</Heading>
@@ -162,7 +162,7 @@ export default function AchievementsPage() {
                                         <motion.button
                                             key={badge.id}
                                             layout
-                                            initial={{ opacity: 1, scale: 0.8 }}
+                                            initial={{ opacity: 0, scale: 0.8 }}
                                             animate={{ opacity: isEarned ? 1 : 0.55, scale: 1 }}
                                             exit={{ opacity: 0, scale: 0.8 }}
                                             transition={{ delay: i * 0.04 }}

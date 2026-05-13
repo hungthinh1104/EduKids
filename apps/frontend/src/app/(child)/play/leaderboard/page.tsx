@@ -107,7 +107,7 @@ export default function LeaderboardPage() {
 
       <div className="max-w-lg md:max-w-4xl lg:max-w-6xl mx-auto px-4 md:px-6 pt-5 space-y-5">
         <motion.div
-          initial={{ opacity: 1, y: 12 }}
+          initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           className="rounded-[2rem] border border-warning/30 bg-gradient-to-r from-warning to-warning-dark p-5 text-white shadow-lg shadow-warning/20"
         >
@@ -147,7 +147,7 @@ export default function LeaderboardPage() {
           <>
             {currentUser && (
               <motion.div
-                initial={{ opacity: 1, y: 10 }}
+                initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="rounded-[2rem] border border-primary/30 bg-card/95 p-5 shadow-sm"
               >
@@ -197,7 +197,7 @@ export default function LeaderboardPage() {
                     return (
                       <motion.div
                         key={entry.childId}
-                        initial={{ opacity: 1, y: 18 }}
+                        initial={{ opacity: 0, y: 18 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: index * 0.08 }}
                         className={`rounded-[2rem] border bg-gradient-to-b p-5 shadow-sm ${style.wrapper} ${entry.isCurrentUser ? 'ring-2 ring-primary/40' : ''}`}
@@ -253,7 +253,7 @@ export default function LeaderboardPage() {
                   restOfBoard.map((entry, index) => (
                     <motion.div
                       key={entry.childId}
-                      initial={{ opacity: 1, x: -16 }}
+                      initial={{ opacity: 0, x: -16 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: index * 0.03 }}
                       className={`rounded-[1.75rem] border p-4 shadow-sm ${

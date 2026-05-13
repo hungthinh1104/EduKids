@@ -17,7 +17,7 @@ import {
 
 const RANGE_OPTIONS = ['7 ngày', '30 ngày', 'Tất cả'];
 
-const fadeUp = { hidden: { opacity: 1, y: 20 }, visible: { opacity: 1, y: 0 } };
+const fadeUp = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } };
 const stagger = { hidden: {}, visible: { transition: { staggerChildren: 0.08 } } };
 
 export default function ReportsPage() {
@@ -174,7 +174,7 @@ export default function ReportsPage() {
     return (
         <div className="space-y-8 pb-8">
             {/* Header */}
-            <motion.div initial={{ opacity: 1, y: -16 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+            <motion.div initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
                 <div className="flex-1">
                     <Heading level={2} className="text-heading text-2xl md:text-3xl mb-1">Báo cáo học tập 📊</Heading>
                     <Body className="text-body text-sm md:text-base">Theo dõi hành trình tiến bộ của bé</Body>
@@ -256,7 +256,7 @@ export default function ReportsPage() {
                     </motion.div>
 
                     {/* Activity chart with range selector */}
-                    <motion.div initial={{ opacity: 1, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="bg-card/60 dark:bg-card/60 backdrop-blur-md border border-white/40 dark:border-white/10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-[2rem] md:rounded-[2.5rem] p-4 md:p-8 mt-6 mb-8">
+                    <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="bg-card/60 dark:bg-card/60 backdrop-blur-md border border-white/40 dark:border-white/10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-[2rem] md:rounded-[2.5rem] p-4 md:p-8 mt-6 mb-8">
                         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-5 mb-5">
                             <div className="flex items-center gap-2">
                                 <TrendingUp size={18} className="md:w-5 md:h-5 text-primary flex-shrink-0" />
@@ -299,7 +299,7 @@ export default function ReportsPage() {
                     {/* Two-column: Mastered words + Badges */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mb-8">
                         {/* Mastered Vocabulary */}
-                        <motion.div initial={{ opacity: 1, x: -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} className="bg-card/60 dark:bg-card/60 backdrop-blur-md border border-white/40 dark:border-white/10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-[2rem] md:rounded-[2.5rem] p-4 md:p-8">
+                        <motion.div initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} className="bg-card/60 dark:bg-card/60 backdrop-blur-md border border-white/40 dark:border-white/10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-[2rem] md:rounded-[2.5rem] p-4 md:p-8">
                             <div className="flex items-center gap-2 mb-4 md:mb-5">
                                 <Star size={18} className="md:w-5 md:h-5 text-star fill-star flex-shrink-0" />
                                 <Heading level={4} className="text-heading text-base md:text-lg">Từ đã thuộc tốt nhất</Heading>
@@ -309,7 +309,7 @@ export default function ReportsPage() {
                                     return (
                                         <motion.div
                                             key={v.vocabularyId}
-                                            initial={{ opacity: 1, x: -10 }}
+                                            initial={{ opacity: 0, x: -10 }}
                                             whileInView={{ opacity: 1, x: 0 }}
                                             viewport={{ once: true }}
                                             transition={{ delay: i * 0.06 }}
@@ -331,7 +331,7 @@ export default function ReportsPage() {
                             </div>
                         </motion.div>
                         {/* Recent Badges */}
-                        <motion.div initial={{ opacity: 1, x: 20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} className="bg-card/60 dark:bg-card/60 backdrop-blur-md border border-white/40 dark:border-white/10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-[2rem] md:rounded-[2.5rem] p-4 md:p-8">
+                        <motion.div initial={{ opacity: 0, x: 20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} className="bg-card/60 dark:bg-card/60 backdrop-blur-md border border-white/40 dark:border-white/10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-[2rem] md:rounded-[2.5rem] p-4 md:p-8">
                             <div className="flex items-center gap-2 mb-4 md:mb-5">
                                 <Trophy size={18} className="md:w-5 md:h-5 text-accent flex-shrink-0" />
                                 <Heading level={4} className="text-heading text-base md:text-lg">Huy hiệu gần đây</Heading>
@@ -340,7 +340,7 @@ export default function ReportsPage() {
                                 {recentBadges.slice(0, 5).map((b, i) => (
                                     <motion.div
                                         key={b.id}
-                                        initial={{ opacity: 1, y: 10 }}
+                                        initial={{ opacity: 0, y: 10 }}
                                         whileInView={{ opacity: 1, y: 0 }}
                                         viewport={{ once: true }}
                                         transition={{ delay: i * 0.1 }}
@@ -364,7 +364,7 @@ export default function ReportsPage() {
                     </div>
 
                     {/* UC-09: Send Report ─────────────────────────────── */}
-                    <motion.div initial={{ opacity: 1, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
+                    <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
                         className="bg-card border-2 border-border rounded-2xl p-4 md:p-6"
                     >
                         <div className="flex items-center gap-2 mb-3 md:mb-4">
@@ -413,7 +413,7 @@ export default function ReportsPage() {
             {showSubscriptionModal && (
                 <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
                     <motion.div
-                        initial={{ opacity: 1, scale: 0.95 }}
+                        initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
                         className="bg-card rounded-2xl md:rounded-3xl shadow-2xl p-4 md:p-8 max-w-md w-full max-h-[90vh] overflow-y-auto"
                     >

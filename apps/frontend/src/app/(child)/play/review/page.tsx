@@ -298,7 +298,7 @@ export default function ReviewPage() {
                     })()
                 ) : (
                     <motion.div key={index}
-                        initial={{ opacity: 1, x: leaving ? -60 : 60, scale: 0.95 }}
+                        initial={{ opacity: 0, x: leaving ? -60 : 60, scale: 0.95 }}
                         animate={{ opacity: leaving ? 0 : 1, x: leaving ? -60 : 0, scale: leaving ? 0.95 : 1 }}
                         transition={{ duration: 0.26 }}
                         className="space-y-8 pt-2"

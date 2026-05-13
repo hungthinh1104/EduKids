@@ -149,24 +149,34 @@ export default function TopicDetailPage() {
                     <Body className="text-body mb-6">{error || 'Chủ đề không tồn tại'}</Body>
                     {is403 ? (
                         <Link href="/dashboard">
-                            <motion.div 
-                                whileHover={{ scale: 1.05 }} 
-                                whileTap={{ scale: 0.95 }} 
+                            <motion.div
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
                                 className="inline-flex items-center gap-2 bg-primary text-white px-6 py-3 rounded-xl font-heading font-bold shadow-lg"
                             >
                                 <ArrowLeft size={18} /> Về Dashboard chọn bé
                             </motion.div>
                         </Link>
                     ) : (
-                        <Link href="/play">
-                            <motion.div 
-                                whileHover={{ scale: 1.05 }} 
-                                whileTap={{ scale: 0.95 }} 
+                        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                            <motion.button
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                                onClick={() => window.location.reload()}
                                 className="inline-flex items-center gap-2 bg-primary text-white px-6 py-3 rounded-xl font-heading font-bold shadow-lg"
                             >
-                                <ArrowLeft size={18} /> Quay về bản đồ
-                            </motion.div>
-                        </Link>
+                                Tải lại
+                            </motion.button>
+                            <Link href="/play">
+                                <motion.div
+                                    whileHover={{ scale: 1.05 }}
+                                    whileTap={{ scale: 0.95 }}
+                                    className="inline-flex items-center gap-2 bg-card border-2 border-border text-body px-6 py-3 rounded-xl font-heading font-bold"
+                                >
+                                    <ArrowLeft size={18} /> Quay về bản đồ
+                                </motion.div>
+                            </Link>
+                        </div>
                     )}
                 </div>
             </div>
@@ -226,7 +236,7 @@ export default function TopicDetailPage() {
 
                         <div className="grid gap-6 lg:grid-cols-[1.45fr_0.95fr] lg:items-center">
                             <motion.div
-                                initial={{ opacity: 1, y: 20 }}
+                                initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ duration: 0.5 }}
                                 className="space-y-5"
@@ -285,7 +295,7 @@ export default function TopicDetailPage() {
                             </motion.div>
 
                             <motion.div
-                                initial={{ opacity: 1, y: 20, scale: 0.98 }}
+                                initial={{ opacity: 0, y: 20, scale: 0.98 }}
                                 animate={{ opacity: 1, y: 0, scale: 1 }}
                                 transition={{ duration: 0.55, delay: 0.08 }}
                                 className="relative overflow-hidden rounded-[1.75rem] border border-white/20 bg-white/10 shadow-2xl"
@@ -324,7 +334,7 @@ export default function TopicDetailPage() {
             {/* Progress panel */}
             <div className="max-w-lg md:max-w-4xl lg:max-w-7xl mx-auto px-6 md:px-8 mb-8">
                 <motion.div
-                    initial={{ opacity: 1, y: 16 }}
+                    initial={{ opacity: 0, y: 16 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.18 }}
                     className="bg-card border-2 border-border rounded-[1.75rem] p-5 md:p-6 shadow-xl"
@@ -372,7 +382,7 @@ export default function TopicDetailPage() {
             {/* Quick start */}
             <div className="max-w-lg md:max-w-4xl lg:max-w-7xl mx-auto px-6 md:px-8 mb-8">
                 <motion.div
-                    initial={{ opacity: 1, y: 16 }}
+                    initial={{ opacity: 0, y: 16 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.26 }}
                     className="rounded-[2rem] border-2 border-border bg-card shadow-xl p-5 md:p-6"
@@ -450,7 +460,7 @@ export default function TopicDetailPage() {
                         return (
                             <motion.div
                                 key={mode.id}
-                                initial={{ opacity: 1, scale: 0.9 }}
+                                initial={{ opacity: 0, scale: 0.9 }}
                                 animate={{ opacity: 1, scale: 1 }}
                                 transition={{ delay: 0.1 * i }}
                                 whileHover={!mode.locked ? { scale: 1.04, y: -4 } : undefined}
@@ -506,7 +516,7 @@ export default function TopicDetailPage() {
                         {vocabPreview.map((v, i) => (
                             <motion.div
                                 key={v.id}
-                                initial={{ opacity: 1, x: -10 }}
+                                initial={{ opacity: 0, x: -10 }}
                                 whileInView={{ opacity: 1, x: 0 }}
                                 viewport={{ once: true }}
                                 transition={{ delay: i * 0.07 }}

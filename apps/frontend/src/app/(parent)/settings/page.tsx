@@ -272,14 +272,14 @@ export default function SettingsPage() {
     return (
         <div className="pb-8">
             {/* Header */}
-            <motion.div initial={{ opacity: 1, y: -16 }} animate={{ opacity: 1, y: 0 }} className="mb-6 md:mb-8">
+            <motion.div initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }} className="mb-6 md:mb-8">
                 <Heading level={2} className="text-heading text-2xl md:text-3xl mb-1">Cài đặt ⚙️</Heading>
                 <Body className="text-body text-sm md:text-base">Quản lý tài khoản và tùy chỉnh trải nghiệm</Body>
             </motion.div>
 
             {/* Profile card */}
             <motion.div
-                initial={{ opacity: 1, y: 16 }}
+                initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 }}
                 className="bg-gradient-candy rounded-xl md:rounded-[2rem] p-4 md:p-6 flex flex-col sm:flex-row items-start sm:items-center gap-3 md:gap-5 mb-6 md:mb-8"
@@ -328,7 +328,7 @@ export default function SettingsPage() {
             <AnimatePresence mode="wait">
                 <motion.div
                     key={activeTab}
-                    initial={{ opacity: 1, y: 12 }}
+                    initial={{ opacity: 0, y: 12 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -8 }}
                     transition={{ duration: 0.2 }}
