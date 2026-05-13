@@ -1,6 +1,13 @@
+import Cookies from 'js-cookie';
 import { apiClient } from '@/shared/services/api.client';
 import { setTopicModeProgressChildScope } from '@/features/learning/utils/topic-mode-progress';
 import { backupParentSession } from '@/shared/utils/parent-session-handoff';
+
+const COOKIE_OPTS = {
+  secure: process.env.NODE_ENV === 'production',
+  sameSite: 'lax' as const,
+  path: '/',
+};
 
 export interface ChildProfile {
   id: number;
@@ -94,16 +101,17 @@ export const switchProfile = async (childId: number): Promise<ProfileSwitchRespo
   const response = await apiClient.post('/profiles/switch', { childId });
   const data = response.data.data;
   
-  // Store new tokens with LEARNER role (matching api.client.ts cookie names)
+  // Store new tokens with LEARNER role
   if (data.accessToken) {
-    document.cookie = `access_token=${data.accessToken}; path=/; max-age=${15 * 60}`; // 15 min
+    Cookies.set('access_token', data.accessToken, { ...COOKIE_OPTS, expires: 1 / 24 }); // 1h
   }
   if (data.refreshToken) {
-    document.cookie = `refresh_token=${data.refreshToken}; path=/; max-age=${7 * 24 * 60 * 60}`; // 7 days
+    Cookies.set('refresh_token', data.refreshToken, { ...COOKIE_OPTS, expires: 7 }); // 7 days
   }
-  
-  // CRITICAL: Set role=LEARNER so middleware can validate child routes
-  document.cookie = `role=LEARNER; path=/; max-age=${15 * 60}`; // 15 min, same as access_token
+
+  // role cookie phải sống cùng refresh_token (7 ngày), không phải access_token (15 phút)
+  // Middleware dùng role cookie để allow /play — nếu expire sớm sẽ bị kick ra
+  Cookies.set('role', 'LEARNER', { ...COOKIE_OPTS, expires: 7 });
 
   setTopicModeProgressChildScope(childId);
   
