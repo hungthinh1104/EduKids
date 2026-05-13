@@ -1,39 +1,45 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
+import Cookies from 'js-cookie';
 import { switchProfile } from '../api/profile.api';
 
 /**
- * Auto-switch to child profile when entering (child) routes
- * Ensures JWT has LEARNER role for content access
+ * Auto-switch to child profile when entering (child) routes.
+ * Only fires once per activeChildId — not on every pathname change.
  */
 export function ProfileAutoSwitcher({ activeChildId }: { activeChildId: number | null }) {
   const router = useRouter();
   const pathname = usePathname();
   const isChildRoute = pathname?.startsWith('/play');
+  const switchedForId = useRef<number | null>(null);
 
   useEffect(() => {
-    const performSwitch = async () => {
-      // Only auto-switch on child routes and if we have an active profile
-      if (!isChildRoute || !activeChildId) {
-        return;
-      }
+    if (!isChildRoute || !activeChildId) return;
 
+    // Already switched for this child in this session
+    if (switchedForId.current === activeChildId) return;
+
+    // Role cookie already correct — no need to re-switch
+    const role = Cookies.get('role');
+    if (role === 'LEARNER') {
+      switchedForId.current = activeChildId;
+      return;
+    }
+
+    const performSwitch = async () => {
       try {
-        // Switch profile to get LEARNER role JWT
         await switchProfile(activeChildId);
-        
-        // Force router refresh to use new JWT
+        switchedForId.current = activeChildId;
         router.refresh();
       } catch (error) {
         console.error('[ProfileAutoSwitcher] Failed to switch profile:', error);
-        // Don't redirect on error - let API error handlers deal with it
       }
     };
 
     performSwitch();
-  }, [activeChildId, isChildRoute, router, pathname]);
+  }, [activeChildId, isChildRoute, router]);
 
-  return null; // This is a behavior component, renders nothing
+  return null;
 }

@@ -44,22 +44,19 @@ export function restoreParentSession(): string | null {
       return null;
     }
 
-    Cookies.set('access_token', payload.accessToken, {
+    const cookieOpts = {
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-    });
+      sameSite: 'lax' as const,
+      path: '/',
+    };
+
+    Cookies.set('access_token', payload.accessToken, { ...cookieOpts, expires: 1 / 24 });
 
     if (payload.refreshToken) {
-      Cookies.set('refresh_token', payload.refreshToken, {
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-      });
+      Cookies.set('refresh_token', payload.refreshToken, { ...cookieOpts, expires: 7 });
     }
 
-    Cookies.set('role', payload.role, {
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-    });
+    Cookies.set('role', payload.role, { ...cookieOpts, expires: 7 });
 
     clearTopicModeProgressChildScope();
 
