@@ -1,0 +1,252 @@
+#!/usr/bin/env bash
+# ============================================================
+# set-azure-env.sh
+# Set all environment variables for edukids-backend on Azure
+# Container Apps (or VM via docker run).
+#
+# Usage:
+#   1. Fill in every value below (search for <FILL_IN>)
+#   2. chmod +x scripts/set-azure-env.sh
+#   3. az login
+#   4. ./scripts/set-azure-env.sh
+#
+# Requires: Azure CLI (az) installed and logged in.
+# ============================================================
+
+set -euo pipefail
+
+# ── Azure target ─────────────────────────────────────────────
+CONTAINER_APP_NAME="edukids-backend"          # change if different
+RESOURCE_GROUP="<FILL_IN>"                    # e.g. "edukids-rg"
+
+# ── REQUIRED — app will NOT start without these ──────────────
+NODE_ENV="production"
+PORT="3001"
+
+DATABASE_URL="<FILL_IN>"           # postgresql://user:pass@host:5432/db?sslmode=require
+DIRECT_DATABASE_URL="<FILL_IN>"    # same as DATABASE_URL if no PgBouncer
+POOLED_DATABASE_URL="<FILL_IN>"    # same as DATABASE_URL if no PgBouncer
+
+JWT_SECRET="<FILL_IN>"             # random string >= 32 chars, e.g. openssl rand -hex 32
+JWT_EXPIRY="15m"
+JWT_REFRESH_EXPIRY="7d"
+
+CORS_ORIGIN="<FILL_IN>"            # e.g. https://edukids.vercel.app
+FRONTEND_URL="<FILL_IN>"           # same as CORS_ORIGIN
+PUBLIC_API_BASE_URL="<FILL_IN>"    # e.g. https://edukids-backend.azurecontainerapps.io
+WEBSOCKET_CORS_ORIGIN="<FILL_IN>"  # same as CORS_ORIGIN
+
+REDIS_URL="<FILL_IN>"              # redis://:password@host:6379
+REDIS_HOST="<FILL_IN>"
+REDIS_PORT="6379"
+REDIS_PASSWORD="<FILL_IN>"
+REDIS_TLS="true"
+REDIS_USERNAME=""
+REDIS_PROGRESS_DB="1"
+REDIS_ANALYTICS_DB="2"
+
+# ── REQUIRED for features ────────────────────────────────────
+CLOUDINARY_CLOUD_NAME="<FILL_IN>"
+CLOUDINARY_API_KEY="<FILL_IN>"
+CLOUDINARY_API_SECRET="<FILL_IN>"
+CLOUDINARY_BASE_URL="https://res.cloudinary.com"
+
+AZURE_SPEECH_KEY="<FILL_IN>"
+AZURE_SPEECH_REGION="<FILL_IN>"    # e.g. southeastasia
+AZURE_SPEECH_LANGUAGE="en-US"
+AZURE_ENDPOINT=""
+PRONUNCIATION_PROVIDER="azure"
+
+GEMINI_API_KEY="<FILL_IN>"
+GEMINI_MODEL="gemini-2.5-flash"
+GEMINI_BASE_URL="https://generativelanguage.googleapis.com"
+
+GOOGLE_CLIENT_ID="<FILL_IN>"
+GOOGLE_CLIENT_SECRET="<FILL_IN>"
+
+SMTP_HOST="<FILL_IN>"              # e.g. smtp.gmail.com
+SMTP_PORT="587"
+SMTP_USER="<FILL_IN>"
+SMTP_PASSWORD="<FILL_IN>"
+SMTP_FROM="EduKids <noreply@edukids.app>"
+
+METRICS_TOKEN="<FILL_IN>"          # random string for /api/metrics auth
+METRICS_ENABLED="true"
+
+SENTRY_DSN="<FILL_IN>"             # leave empty "" to disable Sentry
+SENTRY_ENVIRONMENT="production"
+SENTRY_TRACES_SAMPLE_RATE="0.1"
+SENTRY_DEBUG_ENDPOINT_ENABLED="false"
+
+ADMIN_SEED_PASSWORD="<FILL_IN>"    # password for seeded admin account
+
+# ── Optional / defaults fine ─────────────────────────────────
+DB_SSL="true"
+APP_HOST="0.0.0.0"
+BACKEND_PORT="3001"
+DEFAULT_AVATAR_URL="https://api.dicebear.com/9.x/bottts/svg?seed=default"
+LOG_LEVEL="info"
+
+ANALYTICS_ENABLED="true"
+ANALYTICS_RETENTION_DAYS="90"
+ANALYTICS_MIN_DATA_POINTS="3"
+SESSION_TIMEOUT_MINUTES="30"
+DASHBOARD_REFRESH_INTERVAL="300"
+DASHBOARD_DEFAULT_RANGE="7d"
+
+PROGRESS_SYNC_ENABLED="true"
+PROGRESS_SYNC_MAX_LATENCY="5000"
+PROGRESS_SYNC_OFFLINE_RETENTION="604800"
+PROGRESS_SYNC_MAX_QUEUE_SIZE="100"
+PROGRESS_SYNC_MAX_RETRIES="3"
+PROGRESS_SYNC_DEVICE_SESSION_TIMEOUT="1800"
+PROGRESS_SYNC_HEARTBEAT_INTERVAL="30"
+PROGRESS_SYNC_METRICS_ENABLED="true"
+PROGRESS_SYNC_LOG_LEVEL="info"
+PROGRESS_SYNC_DEBUG="false"
+PROGRESS_SYNC_STATS_INTERVAL="60"
+
+WEBSOCKET_NAMESPACE="/progress"
+CONFLICT_RESOLUTION_STRATEGY="last-write-wins"
+CLOCK_SKEW_TOLERANCE="5000"
+SYNC_HISTORY_RETENTION_DAYS="30"
+
+TEMP_UPLOAD_PATH="/tmp/uploads"
+UPLOAD_DIR="/tmp/uploads"
+MAX_FILE_SIZE="10485760"
+MAX_FILE_SIZE_MB="10"
+MEDIA_PROCESSING_CONCURRENCY="3"
+MEDIA_PROCESSING_TIMEOUT="30000"
+
+SENTRY_RELEASE=""
+DOCKER_USERNAME=""
+DOCKER_PASSWORD=""
+
+# ── Validate: abort if any FILL_IN left ──────────────────────
+echo "🔍 Checking for unfilled values..."
+UNFILLED=()
+for var in \
+  RESOURCE_GROUP DATABASE_URL DIRECT_DATABASE_URL POOLED_DATABASE_URL \
+  JWT_SECRET CORS_ORIGIN FRONTEND_URL PUBLIC_API_BASE_URL WEBSOCKET_CORS_ORIGIN \
+  REDIS_URL REDIS_HOST REDIS_PASSWORD \
+  CLOUDINARY_CLOUD_NAME CLOUDINARY_API_KEY CLOUDINARY_API_SECRET \
+  AZURE_SPEECH_KEY AZURE_SPEECH_REGION \
+  GEMINI_API_KEY GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET \
+  SMTP_HOST SMTP_USER SMTP_PASSWORD \
+  METRICS_TOKEN ADMIN_SEED_PASSWORD; do
+  val="${!var}"
+  if [[ "$val" == "<FILL_IN>" || -z "$val" ]]; then
+    UNFILLED+=("$var")
+  fi
+done
+
+if [ ${#UNFILLED[@]} -gt 0 ]; then
+  echo "❌ The following variables are not filled in:"
+  for v in "${UNFILLED[@]}"; do echo "   • $v"; done
+  echo ""
+  echo "Fill them in the script then re-run."
+  exit 1
+fi
+
+echo "✅ All required values present. Pushing to Azure Container Apps..."
+echo "   App : $CONTAINER_APP_NAME"
+echo "   RG  : $RESOURCE_GROUP"
+echo ""
+
+# ── Push to Azure Container Apps ─────────────────────────────
+az containerapp update \
+  --name "$CONTAINER_APP_NAME" \
+  --resource-group "$RESOURCE_GROUP" \
+  --set-env-vars \
+    NODE_ENV="$NODE_ENV" \
+    PORT="$PORT" \
+    BACKEND_PORT="$BACKEND_PORT" \
+    APP_HOST="$APP_HOST" \
+    DATABASE_URL="$DATABASE_URL" \
+    DIRECT_DATABASE_URL="$DIRECT_DATABASE_URL" \
+    POOLED_DATABASE_URL="$POOLED_DATABASE_URL" \
+    DB_SSL="$DB_SSL" \
+    JWT_SECRET="$JWT_SECRET" \
+    JWT_EXPIRY="$JWT_EXPIRY" \
+    JWT_REFRESH_EXPIRY="$JWT_REFRESH_EXPIRY" \
+    CORS_ORIGIN="$CORS_ORIGIN" \
+    FRONTEND_URL="$FRONTEND_URL" \
+    PUBLIC_API_BASE_URL="$PUBLIC_API_BASE_URL" \
+    WEBSOCKET_CORS_ORIGIN="$WEBSOCKET_CORS_ORIGIN" \
+    REDIS_URL="$REDIS_URL" \
+    REDIS_HOST="$REDIS_HOST" \
+    REDIS_PORT="$REDIS_PORT" \
+    REDIS_PASSWORD="$REDIS_PASSWORD" \
+    REDIS_USERNAME="$REDIS_USERNAME" \
+    REDIS_TLS="$REDIS_TLS" \
+    REDIS_PROGRESS_DB="$REDIS_PROGRESS_DB" \
+    REDIS_ANALYTICS_DB="$REDIS_ANALYTICS_DB" \
+    CLOUDINARY_CLOUD_NAME="$CLOUDINARY_CLOUD_NAME" \
+    CLOUDINARY_API_KEY="$CLOUDINARY_API_KEY" \
+    CLOUDINARY_API_SECRET="$CLOUDINARY_API_SECRET" \
+    CLOUDINARY_BASE_URL="$CLOUDINARY_BASE_URL" \
+    AZURE_SPEECH_KEY="$AZURE_SPEECH_KEY" \
+    AZURE_SPEECH_REGION="$AZURE_SPEECH_REGION" \
+    AZURE_SPEECH_LANGUAGE="$AZURE_SPEECH_LANGUAGE" \
+    AZURE_ENDPOINT="$AZURE_ENDPOINT" \
+    PRONUNCIATION_PROVIDER="$PRONUNCIATION_PROVIDER" \
+    GEMINI_API_KEY="$GEMINI_API_KEY" \
+    GEMINI_MODEL="$GEMINI_MODEL" \
+    GEMINI_BASE_URL="$GEMINI_BASE_URL" \
+    GOOGLE_CLIENT_ID="$GOOGLE_CLIENT_ID" \
+    GOOGLE_CLIENT_SECRET="$GOOGLE_CLIENT_SECRET" \
+    SMTP_HOST="$SMTP_HOST" \
+    SMTP_PORT="$SMTP_PORT" \
+    SMTP_USER="$SMTP_USER" \
+    SMTP_PASSWORD="$SMTP_PASSWORD" \
+    SMTP_FROM="$SMTP_FROM" \
+    METRICS_TOKEN="$METRICS_TOKEN" \
+    METRICS_ENABLED="$METRICS_ENABLED" \
+    SENTRY_DSN="$SENTRY_DSN" \
+    SENTRY_ENVIRONMENT="$SENTRY_ENVIRONMENT" \
+    SENTRY_TRACES_SAMPLE_RATE="$SENTRY_TRACES_SAMPLE_RATE" \
+    SENTRY_DEBUG_ENDPOINT_ENABLED="$SENTRY_DEBUG_ENDPOINT_ENABLED" \
+    ADMIN_SEED_PASSWORD="$ADMIN_SEED_PASSWORD" \
+    LOG_LEVEL="$LOG_LEVEL" \
+    DEFAULT_AVATAR_URL="$DEFAULT_AVATAR_URL" \
+    ANALYTICS_ENABLED="$ANALYTICS_ENABLED" \
+    ANALYTICS_RETENTION_DAYS="$ANALYTICS_RETENTION_DAYS" \
+    ANALYTICS_MIN_DATA_POINTS="$ANALYTICS_MIN_DATA_POINTS" \
+    SESSION_TIMEOUT_MINUTES="$SESSION_TIMEOUT_MINUTES" \
+    DASHBOARD_REFRESH_INTERVAL="$DASHBOARD_REFRESH_INTERVAL" \
+    DASHBOARD_DEFAULT_RANGE="$DASHBOARD_DEFAULT_RANGE" \
+    PROGRESS_SYNC_ENABLED="$PROGRESS_SYNC_ENABLED" \
+    PROGRESS_SYNC_MAX_LATENCY="$PROGRESS_SYNC_MAX_LATENCY" \
+    PROGRESS_SYNC_OFFLINE_RETENTION="$PROGRESS_SYNC_OFFLINE_RETENTION" \
+    PROGRESS_SYNC_MAX_QUEUE_SIZE="$PROGRESS_SYNC_MAX_QUEUE_SIZE" \
+    PROGRESS_SYNC_MAX_RETRIES="$PROGRESS_SYNC_MAX_RETRIES" \
+    PROGRESS_SYNC_DEVICE_SESSION_TIMEOUT="$PROGRESS_SYNC_DEVICE_SESSION_TIMEOUT" \
+    PROGRESS_SYNC_HEARTBEAT_INTERVAL="$PROGRESS_SYNC_HEARTBEAT_INTERVAL" \
+    PROGRESS_SYNC_METRICS_ENABLED="$PROGRESS_SYNC_METRICS_ENABLED" \
+    PROGRESS_SYNC_LOG_LEVEL="$PROGRESS_SYNC_LOG_LEVEL" \
+    PROGRESS_SYNC_DEBUG="$PROGRESS_SYNC_DEBUG" \
+    PROGRESS_SYNC_STATS_INTERVAL="$PROGRESS_SYNC_STATS_INTERVAL" \
+    WEBSOCKET_NAMESPACE="$WEBSOCKET_NAMESPACE" \
+    CONFLICT_RESOLUTION_STRATEGY="$CONFLICT_RESOLUTION_STRATEGY" \
+    CLOCK_SKEW_TOLERANCE="$CLOCK_SKEW_TOLERANCE" \
+    SYNC_HISTORY_RETENTION_DAYS="$SYNC_HISTORY_RETENTION_DAYS" \
+    TEMP_UPLOAD_PATH="$TEMP_UPLOAD_PATH" \
+    UPLOAD_DIR="$UPLOAD_DIR" \
+    MAX_FILE_SIZE="$MAX_FILE_SIZE" \
+    MAX_FILE_SIZE_MB="$MAX_FILE_SIZE_MB" \
+    MEDIA_PROCESSING_CONCURRENCY="$MEDIA_PROCESSING_CONCURRENCY" \
+    MEDIA_PROCESSING_TIMEOUT="$MEDIA_PROCESSING_TIMEOUT"
+
+echo ""
+echo "✅ Environment variables updated. App is restarting..."
+echo ""
+
+# ── Run DB migrations ─────────────────────────────────────────
+echo "🗄️  Running Prisma migrations..."
+az containerapp exec \
+  --name "$CONTAINER_APP_NAME" \
+  --resource-group "$RESOURCE_GROUP" \
+  --command "npx prisma migrate deploy"
+
+echo ""
+echo "🎉 Done! Check app health at: $PUBLIC_API_BASE_URL/api/system/health"

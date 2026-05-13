@@ -3,7 +3,6 @@ import {
   UnauthorizedException,
   ConflictException,
   ForbiddenException,
-  BadRequestException,
   InternalServerErrorException,
   Logger,
 } from "@nestjs/common";
@@ -483,7 +482,4 @@ export class AuthService {
     };
   }
 
-  async loginWithOAuth(_provider: "facebook", _code: string) {
-    throw new BadRequestException("Facebook OAuth not implemented yet");
-  }
 }

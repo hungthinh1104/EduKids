@@ -30,8 +30,8 @@ export class SystemService {
       flashcard: true,
       quiz: true,
       gamification: true,
-      pronunciation: false,
-      analytics: false,
+      pronunciation: true,
+      analytics: true,
     };
   }
 

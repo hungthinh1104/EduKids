@@ -9,7 +9,6 @@ import {
   Res,
   HttpCode,
   HttpStatus,
-  NotImplementedException,
 } from "@nestjs/common";
 import type { Response } from "express";
 import {
@@ -335,27 +334,4 @@ export class AuthController {
     );
   }
 
-  /**
-   * OAuth Login - Facebook (Placeholder)
-   */
-  @Public()
-  @ApiOperation({
-    summary: "Login with Facebook OAuth",
-    description: "Redirect to Facebook OAuth consent screen",
-  })
-  @ApiResponse({ status: 501, description: "OAuth flow not available" })
-  @Get("facebook")
-  async loginWithFacebook() {
-    throw new NotImplementedException("Facebook OAuth is disabled");
-  }
-
-  /**
-   * OAuth Callback - Facebook (Placeholder)
-   */
-  @Public()
-  @ApiResponse({ status: 501, description: "OAuth flow not available" })
-  @Get("facebook/callback")
-  async facebookCallback() {
-    throw new NotImplementedException("Facebook OAuth is disabled");
-  }
 }
