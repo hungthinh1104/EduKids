@@ -30,6 +30,9 @@ import {
   ApprovalResponseDto,
   BatchValidationRequestDto,
   BatchValidationResponseDto,
+  BulkApproveRequestDto,
+  BulkRejectRequestDto,
+  RejectContentRequestDto,
 } from "../dto/validation.dto";
 import { ContentValidationService } from "../service/content-validation.service";
 import { ApprovalService } from "../service/approval.service";
@@ -326,8 +329,7 @@ export class ValidationController {
   })
   async rejectContent(
     @Param("contentId") contentId: string,
-    @Body()
-    body: { reason: string; flaggedIssues?: string[]; canResubmit?: boolean },
+    @Body() body: RejectContentRequestDto,
     @CurrentUser() user: JwtActor,
   ) {
     const actorId = this.getActorId(user);
@@ -452,7 +454,7 @@ export class ValidationController {
     description: "Approves multiple content items in a single request",
   })
   async bulkApproveContent(
-    @Body() body: { contentIds: string[]; comments?: string },
+    @Body() body: BulkApproveRequestDto,
     @CurrentUser() user: JwtActor,
   ) {
     const actorId = this.getActorId(user);
@@ -479,7 +481,7 @@ export class ValidationController {
     description: "Rejects multiple content items in a single request",
   })
   async bulkRejectContent(
-    @Body() body: { contentIds: string[]; reason: string },
+    @Body() body: BulkRejectRequestDto,
     @CurrentUser() user: JwtActor,
   ) {
     const actorId = this.getActorId(user);

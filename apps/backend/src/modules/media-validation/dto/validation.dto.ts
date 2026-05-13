@@ -393,6 +393,52 @@ export class BatchValidationRequestDto {
 }
 
 /**
+ * Bulk approve request
+ */
+export class BulkApproveRequestDto {
+  @IsArray()
+  @IsString({ each: true })
+  @IsNotEmpty({ each: true })
+  contentIds: string[];
+
+  @IsString()
+  @IsOptional()
+  comments?: string;
+}
+
+/**
+ * Bulk reject request
+ */
+export class BulkRejectRequestDto {
+  @IsArray()
+  @IsString({ each: true })
+  @IsNotEmpty({ each: true })
+  contentIds: string[];
+
+  @IsString()
+  @IsNotEmpty()
+  reason: string;
+}
+
+/**
+ * Reject content request
+ */
+export class RejectContentRequestDto {
+  @IsString()
+  @IsNotEmpty()
+  reason: string;
+
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  flaggedIssues?: string[];
+
+  @IsBoolean()
+  @IsOptional()
+  canResubmit?: boolean;
+}
+
+/**
  * Batch validation response
  */
 export class BatchValidationResponseDto {
