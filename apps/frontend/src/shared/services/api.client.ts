@@ -1,6 +1,7 @@
 import axios, { AxiosError } from 'axios';
 import Cookies from 'js-cookie';
 import { useAuthStore } from '../store/auth.store';
+import { COOKIE_OPTS, COOKIE_EXPIRY } from '../constants/cookies';
 
 /**
  * Resolve the API base URL.
@@ -165,12 +166,7 @@ apiClient.interceptors.response.use(
                 throw new Error('Invalid refresh response');
             }
 
-            // Lưu access token mới vào JS Cookie (1 giờ, khớp với auth.store)
-            Cookies.set('access_token', newAccessToken, {
-                secure: process.env.NODE_ENV === 'production',
-                sameSite: 'lax',
-                expires: 1 / 24,
-            });
+            Cookies.set('access_token', newAccessToken, { ...COOKIE_OPTS, expires: COOKIE_EXPIRY.ACCESS_TOKEN });
 
             // Cập nhật lại request interceptor cho các API khác sắp tới
             apiClient.defaults.headers.common['Authorization'] = `Bearer ${newAccessToken}`;

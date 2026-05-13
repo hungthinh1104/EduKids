@@ -2,6 +2,7 @@
 
 import Cookies from 'js-cookie';
 import { clearTopicModeProgressChildScope } from '@/features/learning/utils/topic-mode-progress';
+import { COOKIE_OPTS, COOKIE_EXPIRY } from '@/shared/constants/cookies';
 
 const STORAGE_KEY = 'edukids:parent-session-backup';
 
@@ -44,19 +45,13 @@ export function restoreParentSession(): string | null {
       return null;
     }
 
-    const cookieOpts = {
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax' as const,
-      path: '/',
-    };
-
-    Cookies.set('access_token', payload.accessToken, { ...cookieOpts, expires: 1 / 24 });
+    Cookies.set('access_token', payload.accessToken, { ...COOKIE_OPTS, expires: COOKIE_EXPIRY.ACCESS_TOKEN });
 
     if (payload.refreshToken) {
-      Cookies.set('refresh_token', payload.refreshToken, { ...cookieOpts, expires: 7 });
+      Cookies.set('refresh_token', payload.refreshToken, { ...COOKIE_OPTS, expires: COOKIE_EXPIRY.REFRESH_TOKEN });
     }
 
-    Cookies.set('role', payload.role, { ...cookieOpts, expires: 7 });
+    Cookies.set('role', payload.role, { ...COOKIE_OPTS, expires: COOKIE_EXPIRY.ROLE });
 
     clearTopicModeProgressChildScope();
 

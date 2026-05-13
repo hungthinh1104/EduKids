@@ -2,12 +2,7 @@ import Cookies from 'js-cookie';
 import { apiClient } from '@/shared/services/api.client';
 import { setTopicModeProgressChildScope } from '@/features/learning/utils/topic-mode-progress';
 import { backupParentSession } from '@/shared/utils/parent-session-handoff';
-
-const COOKIE_OPTS = {
-  secure: process.env.NODE_ENV === 'production',
-  sameSite: 'lax' as const,
-  path: '/',
-};
+import { COOKIE_OPTS, COOKIE_EXPIRY } from '@/shared/constants/cookies';
 
 export interface ChildProfile {
   id: number;
@@ -103,15 +98,13 @@ export const switchProfile = async (childId: number): Promise<ProfileSwitchRespo
   
   // Store new tokens with LEARNER role
   if (data.accessToken) {
-    Cookies.set('access_token', data.accessToken, { ...COOKIE_OPTS, expires: 1 / 24 }); // 1h
+    Cookies.set('access_token', data.accessToken, { ...COOKIE_OPTS, expires: COOKIE_EXPIRY.ACCESS_TOKEN });
   }
   if (data.refreshToken) {
-    Cookies.set('refresh_token', data.refreshToken, { ...COOKIE_OPTS, expires: 7 }); // 7 days
+    Cookies.set('refresh_token', data.refreshToken, { ...COOKIE_OPTS, expires: COOKIE_EXPIRY.REFRESH_TOKEN });
   }
-
-  // role cookie phải sống cùng refresh_token (7 ngày), không phải access_token (15 phút)
-  // Middleware dùng role cookie để allow /play — nếu expire sớm sẽ bị kick ra
-  Cookies.set('role', 'LEARNER', { ...COOKIE_OPTS, expires: 7 });
+  // role must outlive access_token — middleware checks this on every /play request
+  Cookies.set('role', 'LEARNER', { ...COOKIE_OPTS, expires: COOKIE_EXPIRY.ROLE });
 
   setTopicModeProgressChildScope(childId);
   

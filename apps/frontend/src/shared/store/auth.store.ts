@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import Cookies from 'js-cookie';
 import { clearTopicModeProgressChildScope } from '@/features/learning/utils/topic-mode-progress';
+import { COOKIE_OPTS, COOKIE_EXPIRY } from '@/shared/constants/cookies';
 
 // Tương đương với Entity User ở Backend
 export interface User {
@@ -32,32 +33,16 @@ export const useAuthStore = create<AuthState>((set) => ({
     isLoading: true, // Mặc định là true để chờ check auth lúc mới load app
 
     setAuth: (user, accessToken, refreshToken, role) => {
-        const isProd = process.env.NODE_ENV === 'production';
-        // access_token: 1 giờ (JWT_EXPIRY = 15m nhưng cookie sống lâu hơn để refresh kịp)
-        Cookies.set('access_token', accessToken, {
-            secure: isProd,
-            sameSite: 'lax',
-            expires: 1 / 24, // 1 hour
-        });
+        Cookies.set('access_token', accessToken, { ...COOKIE_OPTS, expires: COOKIE_EXPIRY.ACCESS_TOKEN });
 
         if (refreshToken) {
-            // refresh_token: 7 ngày (khớp JWT_REFRESH_EXPIRY)
-            Cookies.set('refresh_token', refreshToken, {
-                secure: isProd,
-                sameSite: 'lax',
-                expires: 7,
-            });
+            Cookies.set('refresh_token', refreshToken, { ...COOKIE_OPTS, expires: COOKIE_EXPIRY.REFRESH_TOKEN });
         } else {
             Cookies.remove('refresh_token');
         }
 
-        // Middleware đọc role từ cookie để phân quyền route (/admin)
         const normalizedRole = (role || user.role || '').toUpperCase();
-        Cookies.set('role', normalizedRole, {
-            secure: isProd,
-            sameSite: 'lax',
-            expires: 7, // sống cùng với refresh_token
-        });
+        Cookies.set('role', normalizedRole, { ...COOKIE_OPTS, expires: COOKIE_EXPIRY.ROLE });
 
         if (normalizedRole === 'PARENT' || normalizedRole === 'ADMIN') {
             clearTopicModeProgressChildScope();
