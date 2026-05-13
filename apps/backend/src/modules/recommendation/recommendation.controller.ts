@@ -32,6 +32,7 @@ import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { PrismaService } from '../../prisma/prisma.service';
+import { assertChildOwnership } from '../../common/utils/child-ownership.util';
 
 /**
  * Recommendation Controller
@@ -47,23 +48,6 @@ export class RecommendationController {
     private readonly recommendationService: RecommendationService,
     private readonly prisma: PrismaService,
   ) {}
-
-  private async assertChildOwnership(childId: number, parentId: number): Promise<void> {
-    const childProfile = await this.prisma.childProfile.findFirst({
-      where: {
-        id: childId,
-        parentId,
-        deletedAt: null,
-      },
-      select: {
-        id: true,
-      },
-    });
-
-    if (!childProfile) {
-      throw new NotFoundException('Child profile not found');
-    }
-  }
 
   /**
    * Get recommendations for a child
@@ -97,7 +81,7 @@ export class RecommendationController {
       throw new BadRequestException('Invalid child ID');
     }
 
-    await this.assertChildOwnership(childId, parentId);
+    await assertChildOwnership(this.prisma, childId, parentId);
     return this.recommendationService.getRecommendations(childId);
   }
 
@@ -141,7 +125,7 @@ export class RecommendationController {
       throw new BadRequestException('Invalid child ID');
     }
 
-    await this.assertChildOwnership(childId, parentId);
+    await assertChildOwnership(this.prisma, childId, parentId);
 
     try {
       return await this.recommendationService.applyRecommendation(
@@ -186,7 +170,7 @@ export class RecommendationController {
       throw new BadRequestException('Invalid child ID');
     }
 
-    await this.assertChildOwnership(childId, parentId);
+    await assertChildOwnership(this.prisma, childId, parentId);
     return this.recommendationService.getAppliedPaths(childId);
   }
 
@@ -219,7 +203,7 @@ export class RecommendationController {
       throw new BadRequestException('Invalid child ID');
     }
 
-    await this.assertChildOwnership(childId, parentId);
+    await assertChildOwnership(this.prisma, childId, parentId);
     return this.recommendationService.getStatistics(childId);
   }
 
@@ -251,7 +235,7 @@ export class RecommendationController {
       throw new BadRequestException('Invalid child ID');
     }
 
-    await this.assertChildOwnership(childId, parentId);
+    await assertChildOwnership(this.prisma, childId, parentId);
     return this.recommendationService.getInsights(childId);
   }
 
@@ -289,7 +273,7 @@ export class RecommendationController {
       throw new BadRequestException('Invalid child ID');
     }
 
-    await this.assertChildOwnership(childId, parentId);
+    await assertChildOwnership(this.prisma, childId, parentId);
 
     await this.recommendationService.saveFeedback(
       childId,
@@ -345,7 +329,7 @@ export class RecommendationController {
       throw new BadRequestException('No recommendations to dismiss');
     }
 
-    await this.assertChildOwnership(childId, parentId);
+    await assertChildOwnership(this.prisma, childId, parentId);
 
     return this.recommendationService.dismissRecommendations(
       childId,
@@ -387,7 +371,7 @@ export class RecommendationController {
       throw new BadRequestException('Invalid child ID');
     }
 
-    await this.assertChildOwnership(childId, parentId);
+    await assertChildOwnership(this.prisma, childId, parentId);
 
     return this.recommendationService.regenerateRecommendations(childId);
   }
@@ -419,7 +403,7 @@ export class RecommendationController {
       throw new BadRequestException('Invalid child ID');
     }
 
-    await this.assertChildOwnership(childId, parentId);
+    await assertChildOwnership(this.prisma, childId, parentId);
 
     return this.recommendationService.regenerateRecommendationsWithGemini(childId);
   }

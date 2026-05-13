@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { assertChildOwnership } from '../../common/utils/child-ownership.util';
 import { MailService } from '../mail/mail.service';
 import { MailTemplateService } from '../mail/mail-template.service';
 import {
@@ -27,13 +28,7 @@ export class ReportService {
   ) {}
 
   async assertChildOwnership(childId: number, parentId: number): Promise<void> {
-    const child = await this.prisma.childProfile.findFirst({
-      where: { id: childId, parentId, deletedAt: null },
-      select: { id: true },
-    });
-    if (!child) {
-      throw new NotFoundException('Child profile not found');
-    }
+    await assertChildOwnership(this.prisma, childId, parentId);
   }
 
   private toDateRangeStart(range: ReportRange, now: Date): Date | null {
