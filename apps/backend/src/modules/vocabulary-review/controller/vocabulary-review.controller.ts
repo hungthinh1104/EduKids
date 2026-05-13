@@ -12,7 +12,7 @@ import {
   Query,
   BadRequestException,
 } from "@nestjs/common";
-import { Request as ExpressRequest } from "express";
+import { RequestWithUser } from "../../../common/types/jwt-user.type";
 import {
   ApiTags,
   ApiBearerAuth,
@@ -171,8 +171,3 @@ export class VocabularyReviewController {
   }
 }
 
-type RequestWithUser = ExpressRequest & {
-  user: {
-    childId?: number;
-  };
-};

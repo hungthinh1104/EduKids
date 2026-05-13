@@ -10,7 +10,7 @@ import {
   HttpStatus,
 } from "@nestjs/common";
 import { ApiTags, ApiBearerAuth, ApiOperation } from "@nestjs/swagger";
-import { Request as ExpressRequest } from "express";
+import { RequestWithUser } from "../../common/types/jwt-user.type";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { RolesGuard } from "../../common/guards/roles.guard";
 import { Roles } from "../../common/decorators/roles.decorator";
@@ -22,8 +22,6 @@ interface AuthUser {
   email: string;
   role: string;
 }
-
-type RequestWithUser = ExpressRequest & { user: AuthUser };
 
 @ApiTags("Subscription")
 @ApiBearerAuth()

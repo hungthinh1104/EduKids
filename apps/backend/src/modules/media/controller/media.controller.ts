@@ -11,7 +11,6 @@ import {
   Body,
   HttpCode,
   HttpStatus,
-  Req,
   BadRequestException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -34,6 +33,7 @@ import { QueryMediaDto } from '../dto/query-media.dto';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../../common/guards/roles.guard';
 import { Roles } from '../../../common/decorators/roles.decorator';
+import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import { ALLOWED_MIME_TYPES, FILE_SIZE_LIMITS } from '../config/cloudinary.config';
 
 const mediaTempDir = join(tmpdir(), 'edukids-media-upload');
@@ -160,10 +160,9 @@ export class MediaController {
   async uploadMedia(
     @UploadedFile() file: Express.Multer.File,
     @Body() uploadDto: UploadMediaDto,
-    @Req() req: any,
+    @CurrentUser() user: { sub: number },
   ): Promise<MediaResponseDto> {
-    // [H-3 Fix] JwtStrategy attaches userId as `sub`, not `userId`
-    const adminId = String(req.user.sub);
+    const adminId = String(user.sub);
     return this.mediaService.uploadMedia(file, uploadDto, adminId);
   }
 
@@ -236,9 +235,8 @@ export class MediaController {
     status: 403,
     description: 'Forbidden - Admin role required',
   })
-  async deleteMedia(@Param('id') id: string, @Req() req: any): Promise<void> {
-    // [H-3 Fix] JwtStrategy attaches userId as `sub`, not `userId`
-    const adminId = String(req.user.sub);
+  async deleteMedia(@Param('id') id: string, @CurrentUser() user: { sub: number }): Promise<void> {
+    const adminId = String(user.sub);
     await this.mediaService.deleteMedia(id, adminId);
   }
 

@@ -362,6 +362,5 @@ type AuthUser = {
   childId?: number;
 };
 
-type RequestWithUser = ExpressRequest & {
-  user: AuthUser;
-};
+type RequestWithUser = ExpressRequest & { user: AuthUser };
+
