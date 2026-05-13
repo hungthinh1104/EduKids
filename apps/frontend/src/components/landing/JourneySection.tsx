@@ -20,7 +20,7 @@ export function JourneySection() {
                     transition={{ duration: 0.6 }}
                     className="text-center mb-16 sm:mb-20 md:mb-24"
                 >
-                    <Heading level={2} className="font-heading font-black text-4xl sm:text-5xl mb-6">Hành Trình Chinh Phục</Heading>
+                    <Heading level={2} className="font-heading font-black text-4xl sm:text-5xl mb-6 !text-white">Hành Trình Chinh Phục</Heading>
                     <Body className="text-slate-300 max-w-2xl mx-auto text-xl font-medium">Lộ trình học tập khoa học được thiết kế thành 3 chặng đường đầy cảm hứng.</Body>
                 </motion.div>
 
@@ -37,9 +37,9 @@ export function JourneySection() {
 
                     <div className="grid md:grid-cols-3 gap-6 sm:gap-8 md:gap-10 lg:gap-8 relative z-10">
                         {[
-                            { step: 1, title: 'Định Hình Phong Cách', desc: 'Thiết kế người bạn đồng hành 3D độc quyền, chọn biệt danh và bước vào học viện.', icon: Sparkles, color: 'text-primary', bg: 'bg-primary' },
-                            { step: 2, title: 'Hấp Thụ Kiến Thức', desc: 'Thưởng thức các đoạn video hoạt hình đỉnh cao, tự động tiếp thu từ vựng và mẫu câu.', icon: Play, color: 'text-secondary', bg: 'bg-secondary' },
-                            { step: 3, title: 'Thực Hành & Chiến Thắng', desc: 'Tham gia đấu trường Flashcard, luyện giọng cùng AI để rinh trọn kho báu cực đã.', icon: Trophy, color: 'text-accent', bg: 'bg-accent' },
+                            { step: 1, title: 'Định Hình Phong Cách', desc: 'Thiết kế người bạn đồng hành 3D độc quyền, chọn biệt danh và bước vào học viện.', icon: Sparkles, iconColor: 'text-blue-400', headingColor: 'text-blue-400', bg: 'bg-primary' },
+                            { step: 2, title: 'Hấp Thụ Kiến Thức', desc: 'Thưởng thức các đoạn video hoạt hình đỉnh cao, tự động tiếp thu từ vựng và mẫu câu.', icon: Play, iconColor: 'text-rose-400', headingColor: 'text-rose-400', bg: 'bg-secondary' },
+                            { step: 3, title: 'Thực Hành & Chiến Thắng', desc: 'Tham gia đấu trường Flashcard, luyện giọng cùng AI để rinh trọn kho báu cực đã.', icon: Trophy, iconColor: 'text-violet-400', headingColor: 'text-violet-400', bg: 'bg-accent' },
                         ].map((item, index) => (
                             <motion.div
                                 key={index}
@@ -49,14 +49,14 @@ export function JourneySection() {
                                 transition={{ duration: 0.7, delay: index * 0.2 }}
                                 className="flex flex-col items-center text-center group"
                             >
-                                <div className="w-48 sm:w-56 md:w-64 h-48 sm:h-56 md:h-64 bg-card/5 backdrop-blur-md rounded-[3rem] border border-white/10 p-8 flex flex-col items-center justify-center relative mb-8 group-hover:bg-card/10 transition-colors duration-500 shadow-2xl">
-                                    <div className={`absolute -top-8 w-16 h-16 ${item.bg} rounded-2xl rotate-12 flex items-center justify-center font-heading font-black text-2xl shadow-lg ring-4 ring-slate-900 group-hover:rotate-0 transition-transform duration-500`}>
+                                <div className="w-48 sm:w-56 md:w-64 h-48 sm:h-56 md:h-64 bg-white/5 backdrop-blur-md rounded-[3rem] border border-white/10 p-8 flex flex-col items-center justify-center relative mb-8 group-hover:bg-white/10 transition-colors duration-500 shadow-2xl">
+                                    <div className={`absolute -top-8 w-16 h-16 ${item.bg} rounded-2xl rotate-12 flex items-center justify-center font-heading font-black text-2xl text-white shadow-lg ring-4 ring-slate-900 group-hover:rotate-0 transition-transform duration-500`}>
                                         {item.step}
                                     </div>
-                                    <item.icon size={64} className={`${item.color} mb-6 opacity-80 group-hover:opacity-100 group-hover:scale-110 transition-all duration-500`} strokeWidth={1.5} />
-                                    <Heading level={3} className={`font-heading font-black text-2xl mb-3 ${item.color} drop-shadow-md`}>{item.title}</Heading>
+                                    <item.icon size={64} className={`${item.iconColor} mb-6 opacity-90 group-hover:opacity-100 group-hover:scale-110 transition-all duration-500`} strokeWidth={1.5} />
+                                    <h3 className={`font-heading font-black text-2xl mb-3 ${item.headingColor} drop-shadow-md`}>{item.title}</h3>
                                 </div>
-                                <Body className="text-slate-300 text-lg leading-relaxed max-w-sm px-2 sm:px-4 group-hover:text-white transition-colors">{item.desc}</Body>
+                                <p className="text-slate-300 text-lg leading-relaxed max-w-sm px-2 sm:px-4 group-hover:text-white transition-colors">{item.desc}</p>
                             </motion.div>
                         ))}
                     </div>
