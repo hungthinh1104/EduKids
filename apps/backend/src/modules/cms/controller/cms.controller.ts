@@ -12,7 +12,7 @@ import {
   HttpStatus,
   Req,
 } from "@nestjs/common";
-import { Request } from "express";
+import { RequestWithUser } from "../../../common/types/jwt-user.type";
 import {
   ApiTags,
   ApiOperation,
@@ -663,10 +663,3 @@ export class CmsController {
   }
 }
 
-type RequestWithUser = Request & {
-  user: {
-    userId?: number;
-    sub?: number;
-    id?: number;
-  };
-};

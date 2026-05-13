@@ -3,6 +3,7 @@ import type { Request } from "express";
 export interface JwtUser {
   sub: number;
   userId?: number;
+  id?: number;
   childId?: number;
   email: string;
   role: string;
