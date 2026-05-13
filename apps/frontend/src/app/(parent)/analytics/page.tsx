@@ -69,6 +69,7 @@ export default function ParentAnalyticsPage() {
     gamification: null,
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
   const activeChild = useMemo(
     () => profiles.find((p) => p.id === selectedChildId) ?? profiles[0],
@@ -85,6 +86,7 @@ export default function ParentAnalyticsPage() {
   const loadAnalytics = useCallback(async () => {
     if (!activeChild?.id) return;
     setIsLoading(true);
+    setFetchError(null);
 
     try {
       const [overview, learningTime, vocabulary, pronunciation, quiz, gamification] =
@@ -105,8 +107,8 @@ export default function ParentAnalyticsPage() {
         quiz: isNoDataResponse(quiz) ? null : quiz,
         gamification: isNoDataResponse(gamification) ? null : gamification,
       });
-    } catch (error) {
-      console.error('Failed to load analytics:', error);
+    } catch {
+      setFetchError('Không thể tải dữ liệu phân tích. Vui lòng thử lại.');
     } finally {
       setIsLoading(false);
     }
@@ -197,6 +199,18 @@ export default function ParentAnalyticsPage() {
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
             <Body className="mt-4 text-body">Đang tải dữ liệu...</Body>
           </div>
+        </div>
+      ) : fetchError ? (
+        <div className="max-w-7xl mx-auto text-center py-16">
+          <div className="text-5xl mb-4">😕</div>
+          <Heading level={3} className="text-heading text-xl mb-2">Không tải được dữ liệu</Heading>
+          <Body className="text-body mb-6">{fetchError}</Body>
+          <button
+            onClick={() => void loadAnalytics()}
+            className="px-6 py-2.5 bg-primary text-white font-heading font-bold rounded-xl hover:bg-primary-dark transition"
+          >
+            Thử lại
+          </button>
         </div>
       ) : (
         <div className="space-y-8">

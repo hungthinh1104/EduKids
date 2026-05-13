@@ -64,6 +64,23 @@ function RegisterPageContent() {
     const [isLoading, setIsLoading] = useState(false);
     const [globalError, setGlobalError] = useState<string | null>(null);
 
+    const [passwordValue, setPasswordValue] = useState('');
+
+    const passwordStrength = (() => {
+        const p = passwordValue;
+        if (!p) return 0;
+        let score = 0;
+        if (p.length >= 8) score++;
+        if (/[A-Z]/.test(p)) score++;
+        if (/[a-z]/.test(p)) score++;
+        if (/\d/.test(p)) score++;
+        if (/[^A-Za-z0-9]/.test(p)) score++;
+        return score;
+    })();
+
+    const strengthLabel = ['', 'Rất yếu', 'Yếu', 'Trung bình', 'Mạnh', 'Rất mạnh'][passwordStrength];
+    const strengthColor = ['', 'bg-error', 'bg-secondary', 'bg-warning', 'bg-success', 'bg-success'][passwordStrength];
+
     const {
         register,
         handleSubmit,
@@ -199,6 +216,11 @@ function RegisterPageContent() {
                 <div className="space-y-2">
                     <div className="flex justify-between items-center ml-1">
                         <label className="text-sm font-bold text-heading block">Mật khẩu</label>
+                        {passwordValue && (
+                            <Caption className={`text-xs font-bold ${passwordStrength >= 4 ? 'text-success' : passwordStrength >= 3 ? 'text-warning' : 'text-secondary'}`}>
+                                {strengthLabel}
+                            </Caption>
+                        )}
                     </div>
                     <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-muted">
@@ -210,8 +232,22 @@ function RegisterPageContent() {
                             placeholder="Mật khẩu (có chữ Hoa, số)"
                             className={`input-base pl-10 ${errors.password ? 'border-secondary focus:border-secondary focus:ring-secondary/20' : ''}`}
                             disabled={isLoading}
+                            onChange={(e) => {
+                                setPasswordValue(e.target.value);
+                                void register('password').onChange(e);
+                            }}
                         />
                     </div>
+                    {passwordValue && (
+                        <div className="flex gap-1 mt-1.5">
+                            {[1, 2, 3, 4, 5].map((i) => (
+                                <div
+                                    key={i}
+                                    className={`h-1.5 flex-1 rounded-full transition-all duration-300 ${i <= passwordStrength ? strengthColor : 'bg-border'}`}
+                                />
+                            ))}
+                        </div>
+                    )}
                     {errors.password && (
                         <Caption className="text-secondary text-sm font-medium ml-1 mt-1 leading-tight">{errors.password.message}</Caption>
                     )}

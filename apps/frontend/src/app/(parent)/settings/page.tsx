@@ -408,11 +408,13 @@ export default function SettingsPage() {
                                             </div>
                                         </div>
 
-                                        <SettingRow icon={<Sliders size={14} className="md:w-4 md:h-4" />} label="Độ khó học tập" desc="Điều chỉnh SRS">
-                                            <span className="inline-flex items-center gap-1 text-[10px] md:text-xs font-heading font-bold px-2 py-1 rounded-full bg-warning-light text-warning flex-shrink-0">
-                                                Sắp hỗ trợ
-                                            </span>
-                                        </SettingRow>
+                                        <div className="opacity-50 cursor-not-allowed pointer-events-none">
+                                            <SettingRow icon={<Sliders size={14} className="md:w-4 md:h-4" />} label="Độ khó học tập" desc="Điều chỉnh SRS">
+                                                <span className="inline-flex items-center gap-1 text-[10px] md:text-xs font-heading font-bold px-2 py-1 rounded-full bg-warning-light text-warning flex-shrink-0">
+                                                    Sắp hỗ trợ
+                                                </span>
+                                            </SettingRow>
+                                        </div>
                                         {selectedChild && (
                                             <SettingRow 
                                                 icon={<Trash2 size={14} className="md:w-4 md:h-4" />} 
@@ -509,11 +511,13 @@ export default function SettingsPage() {
                                         Đổi <ChevronRight size={12} className="md:w-3.5 md:h-3.5" />
                                     </button>
                                 </SettingRow>
-                                <SettingRow icon={<Shield size={14} className="md:w-4 md:h-4" />} label="Xác thực 2 lớp" desc="Bảo vệ tài khoản">
-                                    <span className="text-[9px] md:text-xs font-heading font-bold px-1.5 md:px-2 py-0.5 md:py-1 rounded-lg bg-warning-light text-warning flex-shrink-0 whitespace-nowrap">
-                                        Sắp hỗ trợ
-                                    </span>
-                                </SettingRow>
+                                <div className="opacity-50 cursor-not-allowed pointer-events-none">
+                                    <SettingRow icon={<Shield size={14} className="md:w-4 md:h-4" />} label="Xác thực 2 lớp" desc="Bảo vệ tài khoản">
+                                        <span className="text-[9px] md:text-xs font-heading font-bold px-1.5 md:px-2 py-0.5 md:py-1 rounded-lg bg-warning-light text-warning flex-shrink-0 whitespace-nowrap">
+                                            Sắp hỗ trợ
+                                        </span>
+                                    </SettingRow>
+                                </div>
                             </div>
 
                             <KidButton 
