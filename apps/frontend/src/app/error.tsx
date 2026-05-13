@@ -1,6 +1,7 @@
 'use client'; // Error boundaries must be Client Components
 
 import { useEffect } from 'react';
+import * as Sentry from '@sentry/nextjs';
 import { motion } from 'framer-motion';
 import { RefreshCcw, Home, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
@@ -15,13 +16,13 @@ export default function GlobalError({
     reset: () => void;
 }) {
     useEffect(() => {
-        console.error('EduKids Global Error Caught:', error);
-
         // ChunkLoadError = stale cached HTML referencing old deploy chunks.
         // Hard reload fetches fresh HTML + new chunk hashes automatically.
         if (error?.name === 'ChunkLoadError' || error?.message?.includes('Failed to load chunk')) {
             window.location.reload();
+            return;
         }
+        Sentry.captureException(error);
     }, [error]);
 
     return (

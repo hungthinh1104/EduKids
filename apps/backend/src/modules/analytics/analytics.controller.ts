@@ -3,7 +3,6 @@ import {
   Get,
   Query,
   UseGuards,
-  Request,
   UnauthorizedException,
 } from '@nestjs/common';
 import {
@@ -17,6 +16,8 @@ import {
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { JwtUser } from '../../common/types/jwt-user.type';
 import { AnalyticsService } from './analytics.service';
 import {
   AnalyticsQueryDto,
@@ -43,8 +44,8 @@ export class AnalyticsController {
     private readonly analyticsService: AnalyticsService,
   ) {}
 
-  private getParentId(req: any): number {
-    const parentId = req?.user?.userId ?? req?.user?.sub;
+  private getParentId(user: JwtUser): number {
+    const parentId = user?.userId ?? user?.sub;
     if (!parentId) {
       throw new UnauthorizedException('Invalid JWT payload');
     }
@@ -107,9 +108,9 @@ export class AnalyticsController {
   })
   async getAnalyticsOverview(
     @Query() query: AnalyticsQueryDto,
-    @Request() req: any,
+    @CurrentUser() user: JwtUser,
   ): Promise<AnalyticsOverviewDto | NoDataResponseDto> {
-    const parentId = this.getParentId(req);
+    const parentId = this.getParentId(user);
     const childId = query.childId || (await this.analyticsService.resolveChildId(parentId));
     const period = query.period || AnalyticsPeriod.WEEK;
 
@@ -153,9 +154,9 @@ export class AnalyticsController {
   })
   async getLearningTime(
     @Query() query: AnalyticsQueryDto,
-    @Request() req: any,
+    @CurrentUser() user: JwtUser,
   ): Promise<LearningTimeDto | NoDataResponseDto> {
-    const parentId = this.getParentId(req);
+    const parentId = this.getParentId(user);
     const childId = query.childId || (await this.analyticsService.resolveChildId(parentId));
     const period = query.period || AnalyticsPeriod.WEEK;
 
@@ -195,9 +196,9 @@ export class AnalyticsController {
   })
   async getVocabularyRetention(
     @Query() query: AnalyticsQueryDto,
-    @Request() req: any,
+    @CurrentUser() user: JwtUser,
   ): Promise<VocabularyRetentionDto | NoDataResponseDto> {
-    const parentId = this.getParentId(req);
+    const parentId = this.getParentId(user);
     const childId = query.childId || (await this.analyticsService.resolveChildId(parentId));
     const period = query.period || AnalyticsPeriod.WEEK;
 
@@ -241,9 +242,9 @@ export class AnalyticsController {
   })
   async getPronunciationAccuracy(
     @Query() query: AnalyticsQueryDto,
-    @Request() req: any,
+    @CurrentUser() user: JwtUser,
   ): Promise<PronunciationAccuracyDto | NoDataResponseDto> {
-    const parentId = this.getParentId(req);
+    const parentId = this.getParentId(user);
     const childId = query.childId || (await this.analyticsService.resolveChildId(parentId));
     const period = query.period || AnalyticsPeriod.WEEK;
 
@@ -287,9 +288,9 @@ export class AnalyticsController {
   })
   async getQuizPerformance(
     @Query() query: AnalyticsQueryDto,
-    @Request() req: any,
+    @CurrentUser() user: JwtUser,
   ): Promise<QuizPerformanceDto | NoDataResponseDto> {
-    const parentId = this.getParentId(req);
+    const parentId = this.getParentId(user);
     const childId = query.childId || (await this.analyticsService.resolveChildId(parentId));
     const period = query.period || AnalyticsPeriod.WEEK;
 
@@ -329,9 +330,9 @@ export class AnalyticsController {
   })
   async getGamificationProgress(
     @Query() query: AnalyticsQueryDto,
-    @Request() req: any,
+    @CurrentUser() user: JwtUser,
   ): Promise<GamificationProgressDto | NoDataResponseDto> {
-    const parentId = this.getParentId(req);
+    const parentId = this.getParentId(user);
     const childId = query.childId || (await this.analyticsService.resolveChildId(parentId));
     const period = query.period || AnalyticsPeriod.WEEK;
 

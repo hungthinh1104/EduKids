@@ -218,6 +218,13 @@ export default function PlayPage() {
                 </div>
 
                 <div className="relative z-10 space-y-8">
+                    {topics.length === 0 && (
+                        <div className="flex flex-col items-center justify-center py-16 text-center">
+                            <span className="text-6xl mb-4">📚</span>
+                            <p className="text-white/80 font-heading text-lg font-bold">Chưa có bài học nào</p>
+                            <p className="text-white/50 text-sm mt-1">Quay lại sau khi admin thêm chủ đề nhé!</p>
+                        </div>
+                    )}
                     {topics.map((topic, i) => (
                         <TopicNode
                             key={topic.id}

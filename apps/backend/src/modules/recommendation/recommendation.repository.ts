@@ -23,6 +23,31 @@ import { RecommendationGeminiApiService } from './recommendation.gemini-api.serv
 import { subDays } from 'date-fns';
 import { WeakTopicDetectionService } from './services/weak-topic-detection.service';
 
+type ChildActivity = {
+  activityType: string;
+  score?: number | null;
+  topicId?: number | null;
+  duration?: number | null;
+  createdAt?: Date;
+};
+
+type ChildProfileInput = {
+  id: number;
+  age?: number | null;
+  activities: ChildActivity[];
+};
+
+type ChildAnalysis = {
+  pronounciationWeakness: number;
+  quizScore: number;
+  reviewNeeded: number[];
+  engagementScore: number;
+  readinessScore: number;
+  vocabularyGap: number;
+  activityCount: number;
+  topicScores: Map<number, number[]>;
+};
+
 /**
  * Repository for AI recommendation generation and management
  * Generates personalized learning path suggestions based on child metrics
@@ -150,7 +175,7 @@ export class RecommendationRepository {
 
   private async generateCodeBasedRecs(
     childId: number,
-    childProfile: { id: number; age?: number | null; activities: any[] },
+    childProfile: ChildProfileInput,
   ): Promise<RecommendationDto[]> {
     const recommendations: RecommendationDto[] = [];
     const analysis = this.analyzeChildProgress(childProfile);
@@ -197,7 +222,7 @@ export class RecommendationRepository {
 
   private async tryGenerateGeminiRecommendations(
     childId: number,
-    childProfile: any,
+    childProfile: ChildProfileInput,
   ): Promise<RecommendationDto[]> {
     const analysis = this.analyzeChildProgress(childProfile);
 
@@ -523,7 +548,7 @@ export class RecommendationRepository {
   /**
    * Analyze child's learning progress
    */
-  private analyzeChildProgress(childProfile: any): any {
+  private analyzeChildProgress(childProfile: ChildProfileInput): ChildAnalysis {
     const activities = childProfile.activities || [];
 
     if (activities.length === 0) {
@@ -618,7 +643,7 @@ export class RecommendationRepository {
     type: RecommendationType,
     priority: RecommendationPriority,
     baseScore: number,
-    analysis: any,
+    analysis: ChildAnalysis,
   ): Promise<RecommendationDto> {
     const scoreBreakdown = this.calculateScoreBreakdown(type, analysis, baseScore);
     const learningPath = await this.generateLearningPath(childId, type, analysis);
@@ -647,7 +672,7 @@ export class RecommendationRepository {
    */
   private calculateScoreBreakdown(
     type: RecommendationType,
-    analysis: any,
+    analysis: ChildAnalysis,
     baseScore: number,
   ): AIScoreBreakdown {
     const breakdown: AIScoreBreakdown = {
@@ -668,7 +693,7 @@ export class RecommendationRepository {
   private async generateLearningPath(
     childId: number,
     type: RecommendationType,
-    analysis?: any,
+    analysis?: ChildAnalysis,
   ): Promise<LearningPathItemDto[]> {
     const publishedFilter = {
       status: CmsContentStatus.PUBLISHED,
@@ -831,7 +856,7 @@ export class RecommendationRepository {
   /**
    * Get description for recommendation type
    */
-  private getDescriptionForType(type: RecommendationType, analysis: any): string {
+  private getDescriptionForType(type: RecommendationType, analysis: ChildAnalysis): string {
     const descriptions: Record<RecommendationType, string> = {
       [RecommendationType.PRONUNCIATION_REFINEMENT]:
         'Your child showed areas for pronunciation improvement. This tailored path focuses on weak pronunciation patterns.',
@@ -875,7 +900,7 @@ export class RecommendationRepository {
   /**
    * Get default analysis for new learners
    */
-  private getDefaultAnalysis(): any {
+  private getDefaultAnalysis(): ChildAnalysis {
     return {
       pronounciationWeakness: 50,
       quizScore: 50,
@@ -1174,12 +1199,13 @@ export class RecommendationRepository {
    * Get most common recommendation type
    */
   private getMostCommonType(
-    recommendations: any[],
+    recommendations: Array<{ type: string }>,
   ): RecommendationType | undefined {
     const typeCounts = new Map<RecommendationType, number>();
     recommendations.forEach((rec) => {
-      const count = typeCounts.get(rec.type) || 0;
-      typeCounts.set(rec.type, count + 1);
+      const type = rec.type as RecommendationType;
+      const count = typeCounts.get(type) || 0;
+      typeCounts.set(type, count + 1);
     });
 
     return Array.from(typeCounts.entries()).sort(

@@ -1,3 +1,5 @@
+import { withSentryConfig } from '@sentry/nextjs';
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   compress: true,
@@ -71,6 +73,7 @@ const nextConfig = {
       wsOrigin,
       'ws:',
       'wss:',
+      'https://*.sentry.io',
     ]
       .filter(Boolean)
       .join(' ');
@@ -251,4 +254,14 @@ const nextConfig = {
   },
 };
 
-export default nextConfig;
+export default process.env.NEXT_PUBLIC_SENTRY_DSN
+  ? withSentryConfig(nextConfig, {
+      org: process.env.SENTRY_ORG,
+      project: process.env.SENTRY_PROJECT,
+      silent: true,
+      widenClientFileUpload: true,
+      hideSourceMaps: true,
+      disableLogger: true,
+      automaticVercelMonitors: false,
+    })
+  : nextConfig;
