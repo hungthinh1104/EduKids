@@ -28,7 +28,7 @@ function matchesPrefix(pathname: string, prefixes: string[]) {
     return prefixes.some((p) => pathname === p || pathname.startsWith(p + '/'));
 }
 
-export function proxy(request: NextRequest) {
+export function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl;
 
     // Allow Next.js internals and static files
