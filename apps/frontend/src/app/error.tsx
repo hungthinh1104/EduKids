@@ -15,8 +15,13 @@ export default function GlobalError({
     reset: () => void;
 }) {
     useEffect(() => {
-        // Log the error to an error reporting service
         console.error('EduKids Global Error Caught:', error);
+
+        // ChunkLoadError = stale cached HTML referencing old deploy chunks.
+        // Hard reload fetches fresh HTML + new chunk hashes automatically.
+        if (error?.name === 'ChunkLoadError' || error?.message?.includes('Failed to load chunk')) {
+            window.location.reload();
+        }
     }, [error]);
 
     return (
