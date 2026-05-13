@@ -183,14 +183,6 @@ const nextConfig = {
   },
 
   // ==========================================
-  // Turbopack Configuration (Next.js 16+)
-  // ==========================================
-  turbopack: {
-    // Fix: silence 'inferred workspace root' warning
-    root: import.meta.dirname,
-  },
-
-  // ==========================================
   // TypeScript Configuration
   // ==========================================
   typescript: {
