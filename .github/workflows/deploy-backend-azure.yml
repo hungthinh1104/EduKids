@@ -281,16 +281,51 @@ jobs:
     if: ${{ vars.DEPLOY_TARGET == 'container-app' }}
     environment: ${{ github.event.inputs.environment || 'production' }}
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
       - name: Azure login
         uses: azure/login@v2
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: Update Container App revision
-        uses: azure/container-apps-deploy-action@v2
-        with:
-          acrName: ${{ secrets.DOCKER_USERNAME }}
-          containerAppName: ${{ vars.CONTAINER_APP_NAME }}
-          resourceGroup: ${{ vars.AZURE_RESOURCE_GROUP }}
-          imageToDeploy: ${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}:${{ needs.build-and-push.outputs.image_tag }}
-          environmentVariables: SENTRY_RELEASE=${{ github.sha }}
+      - name: Update Container App image
+        run: |
+          az containerapp update \
+            --name "${{ vars.CONTAINER_APP_NAME }}" \
+            --resource-group "${{ vars.AZURE_RESOURCE_GROUP }}" \
+            --image "${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}:${{ needs.build-and-push.outputs.image_tag }}" \
+            --set-env-vars "SENTRY_RELEASE=${{ github.sha }}" \
+            --output none
+          echo "✅ Container App updated"
+
+      - name: Run Prisma migrations
+        run: |
+          echo "⏳ Waiting for new revision to start..."
+          sleep 20
+          az containerapp exec \
+            --name "${{ vars.CONTAINER_APP_NAME }}" \
+            --resource-group "${{ vars.AZURE_RESOURCE_GROUP }}" \
+            --command "npx prisma migrate deploy" \
+            --output none && echo "✅ Migrations applied" || echo "⚠️ Migration exec failed (may need manual run)"
+
+      - name: Health check
+        run: |
+          FQDN=$(az containerapp show \
+            --name "${{ vars.CONTAINER_APP_NAME }}" \
+            --resource-group "${{ vars.AZURE_RESOURCE_GROUP }}" \
+            --query "properties.configuration.ingress.fqdn" -o tsv)
+          echo "Checking https://${FQDN}/api/system/health"
+          for i in $(seq 1 20); do
+            STATUS=$(curl -sf -o /dev/null -w "%{http_code}" "https://${FQDN}/api/system/health" || echo "000")
+            if [[ "$STATUS" == "200" ]]; then
+              echo "✅ Backend healthy"
+              break
+            fi
+            echo "  attempt $i/20 — HTTP $STATUS"
+            sleep 5
+            if [[ "$i" == "20" ]]; then
+              echo "❌ Backend did not become healthy"
+              exit 1
+            fi
+          done
