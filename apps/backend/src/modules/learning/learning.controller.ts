@@ -17,7 +17,7 @@ import { LearningService } from "./learning.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { RolesGuard } from "../../common/guards/roles.guard";
 import { Roles } from "../../common/decorators/roles.decorator";
-import { UpdateProgressDto, ProgressResponseDto } from "./dto/progress.dto";
+import { UpdateProgressDto, ProgressResponseDto, LogVideoActivityDto, VideoActivityResponseDto } from "./dto/progress.dto";
 
 @ApiTags("Learning")
 @ApiBearerAuth("JWT-auth")
@@ -63,6 +63,28 @@ export class LearningController {
     }
 
     return await this.learningService.updateViewingProgress(childId, dto);
+  }
+
+  /**
+   * Log video watch completion — writes to activityLog with activityType=VIDEO
+   */
+  @Post("video-activity")
+  @Roles("LEARNER")
+  @ApiOperation({ summary: "Log video watch activity", description: "Records a VIDEO entry in activityLog with real watch duration. Requires LEARNER JWT." })
+  @ApiResponse({ status: 201, description: "Activity logged", type: VideoActivityResponseDto })
+  @ApiResponse({ status: 403, description: "Forbidden - Requires LEARNER role" })
+  async logVideoActivity(
+    @Body() dto: LogVideoActivityDto,
+    @Request() req,
+  ): Promise<VideoActivityResponseDto> {
+    const childId = req.user?.childId;
+    if (!childId) {
+      throw new HttpException(
+        "Child profile required. Please switch to child profile first.",
+        HttpStatus.FORBIDDEN,
+      );
+    }
+    return this.learningService.logVideoActivity(childId, dto);
   }
 
   // @ApiOperation({ summary: 'Get learning progress for child' })

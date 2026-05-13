@@ -223,6 +223,10 @@ export class ChildProfileService {
     // Update last activity timestamp
     await this.repository.updateLastActivity(childId);
 
+    // Invalidate existing parent sessions before issuing LEARNER token so the
+    // old PARENT-role JWT cannot be used in parallel with the new LEARNER one.
+    await this.repository.revokeAllSessions(parentId);
+
     // Generate new JWT tokens with LEARNER role and childId
     const payload = {
       sub: parentId,

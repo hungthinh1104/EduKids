@@ -41,6 +41,21 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       throw new UnauthorizedException("Invalid token or user inactive");
     }
 
+    // Session-revocation check: if no active refresh session exists for this
+    // user, their tokens have been revoked (logout / switchProfile) and the
+    // access token must be rejected even if it hasn't expired yet.
+    const hasActiveSession = await this.prisma.session.findFirst({
+      where: {
+        userId: payload.sub,
+        expiresAt: { gt: new Date() },
+      },
+      select: { id: true },
+    });
+
+    if (!hasActiveSession) {
+      throw new UnauthorizedException("Session revoked. Please log in again.");
+    }
+
     // Track DAU — fire-and-forget, Redis SADD deduplicates per day automatically
     void this.redisAnalytics
       .trackUserActivity(String(payload.sub))

@@ -1,9 +1,10 @@
-export type TopicLearningMode = 'flashcard' | 'quiz' | 'pronunciation';
+export type TopicLearningMode = 'flashcard' | 'quiz' | 'pronunciation' | 'video';
 
 export interface TopicModeProgress {
   flashcard: boolean;
   quiz: boolean;
   pronunciation: boolean;
+  video: boolean;
   updatedAt: string | null;
 }
 
@@ -11,6 +12,7 @@ const defaultProgress = (): TopicModeProgress => ({
   flashcard: false,
   quiz: false,
   pronunciation: false,
+  video: false,
   updatedAt: null,
 });
 
@@ -69,6 +71,7 @@ export const readTopicModeProgress = (topicId: number): TopicModeProgress => {
       flashcard: Boolean(parsed.flashcard),
       quiz: Boolean(parsed.quiz),
       pronunciation: Boolean(parsed.pronunciation),
+      video: Boolean(parsed.video),
       updatedAt: typeof parsed.updatedAt === 'string' ? parsed.updatedAt : null,
     };
   } catch {

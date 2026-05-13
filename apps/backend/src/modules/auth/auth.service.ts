@@ -231,19 +231,21 @@ export class AuthService {
   async logout(userId: number, token: string): Promise<{ message: string }> {
     // Try revoking a single session by token first (when client sends refresh token).
     // If nothing was revoked (e.g. client sent access token), revoke all sessions for safety.
-    const revokedByToken = token
-      ? await this.prisma.session.deleteMany({
-          where: {
-            userId,
-            token,
-          },
-        })
-      : { count: 0 };
-
-    if (revokedByToken.count === 0) {
-      await this.prisma.session.deleteMany({
-        where: { userId },
+    // Delete the specific session identified by token.
+    // If no token provided (or not found), fall back to revoking all sessions
+    // only when the child explicitly logs out — not as a side effect of a
+    // concurrent login creating a new session between the two deletes.
+    if (token) {
+      const revokedByToken = await this.prisma.session.deleteMany({
+        where: { userId, token },
       });
+      if (revokedByToken.count === 0) {
+        // Token not found (already expired/revoked); revoke all remaining sessions
+        // so stale sessions cannot be reused.
+        await this.prisma.session.deleteMany({ where: { userId } });
+      }
+    } else {
+      await this.prisma.session.deleteMany({ where: { userId } });
     }
 
     // Log audit

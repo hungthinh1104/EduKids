@@ -68,12 +68,15 @@ export default function AddChildPage() {
         } catch (error: unknown) {
             if (axios.isAxiosError(error)) {
                 const status = error.response?.status;
+                const serverMessage =
+                    error.response?.data?.message ||
+                    (Array.isArray(error.response?.data?.errors) ? error.response.data.errors[0] : null);
                 if (status === 400) {
-                    setSubmitError('Không thể tạo hồ sơ. Kiểm tra tuổi (4-12) hoặc đã đạt giới hạn 5 hồ sơ.');
+                    setSubmitError(serverMessage || 'Không thể tạo hồ sơ. Kiểm tra tuổi (4-12) hoặc đã đạt giới hạn hồ sơ của gói hiện tại.');
                 } else if (status === 401) {
                     setSubmitError('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
                 } else {
-                    setSubmitError('Không thể tạo hồ sơ lúc này. Vui lòng thử lại sau.');
+                    setSubmitError(serverMessage || 'Không thể tạo hồ sơ lúc này. Vui lòng thử lại sau.');
                 }
             } else {
                 setSubmitError('Đã xảy ra lỗi không xác định. Vui lòng thử lại.');
@@ -222,21 +225,33 @@ export default function AddChildPage() {
                     )}
                 </AnimatePresence>
 
-                {/* Navigation Buttons */}
-                <div className="flex gap-3 mt-8">
-                    {submitError && step === STEPS.length - 1 && (
-                        <div className="w-full mb-2 px-4 py-2 rounded-xl bg-secondary-light border border-secondary/30 text-secondary text-sm font-medium">
-                            {submitError}
-                        </div>
-                    )}
-
+                {/* Error + Navigation: grouped so buttons never jump */}
+                <div className="mt-6 space-y-3">
+                    <AnimatePresence>
+                        {submitError && (
+                            <motion.div
+                                key="submit-error"
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: 'auto' }}
+                                exit={{ opacity: 0, height: 0 }}
+                                transition={{ duration: 0.2 }}
+                                className="overflow-hidden"
+                            >
+                                <div className="flex items-start gap-3 px-4 py-3 rounded-2xl bg-red-50 border border-red-200 text-red-700 text-sm">
+                                    <span className="text-base leading-5 flex-shrink-0">⚠️</span>
+                                    <span className="font-medium leading-snug">{submitError}</span>
+                                </div>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+                    <div className="flex gap-3">
                     {step > 0 && (
-                        <KidButton variant="outline" onClick={() => setStep(step - 1)} className="flex-1" disabled={isSubmitting}>
+                        <KidButton variant="outline" onClick={() => { setStep(step - 1); setSubmitError(null); }} className="flex-1" disabled={isSubmitting}>
                             <ChevronLeft size={20} /> Quay lại
                         </KidButton>
                     )}
                     {step < STEPS.length - 1 ? (
-                        <KidButton variant="default" onClick={() => setStep(step + 1)} disabled={!canGoNext || isSubmitting} className="flex-1">
+                        <KidButton variant="default" onClick={() => { setStep(step + 1); setSubmitError(null); }} disabled={!canGoNext || isSubmitting} className="flex-1">
                             Tiếp theo <ChevronRight size={20} />
                         </KidButton>
                     ) : (
@@ -244,6 +259,7 @@ export default function AddChildPage() {
                             {isSubmitting ? 'Đang tạo hồ sơ...' : '🎉 Tạo nhân vật!'}
                         </KidButton>
                     )}
+                </div>
                 </div>
             </div>
         </div>

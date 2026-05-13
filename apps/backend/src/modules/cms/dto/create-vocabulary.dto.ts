@@ -7,6 +7,7 @@ import {
   IsOptional,
   IsEnum,
   IsNumber,
+  IsUrl,
 } from "class-validator";
 import { ContentStatus } from "./create-topic.dto";
 
@@ -72,7 +73,7 @@ export class CreateVocabularyDto {
     required: false,
   })
   @IsOptional()
-  @IsString()
+  @IsUrl({ require_protocol: true, require_host: true, protocols: ['https'] })
   imageUrl?: string;
 
   @ApiProperty({
@@ -81,7 +82,7 @@ export class CreateVocabularyDto {
     required: false,
   })
   @IsOptional()
-  @IsString()
+  @IsUrl({ require_protocol: true, require_host: true, protocols: ['https'] })
   audioUrl?: string;
 
   @ApiProperty({

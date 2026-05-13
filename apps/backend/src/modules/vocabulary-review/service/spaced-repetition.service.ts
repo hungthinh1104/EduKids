@@ -26,8 +26,10 @@ export class SpacedRepetitionService {
   ) {
     let newInterval: number;
 
-    // Calculate ease factor based on difficulty
-    const easeAdjustment = 0.1 * (5 - difficulty);
+    // Per SM-2: ease factor should NOT be adjusted on the very first review
+    // (reviewCount === 1 means this is the first time the item is being reviewed).
+    // Only start adjusting ease from the second review onward.
+    const easeAdjustment = reviewCount <= 1 ? 0 : 0.1 * (5 - difficulty);
     const newEase = Math.max(
       this.MIN_EASE,
       Math.min(this.MAX_EASE, currentEase + easeAdjustment),
@@ -37,7 +39,7 @@ export class SpacedRepetitionService {
     if (difficulty < 3) {
       // Failed to recall - restart learning
       newInterval = 1; // 1 day
-    } else if (reviewCount === 1) {
+    } else if (reviewCount <= 1) {
       // First successful review
       newInterval = 1;
     } else if (reviewCount === 2) {

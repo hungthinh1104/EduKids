@@ -33,11 +33,6 @@ const nextConfig = {
         hostname: 'res.cloudinary.com',
         pathname: '/**',
       },
-        {
-          protocol: 'https',
-          hostname: 'loremflickr.com',
-          pathname: '/**',
-        },
     ],
     // Optimize images with external service
     minimumCacheTTL: 60 * 60 * 24 * 365, // 1 year
@@ -85,8 +80,7 @@ const nextConfig = {
       "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://vercel.live blob:",
       "worker-src 'self' blob:",
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-      //"img-src 'self' data: blob: https:",
-      "img-src 'self' data: blob: https: https://loremflickr.com",
+      "img-src 'self' data: blob: https://res.cloudinary.com https://api.dicebear.com https://loremflickr.com https://images.unsplash.com",
       "font-src 'self' data: https://fonts.gstatic.com",
       `connect-src ${connectSrc}`,
       "frame-ancestors 'self'",

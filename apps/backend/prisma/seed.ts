@@ -749,35 +749,11 @@ async function main() {
   console.log('🏆 Seeding Badges...');
   const badges = await Promise.all([
     prisma.badge.upsert({
-      where: { name: 'First Word' },
+      where: { name: 'First Steps' },
       update: {},
       create: {
-        name: 'First Word',
-        description: 'Learn your first word',
-      },
-    }),
-    prisma.badge.upsert({
-      where: { name: '10 Words Master' },
-      update: {},
-      create: {
-        name: '10 Words Master',
-        description: 'Master 10 words',
-      },
-    }),
-    prisma.badge.upsert({
-      where: { name: '7 Day Streak' },
-      update: {},
-      create: {
-        name: '7 Day Streak',
-        description: 'Learn for 7 days in a row',
-      },
-    }),
-    prisma.badge.upsert({
-      where: { name: 'Perfect Score' },
-      update: {},
-      create: {
-        name: 'Perfect Score',
-        description: 'Get 100% on a quiz',
+        name: 'First Steps',
+        description: 'Complete your first lesson',
       },
     }),
     prisma.badge.upsert({
@@ -785,7 +761,31 @@ async function main() {
       update: {},
       create: {
         name: 'Pronunciation Star',
-        description: 'Perfect pronunciation 10 times',
+        description: 'Complete 10 pronunciation practices with 4+ stars',
+      },
+    }),
+    prisma.badge.upsert({
+      where: { name: 'Quiz Master' },
+      update: {},
+      create: {
+        name: 'Quiz Master',
+        description: 'Complete 10 quizzes with 80%+ accuracy',
+      },
+    }),
+    prisma.badge.upsert({
+      where: { name: 'Flashcard Champion' },
+      update: {},
+      create: {
+        name: 'Flashcard Champion',
+        description: 'Complete 25 flashcard activities',
+      },
+    }),
+    prisma.badge.upsert({
+      where: { name: '7-Day Streak' },
+      update: {},
+      create: {
+        name: '7-Day Streak',
+        description: 'Practice for 7 consecutive days',
       },
     }),
   ]);

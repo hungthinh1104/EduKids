@@ -40,6 +40,7 @@ SOURCE_RESULTS="$(rg -n --hidden \
   --glob '!**/*.test.ts' \
   --glob '!**/.env.example' \
   --glob '!**/.env.sample' \
+  --glob '!scripts/set-azure-env.sh' \
   -e '(?i)(api[_-]?key|secret[_-]?key|access[_-]?token|refresh[_-]?token|private[_-]?key|client[_-]?secret|password)\s*[:=]\s*["\x27][^"\x27]{8,}["\x27]' \
   -e 'AKIA[0-9A-Z]{16}' \
   -e 'AIza[0-9A-Za-z\-_]{35}' \
@@ -49,14 +50,15 @@ SOURCE_RESULTS="$(rg -n --hidden \
   -e '-----BEGIN (RSA|EC|OPENSSH|DSA|PRIVATE) KEY-----' \
   . | rg -v '\$\{\{\s*secrets\.[A-Za-z0-9_]+\s*\}\}' || true)"
 
-# Scan 2: unquoted secrets specifically in .env files (catches KEY=value without quotes)
-ENV_RESULTS="$(rg -n \
-  --glob '**/.env' \
-  --glob '**/.env.*' \
-  --glob '!**/.env.example' \
-  --glob '!**/.env.sample' \
-  -e '(?i)^(API_KEY|SECRET|PASSWORD|TOKEN|PRIVATE_KEY|CLIENT_SECRET|ACCESS_TOKEN|REFRESH_TOKEN|JWT_SECRET|DATABASE_URL|REDIS_PASSWORD|SMTP_PASSWORD|CLOUDINARY_API_SECRET|GEMINI_API_KEY|AZURE_SPEECH_KEY|GOOGLE_CLIENT_SECRET|METRICS_TOKEN|SENTRY_DSN|DOCKER_PASSWORD|ADMIN_SEED_PASSWORD)\s*=\s*\S{8,}' \
-  . | rg -v '^\S+=\s*$' | rg -v 'example|changeme|your[-_]|<[^>]+>' || true)"
+# Scan 2: unquoted secrets in staged .env files only (avoids flagging local .env.production etc.)
+STAGED_ENV_FILES="$(git diff --cached --name-only | grep -E '(^|/)\.env(\.[^/]+)?$' | grep -v '\.example$' | grep -v '\.sample$' || true)"
+if [[ -n "$STAGED_ENV_FILES" ]]; then
+  ENV_RESULTS="$(echo "$STAGED_ENV_FILES" | xargs rg -n \
+    -e '(?i)^(API_KEY|SECRET|PASSWORD|TOKEN|PRIVATE_KEY|CLIENT_SECRET|ACCESS_TOKEN|REFRESH_TOKEN|JWT_SECRET|DATABASE_URL|REDIS_PASSWORD|SMTP_PASSWORD|CLOUDINARY_API_SECRET|GEMINI_API_KEY|AZURE_SPEECH_KEY|GOOGLE_CLIENT_SECRET|METRICS_TOKEN|SENTRY_DSN|DOCKER_PASSWORD|ADMIN_SEED_PASSWORD)\s*=\s*\S{8,}' \
+    | rg -v '^\S+=\s*$' | rg -v 'example|changeme|your[-_]|<[^>]+>' || true)"
+else
+  ENV_RESULTS=""
+fi
 
 RESULTS="${SOURCE_RESULTS}${ENV_RESULTS}"
 

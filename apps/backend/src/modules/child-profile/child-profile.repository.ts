@@ -242,4 +242,12 @@ export class ChildProfileRepository {
   calculateLevel(totalPoints: number): number {
     return Math.floor(totalPoints / 50) + 1;
   }
+
+  /**
+   * Revoke all active sessions for a user.
+   * Called after switchProfile so the old parent-role token cannot be reused.
+   */
+  async revokeAllSessions(userId: number): Promise<void> {
+    await this.prisma.session.deleteMany({ where: { userId } });
+  }
 }

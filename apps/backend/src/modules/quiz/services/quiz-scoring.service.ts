@@ -35,14 +35,15 @@ export class QuizScoringService {
   }
 
   checkQuizBadges(totalQuizzes: number, accuracy: number): string | undefined {
-    if (totalQuizzes === 10 && accuracy >= 80) {
-      return "🏅 Quiz Enthusiast: 10 Quizzes Completed!";
+    // Check highest tier first so the most prestigious badge is returned
+    if (totalQuizzes >= 50) {
+      return "👑 Quiz Legend: 50 Quizzes Completed!";
     }
-    if (totalQuizzes === 25 && accuracy >= 85) {
+    if (totalQuizzes >= 25 && accuracy >= 85) {
       return "🏆 Quiz Master: 25 Quizzes with Excellence!";
     }
-    if (totalQuizzes === 50) {
-      return "👑 Quiz Legend: 50 Quizzes Completed!";
+    if (totalQuizzes >= 10 && accuracy >= 80) {
+      return "🏅 Quiz Enthusiast: 10 Quizzes Completed!";
     }
     return undefined;
   }

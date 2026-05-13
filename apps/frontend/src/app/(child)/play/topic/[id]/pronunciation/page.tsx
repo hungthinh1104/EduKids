@@ -300,6 +300,7 @@ export default function PronunciationPage() {
                                                     const chunks: Float32Array[] = [];
                                                     let ctx: AudioContext | null = null;
                                                     let processor: ScriptProcessorNode | null = null;
+                                                    let silentGain: GainNode | null = null;
                                                     let source: MediaStreamAudioSourceNode | null = null;
                                                     let stream: MediaStream | null = null;
                                                     let recordedSampleRate = 16000;
@@ -315,8 +316,13 @@ export default function PronunciationPage() {
                                                         processor.onaudioprocess = (e) => {
                                                             chunks.push(new Float32Array(e.inputBuffer.getChannelData(0)));
                                                         };
+                                                        // Use a silent gain node so onaudioprocess fires
+                                                        // without playing mic audio through the speakers
+                                                        silentGain = ctx.createGain();
+                                                        silentGain.gain.value = 0;
                                                         source.connect(processor);
-                                                        processor.connect(ctx.destination);
+                                                        processor.connect(silentGain);
+                                                        silentGain.connect(ctx.destination);
                                                     } catch {
                                                         if (stream) {
                                                             stream.getTracks().forEach((track) => track.stop());
@@ -325,16 +331,19 @@ export default function PronunciationPage() {
                                                     }
 
                                                     // ── 3-second countdown ───────────────────────────────
-                                                    for (let c = 2; c >= 0; c--) {
+                                                    for (let c = 2; c >= 1; c--) {
                                                         await new Promise<void>((res) => setTimeout(res, 1000));
                                                         if (!isMountedRef.current) return;
                                                         setCountdown(c);
                                                     }
+                                                    await new Promise<void>((res) => setTimeout(res, 1000));
+                                                    if (!isMountedRef.current) return;
 
                                                     // ── stop recording & encode WAV base64 ───────────────
                                                     let audioBase64: string | undefined;
                                                     if (processor && source && ctx && stream) {
                                                         processor.disconnect();
+                                                        silentGain?.disconnect();
                                                         source.disconnect();
                                                         stream.getTracks().forEach((t) => t.stop());
                                                         activeStreamRef.current = null;
@@ -419,9 +428,13 @@ export default function PronunciationPage() {
                                         </div>
                                     </div>
                                             <StarRating stars={confidenceToStars(confidence)} />
-                                            <Caption className="text-success font-bold">
-                                                +{starsToPoints(confidenceToStars(confidence))} ⭐ điểm
-                                            </Caption>
+                                            {starsToPoints(confidenceToStars(confidence)) > 0 ? (
+                                                <Caption className="text-success font-bold">
+                                                    +{starsToPoints(confidenceToStars(confidence))} ⭐ điểm
+                                                </Caption>
+                                            ) : (
+                                                <Caption className="text-caption">Luyện tiếp để nhận điểm thưởng!</Caption>
+                                            )}
                                         </div>
 
                                         {/* Feedback message */}

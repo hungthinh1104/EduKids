@@ -56,7 +56,7 @@ export class MediaController {
   constructor(private readonly mediaService: MediaService) { }
 
   @Post('upload')
-  @Roles('admin')
+  @Roles('ADMIN')
   @UseInterceptors(
     FileInterceptor('file', {
       storage: diskStorage({
@@ -218,7 +218,7 @@ export class MediaController {
   }
 
   @Delete(':id')
-  @Roles('admin')
+  @Roles('ADMIN')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({
     summary: 'Delete media',
@@ -243,7 +243,7 @@ export class MediaController {
   }
 
   @Post(':id/retry')
-  @Roles('admin')
+  @Roles('ADMIN')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Retry failed processing',
@@ -267,7 +267,7 @@ export class MediaController {
   }
 
   @Get('stats/pending')
-  @Roles('admin')
+  @Roles('ADMIN')
   @ApiOperation({
     summary: 'Get pending media count',
     description: 'Get count of media pending or in processing (monitoring)',

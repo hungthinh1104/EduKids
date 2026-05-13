@@ -610,22 +610,19 @@ export class AzureSpeechPronunciationProvider implements PronunciationProvider {
     completenessScore?: number;
     prosodyScore?: number;
   }): number {
-    const scoreEntries = [
-      input.accuracyScore,
-      input.fluencyScore,
-      input.completenessScore ?? 0,
-      input.prosodyScore ?? 0,
-    ].sort((left, right) => left - right);
-
     if (input.prosodyScore === undefined) {
-      return this.clampScore(input.accuracyScore * 0.5 + input.fluencyScore * 0.5);
+      return this.clampScore(
+        input.accuracyScore * 0.5 +
+          input.fluencyScore * 0.3 +
+          (input.completenessScore ?? 0) * 0.2,
+      );
     }
 
     return this.clampScore(
-      scoreEntries[0] * 0.4 +
-        scoreEntries[1] * 0.2 +
-        scoreEntries[2] * 0.2 +
-        scoreEntries[3] * 0.2,
+      input.accuracyScore * 0.4 +
+        input.fluencyScore * 0.3 +
+        (input.completenessScore ?? 0) * 0.2 +
+        input.prosodyScore * 0.1,
     );
   }
 

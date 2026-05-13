@@ -99,6 +99,7 @@ export default function ReviewPage() {
     const [loadError, setLoadError] = useState<string | null>(null);
     const [isRating, setIsRating] = useState(false);
     const transitionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const cardShownAtRef = useRef<number>(Date.now());
 
     useEffect(() => {
         return () => {
@@ -136,6 +137,7 @@ export default function ReviewPage() {
     async function handleRate(difficulty: Difficulty) {
         if (!child?.id || isRating) return;
         setIsRating(true);
+        const timeSpentMs = Date.now() - cardShownAtRef.current;
         const correct = difficulty !== 'HARD';
         const newLog: ReviewLog = { vocabId: card.vocabularyId, difficulty, correct };
 
@@ -145,6 +147,7 @@ export default function ReviewPage() {
                 vocabularyId: card.vocabularyId,
                 difficulty,
                 correct,
+                timeSpentMs,
             };
             await reviewApi.submitReview(child.id, submission);
         } catch (err) {
@@ -164,6 +167,7 @@ export default function ReviewPage() {
                 setFlipped(false);
                 setLeaving(false);
                 setIsRating(false);
+                cardShownAtRef.current = Date.now();
             }, 260);
         }
     }

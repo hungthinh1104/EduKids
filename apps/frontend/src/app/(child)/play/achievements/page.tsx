@@ -9,6 +9,7 @@ import { GameHUD } from '@/features/learning/components/GameHUD';
 import { LoadingScreen } from '@/components/edukids/LoadingScreen';
 import { gamificationApi, Badge } from '@/features/learning/api/gamification.api';
 import { useCurrentChild } from '@/features/learning/hooks/useCurrentChild';
+import { BottomNav } from '@/features/learning/components/BottomNav';
 
 const RARITY_STYLE: Record<string, { label: string; earnedCls: string; lockedCls: string }> = {
     common: { label: 'Thường', earnedCls: 'from-muted/20 to-muted/10 border-border', lockedCls: 'from-card/50 to-card border-border/60' },
@@ -208,6 +209,8 @@ export default function AchievementsPage() {
                     </>
                 )}
             </div>
+
+            <BottomNav active="achievements" />
 
             {/* Badge Detail Drawer */}
             <AnimatePresence>

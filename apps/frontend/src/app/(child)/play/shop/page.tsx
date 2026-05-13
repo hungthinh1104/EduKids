@@ -15,6 +15,7 @@ import { CATEGORIES } from '@/features/learning/components/shop/constants';
 import { ShopGrid } from '@/features/learning/components/shop/ShopGrid';
 import { ItemPreviewDrawer } from '@/features/learning/components/shop/ItemPreviewDrawer';
 import { resolveChildAvatarUrl } from '@/features/profile/utils/avatar-sync';
+import { BottomNav } from '@/features/learning/components/BottomNav';
 
 export default function ShopPage() {
     const { child, loading: childLoading } = useCurrentChild();
@@ -31,6 +32,7 @@ export default function ShopPage() {
     const [loadError, setLoadError] = useState<string | null>(null);
     const [purchased, setPurchased] = useState<number | null>(null);
     const [isPurchasing, setIsPurchasing] = useState(false);
+    const isEquippingRef = useRef(false);
     const purchaseTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     useEffect(() => {
@@ -121,12 +123,15 @@ export default function ShopPage() {
     }
 
     async function handleEquip(item: ShopItem) {
-        if (!child) {
+        if (!child || isEquippingRef.current) {
             return;
         }
+        isEquippingRef.current = true;
         try {
             await gamificationApi.equipItem(childId, item.id);
             const customization = await gamificationApi.getAvatarCustomization(childId);
+            // resolveChildAvatarUrl already ignores data: URLs — the child's
+            // DiceBear avatar stays as the canonical display avatar.
             const nextAvatarUrl = resolveChildAvatarUrl(child, { avatar: customization.avatar }, child.avatar);
             setPreviewAvatarUrl(nextAvatarUrl);
             window.dispatchEvent(new CustomEvent('edukids-avatar-updated', {
@@ -156,6 +161,8 @@ export default function ShopPage() {
         } catch (err) {
             console.error('Failed to equip item:', err);
             toast.error('Không thể trang bị item', { description: 'Vui lòng thử lại.' });
+        } finally {
+            isEquippingRef.current = false;
         }
     }
 
@@ -296,6 +303,8 @@ export default function ShopPage() {
                 handleBuy={handleBuy}
                 setPreviewItem={setPreviewItem}
             />
+
+            <BottomNav active="shop" />
         </div>
     );
 }

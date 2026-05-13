@@ -41,6 +41,7 @@ enum ActivityType {
   QUIZ
   PRONUNCIATION
   VIDEO
+  VOCABULARY_REVIEW
 }
 
 enum SyncEventType {

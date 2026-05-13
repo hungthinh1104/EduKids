@@ -92,17 +92,30 @@ export class VocabularyReviewRepository {
       include: { vocabulary: true },
     });
 
-    await this.prisma.reviewSessionLog.create({
-      data: {
-        childId,
-        vocabularyId,
-        correct,
-        difficulty: difficulty ?? (correct ? "EASY" : "HARD"),
-        timeSpentMs,
-        newInterval,
-        newEase,
-      },
-    });
+    await Promise.all([
+      this.prisma.reviewSessionLog.create({
+        data: {
+          childId,
+          vocabularyId,
+          correct,
+          difficulty: difficulty ?? (correct ? "EASY" : "HARD"),
+          timeSpentMs,
+          newInterval,
+          newEase,
+        },
+      }),
+      // Cross-post to activityLog so analytics dashboard counts review sessions
+      this.prisma.activityLog.create({
+        data: {
+          childId,
+          vocabularyId,
+          activityType: "VOCABULARY_REVIEW",
+          score: correct ? (difficulty === "EASY" ? 100 : difficulty === "MEDIUM" ? 60 : 20) : 0,
+          durationSec: timeSpentMs ? Math.round(timeSpentMs / 1000) : 30,
+          pointsEarned: 0,
+        },
+      }),
+    ]);
 
     return updated;
   }
@@ -148,42 +161,30 @@ export class VocabularyReviewRepository {
    * Get review statistics for child
    */
   async getReviewStats(childId: number) {
-    const [totalReviewed, totalCorrect, reviewItems, sessions] =
+    const [totalReviewed, totalCorrect, reviewAgg, timeAgg] =
       await Promise.all([
         this.prisma.vocabularyReview.count({ where: { childId } }),
-        this.prisma.reviewSessionLog.count({
-          where: { childId, correct: true },
+        this.prisma.reviewSessionLog.count({ where: { childId, correct: true } }),
+        this.prisma.vocabularyReview.aggregate({
+          where: { childId },
+          _avg: { easeFactor: true, interval: true },
         }),
-        this.prisma.vocabularyReview.findMany({ where: { childId } }),
-        this.prisma.reviewSessionLog.findMany({ where: { childId } }),
+        this.prisma.reviewSessionLog.aggregate({
+          where: { childId },
+          _sum: { timeSpentMs: true },
+        }),
       ]);
 
-    const totalTimeSpent = sessions.reduce(
-      (sum, s) => sum + (s.timeSpentMs || 0),
-      0,
-    );
-    const accuracy =
-      totalReviewed > 0 ? (totalCorrect / totalReviewed) * 100 : 0;
-
-    const averageEase =
-      reviewItems.length > 0
-        ? reviewItems.reduce((sum, item) => sum + item.easeFactor, 0) /
-          reviewItems.length
-        : 2.5;
-
-    const averageInterval =
-      reviewItems.length > 0
-        ? reviewItems.reduce((sum, item) => sum + item.interval, 0) /
-          reviewItems.length
-        : 0;
+    const accuracy = totalReviewed > 0 ? (totalCorrect / totalReviewed) * 100 : 0;
+    const totalTimeSpentMs = timeAgg._sum.timeSpentMs ?? 0;
 
     return {
       totalReviewed,
       totalCorrect,
       accuracy: Math.round(accuracy * 100) / 100,
-      averageEase: Math.round(averageEase * 100) / 100,
-      averageInterval: Math.round(averageInterval * 100) / 100,
-      totalTimeSpent: Math.floor(totalTimeSpent / 1000 / 60), // Convert to minutes
+      averageEase: Math.round((reviewAgg._avg.easeFactor ?? 2.5) * 100) / 100,
+      averageInterval: Math.round((reviewAgg._avg.interval ?? 0) * 100) / 100,
+      totalTimeSpent: Math.floor(totalTimeSpentMs / 1000 / 60),
     };
   }
 
@@ -209,23 +210,24 @@ export class VocabularyReviewRepository {
       }),
     ]);
 
-    // Get upcoming review distribution
+    // Get upcoming review distribution using DB-level counts (avoids loading all rows)
     const upcomingReviews = [];
-    const reviewItems = await this.prisma.vocabularyReview.findMany({
-      where: { childId },
-    });
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
     for (let i = 1; i <= 7; i++) {
-      const date = new Date();
-      date.setDate(date.getDate() + i);
-      date.setHours(0, 0, 0, 0);
+      const dayStart = new Date(today);
+      dayStart.setDate(today.getDate() + i);
 
-      const nextDate = new Date(date);
-      nextDate.setDate(nextDate.getDate() + 1);
+      const dayEnd = new Date(dayStart);
+      dayEnd.setDate(dayStart.getDate() + 1);
 
-      const count = reviewItems.filter(
-        (item) => item.nextReview >= date && item.nextReview < nextDate,
-      ).length;
+      const count = await this.prisma.vocabularyReview.count({
+        where: {
+          childId,
+          nextReview: { gte: dayStart, lt: dayEnd },
+        },
+      });
 
       if (count > 0) {
         upcomingReviews.push({ daysFromNow: i, count });
@@ -256,21 +258,26 @@ export class VocabularyReviewRepository {
   }
 
   /**
-   * Suggest new vocabulary to learn
+   * Suggest vocabulary the child has already encountered (via flashcard/quiz)
+   * but hasn't entered the SRS review queue yet.
    */
   async suggestNewVocabulary(childId: number, limit: number = 5) {
-    // Get vocabulary items child hasn't reviewed yet
-    const reviewedIds = await this.prisma.vocabularyReview
-      .findMany({
-        where: { childId },
-        select: { vocabularyId: true },
-      })
-      .then((items) => items.map((i) => i.vocabularyId));
+    const [reviewedIds, learnedIds] = await Promise.all([
+      this.prisma.vocabularyReview
+        .findMany({ where: { childId }, select: { vocabularyId: true } })
+        .then((items) => items.map((i) => i.vocabularyId)),
+      this.prisma.learningProgress
+        .findMany({ where: { childId }, select: { vocabularyId: true } })
+        .then((rows) => rows.map((r) => r.vocabularyId)),
+    ]);
+
+    const reviewedSet = new Set(reviewedIds);
+    const candidateIds = learnedIds.filter((id) => !reviewedSet.has(id));
+
+    if (candidateIds.length === 0) return [];
 
     return this.prisma.vocabulary.findMany({
-      where: {
-        id: { notIn: reviewedIds },
-      },
+      where: { id: { in: candidateIds } },
       take: limit,
       orderBy: { createdAt: "desc" },
     });
@@ -348,22 +355,27 @@ export class VocabularyReviewRepository {
         },
       });
 
-      // Update streak
+      // Update streak — compare by UTC day boundaries to avoid timezone drift
       const yesterday = new Date(today);
-      yesterday.setDate(yesterday.getDate() - 1);
+      yesterday.setUTCDate(yesterday.getUTCDate() - 1);
+      const yesterdayEnd = new Date(today);
 
       const yesterdayProgress = await this.prisma.dailyProgress.findFirst({
         where: {
           childId,
-          date: { gte: yesterday, lt: today },
+          date: { gte: yesterday, lt: yesterdayEnd },
         },
       });
 
+      // Only reset streak if child genuinely had no activity yesterday;
+      // keep existing count when the streak should continue.
       await this.prisma.childProfile.update({
         where: { id: childId },
         data: {
           lastLearnDate: new Date(),
-          streakCount: yesterdayProgress ? { increment: 1 } : 1,
+          streakCount: yesterdayProgress
+            ? { increment: 1 }
+            : { set: 1 },
         },
       });
     } else {

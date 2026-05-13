@@ -65,6 +65,8 @@ export class GamificationService {
    * Get all badges with earned status and progress
    */
   async getAllBadges(childId: number) {
+    // Check and award any newly earned badges before returning the list
+    await this.gamificationRepository.checkAndAwardBadges(childId);
     return this.gamificationRepository.getAllBadgesForChild(childId);
   }
 

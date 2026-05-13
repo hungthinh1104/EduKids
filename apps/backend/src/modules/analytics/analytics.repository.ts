@@ -133,9 +133,13 @@ export class AnalyticsRepository {
   ) {
     const activities = await this.getActivitiesInPeriod(childId, period);
 
-    // Filter flashcard and pronunciation activities (vocabulary-related)
+    // Filter flashcard, pronunciation, and SRS review activities that are tied to a
+    // specific vocabulary or content item — activities without an identifier would be
+    // bucketed under a synthetic key and inflate the retention word count.
     const vocabActivities = activities.filter(
-      (a) => a.activityType === 'FLASHCARD' || a.activityType === 'PRONUNCIATION',
+      (a) =>
+        (a.activityType === 'FLASHCARD' || a.activityType === 'PRONUNCIATION' || a.activityType === 'VOCABULARY_REVIEW') &&
+        (typeof a.vocabularyId === 'number' || (typeof a.contentId === 'string' && a.contentId.length > 0)),
     );
 
     if (vocabActivities.length === 0) {

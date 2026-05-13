@@ -139,6 +139,8 @@ export default function FlashcardPage() {
     
     // Ref to track timeout and prevent memory leak on unmount
     const transitionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    // Track when the current card was shown to measure real time spent
+    const cardShownAtRef = useRef<number>(Date.now());
 
     useEffect(() => {
         return () => {
@@ -192,7 +194,9 @@ export default function FlashcardPage() {
     }, [card]);
 
     const handleRate = useCallback(async (rating: SRSRating) => {
-        if (!card) return;
+        if (!card || leaving) return;
+        setActivityWarning(null);
+        const timeTakenMs = Date.now() - cardShownAtRef.current;
         const newLog = { vocabId: card.id, rating };
         const updatedLogs = [...logs, newLog];
 
@@ -209,7 +213,7 @@ export default function FlashcardPage() {
                 }
 
                 const selectedOptionId = shouldSubmitIncorrect ? wrongOptionId : correctOptionId;
-                await flashcardApi.submitDragDrop(card.id, selectedOptionId, 2000);
+                await flashcardApi.submitDragDrop(card.id, selectedOptionId, timeTakenMs);
             }
         } catch (err) {
             if (axios.isAxiosError(err) && err.response?.status === 400) {
@@ -220,7 +224,6 @@ export default function FlashcardPage() {
         }
 
         playSound('pop');
-        setActivityWarning(null);
         setLogs(updatedLogs);
         if (index + 1 >= deck.length) {
             markTopicModeCompleted(parsedTopicId, 'flashcard');
@@ -231,9 +234,10 @@ export default function FlashcardPage() {
                 setIndex((i) => i + 1);
                 setFlipped(false);
                 setLeaving(false);
+                cardShownAtRef.current = Date.now();
             }, 280);
         }
-    }, [card, index, deck.length, logs, parsedTopicId]);
+    }, [card, leaving, index, deck.length, logs, parsedTopicId]);
 
     return (
         <LearningModeShell
@@ -318,9 +322,9 @@ export default function FlashcardPage() {
                                 </div>
                             )}
 
-                            {/* SRS Buttons — only show after flip */}
+                            {/* SRS Buttons — only show after flip and before card transitions away */}
                             <AnimatePresence>
-                                {flipped && (
+                                {flipped && !leaving && (
                                     <SRSButtons onRate={handleRate} />
                                 )}
                             </AnimatePresence>

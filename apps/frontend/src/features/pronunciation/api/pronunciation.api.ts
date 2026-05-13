@@ -147,17 +147,17 @@ function normalizePronunciationError(error: unknown): PronunciationApiError {
   let friendlyMessage = 'Chưa thể chấm phát âm lúc này.';
 
   if (status === 400) {
-    friendlyMessage = `Yeu cau phat am chua hop le: ${backendMessage}`;
+    friendlyMessage = `Yêu cầu phát âm chưa hợp lệ: ${backendMessage}`;
   } else if (status === 413) {
-    friendlyMessage = 'Ban ghi am qua lon de gui len server. Hay thu doan ngan hon.';
+    friendlyMessage = 'Bản ghi âm quá lớn để gửi lên server. Hãy thử đoạn ngắn hơn.';
   } else if (status === 401) {
-    friendlyMessage = 'Phien hoc cua be da het han. Vui long vao lai che do hoc cua be.';
+    friendlyMessage = 'Phiên học của bé đã hết hạn. Vui lòng vào lại chế độ học của bé.';
   } else if (status === 403) {
-    friendlyMessage = 'Can chuyen sang ho so cua be truoc khi luyen phat am.';
+    friendlyMessage = 'Cần chuyển sang hồ sơ của bé trước khi luyện phát âm.';
   } else if (status === 404) {
-    friendlyMessage = 'Khong tim thay tu vung de cham phat am.';
+    friendlyMessage = 'Không tìm thấy từ vựng để chấm phát âm.';
   } else if (axiosError.code === 'ERR_NETWORK') {
-    friendlyMessage = 'Khong ket noi duoc toi backend phat am.';
+    friendlyMessage = 'Không kết nối được tới backend phát âm.';
   } else if (backendMessage) {
     friendlyMessage = backendMessage;
   }

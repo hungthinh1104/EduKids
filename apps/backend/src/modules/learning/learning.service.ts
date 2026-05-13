@@ -1,12 +1,16 @@
 import { Injectable, Logger, NotFoundException } from "@nestjs/common";
+import { PrismaService } from "../../prisma/prisma.service";
 import { LearningProgressRepository } from "./repositories/learning-progress.repository";
-import { UpdateProgressDto, ProgressResponseDto } from "./dto/progress.dto";
+import { UpdateProgressDto, ProgressResponseDto, LogVideoActivityDto, VideoActivityResponseDto } from "./dto/progress.dto";
 
 @Injectable()
 export class LearningService {
   private readonly logger = new Logger(LearningService.name);
 
-  constructor(private learningProgressRepository: LearningProgressRepository) {}
+  constructor(
+    private learningProgressRepository: LearningProgressRepository,
+    private prisma: PrismaService,
+  ) {}
 
   /**
    * UC-01: Update viewing progress when child completes flashcard/video
@@ -76,5 +80,35 @@ export class LearningService {
       );
       throw error;
     }
+  }
+
+  /**
+   * Log video watch completion to activityLog (ActivityType.VIDEO)
+   */
+  async logVideoActivity(
+    childId: number,
+    dto: LogVideoActivityDto,
+  ): Promise<VideoActivityResponseDto> {
+    const topicExists = await this.prisma.topic.findUnique({
+      where: { id: dto.topicId },
+      select: { id: true },
+    });
+    if (!topicExists) {
+      throw new NotFoundException(`Topic ${dto.topicId} not found`);
+    }
+
+    const durationSec = dto.durationSec ?? 0;
+    await this.prisma.activityLog.create({
+      data: {
+        childId,
+        topicId: dto.topicId,
+        activityType: "VIDEO",
+        durationSec,
+        score: 100,
+        pointsEarned: 0,
+      },
+    });
+
+    return { childId, topicId: dto.topicId, durationSec, message: "Video activity logged" };
   }
 }

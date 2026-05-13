@@ -650,22 +650,25 @@ export class QuizService {
 
       if (rewardLockAcquired) {
         try {
+          // Re-read session inside the lock to catch concurrent grants
           const latestSession =
             await this.quizSessionService.getSession(quizSessionId);
 
           if (!latestSession.rewardsGranted) {
+            // Mark as granted BEFORE the DB write so that any concurrent
+            // request that passes the lock check will see it already set
+            latestSession.rewardsGranted = true;
+            latestSession.completedAt = new Date();
+            await this.quizSessionService.saveSession(latestSession);
+            Object.assign(session, latestSession);
+
+            // Now perform the actual DB transaction
             await this.prisma.$transaction(async (tx) => {
               await tx.childProfile.update({
                 where: { id: childId },
                 data: { totalPoints: { increment: pointsAwarded } },
               });
             });
-
-            latestSession.rewardsGranted = true;
-            latestSession.completedAt = new Date();
-            Object.assign(session, latestSession);
-
-            await this.quizSessionService.saveSession(latestSession);
 
             await this.quizEventPublisher.publishQuizCompleted({
               childId,
@@ -680,6 +683,8 @@ export class QuizService {
             void this.gamificationService
               .checkAndAwardBadges(childId)
               .catch(() => {});
+          } else {
+            Object.assign(session, latestSession);
           }
         } finally {
           this.quizSessionService.releaseRewardGrantLock(quizSessionId);

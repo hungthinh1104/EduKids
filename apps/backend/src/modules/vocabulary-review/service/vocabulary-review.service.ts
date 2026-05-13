@@ -1,5 +1,5 @@
 import { randomUUID } from "crypto";
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { Injectable, NotFoundException, BadRequestException } from "@nestjs/common";
 import { VocabularyReviewRepository } from "../repository/vocabulary-review.repository";
 import { SpacedRepetitionService } from "./spaced-repetition.service";
 import { SubmitReviewRequestDto } from "../dto/vocabulary-review.dto";
@@ -111,11 +111,11 @@ export class VocabularyReviewService {
         difficulty,
         reviewItem.reviewCount + 1,
       );
-      await this.repository.awardStars(
-        childId,
-        starsAwarded,
-        "VOCABULARY_REVIEW",
-      );
+      try {
+        await this.repository.awardStars(childId, starsAwarded, "VOCABULARY_REVIEW");
+      } catch {
+        starsAwarded = 0;
+      }
     }
 
     // Update streak and daily progress (UC-P3, UC-C4)
@@ -154,6 +154,10 @@ export class VocabularyReviewService {
    * Bulk submit reviews
    */
   async submitBulkReviews(childId: number, reviews: SubmitReviewRequestDto[]) {
+    if (reviews.length > 50) {
+      throw new BadRequestException("Maximum 50 reviews per bulk request.");
+    }
+
     const results = [];
 
     for (const review of reviews) {

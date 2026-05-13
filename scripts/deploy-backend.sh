@@ -75,18 +75,20 @@ echo "[INFO] Running Prisma migrations (before app start)..."
 if docker compose --env-file "$ENV_FILE" exec -T postgres pg_isready >/dev/null 2>&1; then
   # Get DATABASE_URL from environment or .env
   migration_db_url="$(grep -E '^DATABASE_URL=' "$ENV_FILE" | tail -n1 | cut -d'=' -f2- | tr -d '"')"
-  
+
   if [[ -z "$migration_db_url" ]]; then
     echo "[ERROR] DATABASE_URL not found in $ENV_FILE"
     exit 1
   fi
 
+  # Replace Docker-internal hostname with localhost for host-side migration
+  host_db_url="${migration_db_url//postgres:5432/localhost:5432}"
   (
     cd "$ROOT_DIR/apps/backend"
-    DATABASE_URL="$migration_db_url" \
-    POOLED_DATABASE_URL="$migration_db_url" \
-    DIRECT_DATABASE_URL="$migration_db_url" \
-    npm run prisma:migrate:deploy
+    DATABASE_URL="$host_db_url" \
+    POOLED_DATABASE_URL="$host_db_url" \
+    DIRECT_DATABASE_URL="$host_db_url" \
+    npx prisma migrate deploy
   ) || {
     echo "[ERROR] Migration failed - aborting app start to prevent incompatible schema"
     exit 1

@@ -8,6 +8,7 @@ import {
   IsEnum,
   IsArray,
   IsNumber,
+  IsUrl,
   Min,
   Max,
 } from "class-validator";
@@ -61,7 +62,7 @@ export class CreateTopicDto {
     required: false,
   })
   @IsOptional()
-  @IsString()
+  @IsUrl({ require_protocol: true, require_host: true, protocols: ['https'] })
   imageUrl?: string;
 
   @ApiProperty({
@@ -70,7 +71,7 @@ export class CreateTopicDto {
     required: false,
   })
   @IsOptional()
-  @IsString()
+  @IsUrl({ require_protocol: true, require_host: true, protocols: ['https'] })
   videoUrl?: string;
 
   @ApiProperty({

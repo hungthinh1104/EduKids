@@ -28,6 +28,10 @@ export class GamificationRepository {
     this.initializeBadgeDefinitions();
   }
 
+  private levelFromPoints(points: number): number {
+    return Math.floor(Math.max(0, points) / 50) + 1;
+  }
+
   /**
    * UC-05: Initialize badge definitions with unlock conditions
    */
@@ -169,8 +173,14 @@ export class GamificationRepository {
 
     return Promise.all(
       this.badgeDefinitions.map(async (badge) => {
-        const isEarned = earnedMap.has(badge.name);
         const progress = await badge.getProgress(childId);
+        // Treat badge as earned if the DB record exists OR if progress already
+        // meets the requirement (guards against checkAndAwardBadges not having
+        // run yet or failing silently on a previous request).
+        const conditionMet =
+          progress.required > 0 && progress.current >= progress.required;
+        const isEarned = earnedMap.has(badge.name) || conditionMet;
+        const earnedAt = earnedMap.get(badge.name) as Date | undefined;
 
         return {
           id: badge.id,
@@ -181,7 +191,7 @@ export class GamificationRepository {
           isEarned,
           progress: progress.current,
           requirement: progress.required,
-          earnedAt: earnedMap.get(badge.name) as Date | undefined,
+          earnedAt,
         };
       }),
     );
@@ -201,19 +211,19 @@ export class GamificationRepository {
       if (!existing) {
         const isUnlocked = await badge.checkCondition(childId);
         if (isUnlocked) {
-          // First find the badge by name
-          const badgeDefinition = await this.prisma.badge.findFirst({
+          // Upsert the badge definition so missing seed data never silently blocks award
+          const badgeDefinition = await this.prisma.badge.upsert({
             where: { name: badge.name },
+            create: { name: badge.name, description: badge.description },
+            update: {},
           });
-          if (badgeDefinition) {
-            await this.prisma.childBadge.create({
-              data: {
-                childId,
-                badgeId: badgeDefinition.id,
-              },
-            });
-            newBadges.push(`${badge.icon} ${badge.name}`);
-          }
+          await this.prisma.childBadge.create({
+            data: {
+              childId,
+              badgeId: badgeDefinition.id,
+            },
+          });
+          newBadges.push(`${badge.icon} ${badge.name}`);
         }
       }
     }
@@ -330,8 +340,14 @@ export class GamificationRepository {
           where: { id: childId },
         });
 
-        if (!child || child.totalPoints < price) {
-          return null;
+        if (!child) {
+          throw new BadRequestException("Child profile not found.");
+        }
+
+        if (child.totalPoints < price) {
+          throw new BadRequestException(
+            `Không đủ sao để mua. Cần ${price}, hiện có ${child.totalPoints}.`,
+          );
         }
 
         const existingPurchase = await tx.purchase.findUnique({
@@ -344,14 +360,14 @@ export class GamificationRepository {
         });
 
         if (existingPurchase) {
-          return null;
+          throw new BadRequestException("You already own this item!");
         }
 
         await tx.childProfile.update({
           where: { id: childId },
           data: {
             totalPoints: { decrement: price },
-            currentLevel: Math.floor((child.totalPoints - price) / 50) + 1,
+            currentLevel: this.levelFromPoints(child.totalPoints - price),
           },
         });
 
@@ -489,7 +505,7 @@ export class GamificationRepository {
       where: { childId },
     });
 
-    const currentLevel = Math.floor((child?.totalPoints || 0) / 50) + 1;
+    const currentLevel = this.levelFromPoints(child?.totalPoints || 0);
     const pointsInCurrentLevel = (child?.totalPoints || 0) % 50;
     const levelProgress = Math.round((pointsInCurrentLevel / 50) * 100);
     const pointsToNextLevel = 50 - pointsInCurrentLevel;
@@ -554,7 +570,7 @@ export class GamificationRepository {
           childName: child.nickname,
           avatar: await this.getAvatarPreviewForChild(child.id, child.avatar),
           totalPoints: child.totalPoints,
-          currentLevel: Math.floor(child.totalPoints / 50) + 1,
+          currentLevel: this.levelFromPoints(child.totalPoints),
           badgesEarned: badgeCount,
         };
       }),

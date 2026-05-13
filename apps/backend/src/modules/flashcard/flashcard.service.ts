@@ -156,6 +156,21 @@ export class FlashcardService {
       );
 
       const result = await this.prisma.$transaction(async (tx) => {
+        // Idempotency: prevent duplicate activity logs for the same attempt
+        // (guards against rapid double-submit from the client)
+        const recentDuplicate = await tx.activityLog.findFirst({
+          where: {
+            childId,
+            vocabularyId: dto.vocabularyId,
+            activityType: "FLASHCARD",
+            createdAt: { gte: new Date(Date.now() - 5000) },
+          },
+          select: { id: true },
+        });
+        if (recentDuplicate) {
+          return null;
+        }
+
         const activity = await tx.activityLog.create({
           data: {
             childId,
@@ -228,6 +243,18 @@ export class FlashcardService {
         return { activity, updatedChild };
       });
 
+      // Duplicate request — return a neutral response without re-awarding
+      if (!result) {
+        return {
+          activityId: 0,
+          feedback: { ...feedback, pointsEarned: 0, audioUrl: feedback.audioUrl || "" },
+          audioPlaybackFailed: false,
+          totalPoints: 0,
+          currentLevel: 1,
+        };
+      }
+
+      // Badge check runs after commit so it sees the committed points
       void this.gamificationService
         .checkAndAwardBadges(childId)
         .catch(() => {});

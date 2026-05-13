@@ -16,7 +16,15 @@ export function resolveChildAvatarUrl(
   const customizationAvatar = customization?.avatar?.trim();
   const sourceAvatar = source?.avatar?.trim();
 
-  return customizationAvatar || sourceAvatar || fallback;
+  // Ignore generated SVG data URLs (shop layer previews) — they represent a
+  // different visual style than the DiceBear avatar chosen at profile creation.
+  // Only apply an external customization URL (e.g. a future CDN-hosted avatar).
+  const externalCustomization =
+    customizationAvatar && !customizationAvatar.startsWith('data:')
+      ? customizationAvatar
+      : null;
+
+  return externalCustomization || sourceAvatar || fallback;
 }
 
 export function syncChildAvatarById<T extends ChildAvatarSource & { id: number }>(

@@ -24,7 +24,7 @@ import { contentApi, Topic } from '@/features/learning/api/content.api';
 import { readTopicModeProgress, TOPIC_MODE_PROGRESS_EVENT, type TopicModeProgress } from '@/features/learning/utils/topic-mode-progress';
 
 type GameModeId = 'flashcard' | 'quiz' | 'pronunciation' | 'video';
-type TrackedModeId = 'flashcard' | 'quiz' | 'pronunciation';
+type TrackedModeId = 'flashcard' | 'quiz' | 'pronunciation' | 'video';
 type GameMode = { id: GameModeId; icon: React.ReactNode; label: string; desc: string; color: string; locked: boolean };
 
 const BASE_GAME_MODES: Omit<GameMode, 'locked'>[] = [
@@ -61,7 +61,7 @@ const ICON_MAP: Record<string, string> = {
 };
 
 const COLOR_KEYS = ['success', 'accent', 'primary', 'secondary', 'warning'];
-const TRACKED_MODE_IDS: TrackedModeId[] = ['flashcard', 'quiz', 'pronunciation'];
+const TRACKED_MODE_IDS: TrackedModeId[] = ['flashcard', 'quiz', 'pronunciation', 'video'];
 
 export default function TopicDetailPage() {
     const params = useParams<{ id: string }>();
@@ -75,6 +75,7 @@ export default function TopicDetailPage() {
         flashcard: false,
         quiz: false,
         pronunciation: false,
+        video: false,
         updatedAt: null,
     });
 
