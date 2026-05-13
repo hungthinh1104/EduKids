@@ -70,10 +70,22 @@ async function proxyRequest(
             method,
             headers: forwardHeaders,
             body,
+            redirect: 'manual', // Don't follow redirects — forward 3xx as-is to the browser
             // Required for Node 18+ to allow self-signed certs in dev
             // @ts-expect-error node fetch option
             duplex: 'half',
         });
+
+        // Handle 3xx redirects from backend (e.g. OAuth flows)
+        // fetch with redirect:'manual' returns type='opaqueredirect' with status 0 in browser
+        // but in Node.js (Vercel server) it returns the actual 3xx status with Location header
+        const status = backendResponse.status;
+        if (status >= 300 && status < 400) {
+            const location = backendResponse.headers.get('location');
+            if (location) {
+                return NextResponse.redirect(location, { status });
+            }
+        }
 
         // Build response: forward all headers from backend
         const responseHeaders = new Headers();
