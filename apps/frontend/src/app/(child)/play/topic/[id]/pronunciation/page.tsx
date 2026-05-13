@@ -171,7 +171,6 @@ export default function PronunciationPage() {
                 const topic = await contentApi.getTopicById(parsedTopicId);
                 setVocabList(topic.vocabularies || []);
             } catch (error) {
-                console.error('Failed to load vocabularies:', error);
                 setVocabList([]);
             } finally {
                 setLoading(false);
@@ -371,7 +370,6 @@ export default function PronunciationPage() {
                                                         setStage('result');
                                                     } catch (error) {
                                                         if (!isMountedRef.current) return;
-                                                        console.error('Pronunciation request failed:', error);
                                                         setConfidence(0);
                                                         setPracticeError(getPronunciationErrorMessage(error));
                                                         setStage('ready');

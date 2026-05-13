@@ -100,7 +100,6 @@ function LoginPageContent() {
             } else if (status === 403) {
                 setGlobalError('Tài khoản đã bị khóa tạm thời. Vui lòng thử lại sau 15 phút hoặc liên hệ hỗ trợ.');
             } else {
-                console.error('Login error:', error);
                 setGlobalError('Đã có lỗi xảy ra. Vui lòng thử lại sau.');
             }
         } finally {

@@ -109,7 +109,6 @@ export default function TopicDetailPage() {
                 const data = await contentApi.getTopicById(parsedTopicId);
                 setTopic(data);
             } catch (err: unknown) {
-                console.error('Failed to fetch topic:', err);
 
                 const status =
                     typeof err === 'object' &&

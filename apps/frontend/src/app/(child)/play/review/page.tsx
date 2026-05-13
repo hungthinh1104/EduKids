@@ -121,7 +121,6 @@ export default function ReviewPage() {
                 setSuggestedItems(session.suggestedItems ?? []);
                 setSuggestionMessage(session.suggestionMessage ?? null);
             } catch (err) {
-                console.error('Failed to fetch review session:', err);
                 setLoadError('Không thể tải bài ôn tập lúc này.');
                 setReviewDeck([]);
                 setSuggestedItems([]);
@@ -151,7 +150,6 @@ export default function ReviewPage() {
             };
             await reviewApi.submitReview(child.id, submission);
         } catch (err) {
-            console.error('Failed to submit review:', err);
         }
 
         const updated = [...logs, newLog];
@@ -187,7 +185,6 @@ export default function ReviewPage() {
             setSuggestedItems(session.suggestedItems ?? []);
             setSuggestionMessage(session.suggestionMessage ?? null);
         } catch (err) {
-            console.error('Failed to fetch new session:', err);
             setLoadError('Không thể tải lại bài ôn tập.');
         } finally {
             setLoading(false);
@@ -318,13 +315,17 @@ export default function ReviewPage() {
                             flipped={flipped}
                             onFlip={() => setFlipped(true)}
                             onPlayAudio={() => {
-                                if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+                                if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+                                try {
                                     window.speechSynthesis.cancel();
                                     const utterance = new SpeechSynthesisUtterance(card.word);
                                     utterance.lang = 'en-US';
                                     utterance.rate = 0.85;
                                     utterance.pitch = 1.1;
+                                    utterance.onerror = () => { /* browser blocked speech — fail silently */ };
                                     window.speechSynthesis.speak(utterance);
+                                } catch {
+                                    /* speech not available — no user action needed */
                                 }
                             }}
                         />

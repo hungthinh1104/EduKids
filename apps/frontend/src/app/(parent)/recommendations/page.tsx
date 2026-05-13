@@ -44,7 +44,6 @@ export default function ParentRecommendationsPage() {
           'Bé chưa có gợi ý nào. Nhấn "Tạo gợi ý mới" để bắt đầu!',
       );
     } catch (error) {
-      console.error('Failed to load recommendations:', error);
       setRecommendations([]);
       setEmptyMessage('Không thể tải gợi ý học tập lúc này.');
     } finally {
@@ -64,7 +63,6 @@ export default function ParentRecommendationsPage() {
         toast.success(`Đã tạo ${recs.length} gợi ý mới cho ${activeChild?.nickname || 'bé'}.`);
       }
     } catch (error) {
-      console.error('Failed to regenerate recommendations:', error);
       toast.error('Không thể tạo gợi ý mới lúc này. Vui lòng thử lại sau.');
       setEmptyMessage('Không thể tạo gợi ý mới lúc này. Vui lòng thử lại sau.');
     } finally {
@@ -173,7 +171,6 @@ export default function ParentRecommendationsPage() {
       toast.success(`Đang mở bài học được gợi ý cho ${activeChild.nickname}.`);
       window.location.assign(learningRoute);
     } catch (error) {
-      console.error('Failed to start recommendation:', error);
       const msg = error instanceof Error ? error.message : '';
       if (msg.toLowerCase().includes('playable') || msg.toLowerCase().includes('not found')) {
         toast.error('Bài học trong gợi ý này không còn khả dụng. Vui lòng tạo gợi ý mới.');

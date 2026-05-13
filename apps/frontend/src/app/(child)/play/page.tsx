@@ -50,7 +50,6 @@ export default function PlayPage() {
             clearTopicModeProgressChildScope();
             router.replace('/dashboard');
         } catch (error) {
-            console.error('Failed to exit child mode:', error);
 
             const restoredRole = restoreParentSession();
             clearTopicModeProgressChildScope();

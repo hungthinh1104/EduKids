@@ -35,7 +35,6 @@ export default function TopicVideoPage() {
         const detail = await contentApi.getTopicById(topicId);
         setTopic(detail);
       } catch (error) {
-        console.error('Failed to load topic video:', error);
         setTopic(null);
       } finally {
         setLoading(false);

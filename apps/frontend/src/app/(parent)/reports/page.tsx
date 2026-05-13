@@ -70,7 +70,6 @@ export default function ReportsPage() {
                     : 'Đã cập nhật cài đặt gửi báo cáo.'
             );
         } catch (err) {
-            console.error(`Failed to ${enabled ? 'enable' : 'disable'} ${channel} reports:`, err);
             setSubscriptionMessage('Không thể cập nhật cài đặt gửi báo cáo. Vui lòng thử lại.');
         } finally {
             setIsSavingPrefs(false);
@@ -459,14 +458,8 @@ export default function ReportsPage() {
                                                 type="radio"
                                                 name="report-channel"
                                                 checked={subscriptionPrefs?.preferredChannel === 'EMAIL'}
-                                                onChange={async (e) => {
-                                                    const enabled = e.target.checked;
-
-                                                    try {
-                                                        await toggleReportChannel('email', enabled);
-                                                    } catch (err) {
-                                                        console.error('Failed to update email subscription:', err);
-                                                    }
+                                                onChange={(e) => {
+                                                    void toggleReportChannel('email', e.target.checked);
                                                 }}
                                                 disabled={isSavingPrefs}
                                                 className="sr-only peer"
@@ -489,14 +482,8 @@ export default function ReportsPage() {
                                                 type="radio"
                                                 name="report-channel"
                                                 checked={subscriptionPrefs?.preferredChannel === 'ZALO'}
-                                                onChange={async (e) => {
-                                                    const enabled = e.target.checked;
-
-                                                    try {
-                                                        await toggleReportChannel('zalo', enabled);
-                                                    } catch (err) {
-                                                        console.error('Failed to update Zalo subscription:', err);
-                                                    }
+                                                onChange={(e) => {
+                                                    void toggleReportChannel('zalo', e.target.checked);
                                                 }}
                                                 disabled={isSavingPrefs}
                                                 className="sr-only peer"
@@ -520,7 +507,6 @@ export default function ReportsPage() {
                                             setSubscriptionPrefs(nextPrefs);
                                             setSubscriptionMessage('Đã tắt gửi báo cáo tự động.');
                                         } catch (err) {
-                                            console.error('Failed to unsubscribe reports:', err);
                                             setSubscriptionMessage('Không thể tắt gửi báo cáo tự động. Vui lòng thử lại.');
                                         } finally {
                                             setIsSavingPrefs(false);

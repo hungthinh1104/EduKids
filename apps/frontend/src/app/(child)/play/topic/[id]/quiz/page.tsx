@@ -129,7 +129,6 @@ export default function QuizPage() {
             setDone(false);
             setTimeLeft(TIME_LIMIT);
         } catch (error) {
-            console.error('Failed to load quiz:', error);
             setLoadError('Không thể tải quiz. Vui lòng thử lại.');
             setQuestions([]);
         } finally {
@@ -176,7 +175,6 @@ export default function QuizPage() {
             isCorrect = Boolean(result.isCorrect);
             correctAnswerId = Number(result.correctAnswerId);
         } catch (error) {
-            console.error('Failed to submit answer:', error);
 
             // Fallback when submit fails: keep UI responsive
             if (!isTimeout && typeof option.id === 'number') {

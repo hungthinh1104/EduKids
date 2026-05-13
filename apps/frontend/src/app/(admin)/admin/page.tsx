@@ -69,7 +69,6 @@ export default function AdminDashboardPage() {
                     sessions: dauMetrics.chartData[index]?.dau || 0,
                 })));
             } catch (err) {
-                console.error('Failed to fetch dashboard overview:', err);
                 setFetchError('Không thể tải dữ liệu dashboard admin lúc này. Vui lòng thử lại sau.');
                 setPlatformMetrics([]);
                 setRecentUsers([]);

@@ -15,6 +15,9 @@ export default function AdminMediaPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<'all' | 'image' | 'audio' | 'video'>('all');
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
   useEffect(() => {
     loadMediaFiles();
@@ -26,7 +29,6 @@ export default function AdminMediaPage() {
       const data = await listMediaFiles({ page: 1, limit: 50 });
       setMediaFiles(data.items);
     } catch (error) {
-      console.error('Failed to load media files:', error);
       setMediaFiles([]);
     } finally {
       setIsLoading(false);
@@ -48,7 +50,7 @@ export default function AdminMediaPage() {
               : null;
 
         if (!mediaType) {
-          alert(`Định dạng không hỗ trợ: ${file.type || file.name}`);
+          setUploadError(`Định dạng không hỗ trợ: ${file.type || file.name}`);
           continue;
         }
 
@@ -56,11 +58,11 @@ export default function AdminMediaPage() {
           mediaType,
           context: 'GENERAL',
         });
+        setUploadError(null);
         await loadMediaFiles();
       } catch (error) {
-        console.error('Failed to upload file:', error);
         const errorMessage = error instanceof Error ? error.message : 'Không rõ lỗi';
-        alert(`Lỗi khi tải file: ${errorMessage}`);
+        setUploadError(`Lỗi khi tải file: ${errorMessage}`);
       } finally {
         setIsUploading(false);
       }
@@ -84,14 +86,19 @@ export default function AdminMediaPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Bạn có chắc muốn xóa file này?')) return;
+    setPendingDeleteId(id);
+  };
 
+  const confirmDelete = async () => {
+    if (!pendingDeleteId) return;
     try {
-      await deleteMediaFile(id);
+      await deleteMediaFile(pendingDeleteId);
+      setDeleteError(null);
       await loadMediaFiles();
-    } catch (error) {
-      console.error('Failed to delete media file:', error);
-      alert('Lỗi khi xóa file');
+    } catch {
+      setDeleteError('Lỗi khi xóa file. Vui lòng thử lại.');
+    } finally {
+      setPendingDeleteId(null);
     }
   };
 
@@ -157,6 +164,40 @@ export default function AdminMediaPage() {
 
   return (
     <div className="p-4 sm:p-6 md:p-8 max-w-7xl mx-auto space-y-6">
+      {/* Upload error banner */}
+      {uploadError && (
+        <div className="rounded-xl border border-error/30 bg-error/10 px-4 py-3 flex items-center justify-between gap-3">
+          <Caption className="text-error font-medium">{uploadError}</Caption>
+          <button onClick={() => setUploadError(null)} className="text-error hover:opacity-70 text-lg leading-none">×</button>
+        </div>
+      )}
+
+      {/* Delete error banner */}
+      {deleteError && (
+        <div className="rounded-xl border border-error/30 bg-error/10 px-4 py-3 flex items-center justify-between gap-3">
+          <Caption className="text-error font-medium">{deleteError}</Caption>
+          <button onClick={() => setDeleteError(null)} className="text-error hover:opacity-70 text-lg leading-none">×</button>
+        </div>
+      )}
+
+      {/* Delete confirm modal */}
+      {pendingDeleteId && (
+        <>
+          <div className="fixed inset-0 bg-black/40 z-40 backdrop-blur-sm" onClick={() => setPendingDeleteId(null)} />
+          <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+            <div className="bg-card border-2 border-error rounded-2xl p-6 w-full max-w-sm text-center shadow-2xl">
+              <div className="text-4xl mb-3">🗑️</div>
+              <Heading level={3} className="text-heading text-lg mb-2">Xóa file này?</Heading>
+              <Body className="text-body text-sm mb-5">Hành động này không thể hoàn tác.</Body>
+              <div className="flex gap-3">
+                <button onClick={() => setPendingDeleteId(null)} className="flex-1 px-4 py-2 rounded-xl border-2 border-border text-body font-heading font-bold hover:bg-background transition">Hủy</button>
+                <button onClick={() => void confirmDelete()} className="flex-1 px-4 py-2 rounded-xl bg-error text-white font-heading font-bold hover:opacity-90 transition">Xóa</button>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
       {/* Header */}
       <div className="rounded-3xl border border-primary/15 bg-gradient-to-r from-primary-light/55 via-card to-accent-light/40 p-6 shadow-sm">
         <div>

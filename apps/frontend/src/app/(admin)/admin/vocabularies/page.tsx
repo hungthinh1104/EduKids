@@ -52,7 +52,6 @@ export default function AdminVocabulariesPage() {
           setTopics([]);
           toast.error('Bạn không có quyền ADMIN để xem danh sách chủ đề');
         } else {
-          console.error('Failed to load topics:', error);
           toast.error('Lỗi tải danh sách chủ đề');
         }
     } finally {
@@ -67,7 +66,6 @@ export default function AdminVocabulariesPage() {
       const vocabs = await getTopicVocabularies(selectedTopicId, { page: 1, limit: 100 });
       setVocabularies(vocabs);
     } catch (error) {
-      console.error('Failed to load vocabularies:', error);
       toast.error('Lỗi tải danh sách từ vựng');
     } finally {
       setIsLoadingVocabs(false);
@@ -101,7 +99,6 @@ export default function AdminVocabulariesPage() {
       setEditingVocab(null);
       void loadVocabularies();
     } catch (error) {
-      console.error('Failed to save vocabulary:', error);
       toast.error('Lỗi khi lưu từ vựng');
       throw error;
     } finally {
@@ -117,7 +114,6 @@ export default function AdminVocabulariesPage() {
       toast.success('Đã xóa từ vựng');
       void loadVocabularies();
     } catch (error) {
-      console.error('Failed to delete vocabulary:', error);
       toast.error('Lỗi khi xóa từ vựng');
     }
   };
@@ -128,7 +124,6 @@ export default function AdminVocabulariesPage() {
       toast.success('Xuất bản từ vựng thành công');
       void loadVocabularies();
     } catch (error) {
-      console.error('Failed to publish vocabulary:', error);
       toast.error('Lỗi khi xuất bản từ vựng');
     }
   };

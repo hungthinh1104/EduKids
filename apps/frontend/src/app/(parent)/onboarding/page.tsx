@@ -65,7 +65,6 @@ export default function OnboardingPage() {
             });
             router.push(getDefaultRouteByRole('PARENT'));
         } catch (err) {
-            console.error('Failed to create profile:', err);
             setCreateError('Không thể tạo hồ sơ. Vui lòng thử lại.');
         } finally {
             setCreating(false);

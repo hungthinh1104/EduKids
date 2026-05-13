@@ -117,7 +117,6 @@ export default function AdminAuditLogsPage() {
 
         setAuditLogs(mappedLogs);
       } catch (error) {
-        console.error('Failed to load audit logs:', error);
         setAuditLogs([]);
       } finally {
         setIsLoading(false);

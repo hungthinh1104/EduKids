@@ -30,7 +30,6 @@ export default function AdminUsersPage() {
                 const fetchedUsers = await getAdminUsers();
                 setUsers(fetchedUsers);
             } catch (error) {
-                console.error('Failed to fetch users:', error);
                 setUsers([]);
             }
         };

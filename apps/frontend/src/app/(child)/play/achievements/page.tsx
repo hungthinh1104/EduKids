@@ -52,7 +52,6 @@ export default function AchievementsPage() {
                 setAllBadges(all);
                 setEarnedBadges(earned);
             } catch (error) {
-                console.error('Failed to load badges:', error);
                 setLoadError('Không thể tải huy hiệu lúc này.');
                 setAllBadges([]);
                 setEarnedBadges([]);

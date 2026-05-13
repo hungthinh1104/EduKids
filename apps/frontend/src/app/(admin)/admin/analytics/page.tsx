@@ -178,7 +178,6 @@ export default function AdminAnalyticsPage() {
                     avgLearningScore: dashboard.avgLearningScore,
                 });
             } catch (error) {
-                console.error('Failed to fetch analytics:', error);
                 setData(null);
                 setWarning('Không thể tải đầy đủ analytics lúc này. Vui lòng thử lại sau.');
             } finally {

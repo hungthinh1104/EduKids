@@ -34,7 +34,6 @@ export default function AdminTopicsPage() {
         setTopics([]);
         toast.error('Bạn không có quyền ADMIN để xem danh sách chủ đề');
       } else {
-        console.error('Failed to load topics:', error);
         toast.error('Không thể tải danh sách chủ đề');
       }
     } finally {
@@ -71,7 +70,6 @@ export default function AdminTopicsPage() {
       setEditingTopic(null);
       void loadTopics();
     } catch (error) {
-      console.error('Failed to save topic:', error);
       toast.error('Lỗi khi lưu chủ đề');
       throw error;
     } finally {
@@ -99,7 +97,6 @@ export default function AdminTopicsPage() {
       toast.success('Đã xóa chủ đề');
       void loadTopics();
     } catch (error) {
-      console.error('Failed to delete topic:', error);
       if (axios.isAxiosError(error) && error.response?.status === 409) {
         const backendMessage =
           (error.response.data as { message?: string })?.message ||
@@ -118,7 +115,6 @@ export default function AdminTopicsPage() {
       toast.success('Đã xuất bản chủ đề');
       void loadTopics();
     } catch (error) {
-      console.error('Failed to publish topic:', error);
       toast.error('Lỗi khi xuất bản chủ đề');
     }
   };
@@ -129,7 +125,6 @@ export default function AdminTopicsPage() {
       toast.success('Đã lưu trữ chủ đề');
       void loadTopics();
     } catch (error) {
-      console.error('Failed to archive topic:', error);
       toast.error('Lỗi khi lưu trữ chủ đề');
     }
   };

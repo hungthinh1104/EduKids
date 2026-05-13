@@ -161,7 +161,6 @@ export default function FlashcardPage() {
                 const topic = await contentApi.getTopicById(parsedTopicId);
                 setDeck(topic.vocabularies || []);
             } catch (error) {
-                console.error('Failed to load vocabularies:', error);
                 setDeck([]);
             } finally {
                 setLoading(false);
@@ -219,7 +218,6 @@ export default function FlashcardPage() {
             if (axios.isAxiosError(err) && err.response?.status === 400) {
                 setActivityWarning('Chủ đề này chưa đủ đáp án để ghi nhận điểm flashcard tự động. Bé vẫn có thể học tiếp nhé.');
             } else {
-                console.error('Failed to submit flashcard activity:', err);
             }
         }
 

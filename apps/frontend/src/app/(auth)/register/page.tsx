@@ -120,7 +120,6 @@ function RegisterPageContent() {
                 router.push(getDefaultRouteByRole(response.role || response.user?.role));
             }
         } catch (error: unknown) {
-            console.error('Register error:', error);
             const status = axios.isAxiosError(error) ? error.response?.status : undefined;
             if (status === 409) {
                 setGlobalError('Email này đã được đăng ký. Vui lòng sử dụng email khác hoặc đăng nhập.');

@@ -76,7 +76,6 @@ export default function ShopPage() {
                     'Nền': customization.equippedItems.find((item) => item.category === 'Nền')?.id ?? null,
                 });
             } catch (err) {
-                console.error('Failed to fetch shop data:', err);
                 setLoadError('Không thể tải dữ liệu cửa hàng lúc này. Vui lòng thử lại sau.');
             } finally {
                 setLoading(false);
@@ -115,7 +114,6 @@ export default function ShopPage() {
                 purchaseTimeoutRef.current = setTimeout(() => setPurchased(null), 2500);
             }
         } catch (err) {
-            console.error('Failed to purchase item:', err);
             toast.error('Không thể mua item này', { description: 'Vui lòng kiểm tra số sao/xu và thử lại.' });
         } finally {
             setIsPurchasing(false);
@@ -159,7 +157,6 @@ export default function ShopPage() {
                 'Nền': customization.equippedItems.find((equipped) => equipped.category === 'Nền')?.id ?? null,
             });
         } catch (err) {
-            console.error('Failed to equip item:', err);
             toast.error('Không thể trang bị item', { description: 'Vui lòng thử lại.' });
         } finally {
             isEquippingRef.current = false;
