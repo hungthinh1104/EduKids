@@ -1,6 +1,7 @@
 import { Injectable, UnauthorizedException } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import { PrismaService } from "../../../prisma/prisma.service";
+import { MS } from "../../../common/constants";
 
 @Injectable()
 export class AuthTokenService {
@@ -38,7 +39,7 @@ export class AuthTokenService {
       data: {
         userId,
         token: refreshToken,
-        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        expiresAt: new Date(Date.now() + MS.SEVEN_DAYS),
       },
     });
   }

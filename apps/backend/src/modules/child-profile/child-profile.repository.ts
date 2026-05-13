@@ -1,6 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { Prisma } from "@prisma/client";
 import { PrismaService } from "../../prisma/prisma.service";
+import { MS } from "../../common/constants";
 import {
   CreateChildProfileDto,
   UpdateChildProfileDto,
@@ -256,7 +257,7 @@ export class ChildProfileRepository {
       data: {
         userId,
         token: refreshToken,
-        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        expiresAt: new Date(Date.now() + MS.SEVEN_DAYS),
       },
     });
   }

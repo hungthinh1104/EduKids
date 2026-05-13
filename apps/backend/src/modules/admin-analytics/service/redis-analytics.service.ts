@@ -1,5 +1,6 @@
 import { Injectable, Inject } from "@nestjs/common";
 import { Redis } from "ioredis";
+import { TTL } from "../../../common/constants";
 
 /**
  * Redis service for real-time analytics tracking
@@ -19,13 +20,13 @@ export class RedisAnalyticsService {
     // Add user to daily active users set
     const dauKey = `analytics:dau:${dateKey}`;
     await this.redis.sadd(dauKey, userId);
-    await this.redis.expire(dauKey, 90 * 24 * 60 * 60); // Keep for 90 days
+    await this.redis.expire(dauKey, TTL.NINETY_DAYS); // Keep for 90 days
 
     // Track hourly activity for granular analysis
     const hour = date.getHours();
     const hourKey = `analytics:dau:${dateKey}:hour:${hour}`;
     await this.redis.sadd(hourKey, userId);
-    await this.redis.expire(hourKey, 7 * 24 * 60 * 60); // Keep for 7 days
+    await this.redis.expire(hourKey, TTL.SEVEN_DAYS); // Keep for 7 days
   }
 
   /**
@@ -76,7 +77,7 @@ export class RedisAnalyticsService {
     const durationKey = `analytics:session_duration:${dateKey}`;
 
     await this.redis.rpush(durationKey, duration.toString());
-    await this.redis.expire(durationKey, 90 * 24 * 60 * 60); // Keep for 90 days
+    await this.redis.expire(durationKey, TTL.NINETY_DAYS); // Keep for 90 days
 
     // Clean up session data
     await this.redis.del(sessionKey);
@@ -99,17 +100,17 @@ export class RedisAnalyticsService {
     // Increment total view count
     const viewCountKey = `analytics:content:${contentType}:${contentId}:views:${dateKey}`;
     await this.redis.incr(viewCountKey);
-    await this.redis.expire(viewCountKey, 90 * 24 * 60 * 60);
+    await this.redis.expire(viewCountKey, TTL.NINETY_DAYS);
 
     // Track unique viewers
     const uniqueViewersKey = `analytics:content:${contentType}:${contentId}:unique:${dateKey}`;
     await this.redis.sadd(uniqueViewersKey, userId);
-    await this.redis.expire(uniqueViewersKey, 90 * 24 * 60 * 60);
+    await this.redis.expire(uniqueViewersKey, TTL.NINETY_DAYS);
 
     // Add to sorted set for ranking (score = view count)
     const rankingKey = `analytics:content_ranking:${contentType}:${dateKey}`;
     await this.redis.zincrby(rankingKey, 1, contentId);
-    await this.redis.expire(rankingKey, 90 * 24 * 60 * 60);
+    await this.redis.expire(rankingKey, TTL.NINETY_DAYS);
   }
 
   /**
@@ -126,7 +127,7 @@ export class RedisAnalyticsService {
 
     const timeSpentKey = `analytics:content:${contentType}:${contentId}:time:${dateKey}`;
     await this.redis.rpush(timeSpentKey, timeSpentSeconds.toString());
-    await this.redis.expire(timeSpentKey, 90 * 24 * 60 * 60);
+    await this.redis.expire(timeSpentKey, TTL.NINETY_DAYS);
   }
 
   /**
@@ -147,7 +148,7 @@ export class RedisAnalyticsService {
       completed ? "completed" : "started",
       1,
     );
-    await this.redis.expire(completionKey, 90 * 24 * 60 * 60);
+    await this.redis.expire(completionKey, TTL.NINETY_DAYS);
   }
 
   /**

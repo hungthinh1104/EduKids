@@ -2,6 +2,7 @@ import { Injectable, Inject, Logger } from "@nestjs/common";
 import { Redis } from "ioredis";
 import { ProgressUpdateDto } from "../dto/progress-update.dto";
 import { DeviceSessionDto } from "../dto/sync-response.dto";
+import { TTL } from "../../../common/constants";
 
 /**
  * Redis Progress Cache Service
@@ -116,7 +117,7 @@ export class RedisProgressCacheService {
 
     try {
       // Session expires after 24 hours of inactivity
-      await this.redis.setex(key, 24 * 3600, JSON.stringify(sessionData));
+      await this.redis.setex(key, TTL.ONE_DAY, JSON.stringify(sessionData));
 
       // Add to user's device list
       await this.redis.sadd(`user_devices:${userId}`, deviceId);
