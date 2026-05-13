@@ -32,18 +32,20 @@ export const useAuthStore = create<AuthState>((set) => ({
     isLoading: true, // Mặc định là true để chờ check auth lúc mới load app
 
     setAuth: (user, accessToken, refreshToken, role) => {
-        // Lưu access token vào JS Cookie để Axios Interceptor có thể chèn vào Header tự động
+        const isProd = process.env.NODE_ENV === 'production';
+        // access_token: 1 giờ (JWT_EXPIRY = 15m nhưng cookie sống lâu hơn để refresh kịp)
         Cookies.set('access_token', accessToken, {
-            secure: process.env.NODE_ENV === 'production',
+            secure: isProd,
             sameSite: 'lax',
-            // expire không thật sự cần thiết nếu token ngắn hạn, nhưng có thể map theo config
-            // expire: 1/24 // ví dụ 1 giờ
+            expires: 1 / 24, // 1 hour
         });
 
         if (refreshToken) {
+            // refresh_token: 7 ngày (khớp JWT_REFRESH_EXPIRY)
             Cookies.set('refresh_token', refreshToken, {
-                secure: process.env.NODE_ENV === 'production',
+                secure: isProd,
                 sameSite: 'lax',
+                expires: 7,
             });
         } else {
             Cookies.remove('refresh_token');
@@ -52,8 +54,9 @@ export const useAuthStore = create<AuthState>((set) => ({
         // Middleware đọc role từ cookie để phân quyền route (/admin)
         const normalizedRole = (role || user.role || '').toUpperCase();
         Cookies.set('role', normalizedRole, {
-            secure: process.env.NODE_ENV === 'production',
+            secure: isProd,
             sameSite: 'lax',
+            expires: 7, // sống cùng với refresh_token
         });
 
         if (normalizedRole === 'PARENT' || normalizedRole === 'ADMIN') {

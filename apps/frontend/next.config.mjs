@@ -80,7 +80,7 @@ const nextConfig = {
       "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://vercel.live blob:",
       "worker-src 'self' blob:",
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-      "img-src 'self' data: blob: https://res.cloudinary.com https://api.dicebear.com https://loremflickr.com https://images.unsplash.com",
+      "img-src 'self' data: blob: https://res.cloudinary.com https://api.dicebear.com https://loremflickr.com https://images.unsplash.com https://www.transparenttextures.com",
       "font-src 'self' data: https://fonts.gstatic.com",
       `connect-src ${connectSrc}`,
       "frame-ancestors 'self'",
@@ -115,7 +115,7 @@ const nextConfig = {
           // Permissions Policy
           {
             key: 'Permissions-Policy',
-            value: 'camera=(), microphone=(), geolocation=()',
+            value: 'camera=(), microphone=(self), geolocation=()',
           },
           {
             key: 'Content-Security-Policy',

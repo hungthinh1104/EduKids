@@ -165,8 +165,12 @@ apiClient.interceptors.response.use(
                 throw new Error('Invalid refresh response');
             }
 
-            // Lưu access token mới vào JS Cookie
-            Cookies.set('access_token', newAccessToken, { secure: process.env.NODE_ENV === 'production' });
+            // Lưu access token mới vào JS Cookie (1 giờ, khớp với auth.store)
+            Cookies.set('access_token', newAccessToken, {
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'lax',
+                expires: 1 / 24,
+            });
 
             // Cập nhật lại request interceptor cho các API khác sắp tới
             apiClient.defaults.headers.common['Authorization'] = `Bearer ${newAccessToken}`;
@@ -179,11 +183,23 @@ apiClient.interceptors.response.use(
             return apiClient(originalRequest);
 
         } catch (refreshError) {
-            // Nếu refresh token cũng thất bại (hết hạn / token không hợp lệ)
             processQueue(refreshError as Error, null);
 
-            // Xóa cookie, update state Zustand => Đẩy người dùng văng ra màn Login
-            useAuthStore.getState().logout();
+            // Chỉ logout khi backend xác nhận token thực sự hết hạn (401/403).
+            // Nếu lỗi là network/502/503 (backend tạm thời không tới được),
+            // KHÔNG logout — giữ session, để user thử lại.
+            const refreshAxiosError = refreshError as AxiosError;
+            const status = refreshAxiosError?.response?.status;
+            const isAuthError = status === 401 || status === 403;
+            const isNetworkError = !refreshAxiosError?.response;
+
+            if (isAuthError) {
+                useAuthStore.getState().logout();
+            } else if (!isNetworkError) {
+                // 4xx khác hoặc 5xx từ backend → token có vấn đề → logout
+                useAuthStore.getState().logout();
+            }
+            // Network error / 502 / 503: giữ nguyên session, không logout
 
             return Promise.reject(refreshError);
         } finally {
