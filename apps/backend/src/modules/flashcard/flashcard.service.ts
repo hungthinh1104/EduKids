@@ -257,7 +257,7 @@ export class FlashcardService {
       // Badge check runs after commit so it sees the committed points
       void this.gamificationService
         .checkAndAwardBadges(childId)
-        .catch(() => {});
+        .catch((err: unknown) => this.logger.warn(`Badge check failed for child ${childId}: ${err instanceof Error ? err.message : String(err)}`));
 
       const audioPlaybackFailed = !vocabulary.media?.some(
         (media) => media.type === "AUDIO",

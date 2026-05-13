@@ -5,6 +5,7 @@ import {
   ForbiddenException,
   BadRequestException,
   InternalServerErrorException,
+  Logger,
 } from "@nestjs/common";
 import * as bcrypt from "bcryptjs";
 import { PrismaService } from "../../prisma/prisma.service";
@@ -24,6 +25,8 @@ import { RedisAnalyticsService } from "../admin-analytics/service/redis-analytic
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     private prisma: PrismaService,
     private childProfileService: ChildProfileService,
@@ -194,7 +197,7 @@ export class AuthService {
 
     void this.redisAnalytics
       .trackSessionStart(String(user.id), tokens.accessToken)
-      .catch(() => {});
+      .catch((err: unknown) => this.logger.warn(`Analytics trackSessionStart failed: ${err instanceof Error ? err.message : String(err)}`));
 
     return {
       accessToken: tokens.accessToken,
@@ -257,7 +260,7 @@ export class AuthService {
       },
     });
 
-    void this.redisAnalytics.trackSessionEnd(token).catch(() => {});
+    void this.redisAnalytics.trackSessionEnd(token).catch((err: unknown) => this.logger.warn(`Analytics trackSessionEnd failed: ${err instanceof Error ? err.message : String(err)}`));
 
     return { message: "Logged out successfully" };
   }
@@ -462,7 +465,7 @@ export class AuthService {
 
     void this.redisAnalytics
       .trackSessionStart(String(user.id), tokens.accessToken)
-      .catch(() => {});
+      .catch((err: unknown) => this.logger.warn(`Analytics trackSessionStart failed: ${err instanceof Error ? err.message : String(err)}`));
 
     return {
       accessToken: tokens.accessToken,

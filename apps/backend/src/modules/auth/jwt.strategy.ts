@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from "@nestjs/common";
+import { Injectable, UnauthorizedException, Logger } from "@nestjs/common";
 import { PassportStrategy } from "@nestjs/passport";
 import { ExtractJwt, Strategy } from "passport-jwt";
 import { PrismaService } from "../../prisma/prisma.service";
@@ -13,6 +13,8 @@ interface JwtPayload {
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
+  private readonly logger = new Logger(JwtStrategy.name);
+
   constructor(
     private prisma: PrismaService,
     private redisAnalytics: RedisAnalyticsService,
@@ -59,7 +61,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     // Track DAU — fire-and-forget, Redis SADD deduplicates per day automatically
     void this.redisAnalytics
       .trackUserActivity(String(payload.sub))
-      .catch(() => {});
+      .catch((err: unknown) => this.logger.warn(`Analytics trackUserActivity failed: ${err instanceof Error ? err.message : String(err)}`));
 
     // Return user data attached to request.user
     return {

@@ -294,39 +294,45 @@ export class ApprovalService {
     averageReviewTime: number;
     topRejectionReasons: { reason: string; count: number }[];
   }> {
-    const approvals = await this.prisma.contentApproval.findMany();
-    const rejections = await this.prisma.contentRejection.findMany();
+    const [
+      totalApprovals,
+      approvalGroups,
+      rejectionCount,
+      topRejectionReasons,
+      avgReviewTime,
+    ] = await Promise.all([
+      this.prisma.contentApproval.count(),
+      this.prisma.contentApproval.groupBy({
+        by: ["decision"],
+        _count: { decision: true },
+      }),
+      this.prisma.contentRejection.count(),
+      this.prisma.contentRejection.groupBy({
+        by: ["reason"],
+        _count: { reason: true },
+        orderBy: { _count: { reason: "desc" } },
+        take: 5,
+      }),
+      this.prisma.contentValidation.aggregate({
+        _avg: { validationTimeMs: true },
+        where: { validationTimeMs: { gt: 0 } },
+      }),
+    ]);
 
-    // Calculate reason distribution
-    const reasonCounts: { [key: string]: number } = {};
-    for (const rejection of rejections) {
-      reasonCounts[rejection.reason] =
-        (reasonCounts[rejection.reason] || 0) + 1;
-    }
-
-    const topReasons = Object.entries(reasonCounts)
-      .map(([reason, count]) => ({ reason, count }))
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 5);
-
-    // Calculate average review time
-    const validations = await this.prisma.contentValidation.findMany();
-    const reviewTimes = validations
-      .filter((v) => v.validationTimeMs)
-      .map((v) => v.validationTimeMs);
-    const averageReviewTime =
-      reviewTimes.length > 0
-        ? reviewTimes.reduce((a, b) => a + b, 0) / reviewTimes.length
-        : 0;
+    const byDecision = Object.fromEntries(
+      approvalGroups.map((g) => [g.decision, g._count.decision]),
+    );
+    const topReasons = topRejectionReasons.map((r) => ({
+      reason: r.reason,
+      count: r._count.reason,
+    }));
+    const averageReviewTime = avgReviewTime._avg.validationTimeMs ?? 0;
 
     return {
-      totalApprovals: approvals.length,
-      approved: approvals.filter((a) => a.decision === ApprovalDecision.APPROVE)
-        .length,
-      rejected: rejections.length,
-      conditional: approvals.filter(
-        (a) => a.decision === ApprovalDecision.CONDITIONAL_APPROVE,
-      ).length,
+      totalApprovals,
+      approved: byDecision[ApprovalDecision.APPROVE] ?? 0,
+      rejected: rejectionCount,
+      conditional: byDecision[ApprovalDecision.CONDITIONAL_APPROVE] ?? 0,
       averageReviewTime: Math.round(averageReviewTime),
       topRejectionReasons: topReasons,
     };

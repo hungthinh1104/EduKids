@@ -148,52 +148,55 @@ export class ValidationRepository {
    * Get validation statistics
    */
   async getValidationStats() {
-    const validations = await this.prisma.contentValidation.findMany();
-    const flags = await this.prisma.safetyFlag.findMany();
+    const [
+      totalValidations,
+      aggregate,
+      statusGroups,
+      flaggedCount,
+      contentTypeGroups,
+      flagTypeGroups,
+    ] = await Promise.all([
+      this.prisma.contentValidation.count(),
+      this.prisma.contentValidation.aggregate({
+        _avg: { safetyScore: true, validationTimeMs: true },
+      }),
+      this.prisma.contentValidation.groupBy({
+        by: ["status"],
+        _count: { status: true },
+      }),
+      this.prisma.contentValidation.count({ where: { hasAutoFlags: true } }),
+      this.prisma.contentValidation.groupBy({
+        by: ["contentType"],
+        _count: { contentType: true },
+        where: { contentType: { not: null } },
+      }),
+      this.prisma.safetyFlag.groupBy({
+        by: ["type"],
+        _count: { type: true },
+      }),
+    ]);
 
-    const stats = {
-      totalValidations: validations.length,
-      approved: validations.filter(
-        (v) => v.status === ValidationStatus.APPROVED,
-      ).length,
-      rejected: validations.filter(
-        (v) => v.status === ValidationStatus.REJECTED,
-      ).length,
-      flagged: validations.filter((v) => v.hasAutoFlags).length,
-      inReview: validations.filter(
-        (v) =>
-          v.status === ValidationStatus.IN_REVIEW ||
-          v.status === ValidationStatus.AUTO_FLAGGED,
-      ).length,
-      averageSafetyScore:
-        validations.length > 0
-          ? validations.reduce((sum, v) => sum + v.safetyScore, 0) /
-            validations.length
-          : 100,
-      averageValidationTime:
-        validations.length > 0
-          ? validations.reduce((sum, v) => sum + v.validationTimeMs, 0) /
-            validations.length
-          : 0,
-      flagTypeDistribution: {} as { [key: string]: number },
-      contentTypeDistribution: {} as { [key: string]: number },
+    const byStatus = Object.fromEntries(
+      statusGroups.map((g) => [g.status, g._count.status]),
+    );
+
+    return {
+      totalValidations,
+      approved: byStatus[ValidationStatus.APPROVED] ?? 0,
+      rejected: byStatus[ValidationStatus.REJECTED] ?? 0,
+      flagged: flaggedCount,
+      inReview:
+        (byStatus[ValidationStatus.IN_REVIEW] ?? 0) +
+        (byStatus[ValidationStatus.AUTO_FLAGGED] ?? 0),
+      averageSafetyScore: aggregate._avg.safetyScore ?? 100,
+      averageValidationTime: aggregate._avg.validationTimeMs ?? 0,
+      contentTypeDistribution: Object.fromEntries(
+        contentTypeGroups.map((g) => [g.contentType, g._count.contentType]),
+      ) as Record<string, number>,
+      flagTypeDistribution: Object.fromEntries(
+        flagTypeGroups.map((g) => [g.type, g._count.type]),
+      ) as Record<string, number>,
     };
-
-    // Calculate flag type distribution
-    for (const flag of flags) {
-      stats.flagTypeDistribution[flag.type] =
-        (stats.flagTypeDistribution[flag.type] || 0) + 1;
-    }
-
-    // Calculate content type distribution
-    for (const validation of validations) {
-      if (validation.contentType) {
-        stats.contentTypeDistribution[validation.contentType] =
-          (stats.contentTypeDistribution[validation.contentType] || 0) + 1;
-      }
-    }
-
-    return stats;
   }
 
   /**

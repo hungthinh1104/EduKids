@@ -9,6 +9,7 @@ import {
   Request,
   HttpException,
   HttpStatus,
+  Logger,
 } from "@nestjs/common";
 import {
   ApiTags,
@@ -36,6 +37,8 @@ import { VocabularyDto } from "./dto/vocabulary.dto";
 @Controller("content")
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class ContentController {
+  private readonly logger = new Logger(ContentController.name);
+
   constructor(
     private readonly contentService: ContentService,
     private readonly redisAnalytics: RedisAnalyticsService,
@@ -132,7 +135,7 @@ export class ContentController {
       const result = await this.contentService.getTopicById(topicId, childId);
       void this.redisAnalytics
         .trackContentView(String(topicId), "TOPIC", String(req.user.userId))
-        .catch(() => {});
+        .catch((err: unknown) => this.logger.warn(`Analytics trackContentView failed: ${err instanceof Error ? err.message : String(err)}`));
       return result;
     } catch (error) {
       // UC-01 Exception: Media loading fails

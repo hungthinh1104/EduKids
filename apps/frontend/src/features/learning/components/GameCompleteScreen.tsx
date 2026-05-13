@@ -42,7 +42,7 @@ export function GameCompleteScreen({
     backLabel = 'Quay lại chủ đề',
 }: GameCompleteScreenProps) {
     useEffect(() => {
-        void import('@/shared/utils/confetti').then((m) => m.fireRewardConfetti());
+        void import('@/shared/utils/confetti').then((m) => m.fireRewardConfetti()).catch(() => {});
         playSound('fanfare');
     }, []);
 

@@ -682,7 +682,7 @@ export class QuizService {
 
             void this.gamificationService
               .checkAndAwardBadges(childId)
-              .catch(() => {});
+              .catch((err: unknown) => this.logger.warn(`Badge check failed for child ${childId}: ${err instanceof Error ? err.message : String(err)}`));
           } else {
             Object.assign(session, latestSession);
           }

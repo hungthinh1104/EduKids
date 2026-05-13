@@ -6,7 +6,7 @@ import { PrismaService } from "../../prisma/prisma.service";
 export class UsersService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async getAdminUsers() {
+  async getAdminUsers(limit = 200, offset = 0) {
     const users = await this.prisma.user.findMany({
       where: {
         role: Role.PARENT,
@@ -15,6 +15,8 @@ export class UsersService {
       orderBy: {
         createdAt: "desc",
       },
+      take: limit,
+      skip: offset,
       select: {
         id: true,
         email: true,
