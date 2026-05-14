@@ -4,7 +4,6 @@ import { PrismaService } from "../../../prisma/prisma.service";
 import { BadgeCategory, ShopItemCategory } from "../dto/gamification.dto";
 import {
   buildAvatarItemImageUrl,
-  buildAvatarPreviewImageUrl,
   ensureDefaultAvatarCatalog,
 } from "../../avatar-customization/avatar-item-catalog";
 
@@ -473,24 +472,10 @@ export class GamificationRepository {
     childId: number,
     fallbackAvatar?: string | null,
   ) {
-    await ensureDefaultAvatarCatalog(this.prisma);
-
-    const equippedItems = await this.prisma.childAvatarItem.findMany({
-      where: {
-        childId,
-        equipped: true,
-      },
-      include: {
-        item: true,
-      },
-      orderBy: { itemId: "asc" },
-    });
-
-    if (equippedItems.length === 0) {
-      return fallbackAvatar || buildAvatarPreviewImageUrl([]);
-    }
-
-    return buildAvatarPreviewImageUrl(equippedItems.map((entry) => entry.item));
+    void childId;
+    // Always return the child's chosen DiceBear avatar.
+    // Shop items are rendered as emoji overlays in the frontend — not merged into the SVG.
+    return fallbackAvatar || "https://api.dicebear.com/9.x/bottts/svg?seed=child";
   }
 
   /**

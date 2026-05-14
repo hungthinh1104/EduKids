@@ -14,6 +14,7 @@ import { CATEGORIES } from '@/features/learning/components/shop/constants';
 import { ShopGrid } from '@/features/learning/components/shop/ShopGrid';
 import { ItemPreviewDrawer } from '@/features/learning/components/shop/ItemPreviewDrawer';
 import { DEFAULT_CHILD_AVATAR } from '@/features/profile/utils/avatar-sync';
+import { getEquippedOverlays } from '@/features/learning/components/shop/avatar-overlay';
 import { BottomNav } from '@/features/learning/components/BottomNav';
 
 export default function ShopPage() {
@@ -26,7 +27,6 @@ export default function ShopPage() {
     const [coins, setCoins] = useState(0);
     const [activeCategory, setActiveCategory] = useState('Tất cả');
     const [previewItem, setPreviewItem] = useState<ShopItem | null>(null);
-    const [previewAvatarUrl, setPreviewAvatarUrl] = useState('');
     const [loading, setLoading] = useState(true);
     const [loadError, setLoadError] = useState<string | null>(null);
     const [purchased, setPurchased] = useState<number | null>(null);
@@ -66,7 +66,6 @@ export default function ShopPage() {
                 setShopItems(items);
                 setStars(rewards.stars);
                 setCoins(rewards.coins);
-                setPreviewAvatarUrl(customization.avatar || fallbackAvatarUrl || DEFAULT_CHILD_AVATAR);
                 setEquippedBySlot({
                     'Mũ': customization.equippedItems.find((item) => item.category === 'Mũ')?.id ?? null,
                     'Áo': customization.equippedItems.find((item) => item.category === 'Áo')?.id ?? null,
@@ -87,6 +86,7 @@ export default function ShopPage() {
     }, [childId, fallbackAvatarUrl]);
 
     const equippedIds = Object.values(equippedBySlot).filter(Boolean) as number[];
+    const equippedOverlays = getEquippedOverlays(equippedBySlot, shopItems);
     const filteredItems = shopItems.filter((i) => activeCategory === 'Tất cả' || i.category === activeCategory);
     const equippedLabels = Object.entries(equippedBySlot)
         .filter(([, itemId]) => Boolean(itemId))
@@ -127,13 +127,6 @@ export default function ShopPage() {
         try {
             await gamificationApi.equipItem(childId, item.id);
             const customization = await gamificationApi.getAvatarCustomization(childId);
-            // resolveChildAvatarUrl already ignores data: URLs — the child's
-            // DiceBear avatar stays as the canonical display avatar.
-            const nextAvatarUrl = customization.avatar || child.avatar || DEFAULT_CHILD_AVATAR;
-            setPreviewAvatarUrl(nextAvatarUrl);
-            window.dispatchEvent(new CustomEvent('edukids-avatar-updated', {
-                detail: { avatar: nextAvatarUrl, childId },
-            }));
             setShopItems((prev) =>
                 prev.map((shopItem) => {
                     const equippedItem = customization.equippedItems.find((equipped) => equipped.id === shopItem.id);
@@ -172,7 +165,7 @@ export default function ShopPage() {
             <div className="hidden md:block">
                 <GameHUD
                     nickname={child.nickname}
-                    avatar={previewAvatarUrl || child.avatar}
+                    avatar={child.avatar || DEFAULT_CHILD_AVATAR}
                     rewards={{ ...child.rewards, totalPoints: stars }}
                     activeNav="shop"
                 />
@@ -210,8 +203,12 @@ export default function ShopPage() {
                     <div className="relative w-20 h-20 flex-shrink-0">
                         <div className="w-full h-full rounded-full bg-card/20 border-4 border-white/50 flex items-center justify-center overflow-hidden">
                             {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img src={previewAvatarUrl || child.avatar || DEFAULT_CHILD_AVATAR} alt={child.nickname} className="h-full w-full object-contain p-1" />
+                            <img src={child.avatar || DEFAULT_CHILD_AVATAR} alt={child.nickname} className="h-full w-full object-contain p-1" />
                         </div>
+                        {/* Emoji overlays for equipped items */}
+                        {equippedOverlays.map(({ item, emoji, positionClass }) => (
+                            <span key={item.id} className={positionClass} title={item.name}>{emoji}</span>
+                        ))}
                     </div>
                     <div className="text-white">
                         <Heading level={3} color="textInverse" className="text-lg mb-0.5">{child.nickname}</Heading>
