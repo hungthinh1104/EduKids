@@ -182,6 +182,9 @@ const nextConfig = {
     optimizePackageImports: ['lucide-react', 'clsx', 'framer-motion'],
   },
 
+  // Silence Turbopack warning — webpack config is intentional for production builds
+  turbopack: {},
+
   // ==========================================
   // TypeScript Configuration
   // ==========================================
