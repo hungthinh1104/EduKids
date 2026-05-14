@@ -88,6 +88,9 @@ export class ShopItemDto {
   @ApiProperty({ example: false, description: "Whether currently equipped" })
   isEquipped: boolean;
 
+  @ApiProperty({ example: "COMMON", required: false })
+  rarity?: string;
+
   @ApiProperty({ example: "2024-03-05T10:30:00Z", required: false })
   purchasedAt?: Date;
 }

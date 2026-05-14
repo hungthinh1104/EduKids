@@ -37,6 +37,7 @@ export interface ShopItem {
   imageUrl?: string;
   owned: boolean;
   isEquipped?: boolean;
+  rarity?: string;
 }
 
 export interface PurchaseResult {
@@ -106,6 +107,7 @@ const normalizeShopItem = (item: Record<string, unknown>): ShopItem => {
     imageUrl: typeof item.imageUrl === 'string' ? item.imageUrl : undefined,
     owned: Boolean(item.isPurchased),
     isEquipped: Boolean(item.isEquipped),
+    rarity: typeof item.rarity === 'string' ? item.rarity : 'COMMON',
   };
 };
 
@@ -217,21 +219,21 @@ export const gamificationApi = {
     void childId;
     const response = await axiosInstance.get<ApiEnvelope<{
       childId?: number;
-      previewUrl?: string;
-      layers?: Array<Record<string, unknown>>;
+      avatar?: string;
+      ownedItems?: Array<Record<string, unknown>>;
     }>>(
-      'gamification/avatar'
+      'gamification/avatar/customization'
     );
     const payload = response.data.data;
-    const layers = Array.isArray(payload.layers)
-      ? payload.layers.map(normalizeShopItem)
+    const ownedItems = Array.isArray(payload.ownedItems)
+      ? payload.ownedItems.map(normalizeShopItem)
       : [];
 
     return {
       childId: Number(payload.childId ?? 0),
-      avatar: typeof payload.previewUrl === 'string' ? payload.previewUrl : '',
-      equippedItems: layers.filter((item) => item.isEquipped),
-      availableItems: layers,
+      avatar: typeof payload.avatar === 'string' ? payload.avatar : '',
+      equippedItems: ownedItems.filter((item) => item.isEquipped),
+      availableItems: ownedItems,
     };
   },
 
