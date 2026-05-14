@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import Image from 'next/image';
 import { Star, Coins, ArrowLeft, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from 'sonner';
@@ -14,7 +13,7 @@ import { useCurrentChild } from '@/features/learning/hooks/useCurrentChild';
 import { CATEGORIES } from '@/features/learning/components/shop/constants';
 import { ShopGrid } from '@/features/learning/components/shop/ShopGrid';
 import { ItemPreviewDrawer } from '@/features/learning/components/shop/ItemPreviewDrawer';
-import { resolveChildAvatarUrl } from '@/features/profile/utils/avatar-sync';
+import { DEFAULT_CHILD_AVATAR } from '@/features/profile/utils/avatar-sync';
 import { BottomNav } from '@/features/learning/components/BottomNav';
 
 export default function ShopPage() {
@@ -67,7 +66,7 @@ export default function ShopPage() {
                 setShopItems(items);
                 setStars(rewards.stars);
                 setCoins(rewards.coins);
-                setPreviewAvatarUrl(resolveChildAvatarUrl({ avatar: fallbackAvatarUrl }, { avatar: customization.avatar }, fallbackAvatarUrl));
+                setPreviewAvatarUrl(customization.avatar || fallbackAvatarUrl || DEFAULT_CHILD_AVATAR);
                 setEquippedBySlot({
                     'Mũ': customization.equippedItems.find((item) => item.category === 'Mũ')?.id ?? null,
                     'Áo': customization.equippedItems.find((item) => item.category === 'Áo')?.id ?? null,
@@ -130,7 +129,7 @@ export default function ShopPage() {
             const customization = await gamificationApi.getAvatarCustomization(childId);
             // resolveChildAvatarUrl already ignores data: URLs — the child's
             // DiceBear avatar stays as the canonical display avatar.
-            const nextAvatarUrl = resolveChildAvatarUrl(child, { avatar: customization.avatar }, child.avatar);
+            const nextAvatarUrl = customization.avatar || child.avatar || DEFAULT_CHILD_AVATAR;
             setPreviewAvatarUrl(nextAvatarUrl);
             window.dispatchEvent(new CustomEvent('edukids-avatar-updated', {
                 detail: { avatar: nextAvatarUrl, childId },
@@ -210,14 +209,9 @@ export default function ShopPage() {
                 <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="bg-gradient-candy rounded-[2rem] p-5 flex items-center gap-5">
                     <div className="relative w-20 h-20 flex-shrink-0">
                         <div className="w-full h-full rounded-full bg-card/20 border-4 border-white/50 flex items-center justify-center overflow-hidden">
-                            <Image src={previewAvatarUrl || child.avatar} alt={child.nickname} width={80} height={80} className="h-full w-full object-contain p-1" />
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={previewAvatarUrl || child.avatar || DEFAULT_CHILD_AVATAR} alt={child.nickname} className="h-full w-full object-contain p-1" />
                         </div>
-                        {/* Show equipped hat emoji on avatar */}
-                        {equippedBySlot['Mũ'] && (
-                            <div className="absolute -top-2 left-1/2 -translate-x-1/2 text-xs px-2 py-0.5 rounded-full bg-card border border-border font-heading font-bold">
-                                {shopItems.find((i) => i.id === equippedBySlot['Mũ'])?.name?.slice(0, 1) || 'M'}
-                            </div>
-                        )}
                     </div>
                     <div className="text-white">
                         <Heading level={3} color="textInverse" className="text-lg mb-0.5">{child.nickname}</Heading>
