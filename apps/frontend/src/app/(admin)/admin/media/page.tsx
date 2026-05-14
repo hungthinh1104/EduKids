@@ -60,7 +60,7 @@ export default function AdminMediaPage() {
         });
         setUploadError(null);
         await loadMediaFiles();
-      } catch {
+      } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Không rõ lỗi';
         setUploadError(`Lỗi khi tải file: ${errorMessage}`);
       } finally {

@@ -170,7 +170,7 @@ export default function ParentRecommendationsPage() {
       await switchProfile(activeChild.id);
       toast.success(`Đang mở bài học được gợi ý cho ${activeChild.nickname}.`);
       window.location.assign(learningRoute);
-    } catch {
+    } catch (error) {
       const msg = error instanceof Error ? error.message : '';
       if (msg.toLowerCase().includes('playable') || msg.toLowerCase().includes('not found')) {
         toast.error('Bài học trong gợi ý này không còn khả dụng. Vui lòng tạo gợi ý mới.');

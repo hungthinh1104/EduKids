@@ -29,7 +29,7 @@ export default function AdminTopicsPage() {
       setIsLoading(true);
       const result = await getCMSTopics({ status: statusFilter, page: 1, limit: 100 });
       setTopics(result.items);
-    } catch {
+    } catch (error) {
       if (axios.isAxiosError(error) && error.response?.status === 403) {
         setTopics([]);
         toast.error('Bạn không có quyền ADMIN để xem danh sách chủ đề');
@@ -69,7 +69,7 @@ export default function AdminTopicsPage() {
       setShowCreateModal(false);
       setEditingTopic(null);
       void loadTopics();
-    } catch {
+    } catch (error) {
       toast.error('Lỗi khi lưu chủ đề');
       throw error;
     } finally {
@@ -96,7 +96,7 @@ export default function AdminTopicsPage() {
       await deleteTopic(topic.id);
       toast.success('Đã xóa chủ đề');
       void loadTopics();
-    } catch {
+    } catch (error) {
       if (axios.isAxiosError(error) && error.response?.status === 409) {
         const backendMessage =
           (error.response.data as { message?: string })?.message ||

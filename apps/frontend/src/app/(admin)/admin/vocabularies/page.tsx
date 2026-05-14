@@ -47,7 +47,7 @@ export default function AdminVocabulariesPage() {
       if (result.items.length > 0) {
         setSelectedTopicId(result.items[0].id);
       }
-    } catch {
+    } catch (error) {
         if (axios.isAxiosError(error) && error.response?.status === 403) {
           setTopics([]);
           toast.error('Bạn không có quyền ADMIN để xem danh sách chủ đề');
@@ -98,7 +98,7 @@ export default function AdminVocabulariesPage() {
       setShowCreateModal(false);
       setEditingVocab(null);
       void loadVocabularies();
-    } catch {
+    } catch (error) {
       toast.error('Lỗi khi lưu từ vựng');
       throw error;
     } finally {

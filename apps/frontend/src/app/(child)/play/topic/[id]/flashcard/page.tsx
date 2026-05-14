@@ -214,7 +214,7 @@ export default function FlashcardPage() {
                 const selectedOptionId = shouldSubmitIncorrect ? wrongOptionId : correctOptionId;
                 await flashcardApi.submitDragDrop(card.id, selectedOptionId, timeTakenMs);
             }
-        } catch {
+        } catch (err) {
             if (axios.isAxiosError(err) && err.response?.status === 400) {
                 setActivityWarning('Chủ đề này chưa đủ đáp án để ghi nhận điểm flashcard tự động. Bé vẫn có thể học tiếp nhé.');
             } else {

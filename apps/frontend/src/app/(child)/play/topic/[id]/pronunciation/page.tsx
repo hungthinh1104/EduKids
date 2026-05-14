@@ -368,7 +368,7 @@ export default function PronunciationPage() {
                                                         if (!isMountedRef.current) return;
                                                         setConfidence(response.confidenceScore);
                                                         setStage('result');
-                                                    } catch {
+                                                    } catch (error) {
                                                         if (!isMountedRef.current) return;
                                                         setConfidence(0);
                                                         setPracticeError(getPronunciationErrorMessage(error));

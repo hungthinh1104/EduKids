@@ -54,7 +54,7 @@ export default function AdminQuizzesPage() {
 
         return result.items.length > 0 ? result.items[0].id : null;
       });
-    } catch {
+    } catch (error) {
       if (axios.isAxiosError(error) && error.response?.status === 403) {
         setTopics([]);
         toast.error('Bạn không có quyền ADMIN để xem danh sách chủ đề');
@@ -146,7 +146,7 @@ export default function AdminQuizzesPage() {
       setShowCreateModal(false);
       setEditingQuiz(null);
       void loadQuizzes();
-    } catch {
+    } catch (error) {
       const message = axios.isAxiosError(error)
         ? String(error.response?.data?.message || 'Lỗi khi lưu bài tập')
         : 'Lỗi khi lưu bài tập';
