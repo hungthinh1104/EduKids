@@ -7,6 +7,7 @@ import axios from 'axios';
 import { BookOpen, Flame, Mic, Trophy, Star, TrendingUp, Calendar, Send, Mail, CheckCircle2, Download, Bell, Loader2 } from 'lucide-react';
 import { Heading, Body, Caption } from '@/shared/components/Typography';
 import { useChildProfiles, useChildAnalytics } from '@/features/dashboard/hooks/useChildProfiles';
+import { DEFAULT_CHILD_AVATAR } from '@/features/profile/utils/avatar-sync';
 import {
   sendReport,
   getReportPreferences, 
@@ -209,12 +210,13 @@ export default function ReportsPage() {
                             }`}
                     >
                         <Image
-                            src={p.avatar}
+                            src={p.avatar || DEFAULT_CHILD_AVATAR}
                             alt={`Avatar của ${p.nickname}`}
                             width={20}
                             height={20}
                             className="rounded-full w-5 h-5 md:w-6 md:h-6"
                             loading="lazy"
+                            onError={(e) => { e.currentTarget.src = DEFAULT_CHILD_AVATAR; }}
                         />
                         {p.nickname}
                     </motion.button>
