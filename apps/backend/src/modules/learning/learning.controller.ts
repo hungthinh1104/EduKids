@@ -3,7 +3,6 @@ import {
   Post,
   Body,
   UseGuards,
-  Request,
   HttpException,
   HttpStatus,
 } from "@nestjs/common";
@@ -17,6 +16,8 @@ import { LearningService } from "./learning.service";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { RolesGuard } from "../../common/guards/roles.guard";
 import { Roles } from "../../common/decorators/roles.decorator";
+import { CurrentUser } from "../../common/decorators/current-user.decorator";
+import { JwtUser } from "../../common/types/jwt-user.type";
 import { UpdateProgressDto, ProgressResponseDto, LogVideoActivityDto, VideoActivityResponseDto } from "./dto/progress.dto";
 
 @ApiTags("Learning")
@@ -51,9 +52,9 @@ export class LearningController {
   })
   async updateProgress(
     @Body() dto: UpdateProgressDto,
-    @Request() req,
+    @CurrentUser() user: JwtUser,
   ): Promise<ProgressResponseDto> {
-    const childId = req.user?.childId;
+    const childId = user.childId;
 
     if (!childId) {
       throw new HttpException(
@@ -75,9 +76,9 @@ export class LearningController {
   @ApiResponse({ status: 403, description: "Forbidden - Requires LEARNER role" })
   async logVideoActivity(
     @Body() dto: LogVideoActivityDto,
-    @Request() req,
+    @CurrentUser() user: JwtUser,
   ): Promise<VideoActivityResponseDto> {
-    const childId = req.user?.childId;
+    const childId = user.childId;
     if (!childId) {
       throw new HttpException(
         "Child profile required. Please switch to child profile first.",

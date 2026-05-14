@@ -1,5 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsInt, IsOptional, IsBoolean, Min } from "class-validator";
+import { IsInt, IsOptional, IsBoolean, Min, Max } from "class-validator";
 
 export class UpdateProgressDto {
   @ApiProperty({ example: 1, description: "Vocabulary ID that was viewed" })
@@ -25,6 +25,7 @@ export class LogVideoActivityDto {
   @IsOptional()
   @IsInt()
   @Min(0)
+  @Max(7200) // 2 hours max — rejects inflated client-sent values
   durationSec?: number;
 }
 
