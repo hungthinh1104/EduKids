@@ -23,6 +23,7 @@ import { AdminAnalyticsModule } from "./modules/admin-analytics/admin-analytics.
 import { UsersModule } from "./modules/users/users.module";
 import { AvatarCustomizationModule } from "./modules/avatar-customization/avatar-customization.module";
 import { SubscriptionModule } from "./modules/subscription/subscription.module";
+import { LearningProgressSyncModule } from "./modules/learning-progress-sync/learning-progress-sync.module";
 import { RootController } from "./root.controller";
 import { ConfigModule } from "@nestjs/config";
 @Module({
@@ -61,6 +62,7 @@ import { ConfigModule } from "@nestjs/config";
     UsersModule,
     AvatarCustomizationModule,
     SubscriptionModule,
+    LearningProgressSyncModule,
   ],
   providers: [
     {

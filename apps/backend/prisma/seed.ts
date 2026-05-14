@@ -819,6 +819,67 @@ async function main() {
   ]);
   console.log(`✅ Created ${avatarItems.length} avatar items`);
 
+  // ========================================
+  // SEED PREMIUM DEMO ACCOUNT
+  // ========================================
+  console.log('💎 Seeding Premium Demo Account...');
+  const premiumPassword = process.env.PREMIUM_SEED_PASSWORD || 'ChangeMe-Premium-123!';
+  const hashedPremiumPassword = await bcrypt.hash(premiumPassword, 12);
+
+  const premiumUser = await prisma.user.upsert({
+    where: { email: 'premium@edukids.com' },
+    update: {
+      passwordHash: hashedPremiumPassword,
+      firstName: 'Premium',
+      lastName: 'Demo',
+      role: 'PARENT',
+      isActive: true,
+    },
+    create: {
+      email: 'premium@edukids.com',
+      passwordHash: hashedPremiumPassword,
+      firstName: 'Premium',
+      lastName: 'Demo',
+      role: 'PARENT',
+      isActive: true,
+    },
+  });
+
+  await prisma.subscription.upsert({
+    where: { userId: premiumUser.id },
+    update: {
+      plan: 'PREMIUM',
+      status: 'ACTIVE',
+      expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1 year
+    },
+    create: {
+      userId: premiumUser.id,
+      plan: 'PREMIUM',
+      status: 'ACTIVE',
+      expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+    },
+  });
+
+  // Create a demo child profile for premium account
+  await prisma.childProfile.upsert({
+    where: { id: 9999 },
+    update: { nickname: 'Demo Kid', age: 7, totalPoints: 250 },
+    create: {
+      id: 9999,
+      userId: premiumUser.id,
+      nickname: 'Demo Kid',
+      age: 7,
+      totalPoints: 250,
+      isActive: true,
+    },
+  });
+
+  console.log(`✅ Created premium user: ${premiumUser.email}`);
+  console.log(`   📧 Email: premium@edukids.com`);
+  console.log(`   🔑 Password: ${premiumPassword}`);
+  console.log(`   💎 Plan: PREMIUM (expires 1 year from now)`);
+  console.log('');
+
   console.log('');
   console.log('✨ Database seeding completed successfully!');
   console.log('');

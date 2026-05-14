@@ -1,25 +1,27 @@
 import { Global, Module } from "@nestjs/common";
 import { ConfigModule, ConfigService } from "@nestjs/config";
+import { JwtModule } from "@nestjs/jwt";
 import { Redis } from "ioredis";
+import { ProgressSyncService } from "./service/progress-sync.service";
+import { ConflictResolutionService } from "./service/conflict-resolution.service";
+import { RedisProgressCacheService } from "./service/redis-progress-cache.service";
+import { OfflineQueueService } from "./service/offline-queue.service";
+import { ProgressSyncGateway } from "./gateway/progress-sync.gateway";
+import { WsJwtGuard } from "@/common/guards/ws-jwt.guard";
 
-// Services
-// import { ProgressSyncService } from './service/progress-sync.service';
-// import { ConflictResolutionService } from './service/conflict-resolution.service';
-// import { RedisProgressCacheService } from './service/redis-progress-cache.service';
-// import { OfflineQueueService } from './service/offline-queue.service';
-
-// Gateway
-// import { ProgressSyncGateway } from './gateway/progress-sync.gateway';
-
-/**
- * Learning Progress Synchronization Module
- * Manages real-time sync of user progress across devices
- */
 @Global()
 @Module({
-  imports: [ConfigModule],
+  imports: [
+    ConfigModule,
+    JwtModule.registerAsync({
+      imports: [ConfigModule],
+      useFactory: (config: ConfigService) => ({
+        secret: config.get<string>("JWT_SECRET"),
+      }),
+      inject: [ConfigService],
+    }),
+  ],
   providers: [
-    // Redis client factory for progress sync
     {
       provide: "REDIS_CLIENT",
       useFactory: (configService: ConfigService) => {
@@ -30,10 +32,7 @@ import { Redis } from "ioredis";
 
         const baseOptions = {
           db,
-          retryStrategy: (times: number) => {
-            const delay = Math.min(times * 50, 2000);
-            return delay;
-          },
+          retryStrategy: (times: number) => Math.min(times * 50, 2000),
           enableReadyCheck: false,
           enableOfflineQueue: true,
           lazyConnect: false,
@@ -54,23 +53,19 @@ import { Redis } from "ioredis";
       },
       inject: [ConfigService],
     },
-
-    // Core services
-    // ConflictResolutionService,
-    // RedisProgressCacheService,
-    // OfflineQueueService,
-    // ProgressSyncService,
-
-    // WebSocket gateway
-    // ProgressSyncGateway,
+    WsJwtGuard,
+    ConflictResolutionService,
+    RedisProgressCacheService,
+    OfflineQueueService,
+    ProgressSyncService,
+    ProgressSyncGateway,
   ],
   exports: [
     "REDIS_CLIENT",
-    // ConflictResolutionService,
-    // RedisProgressCacheService,
-    // OfflineQueueService,
-    // ProgressSyncService,
-    // ProgressSyncGateway,
+    ConflictResolutionService,
+    RedisProgressCacheService,
+    OfflineQueueService,
+    ProgressSyncService,
   ],
 })
 export class LearningProgressSyncModule {}
