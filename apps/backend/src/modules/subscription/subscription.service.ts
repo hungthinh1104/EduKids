@@ -1,7 +1,11 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { PlanTier, SubscriptionStatus } from "@prisma/client";
 import { PrismaService } from "../../prisma/prisma.service";
-import { SubscriptionDto, UpgradeSubscriptionDto, PLAN_LIMITS } from "./subscription.dto";
+import {
+  SubscriptionDto,
+  UpgradeSubscriptionDto,
+  PLAN_LIMITS,
+} from "./subscription.dto";
 
 @Injectable()
 export class SubscriptionService {
@@ -23,7 +27,10 @@ export class SubscriptionService {
     return { plan, status, expiresAt, ...limits };
   }
 
-  async upgradePlan(userId: number, dto: UpgradeSubscriptionDto): Promise<SubscriptionDto> {
+  async upgradePlan(
+    userId: number,
+    dto: UpgradeSubscriptionDto,
+  ): Promise<SubscriptionDto> {
     const expiresAt = dto.expiresAt ? new Date(dto.expiresAt) : null;
 
     await this.prisma.subscription.upsert({
@@ -47,7 +54,11 @@ export class SubscriptionService {
   async cancelSubscription(userId: number): Promise<SubscriptionDto> {
     await this.prisma.subscription.upsert({
       where: { userId },
-      create: { userId, plan: PlanTier.FREE, status: SubscriptionStatus.CANCELLED },
+      create: {
+        userId,
+        plan: PlanTier.FREE,
+        status: SubscriptionStatus.CANCELLED,
+      },
       update: { status: SubscriptionStatus.CANCELLED },
     });
 
@@ -55,7 +66,9 @@ export class SubscriptionService {
   }
 
   async getPlanForUser(userId: number): Promise<PlanTier> {
-    const sub = await this.prisma.subscription.findUnique({ where: { userId } });
+    const sub = await this.prisma.subscription.findUnique({
+      where: { userId },
+    });
     if (!sub || sub.status !== SubscriptionStatus.ACTIVE) return PlanTier.FREE;
     if (sub.expiresAt && sub.expiresAt < new Date()) return PlanTier.FREE;
     return sub.plan;

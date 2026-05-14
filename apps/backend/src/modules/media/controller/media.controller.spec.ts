@@ -34,7 +34,7 @@ describe("MediaController", () => {
     (mediaServiceMock.uploadMedia as any).mockResolvedValue(expected);
 
     const result = await controller.uploadMedia(file, dto as any, {
-      user: { sub: 42 },
+      sub: 42,
     } as any);
 
     expect(mediaServiceMock.uploadMedia).toHaveBeenCalledWith(file, dto, "42");
@@ -44,7 +44,7 @@ describe("MediaController", () => {
   it("deleteMedia passes id and adminId from sub", async () => {
     (mediaServiceMock.deleteMedia as any).mockResolvedValue(undefined);
 
-    await controller.deleteMedia("m99", { user: { sub: 8 } } as any);
+    await controller.deleteMedia("m99", { sub: 8 } as any);
 
     expect(mediaServiceMock.deleteMedia).toHaveBeenCalledWith("m99", "8");
   });

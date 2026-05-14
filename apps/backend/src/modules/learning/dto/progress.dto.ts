@@ -21,7 +21,11 @@ export class LogVideoActivityDto {
   @IsInt()
   topicId: number;
 
-  @ApiProperty({ example: 120, description: "Actual watch time in seconds", required: false })
+  @ApiProperty({
+    example: 120,
+    description: "Actual watch time in seconds",
+    required: false,
+  })
   @IsOptional()
   @IsInt()
   @Min(0)

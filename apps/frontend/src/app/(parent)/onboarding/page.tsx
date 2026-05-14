@@ -64,7 +64,7 @@ export default function OnboardingPage() {
                 avatar: `https://api.dicebear.com/9.x/bottts/svg?seed=${avatar}`,
             });
             router.push(getDefaultRouteByRole('PARENT'));
-        } catch (err) {
+        } catch {
             setCreateError('Không thể tạo hồ sơ. Vui lòng thử lại.');
         } finally {
             setCreating(false);

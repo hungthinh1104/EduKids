@@ -57,7 +57,13 @@ describe("AuthService - register", () => {
         { provide: AuthRateLimitService, useValue: authRateLimitServiceMock },
         { provide: AuthTokenService, useValue: authTokenServiceMock },
         { provide: AuthPasswordService, useValue: authPasswordServiceMock },
-        { provide: RedisAnalyticsService, useValue: { trackUserLogin: jest.fn(), trackUserRegistration: jest.fn() } },
+        {
+          provide: RedisAnalyticsService,
+          useValue: {
+            trackUserLogin: jest.fn(),
+            trackUserRegistration: jest.fn(),
+          },
+        },
       ],
     }).compile();
 

@@ -177,7 +177,7 @@ export default function AdminAnalyticsPage() {
                     totalQuizQuestions: dashboard.totalQuizQuestions,
                     avgLearningScore: dashboard.avgLearningScore,
                 });
-            } catch (error) {
+            } catch {
                 setData(null);
                 setWarning('Không thể tải đầy đủ analytics lúc này. Vui lòng thử lại sau.');
             } finally {

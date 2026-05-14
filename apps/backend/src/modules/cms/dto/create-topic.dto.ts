@@ -62,7 +62,7 @@ export class CreateTopicDto {
     required: false,
   })
   @IsOptional()
-  @IsUrl({ require_protocol: true, require_host: true, protocols: ['https'] })
+  @IsUrl({ require_protocol: true, require_host: true, protocols: ["https"] })
   imageUrl?: string;
 
   @ApiProperty({
@@ -71,7 +71,7 @@ export class CreateTopicDto {
     required: false,
   })
   @IsOptional()
-  @IsUrl({ require_protocol: true, require_host: true, protocols: ['https'] })
+  @IsUrl({ require_protocol: true, require_host: true, protocols: ["https"] })
   videoUrl?: string;
 
   @ApiProperty({

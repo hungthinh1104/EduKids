@@ -44,7 +44,7 @@ describe("AnalyticsController", () => {
 
     const result = await controller.getAnalyticsOverview(
       { childId: 15 } as any,
-      { user: { userId: 9 } } as any,
+      { userId: 9 } as any,
     );
 
     expect(analyticsServiceMock.getAnalyticsOverview).toHaveBeenCalledWith(
@@ -59,7 +59,7 @@ describe("AnalyticsController", () => {
     (analyticsServiceMock.resolveChildId as any).mockResolvedValue(22);
     (analyticsServiceMock.getLearningTime as any).mockResolvedValue({ hasData: false });
 
-    await controller.getLearningTime({} as any, { user: { userId: 8 } } as any);
+    await controller.getLearningTime({} as any, { userId: 8 } as any);
 
     expect(analyticsServiceMock.resolveChildId).toHaveBeenCalledWith(8);
     expect(analyticsServiceMock.getLearningTime).toHaveBeenCalledWith(
@@ -73,7 +73,7 @@ describe("AnalyticsController", () => {
     (analyticsServiceMock.resolveChildId as any).mockResolvedValue(31);
     (analyticsServiceMock.getQuizPerformance as any).mockResolvedValue({ hasData: false });
 
-    await controller.getQuizPerformance({} as any, { user: { userId: 5 } } as any);
+    await controller.getQuizPerformance({} as any, { userId: 5 } as any);
 
     expect(analyticsServiceMock.resolveChildId).toHaveBeenCalledWith(5);
     expect(analyticsServiceMock.getQuizPerformance).toHaveBeenCalledWith(
@@ -87,7 +87,7 @@ describe("AnalyticsController", () => {
     (analyticsServiceMock.resolveChildId as any).mockRejectedValue(new NotFoundException());
 
     await expect(
-      controller.getVocabularyRetention({} as any, { user: { userId: 1 } } as any),
+      controller.getVocabularyRetention({} as any, { userId: 1 } as any),
     ).rejects.toThrow(NotFoundException);
   });
 

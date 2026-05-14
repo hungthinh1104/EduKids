@@ -60,7 +60,7 @@ export default function LeaderboardPage() {
       setLoadError(null);
       const data = await gamificationApi.getLeaderboard(50);
       setLeaderboard(data);
-    } catch (error) {
+    } catch {
       setLoadError('Không thể tải bảng xếp hạng lúc này.');
       setLeaderboard([]);
     } finally {

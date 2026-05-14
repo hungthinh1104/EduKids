@@ -196,7 +196,11 @@ export class AuthService {
 
     void this.redisAnalytics
       .trackSessionStart(String(user.id), tokens.accessToken)
-      .catch((err: unknown) => this.logger.warn(`Analytics trackSessionStart failed: ${err instanceof Error ? err.message : String(err)}`));
+      .catch((err: unknown) =>
+        this.logger.warn(
+          `Analytics trackSessionStart failed: ${err instanceof Error ? err.message : String(err)}`,
+        ),
+      );
 
     return {
       accessToken: tokens.accessToken,
@@ -259,7 +263,13 @@ export class AuthService {
       },
     });
 
-    void this.redisAnalytics.trackSessionEnd(token).catch((err: unknown) => this.logger.warn(`Analytics trackSessionEnd failed: ${err instanceof Error ? err.message : String(err)}`));
+    void this.redisAnalytics
+      .trackSessionEnd(token)
+      .catch((err: unknown) =>
+        this.logger.warn(
+          `Analytics trackSessionEnd failed: ${err instanceof Error ? err.message : String(err)}`,
+        ),
+      );
 
     return { message: "Logged out successfully" };
   }
@@ -464,7 +474,11 @@ export class AuthService {
 
     void this.redisAnalytics
       .trackSessionStart(String(user.id), tokens.accessToken)
-      .catch((err: unknown) => this.logger.warn(`Analytics trackSessionStart failed: ${err instanceof Error ? err.message : String(err)}`));
+      .catch((err: unknown) =>
+        this.logger.warn(
+          `Analytics trackSessionStart failed: ${err instanceof Error ? err.message : String(err)}`,
+        ),
+      );
 
     return {
       accessToken: tokens.accessToken,
@@ -481,5 +495,4 @@ export class AuthService {
       },
     };
   }
-
 }

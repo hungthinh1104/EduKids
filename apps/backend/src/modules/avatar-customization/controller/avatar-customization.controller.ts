@@ -186,4 +186,3 @@ export class AvatarCustomizationController {
     return this.avatarService.getStatistics();
   }
 }
-

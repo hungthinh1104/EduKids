@@ -21,7 +21,12 @@ describe("ContentController", () => {
       controllers: [ContentController],
       providers: [
         { provide: ContentService, useValue: contentServiceMock },
-        { provide: RedisAnalyticsService, useValue: { trackContentView: jest.fn().mockReturnValue(Promise.resolve()) } },
+        {
+          provide: RedisAnalyticsService,
+          useValue: {
+            trackContentView: jest.fn().mockReturnValue(Promise.resolve()),
+          },
+        },
       ],
     }).compile();
 
@@ -89,7 +94,9 @@ describe("ContentController", () => {
     const expected = { id: 11, word: "dog" };
     (contentServiceMock.getVocabularyById as any).mockResolvedValue(expected);
 
-    const result = await controller.getVocabularyById(11, { user: { userId: 1 } } as any);
+    const result = await controller.getVocabularyById(11, {
+      user: { userId: 1 },
+    } as any);
 
     expect(contentServiceMock.getVocabularyById).toHaveBeenCalledWith(11);
     expect(result).toEqual(expected);

@@ -37,7 +37,7 @@ function OAuthCallbackContent() {
                 if (cancelled) return;
                 setAuth(user, accessToken, refreshToken, user.role);
                 window.location.href = getDefaultRouteByRole(user.role);
-            } catch (err) {
+            } catch {
                 if (!cancelled) {
                     setError('Lỗi khi xử lý thông tin đăng nhập.');
                     setTimeout(() => router.push('/login'), 3000);

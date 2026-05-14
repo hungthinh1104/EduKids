@@ -34,7 +34,7 @@ export default function TopicVideoPage() {
         }
         const detail = await contentApi.getTopicById(topicId);
         setTopic(detail);
-      } catch (error) {
+      } catch {
         setTopic(null);
       } finally {
         setLoading(false);

@@ -35,7 +35,7 @@ describe("FlashcardService", () => {
       $transaction: jest.fn(async (callback: any) => {
         const tx: any = {
           childProfile: { update: jest.fn(), findUnique: jest.fn() },
-          activityLog: { create: jest.fn() },
+          activityLog: { create: jest.fn(), findFirst: jest.fn() },
           dragDropActivity: { create: jest.fn() },
           learningProgress: {
             findUnique: jest.fn(),
@@ -43,6 +43,7 @@ describe("FlashcardService", () => {
           },
         };
         tx.childProfile.update.mockResolvedValue({ totalPoints: 120 });
+        tx.activityLog.findFirst.mockResolvedValue(null);
         tx.activityLog.create.mockResolvedValue({ id: 1 });
         tx.dragDropActivity.create.mockResolvedValue({ id: 1 });
         tx.learningProgress.findUnique.mockResolvedValue({ completedAt: null });
@@ -66,7 +67,13 @@ describe("FlashcardService", () => {
           useValue: mockLearningProgressRepository,
         },
         { provide: PrismaService, useValue: mockPrismaService },
-        { provide: GamificationService, useValue: { awardPoints: jest.fn().mockReturnValue(Promise.resolve()), checkAndAwardBadges: jest.fn().mockReturnValue(Promise.resolve()) } },
+        {
+          provide: GamificationService,
+          useValue: {
+            awardPoints: jest.fn().mockReturnValue(Promise.resolve()),
+            checkAndAwardBadges: jest.fn().mockReturnValue(Promise.resolve()),
+          },
+        },
       ],
     }).compile();
 

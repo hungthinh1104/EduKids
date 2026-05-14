@@ -26,9 +26,7 @@ describe("LearningController", () => {
     await expect(
       controller.updateProgress(
         { vocabularyId: 1 } as any,
-        {
-          user: { role: "LEARNER" },
-        } as any,
+        { role: "LEARNER" } as any,
       ),
     ).rejects.toMatchObject({
       status: HttpStatus.FORBIDDEN,
@@ -44,9 +42,7 @@ describe("LearningController", () => {
 
     const result = await controller.updateProgress(
       dto as any,
-      {
-        user: { childId: 99, role: "LEARNER" },
-      } as any,
+      { childId: 99, role: "LEARNER" } as any,
     );
 
     expect(learningServiceMock.updateViewingProgress).toHaveBeenCalledWith(

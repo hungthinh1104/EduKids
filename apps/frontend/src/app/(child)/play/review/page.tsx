@@ -120,7 +120,7 @@ export default function ReviewPage() {
                 setReviewDeck(session.items);
                 setSuggestedItems(session.suggestedItems ?? []);
                 setSuggestionMessage(session.suggestionMessage ?? null);
-            } catch (err) {
+            } catch {
                 setLoadError('Không thể tải bài ôn tập lúc này.');
                 setReviewDeck([]);
                 setSuggestedItems([]);
@@ -149,7 +149,7 @@ export default function ReviewPage() {
                 timeSpentMs,
             };
             await reviewApi.submitReview(child.id, submission);
-        } catch (err) {
+        } catch {
         }
 
         const updated = [...logs, newLog];
@@ -184,7 +184,7 @@ export default function ReviewPage() {
             setReviewDeck(session.items);
             setSuggestedItems(session.suggestedItems ?? []);
             setSuggestionMessage(session.suggestionMessage ?? null);
-        } catch (err) {
+        } catch {
             setLoadError('Không thể tải lại bài ôn tập.');
         } finally {
             setLoading(false);

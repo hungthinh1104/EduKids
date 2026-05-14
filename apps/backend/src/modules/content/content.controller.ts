@@ -135,7 +135,11 @@ export class ContentController {
       const result = await this.contentService.getTopicById(topicId, childId);
       void this.redisAnalytics
         .trackContentView(String(topicId), "TOPIC", String(req.user.userId))
-        .catch((err: unknown) => this.logger.warn(`Analytics trackContentView failed: ${err instanceof Error ? err.message : String(err)}`));
+        .catch((err: unknown) =>
+          this.logger.warn(
+            `Analytics trackContentView failed: ${err instanceof Error ? err.message : String(err)}`,
+          ),
+        );
       return result;
     } catch (error) {
       // UC-01 Exception: Media loading fails

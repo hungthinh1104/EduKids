@@ -17,12 +17,6 @@ import { Roles } from "../../common/decorators/roles.decorator";
 import { SubscriptionService } from "./subscription.service";
 import { UpgradeSubscriptionDto } from "./subscription.dto";
 
-interface AuthUser {
-  userId: number;
-  email: string;
-  role: string;
-}
-
 @ApiTags("Subscription")
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard)

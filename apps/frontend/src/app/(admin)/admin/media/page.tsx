@@ -28,7 +28,7 @@ export default function AdminMediaPage() {
       setIsLoading(true);
       const data = await listMediaFiles({ page: 1, limit: 50 });
       setMediaFiles(data.items);
-    } catch (error) {
+    } catch {
       setMediaFiles([]);
     } finally {
       setIsLoading(false);
@@ -60,7 +60,7 @@ export default function AdminMediaPage() {
         });
         setUploadError(null);
         await loadMediaFiles();
-      } catch (error) {
+      } catch {
         const errorMessage = error instanceof Error ? error.message : 'Không rõ lỗi';
         setUploadError(`Lỗi khi tải file: ${errorMessage}`);
       } finally {

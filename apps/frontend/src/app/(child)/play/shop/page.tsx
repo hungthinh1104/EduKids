@@ -75,7 +75,7 @@ export default function ShopPage() {
                     'Phụ kiện': customization.equippedItems.find((item) => item.category === 'Phụ kiện')?.id ?? null,
                     'Nền': customization.equippedItems.find((item) => item.category === 'Nền')?.id ?? null,
                 });
-            } catch (err) {
+            } catch {
                 setLoadError('Không thể tải dữ liệu cửa hàng lúc này. Vui lòng thử lại sau.');
             } finally {
                 setLoading(false);
@@ -113,7 +113,7 @@ export default function ShopPage() {
                 setPreviewItem(purchasedItem);
                 purchaseTimeoutRef.current = setTimeout(() => setPurchased(null), 2500);
             }
-        } catch (err) {
+        } catch {
             toast.error('Không thể mua item này', { description: 'Vui lòng kiểm tra số sao/xu và thử lại.' });
         } finally {
             setIsPurchasing(false);
@@ -156,7 +156,7 @@ export default function ShopPage() {
                 'Phụ kiện': customization.equippedItems.find((equipped) => equipped.category === 'Phụ kiện')?.id ?? null,
                 'Nền': customization.equippedItems.find((equipped) => equipped.category === 'Nền')?.id ?? null,
             });
-        } catch (err) {
+        } catch {
             toast.error('Không thể trang bị item', { description: 'Vui lòng thử lại.' });
         } finally {
             isEquippingRef.current = false;

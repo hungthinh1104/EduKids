@@ -29,7 +29,7 @@ export default function AdminUsersPage() {
             try {
                 const fetchedUsers = await getAdminUsers();
                 setUsers(fetchedUsers);
-            } catch (error) {
+            } catch {
                 setUsers([]);
             }
         };

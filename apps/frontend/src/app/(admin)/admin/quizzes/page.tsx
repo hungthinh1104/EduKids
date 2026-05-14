@@ -54,7 +54,7 @@ export default function AdminQuizzesPage() {
 
         return result.items.length > 0 ? result.items[0].id : null;
       });
-    } catch (error) {
+    } catch {
       if (axios.isAxiosError(error) && error.response?.status === 403) {
         setTopics([]);
         toast.error('Bạn không có quyền ADMIN để xem danh sách chủ đề');
@@ -72,7 +72,7 @@ export default function AdminQuizzesPage() {
       setIsLoadingQuizzes(true);
       const quizzesData = await getTopicQuizzes(selectedTopicId, { page: 1, limit: 100 });
       setQuizzes(quizzesData);
-    } catch (error) {
+    } catch {
       toast.error('Lỗi tải danh sách bài tập');
     } finally {
       setIsLoadingQuizzes(false);
@@ -88,7 +88,7 @@ export default function AdminQuizzesPage() {
     try {
       const vocabularies = await getTopicVocabularies(selectedTopicId, { page: 1, limit: 100 });
       setTopicVocabularies(vocabularies);
-    } catch (error) {
+    } catch {
       setTopicVocabularies([]);
       toast.error('Không thể tải danh sách từ của chủ đề');
     }
@@ -146,7 +146,7 @@ export default function AdminQuizzesPage() {
       setShowCreateModal(false);
       setEditingQuiz(null);
       void loadQuizzes();
-    } catch (error) {
+    } catch {
       const message = axios.isAxiosError(error)
         ? String(error.response?.data?.message || 'Lỗi khi lưu bài tập')
         : 'Lỗi khi lưu bài tập';
@@ -163,7 +163,7 @@ export default function AdminQuizzesPage() {
       await deleteQuiz(id);
       toast.success('Đã xóa bài tập');
       void loadQuizzes();
-    } catch (error) {
+    } catch {
       toast.error('Lỗi khi xóa bài tập');
     }
   };
@@ -173,7 +173,7 @@ export default function AdminQuizzesPage() {
       await publishQuiz(id);
       toast.success('Xuất bản bài tập thành công');
       void loadQuizzes();
-    } catch (error) {
+    } catch {
       toast.error('Lỗi khi xuất bản bài tập');
     }
   };

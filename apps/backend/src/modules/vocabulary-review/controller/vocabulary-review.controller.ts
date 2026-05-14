@@ -170,4 +170,3 @@ export class VocabularyReviewController {
     return this.reviewService.getAllReviewItems(childId);
   }
 }
-

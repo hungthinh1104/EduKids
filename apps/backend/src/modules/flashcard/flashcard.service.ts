@@ -217,7 +217,9 @@ export class FlashcardService {
             update: {
               lastReviewedAt: new Date(),
               // Only set completedAt on the first correct answer
-              ...(!existingProgress?.completedAt && { completedAt: new Date() }),
+              ...(!existingProgress?.completedAt && {
+                completedAt: new Date(),
+              }),
             },
           });
         }
@@ -247,7 +249,11 @@ export class FlashcardService {
       if (!result) {
         return {
           activityId: 0,
-          feedback: { ...feedback, pointsEarned: 0, audioUrl: feedback.audioUrl || "" },
+          feedback: {
+            ...feedback,
+            pointsEarned: 0,
+            audioUrl: feedback.audioUrl || "",
+          },
           audioPlaybackFailed: false,
           totalPoints: 0,
           currentLevel: 1,
@@ -257,7 +263,11 @@ export class FlashcardService {
       // Badge check runs after commit so it sees the committed points
       void this.gamificationService
         .checkAndAwardBadges(childId)
-        .catch((err: unknown) => this.logger.warn(`Badge check failed for child ${childId}: ${err instanceof Error ? err.message : String(err)}`));
+        .catch((err: unknown) =>
+          this.logger.warn(
+            `Badge check failed for child ${childId}: ${err instanceof Error ? err.message : String(err)}`,
+          ),
+        );
 
       const audioPlaybackFailed = !vocabulary.media?.some(
         (media) => media.type === "AUDIO",

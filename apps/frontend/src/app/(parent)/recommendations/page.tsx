@@ -43,7 +43,7 @@ export default function ParentRecommendationsPage() {
         data?.noRecommendationMessage ||
           'Bé chưa có gợi ý nào. Nhấn "Tạo gợi ý mới" để bắt đầu!',
       );
-    } catch (error) {
+    } catch {
       setRecommendations([]);
       setEmptyMessage('Không thể tải gợi ý học tập lúc này.');
     } finally {
@@ -62,7 +62,7 @@ export default function ParentRecommendationsPage() {
       if (recs.length > 0) {
         toast.success(`Đã tạo ${recs.length} gợi ý mới cho ${activeChild?.nickname || 'bé'}.`);
       }
-    } catch (error) {
+    } catch {
       toast.error('Không thể tạo gợi ý mới lúc này. Vui lòng thử lại sau.');
       setEmptyMessage('Không thể tạo gợi ý mới lúc này. Vui lòng thử lại sau.');
     } finally {
@@ -170,7 +170,7 @@ export default function ParentRecommendationsPage() {
       await switchProfile(activeChild.id);
       toast.success(`Đang mở bài học được gợi ý cho ${activeChild.nickname}.`);
       window.location.assign(learningRoute);
-    } catch (error) {
+    } catch {
       const msg = error instanceof Error ? error.message : '';
       if (msg.toLowerCase().includes('playable') || msg.toLowerCase().includes('not found')) {
         toast.error('Bài học trong gợi ý này không còn khả dụng. Vui lòng tạo gợi ý mới.');

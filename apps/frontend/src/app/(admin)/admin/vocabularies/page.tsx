@@ -47,7 +47,7 @@ export default function AdminVocabulariesPage() {
       if (result.items.length > 0) {
         setSelectedTopicId(result.items[0].id);
       }
-    } catch (error) {
+    } catch {
         if (axios.isAxiosError(error) && error.response?.status === 403) {
           setTopics([]);
           toast.error('Bạn không có quyền ADMIN để xem danh sách chủ đề');
@@ -65,7 +65,7 @@ export default function AdminVocabulariesPage() {
       setIsLoadingVocabs(true);
       const vocabs = await getTopicVocabularies(selectedTopicId, { page: 1, limit: 100 });
       setVocabularies(vocabs);
-    } catch (error) {
+    } catch {
       toast.error('Lỗi tải danh sách từ vựng');
     } finally {
       setIsLoadingVocabs(false);
@@ -98,7 +98,7 @@ export default function AdminVocabulariesPage() {
       setShowCreateModal(false);
       setEditingVocab(null);
       void loadVocabularies();
-    } catch (error) {
+    } catch {
       toast.error('Lỗi khi lưu từ vựng');
       throw error;
     } finally {
@@ -113,7 +113,7 @@ export default function AdminVocabulariesPage() {
       await deleteVocabulary(id);
       toast.success('Đã xóa từ vựng');
       void loadVocabularies();
-    } catch (error) {
+    } catch {
       toast.error('Lỗi khi xóa từ vựng');
     }
   };
@@ -123,7 +123,7 @@ export default function AdminVocabulariesPage() {
       await publishVocabulary(id);
       toast.success('Xuất bản từ vựng thành công');
       void loadVocabularies();
-    } catch (error) {
+    } catch {
       toast.error('Lỗi khi xuất bản từ vựng');
     }
   };

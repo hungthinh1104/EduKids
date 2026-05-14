@@ -662,4 +662,3 @@ export class CmsController {
     return this.cmsService.getAuditLogsByAdmin(adminId);
   }
 }
-

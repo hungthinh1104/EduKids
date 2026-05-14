@@ -144,9 +144,10 @@ export class QuizService {
             });
           } else {
             // Cycle through distractors if fewer than needed
-            const distractor = distractors.length > 0
-              ? distractors[distractorIndex++ % distractors.length]
-              : null;
+            const distractor =
+              distractors.length > 0
+                ? distractors[distractorIndex++ % distractors.length]
+                : null;
             options.push({
               id: i,
               text: distractor?.word || vocab.translation || vocab.word,
@@ -290,9 +291,10 @@ export class QuizService {
           });
         } else {
           // Cycle through distractors if fewer than needed
-          const distractor = distractors.length > 0
-            ? distractors[distractorIndex++ % distractors.length]
-            : null;
+          const distractor =
+            distractors.length > 0
+              ? distractors[distractorIndex++ % distractors.length]
+              : null;
           options.push({
             id: i,
             text: distractor?.word || vocab.translation || vocab.word,
@@ -682,7 +684,11 @@ export class QuizService {
 
             void this.gamificationService
               .checkAndAwardBadges(childId)
-              .catch((err: unknown) => this.logger.warn(`Badge check failed for child ${childId}: ${err instanceof Error ? err.message : String(err)}`));
+              .catch((err: unknown) =>
+                this.logger.warn(
+                  `Badge check failed for child ${childId}: ${err instanceof Error ? err.message : String(err)}`,
+                ),
+              );
           } else {
             Object.assign(session, latestSession);
           }

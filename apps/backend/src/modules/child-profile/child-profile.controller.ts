@@ -363,4 +363,3 @@ type AuthUser = {
 };
 
 type RequestWithUser = ExpressRequest & { user: AuthUser };
-

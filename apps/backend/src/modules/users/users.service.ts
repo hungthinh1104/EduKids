@@ -54,20 +54,20 @@ export class UsersService {
       const plan = isActivePremium ? ("premium" as const) : ("free" as const);
 
       return {
-      id: user.id,
-      email: user.email,
-      avatar: `https://api.dicebear.com/9.x/avataaars/svg?seed=${encodeURIComponent(user.email)}`,
-      plan,
-      status: user.isActive ? "active" : "banned",
-      joinedAt: user.createdAt.toISOString(),
-      lastLogin: (user.lastLoginAt ?? user.updatedAt).toISOString(),
-      children: user.children.map((child) => ({
-        nickname: child.nickname,
-        age: child.age,
-        totalPoints: child.totalPoints,
-        streakDays: child.streakCount,
-        currentLevel: child.currentLevel,
-      })),
+        id: user.id,
+        email: user.email,
+        avatar: `https://api.dicebear.com/9.x/avataaars/svg?seed=${encodeURIComponent(user.email)}`,
+        plan,
+        status: user.isActive ? "active" : "banned",
+        joinedAt: user.createdAt.toISOString(),
+        lastLogin: (user.lastLoginAt ?? user.updatedAt).toISOString(),
+        children: user.children.map((child) => ({
+          nickname: child.nickname,
+          age: child.age,
+          totalPoints: child.totalPoints,
+          streakDays: child.streakCount,
+          currentLevel: child.currentLevel,
+        })),
       };
     });
   }

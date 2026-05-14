@@ -333,5 +333,4 @@ export class AuthController {
       `${frontendUrl}/oauth/callback#token=${encodeURIComponent(authData.accessToken)}&refresh=${encodeURIComponent(authData.refreshToken)}`,
     );
   }
-
 }

@@ -21,7 +21,14 @@ describe("QuizController", () => {
       controllers: [QuizController],
       providers: [
         { provide: QuizService, useValue: quizServiceMock },
-        { provide: RedisAnalyticsService, useValue: { trackContentView: jest.fn().mockReturnValue(Promise.resolve()), trackQuizStarted: jest.fn().mockReturnValue(Promise.resolve()), trackQuizCompleted: jest.fn().mockReturnValue(Promise.resolve()) } },
+        {
+          provide: RedisAnalyticsService,
+          useValue: {
+            trackContentView: jest.fn().mockReturnValue(Promise.resolve()),
+            trackQuizStarted: jest.fn().mockReturnValue(Promise.resolve()),
+            trackQuizCompleted: jest.fn().mockReturnValue(Promise.resolve()),
+          },
+        },
       ],
     }).compile();
 

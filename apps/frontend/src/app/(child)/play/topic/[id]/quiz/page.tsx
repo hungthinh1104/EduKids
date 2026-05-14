@@ -128,7 +128,7 @@ export default function QuizPage() {
             setCorrectCount(0);
             setDone(false);
             setTimeLeft(TIME_LIMIT);
-        } catch (error) {
+        } catch {
             setLoadError('Không thể tải quiz. Vui lòng thử lại.');
             setQuestions([]);
         } finally {
@@ -174,7 +174,7 @@ export default function QuizPage() {
 
             isCorrect = Boolean(result.isCorrect);
             correctAnswerId = Number(result.correctAnswerId);
-        } catch (error) {
+        } catch {
 
             // Fallback when submit fails: keep UI responsive
             if (!isTimeout && typeof option.id === 'number') {

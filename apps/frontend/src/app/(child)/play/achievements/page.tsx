@@ -51,7 +51,7 @@ export default function AchievementsPage() {
                 const earned = all.filter((badge) => badge.isEarned);
                 setAllBadges(all);
                 setEarnedBadges(earned);
-            } catch (error) {
+            } catch {
                 setLoadError('Không thể tải huy hiệu lúc này.');
                 setAllBadges([]);
                 setEarnedBadges([]);

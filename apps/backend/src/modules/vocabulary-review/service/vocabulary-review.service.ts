@@ -1,5 +1,9 @@
 import { randomUUID } from "crypto";
-import { Injectable, NotFoundException, BadRequestException } from "@nestjs/common";
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from "@nestjs/common";
 import { VocabularyReviewRepository } from "../repository/vocabulary-review.repository";
 import { SpacedRepetitionService } from "./spaced-repetition.service";
 import { SubmitReviewRequestDto } from "../dto/vocabulary-review.dto";
@@ -19,14 +23,18 @@ export class VocabularyReviewService {
 
     if (items.length === 0) {
       // Seed from LearningProgress (words seen in flashcard/quiz but not yet queued)
-      const seeded = await this.repository.seedReviewItemsFromLearningProgress(childId);
+      const seeded =
+        await this.repository.seedReviewItemsFromLearningProgress(childId);
       if (seeded > 0) {
         items = await this.repository.getItemsDueForReview(childId, limit);
       }
     }
 
     if (items.length === 0) {
-      const suggestions = await this.repository.suggestNewVocabulary(childId, 5);
+      const suggestions = await this.repository.suggestNewVocabulary(
+        childId,
+        5,
+      );
       return {
         sessionId: 0,
         childId,
@@ -112,7 +120,11 @@ export class VocabularyReviewService {
         reviewItem.reviewCount + 1,
       );
       try {
-        await this.repository.awardStars(childId, starsAwarded, "VOCABULARY_REVIEW");
+        await this.repository.awardStars(
+          childId,
+          starsAwarded,
+          "VOCABULARY_REVIEW",
+        );
       } catch {
         starsAwarded = 0;
       }

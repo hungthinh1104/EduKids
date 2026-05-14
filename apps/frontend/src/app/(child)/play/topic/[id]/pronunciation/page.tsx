@@ -170,7 +170,7 @@ export default function PronunciationPage() {
                 }
                 const topic = await contentApi.getTopicById(parsedTopicId);
                 setVocabList(topic.vocabularies || []);
-            } catch (error) {
+            } catch {
                 setVocabList([]);
             } finally {
                 setLoading(false);
@@ -368,7 +368,7 @@ export default function PronunciationPage() {
                                                         if (!isMountedRef.current) return;
                                                         setConfidence(response.confidenceScore);
                                                         setStage('result');
-                                                    } catch (error) {
+                                                    } catch {
                                                         if (!isMountedRef.current) return;
                                                         setConfidence(0);
                                                         setPracticeError(getPronunciationErrorMessage(error));

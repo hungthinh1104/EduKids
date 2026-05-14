@@ -13,6 +13,7 @@ describe("GamificationService", () => {
   beforeEach(async () => {
     const mockGamificationRepository: any = {
       getRewardSummary: jest.fn(),
+      checkAndAwardBadges: jest.fn(),
       getAllBadgesForChild: jest.fn(),
       getShopItemById: jest.fn(),
       getAllShopItems: jest.fn(),

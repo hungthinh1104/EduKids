@@ -1,7 +1,12 @@
 import { Injectable, Logger, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../../prisma/prisma.service";
 import { LearningProgressRepository } from "./repositories/learning-progress.repository";
-import { UpdateProgressDto, ProgressResponseDto, LogVideoActivityDto, VideoActivityResponseDto } from "./dto/progress.dto";
+import {
+  UpdateProgressDto,
+  ProgressResponseDto,
+  LogVideoActivityDto,
+  VideoActivityResponseDto,
+} from "./dto/progress.dto";
 
 @Injectable()
 export class LearningService {
@@ -109,6 +114,11 @@ export class LearningService {
       },
     });
 
-    return { childId, topicId: dto.topicId, durationSec, message: "Video activity logged" };
+    return {
+      childId,
+      topicId: dto.topicId,
+      durationSec,
+      message: "Video activity logged",
+    };
   }
 }

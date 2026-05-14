@@ -229,7 +229,17 @@ export class ChildProfileRepository {
    * @returns Default avatar URL
    */
   private getDefaultAvatarUrl(age: number): string {
-    const seeds = ['cat', 'dog', 'bunny', 'bear', 'panda', 'fox', 'lion', 'owl', 'dino'];
+    const seeds = [
+      "cat",
+      "dog",
+      "bunny",
+      "bear",
+      "panda",
+      "fox",
+      "lion",
+      "owl",
+      "dino",
+    ];
     const seed = seeds[age % seeds.length];
     return `https://api.dicebear.com/9.x/bottts/svg?seed=${seed}`;
   }

@@ -110,7 +110,13 @@ export class VocabularyReviewRepository {
           childId,
           vocabularyId,
           activityType: "VOCABULARY_REVIEW",
-          score: correct ? (difficulty === "EASY" ? 100 : difficulty === "MEDIUM" ? 60 : 20) : 0,
+          score: correct
+            ? difficulty === "EASY"
+              ? 100
+              : difficulty === "MEDIUM"
+                ? 60
+                : 20
+            : 0,
           durationSec: timeSpentMs ? Math.round(timeSpentMs / 1000) : 30,
           pointsEarned: 0,
         },
@@ -125,9 +131,7 @@ export class VocabularyReviewRepository {
    * is populated after flashcard/quiz sessions.
    * Only creates rows that don't exist yet; returns count of new rows.
    */
-  async seedReviewItemsFromLearningProgress(
-    childId: number,
-  ): Promise<number> {
+  async seedReviewItemsFromLearningProgress(childId: number): Promise<number> {
     const [learnedIds, reviewedIds] = await Promise.all([
       this.prisma.learningProgress
         .findMany({ where: { childId }, select: { vocabularyId: true } })
@@ -161,10 +165,12 @@ export class VocabularyReviewRepository {
    * Get review statistics for child
    */
   async getReviewStats(childId: number) {
-    const [totalReviewed, totalCorrect, reviewAgg, timeAgg] =
-      await Promise.all([
+    const [totalReviewed, totalCorrect, reviewAgg, timeAgg] = await Promise.all(
+      [
         this.prisma.vocabularyReview.count({ where: { childId } }),
-        this.prisma.reviewSessionLog.count({ where: { childId, correct: true } }),
+        this.prisma.reviewSessionLog.count({
+          where: { childId, correct: true },
+        }),
         this.prisma.vocabularyReview.aggregate({
           where: { childId },
           _avg: { easeFactor: true, interval: true },
@@ -173,9 +179,11 @@ export class VocabularyReviewRepository {
           where: { childId },
           _sum: { timeSpentMs: true },
         }),
-      ]);
+      ],
+    );
 
-    const accuracy = totalReviewed > 0 ? (totalCorrect / totalReviewed) * 100 : 0;
+    const accuracy =
+      totalReviewed > 0 ? (totalCorrect / totalReviewed) * 100 : 0;
     const totalTimeSpentMs = timeAgg._sum.timeSpentMs ?? 0;
 
     return {
@@ -373,9 +381,7 @@ export class VocabularyReviewRepository {
         where: { id: childId },
         data: {
           lastLearnDate: new Date(),
-          streakCount: yesterdayProgress
-            ? { increment: 1 }
-            : { set: 1 },
+          streakCount: yesterdayProgress ? { increment: 1 } : { set: 1 },
         },
       });
     } else {

@@ -116,7 +116,7 @@ export default function AdminAuditLogsPage() {
         });
 
         setAuditLogs(mappedLogs);
-      } catch (error) {
+      } catch {
         setAuditLogs([]);
       } finally {
         setIsLoading(false);

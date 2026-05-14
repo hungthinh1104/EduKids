@@ -57,7 +57,7 @@ export default function AdminSettingsPage() {
     const handleLogout = async () => {
         try {
             await authApi.logout();
-        } catch (error) {
+        } catch {
         } finally {
             logout();
             router.push('/login');

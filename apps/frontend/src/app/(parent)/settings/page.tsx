@@ -234,7 +234,7 @@ export default function SettingsPage() {
     const handleLogout = async () => {
         try {
             await authApi.logout();
-        } catch (error) {
+        } catch {
         } finally {
             logout();
             router.push('/login');
@@ -260,7 +260,7 @@ export default function SettingsPage() {
             setShowDeleteConfirm(false);
             setSelectedChildId(null);
             await profilesData.refetch();
-        } catch (error) {
+        } catch {
             setDeleteError('Không thể xóa hồ sơ lúc này. Vui lòng thử lại.');
         } finally {
             setIsDeletingChild(false);

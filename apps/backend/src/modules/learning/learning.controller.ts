@@ -18,7 +18,12 @@ import { RolesGuard } from "../../common/guards/roles.guard";
 import { Roles } from "../../common/decorators/roles.decorator";
 import { CurrentUser } from "../../common/decorators/current-user.decorator";
 import { JwtUser } from "../../common/types/jwt-user.type";
-import { UpdateProgressDto, ProgressResponseDto, LogVideoActivityDto, VideoActivityResponseDto } from "./dto/progress.dto";
+import {
+  UpdateProgressDto,
+  ProgressResponseDto,
+  LogVideoActivityDto,
+  VideoActivityResponseDto,
+} from "./dto/progress.dto";
 
 @ApiTags("Learning")
 @ApiBearerAuth("JWT-auth")
@@ -71,9 +76,20 @@ export class LearningController {
    */
   @Post("video-activity")
   @Roles("LEARNER")
-  @ApiOperation({ summary: "Log video watch activity", description: "Records a VIDEO entry in activityLog with real watch duration. Requires LEARNER JWT." })
-  @ApiResponse({ status: 201, description: "Activity logged", type: VideoActivityResponseDto })
-  @ApiResponse({ status: 403, description: "Forbidden - Requires LEARNER role" })
+  @ApiOperation({
+    summary: "Log video watch activity",
+    description:
+      "Records a VIDEO entry in activityLog with real watch duration. Requires LEARNER JWT.",
+  })
+  @ApiResponse({
+    status: 201,
+    description: "Activity logged",
+    type: VideoActivityResponseDto,
+  })
+  @ApiResponse({
+    status: 403,
+    description: "Forbidden - Requires LEARNER role",
+  })
   async logVideoActivity(
     @Body() dto: LogVideoActivityDto,
     @CurrentUser() user: JwtUser,
