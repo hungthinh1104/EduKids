@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, NotFoundException, Logger } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException, Logger, HttpException, HttpStatus } from '@nestjs/common';
 import { Inject } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
@@ -71,6 +71,17 @@ export class PronunciationService {
     if (!dto.audioBase64) {
       throw new BadRequestException('A WAV audio recording is required for pronunciation assessment');
     }
+
+    // Daily cap per child — protects Azure Speech quota and billing
+    const DAILY_CAP = 200;
+    const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+    const dailyKey = `pron:daily:${childId}:${today}`;
+    const dailyCount = ((await this.cacheManager.get<number>(dailyKey)) ?? 0);
+    if (dailyCount >= DAILY_CAP) {
+      throw new HttpException('Bé đã luyện phát âm đủ cho hôm nay rồi! Quay lại ngày mai nhé 🌟', HttpStatus.TOO_MANY_REQUESTS);
+    }
+    const ttlSeconds = (24 - new Date().getUTCHours()) * 3600;
+    await this.cacheManager.set(dailyKey, dailyCount + 1, ttlSeconds);
 
     const mode = this.resolveMode(dto);
     const referenceText = this.resolveReferenceText(dto, vocabulary.word);

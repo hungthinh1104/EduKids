@@ -75,7 +75,7 @@ export class PronunciationController {
     description: 'Forbidden - childId missing from JWT or insufficient role',
   })
   @Roles('LEARNER')
-  @Throttle(50, 60) // 50 pronunciation attempts per 60 seconds
+  @Throttle(10, 60) // 10 attempts per minute per child (Azure cost protection)
   @Post(':vocabularyId')
   async submitPronunciation(
     @Param('vocabularyId', ParseIntPipe) vocabularyId: number,
