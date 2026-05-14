@@ -647,55 +647,50 @@ export class QuizService {
     );
 
     if (!session.rewardsGranted) {
-      const rewardLockAcquired =
-        this.quizSessionService.acquireRewardGrantLock(quizSessionId);
-
-      if (rewardLockAcquired) {
-        try {
-          // Re-read session inside the lock to catch concurrent grants
-          const latestSession =
-            await this.quizSessionService.getSession(quizSessionId);
-
-          if (!latestSession.rewardsGranted) {
-            // Mark as granted BEFORE the DB write so that any concurrent
-            // request that passes the lock check will see it already set
-            latestSession.rewardsGranted = true;
-            latestSession.completedAt = new Date();
-            await this.quizSessionService.saveSession(latestSession);
-            Object.assign(session, latestSession);
-
-            // Now perform the actual DB transaction
-            await this.prisma.$transaction(async (tx) => {
-              await tx.childProfile.update({
-                where: { id: childId },
-                data: { totalPoints: { increment: pointsAwarded } },
-              });
-            });
-
-            await this.quizEventPublisher.publishQuizCompleted({
+      try {
+        // DB-level idempotency: unique idempotencyKey prevents double-grant
+        // across concurrent requests and multiple server instances.
+        await this.prisma.$transaction(async (tx) => {
+          await tx.childProfile.update({
+            where: { id: childId },
+            data: { totalPoints: { increment: pointsAwarded } },
+          });
+          await tx.starTransaction.create({
+            data: {
               childId,
-              quizSessionId,
-              topicId: session.topicId,
-              totalQuestions,
-              correctAnswers,
-              accuracy,
-              pointsAwarded,
-            });
+              points: pointsAwarded,
+              reason: `quiz:${quizSessionId}`,
+              idempotencyKey: `quiz:${quizSessionId}`,
+            },
+          });
+        });
 
-            void this.gamificationService
-              .checkAndAwardBadges(childId)
-              .catch((err: unknown) =>
-                this.logger.warn(
-                  `Badge check failed for child ${childId}: ${err instanceof Error ? err.message : String(err)}`,
-                ),
-              );
-          } else {
-            Object.assign(session, latestSession);
-          }
-        } finally {
-          this.quizSessionService.releaseRewardGrantLock(quizSessionId);
-        }
-      } else {
+        session.rewardsGranted = true;
+        session.completedAt = new Date();
+        await this.quizSessionService.saveSession(session);
+
+        await this.quizEventPublisher.publishQuizCompleted({
+          childId,
+          quizSessionId,
+          topicId: session.topicId,
+          totalQuestions,
+          correctAnswers,
+          accuracy,
+          pointsAwarded,
+        });
+
+        void this.gamificationService
+          .checkAndAwardBadges(childId)
+          .catch((err: unknown) =>
+            this.logger.warn(
+              `Badge check failed for child ${childId}: ${err instanceof Error ? err.message : String(err)}`,
+            ),
+          );
+      } catch (err: unknown) {
+        // Unique constraint violation = already granted, safe to ignore
+        const isAlreadyGranted =
+          err instanceof Error && err.message.includes('idempotencyKey');
+        if (!isAlreadyGranted) throw err;
         const latestSession =
           await this.quizSessionService.getSession(quizSessionId);
         Object.assign(session, latestSession);

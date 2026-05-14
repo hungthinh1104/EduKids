@@ -82,11 +82,6 @@ enum OfflineQueueStatus {
   FAILED
 }
 
-enum AvatarActivityType {
-  AVATAR_CHANGED
-  ITEM_EQUIPPED
-  ITEM_REMOVED
-}
 
 enum PlanTier {
   FREE
@@ -282,8 +277,6 @@ model ChildProfile {
   starTransactions   StarTransaction[]
   badges             ChildBadge[]
   avatarItems        ChildAvatarItem[]
-  avatarConfig       AvatarConfiguration?
-  avatarActivityLogs AvatarActivityLog[]
   dailyProgress      DailyProgress[]
   reviewSessions     ReviewSessionLog[]
   purchases          Purchase[]
@@ -560,11 +553,12 @@ model ChildBadge {
 }
 
 model StarTransaction {
-  id      Int      @id @default(autoincrement())
-  childId Int
-  points  Int
-  reason  String
-  date    DateTime @default(now())
+  id             Int      @id @default(autoincrement())
+  childId        Int
+  points         Int
+  reason         String
+  date           DateTime @default(now())
+  idempotencyKey String?  @unique
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -611,37 +605,6 @@ model ChildAvatarItem {
   @@index([childId, equipped])
 }
 
-//////////////////////////////////////
-// UC-15: AVATAR CUSTOMIZATION
-//////////////////////////////////////
-
-model AvatarConfiguration {
-  id                      Int       @id @default(autoincrement())
-  childId                 Int       @unique
-  config                  Json
-  previewCache            String?
-  previewCacheGeneratedAt DateTime?
-  createdAt               DateTime  @default(now())
-  updatedAt               DateTime  @updatedAt
-
-  child ChildProfile @relation(fields: [childId], references: [id], onDelete: Cascade)
-
-  @@index([childId])
-}
-
-model AvatarActivityLog {
-  id           Int                @id @default(autoincrement())
-  childId      Int
-  activityType AvatarActivityType
-  itemId       Int?
-  timestamp    DateTime           @default(now())
-
-  child ChildProfile @relation(fields: [childId], references: [id], onDelete: Cascade)
-
-  @@index([childId])
-  @@index([timestamp(sort: Desc)])
-  @@index([activityType])
-}
 
 //////////////////////////////////////
 // ANALYTICS

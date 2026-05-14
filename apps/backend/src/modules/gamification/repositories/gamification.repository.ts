@@ -5,7 +5,7 @@ import { BadgeCategory, ShopItemCategory } from "../dto/gamification.dto";
 import {
   buildAvatarItemImageUrl,
   ensureDefaultAvatarCatalog,
-} from "../../avatar-customization/avatar-item-catalog";
+} from "./avatar-item-catalog";
 
 interface BadgeCondition {
   id: number;
@@ -362,12 +362,14 @@ export class GamificationRepository {
           throw new BadRequestException("You already own this item!");
         }
 
+        const afterPurchase = await tx.childProfile.update({
+          where: { id: childId },
+          data: { totalPoints: { decrement: price } },
+          select: { totalPoints: true },
+        });
         await tx.childProfile.update({
           where: { id: childId },
-          data: {
-            totalPoints: { decrement: price },
-            currentLevel: this.levelFromPoints(child.totalPoints - price),
-          },
+          data: { currentLevel: this.levelFromPoints(afterPurchase.totalPoints) },
         });
 
         const purchase = await tx.purchase.create({

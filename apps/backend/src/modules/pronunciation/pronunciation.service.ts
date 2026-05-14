@@ -138,7 +138,7 @@ export class PronunciationService {
       starRating,
     );
 
-    const rewardInfo = await this.checkRewardTriggers(childId, vocabularyId, starRating);
+    const rewardInfo = await this.checkRewardTriggers(childId, vocabularyId, starRating, `pron:${activity.id}`);
     const currentLevel = this.calculateLevel(rewardInfo.totalPoints);
     const nativePronunciationAudio =
       vocabulary.media && vocabulary.media.length > 0
@@ -305,42 +305,47 @@ export class PronunciationService {
     childId: number,
     vocabularyId: number,
     starRating: number,
+    idempotencyKey: string,
   ): Promise<{ badgeUnlocked?: string; pointsAwarded: number; totalPoints: number }> {
-    let pointsAwarded = 0;
+    const pointsByRating: Record<number, number> = { 1: 0, 2: 0, 3: 10, 4: 15, 5: 20 };
+    const pointsAwarded = pointsByRating[starRating] ?? 0;
     let badgeUnlocked: string | undefined;
-
-    const pointsByRating = {
-      1: 0,
-      2: 0,
-      3: 10,
-      4: 15,
-      5: 20,
-    };
-
-    pointsAwarded = pointsByRating[starRating];
-
     let totalPoints = 0;
 
     if (pointsAwarded > 0) {
-      const updatedChild = await this.prisma.childProfile.update({
-        where: { id: childId },
-        data: {
-          totalPoints: {
-            increment: pointsAwarded,
-          },
-        },
-        select: {
-          totalPoints: true,
-        },
-      });
-
-      totalPoints = updatedChild.totalPoints;
+      try {
+        const updated = await this.prisma.$transaction(async (tx) => {
+          const child = await tx.childProfile.update({
+            where: { id: childId },
+            data: { totalPoints: { increment: pointsAwarded } },
+            select: { totalPoints: true },
+          });
+          await tx.starTransaction.create({
+            data: {
+              childId,
+              points: pointsAwarded,
+              reason: `pronunciation:${vocabularyId}`,
+              idempotencyKey,
+            },
+          });
+          return child;
+        });
+        totalPoints = updated.totalPoints;
+      } catch (err: unknown) {
+        // Unique constraint = already rewarded for this attempt, read current points
+        if (!(err instanceof Error && err.message.includes('idempotencyKey'))) throw err;
+        const child = await this.prisma.childProfile.findUnique({
+          where: { id: childId },
+          select: { totalPoints: true },
+        });
+        totalPoints = child?.totalPoints ?? 0;
+      }
     } else {
       const child = await this.prisma.childProfile.findUnique({
         where: { id: childId },
         select: { totalPoints: true },
       });
-      totalPoints = child?.totalPoints || 0;
+      totalPoints = child?.totalPoints ?? 0;
     }
 
     const stats = await this.pronunciationRepository.getPronunciationStats(childId, vocabularyId);

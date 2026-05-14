@@ -1,6 +1,13 @@
 import type { PrismaClient } from "@prisma/client";
-import type { PrismaService } from "../../prisma/prisma.service";
-import { AvatarLayer } from "./dto/avatar-customization.dto";
+import type { PrismaService } from "../../../prisma/prisma.service";
+
+enum AvatarLayer {
+  HAIR = "HAIR",
+  CLOTHING = "CLOTHING",
+  ACCESSORIES = "ACCESSORIES",
+  PET = "PET",
+  BACKGROUND = "BACKGROUND",
+}
 
 export type AvatarCatalogCategory =
   | "AVATAR_HAIR"
