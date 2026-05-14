@@ -1,20 +1,5 @@
 import type { ShopItem } from '@/features/learning/api/gamification.api';
 
-// Emoji per item name (matches DEFAULT_AVATAR_ITEMS in backend catalog)
-const ITEM_EMOJI: Record<string, string> = {
-    'Rainbow Hair':    '🌈',
-    'Star Crown':      '👑',
-    'Wizard Hat':      '🧙',
-    'Superhero Cape':  '🦸',
-    'Princess Dress':  '👸',
-    'Space Suit':      '🚀',
-    'Magic Wand':      '🪄',
-    'Star Glasses':    '🕶️',
-    'Flying Dragon':   '🐉',
-    'Unicorn Buddy':   '🦄',
-};
-
-// Fallback emoji by rawCategory
 const CATEGORY_EMOJI: Record<string, string> = {
     AVATAR_HAIR:      '🎩',
     AVATAR_OUTFIT:    '👕',
@@ -23,7 +8,6 @@ const CATEGORY_EMOJI: Record<string, string> = {
     BACKGROUND:       '🌟',
 };
 
-// CSS class for overlay position (relative to the avatar container)
 export const OVERLAY_POSITION: Record<string, string> = {
     AVATAR_HAIR:      'absolute -top-3 left-1/2 -translate-x-1/2 text-2xl',
     AVATAR_OUTFIT:    'absolute -bottom-3 left-1/2 -translate-x-1/2 text-xl',
@@ -33,7 +17,7 @@ export const OVERLAY_POSITION: Record<string, string> = {
 };
 
 export function getItemEmoji(item: ShopItem): string {
-    return ITEM_EMOJI[item.name] ?? CATEGORY_EMOJI[item.rawCategory] ?? '✨';
+    return CATEGORY_EMOJI[item.rawCategory] ?? '✨';
 }
 
 export function getEquippedOverlays(
